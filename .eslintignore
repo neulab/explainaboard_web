@@ -3,3 +3,6 @@ api/*
 *.json
 *.md
 *.gitignore
+build/*
+*.py
+Dockerfile

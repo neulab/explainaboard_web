@@ -81,10 +81,17 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
        - To learn React, check out the [React documentation](https://reactjs.org/).
 
 3.  Setup dev environment for the backend
-    1. install `python 3.8.5`
+    1. install `python 3.9.7`
        - I just so happen to have this version, we can agree on another version if you think this is too low/high.
     2. `python -m venv api/venv`
     3. `pip install -r requirements.txt`
     4. enable pylint linting in IDE
     5. start backend server `npm run start-api`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
+
+## Deployment
+
+- We use docker and gunicorn to deploy both frontend and backend. Frontend is built and copied into the static file folder of Flask. Please see Dockerfile for details.
+- To build: `docker build --pull --rm -f "Dockerfile" -t explainaboard-web:0.0.1 "."`
+- To run: `docker run -rm -p 3001:3001 explainaboard-web:0.0.1`
+- We use 3001 to avoid conflict with dev server.
