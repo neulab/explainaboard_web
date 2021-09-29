@@ -1,22 +1,28 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { useEffect, useState } from "react";
+import logo from "./logo.svg";
+import "./App.css";
 
 function App() {
+  const [apiVersion, setApiVersion] = useState<string>();
+  useEffect(() => {
+    async function init() {
+      const version = (await (await fetch("/version")).json()).data;
+      setApiVersion(version);
+    }
+    init();
+  }, []);
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
+        <p>ExplainaBoard V2 Demo (requesting API version {apiVersion})</p>
         <a
           className="App-link"
-          href="https://reactjs.org"
+          href="http://explainaboard.nlpedia.ai/"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React
+          ExplainaBoard
         </a>
       </header>
     </div>
