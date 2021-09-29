@@ -6,7 +6,7 @@ function App() {
   const [apiVersion, setApiVersion] = useState<string>();
   useEffect(() => {
     async function init() {
-      const version = (await (await fetch("/version")).json()).data;
+      const version = (await (await fetch("api/version")).json()).data;
       setApiVersion(version);
     }
     init();

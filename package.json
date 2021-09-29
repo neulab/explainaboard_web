@@ -6,7 +6,7 @@
     "start": "react-scripts start",
     "start-api": "cd api&&FLASK_APP=app FLASK_ENV=development flask run",
     "prettier": "prettier --write --ignore-unknown .",
-    "lint": "eslint .",
+    "lint": "eslint --ext .js,.ts,.tsx,.js .",
     "start-api:prod": "cd api&&FLASK_APP=app FLASK_ENV=production flask run",
     "build": "react-scripts build",
     "test": "react-scripts test",
