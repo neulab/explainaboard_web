@@ -1,5 +1,5 @@
 /// <reference types="react-scripts" />
 declare module "*.yaml" {
-  const data: any;
+  const data: string;
   export default data;
 }
