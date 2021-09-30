@@ -1,8 +1,27 @@
 import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import SwaggerUI from "swagger-ui-react";
 import logo from "./logo.svg";
+import openapiYaml from "./openapi.yaml";
+import "swagger-ui-react/swagger-ui.css";
 import "./App.css";
 
 function App() {
+  return (
+    <Router>
+      <Switch>
+        <Route path="/openapi">
+          <OpenApi />
+        </Route>
+        <Route path="/">
+          <Home />
+        </Route>
+      </Switch>
+    </Router>
+  );
+}
+
+function Home() {
   const [apiVersion, setApiVersion] = useState<string>();
   useEffect(() => {
     async function init() {
@@ -27,6 +46,11 @@ function App() {
       </header>
     </div>
   );
+}
+
+function OpenApi() {
+  console.log(openapiYaml);
+  return <SwaggerUI url={openapiYaml} />;
 }
 
 export default App;
