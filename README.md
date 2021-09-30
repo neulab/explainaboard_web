@@ -22,6 +22,8 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
     - public # static resources for frontend
     - src    # frontend code
         - haven't really written any frontend code so there is no structure for now
+    - openapi
+        - openapi.yaml # backend api specifications
     - .eslintignore
     - .eslintrc.json
     - .gitignore
@@ -92,6 +94,6 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 ## Deployment
 
 - We use docker and gunicorn to deploy both frontend and backend. Frontend is built and copied into the static file folder of Flask. Please see Dockerfile for details.
-- To build: `docker build --pull --rm -f "Dockerfile" -t explainaboard-web:0.0.1 "."`
-- To run: `docker run -rm -p 3001:3001 explainaboard-web:0.0.1`
+- To build: `docker build --pull --rm -f "Dockerfile" -t explainaboard-web:0.1.0 "."`
+- To run: `docker run --rm -p 3001:3001 explainaboard-web:0.1.0`
 - We use 3001 to avoid conflict with dev server.
