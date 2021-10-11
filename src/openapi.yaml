@@ -11,10 +11,12 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html" # TODO
 
 servers:
-  - url: http://api.example.com/v1 # TODO
+  - url: http://example.com:5000/ # TODO
     description: Optional server description, e.g. Main (production) server
-  - url: http://staging-api.example.com # TODO
+  - url: http://staging.example.com:5000/ # TODO
     description: Optional server description, e.g. Internal staging server for testing
+  - url: http://localhost:5000/
+    description: Local server
 
 paths:
   /results:
