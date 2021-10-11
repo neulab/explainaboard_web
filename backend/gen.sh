@@ -16,7 +16,7 @@ cd src/gen/explainaboard/ && \
 ln -sf ../../impl/ && \
 cd ../../../ && \
 java -jar swagger-codegen-cli-3.0.29.jar generate \
-    -i ../src/openapi.yaml \
+    -i openapi.yaml \
     -l python-flask \
     -o src/gen \
     -t templates \

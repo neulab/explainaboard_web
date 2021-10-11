@@ -41,9 +41,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Result"
+                $ref: '#/components/schemas/Results'
   /result:
     post:
       summary: Upload a system prediction result
@@ -82,9 +80,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/LbResult"
+                $ref: "#/components/schemas/LbResults"
 
   /datasets/{dataset_id}:
     get:
@@ -114,9 +110,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Dataset"
+                $ref: '#/components/schemas/Datasets'
 
 components:
   # Reusable schemas (data models)
@@ -203,6 +197,16 @@ components:
             - paper_info
             - privacy_setting
             - system_prediction
+    
+    # returning array is bad design
+    # so we wrap using an object with key named payload
+    Results:
+      type: object
+      properties:
+        payload:
+          type: array
+          items:
+            $ref: "#/components/schemas/Result"
 
     # result on leaderboard
     LbResult:
@@ -226,6 +230,14 @@ components:
             - metric
             - score
             - data_bias
+    
+    LbResults:
+      type: object
+      properties:
+        payload:
+          type: array
+          items:
+            $ref: "#/components/schemas/LbResult"
 
     # TODO API output (evaluation of uploaded result)
 
@@ -256,7 +268,15 @@ components:
         - dataset_id
         - summary
         - task_id
-
+    
+    Datasets:
+      type: object
+      properties:
+        payload:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dataset"    
+    
   # Security scheme definitions for authentication
   securitySchemes:
     ApiKeyAuth:

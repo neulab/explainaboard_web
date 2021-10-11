@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import SwaggerUI from "swagger-ui-react";
 import logo from "./logo.svg";
-import openapiYaml from "./openapi.yaml";
 import "swagger-ui-react/swagger-ui.css";
 import "./App.css";
 
@@ -49,8 +48,7 @@ function Home() {
 }
 
 function OpenApi() {
-  console.log(openapiYaml);
-  return <SwaggerUI url={openapiYaml} />;
+  return <SwaggerUI url="http://localhost:5000/openapi.json" />;
 }
 
 export default App;
