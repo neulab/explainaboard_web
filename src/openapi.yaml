@@ -164,61 +164,66 @@ components:
           type: string
         paper_info:
           $ref: "#/components/schemas/PaperInfo"
+      required:
+        - task_id
+        - dataset_id
+        - model_name
+        - paper_info
 
     # result that users upload and view
     Result:
       # extends BasicResult
       allOf:
         - $ref: "#/components/schemas/BasicResult"
-      type: object
-      properties:
-        # we might want to group results by tasks (e.g. NER, MLT,...)
-        summary:
-          type: string
-        privacy_setting:
-          type: array
-          # public: [], private: [current user id], list of user ids: [id1, id2, id3]
-          items:
-            type: integer
-        system_prediction:
-          # no strict definition since every task has a different output
-          # if we want to be strict, we can have a schema for each task
-          # and use an enum here.
-          type: object
-        system_metadata:
-          type: object
-        system_confidences:
-          type: object
-      required:
-        - task_id
-        - dataset_id
-        - model_name
-        - paper_info
-        - privacy_setting
-        - system_prediction
+        - type: object
+        - properties:
+            # we might want to group results by tasks (e.g. NER, MLT,...)
+            summary:
+              type: string
+            privacy_setting:
+              type: array
+              # public: [], private: [current user id], list of user ids: [id1, id2, id3]
+              items:
+                type: integer
+            system_prediction:
+              # no strict definition since every task has a different output
+              # if we want to be strict, we can have a schema for each task
+              # and use an enum here.
+              type: object
+            system_metadata:
+              type: object
+            system_confidences:
+              type: object
+        - required:
+            - task_id
+            - dataset_id
+            - model_name
+            - paper_info
+            - privacy_setting
+            - system_prediction
 
     # result on leaderboard
     LbResult:
       allOf:
         - $ref: "#/components/schemas/BasicResult"
-      type: object
-      properties:
-        # TODO multiple metrics
-        metric:
-          type: string
-        score:
-          type: string
-        # TODO clarify format, applies to all tasks?
-        data_bias:
-          type: object
-      required:
-        - task_id
-        - dataset_id
-        - model_name
-        - paper_info
-        - metric
-        - score
-        - data_bias
+        - type: object
+        - properties:
+            # TODO multiple metrics
+            metric:
+              type: string
+            score:
+              type: string
+            # TODO clarify format, applies to all tasks?
+            data_bias:
+              type: object
+        - required:
+            - task_id
+            - dataset_id
+            - model_name
+            - paper_info
+            - metric
+            - score
+            - data_bias
 
     # TODO API output (evaluation of uploaded result)
 
