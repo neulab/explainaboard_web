@@ -31,3 +31,4 @@ __pycache__
 
 # swagger codegen
 backend/src-gen
+backend/swagger-codegen-cli*.jar
