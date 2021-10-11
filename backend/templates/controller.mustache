@@ -4,6 +4,7 @@ import six
 {{#imports}}{{import}}  # noqa: E501
 {{/imports}}
 from {{packageName}} import util
+import {{packageName}}.impl.default_controllers as controllers_impl
 {{#operations}}
 {{#operation}}
 {{#contents}}
@@ -108,7 +109,7 @@ def {{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{
             {{/items}}
         {{/isMapContainer}}
     {{/parameters}}
-    return 'do some magic!'
+    return controllers_impl.{{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}})
 {{/contents}}
 {{/operation}}
 {{/operations}}
