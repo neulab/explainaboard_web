@@ -21,11 +21,20 @@ function App() {
 }
 
 function Home() {
-  const [apiVersion, setApiVersion] = useState<string>();
+  const [datasets, setDatasets] = useState<Array<Record<string, unknown>>>();
   useEffect(() => {
     async function init() {
-      const version = (await (await fetch("api/version")).json()).data;
-      setApiVersion(version);
+      const data = await (await fetch("api/datasets")).json();
+      const datasets = data.payload.map((dataset: Record<string, number>) => (
+        <div key={dataset.dataset_id}>
+          {Object.keys(dataset).map((key) => (
+            <option key={key} value={key}>
+              {key}: {dataset[key]}
+            </option>
+          ))}
+        </div>
+      ));
+      setDatasets(datasets);
     }
     init();
   }, []);
@@ -33,7 +42,9 @@ function Home() {
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>ExplainaBoard V2 Demo (requesting API version {apiVersion})</p>
+        <p>ExplainaBoard V2 Demo</p>
+        <p>(requesting datasets... )</p>
+        <div>{datasets}</div>
         <a
           className="App-link"
           href="http://explainaboard.nlpedia.ai/"
@@ -48,7 +59,7 @@ function Home() {
 }
 
 function OpenApi() {
-  return <SwaggerUI url="http://localhost:5000/openapi.json" />;
+  return <SwaggerUI url="http://localhost:5000/api/openapi.json" />;
 }
 
 export default App;
