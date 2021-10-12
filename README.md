@@ -83,12 +83,11 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
        - To learn React, check out the [React documentation](https://reactjs.org/).
 
 3.  Setup dev environment for the backend
-    1. install `python 3.9.7`
-       - I just so happen to have this version, we can agree on another version if you think this is too low/high.
-    2. `python -m venv api/venv`
-    3. `pip install -r requirements.txt`
-    4. enable pylint linting in IDE
-    5. start backend server `npm run start-api`
+    1. install `python 3.5.2+`
+       - TODO: write a fixed version
+    2. `bash backend/gen.sh` to generate bakend code.
+    3. `pip install -r backend/src/gen/requirements.txt`
+    4. start backend server `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
 
 ## Deployment
