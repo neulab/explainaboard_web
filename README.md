@@ -90,6 +90,8 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
     4. start backend server `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
 
+For details of the backend, please refer to `README.md` under `backend/`.
+
 ## Deployment
 
 - We use docker and gunicorn to deploy both frontend and backend. Frontend is built and copied into the static file folder of Flask. Please see Dockerfile for details.
