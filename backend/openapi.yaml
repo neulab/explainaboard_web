@@ -11,11 +11,11 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html" # TODO
 
 servers:
-  - url: http://example.com:5000/ # TODO
+  - url: http://example.com:5000/api # TODO
     description: Optional server description, e.g. Main (production) server
-  - url: http://staging.example.com:5000/ # TODO
+  - url: http://staging.example.com:5000/api # TODO
     description: Optional server description, e.g. Internal staging server for testing
-  - url: http://localhost:5000/
+  - url: http://localhost:5000/api
     description: Local server
 
 paths:
@@ -30,11 +30,13 @@ paths:
         - in: query
           name: task_id
           schema:
-            $ref: "#/components/schemas/TaskId"
+            type: integer
+            format: int64
         - in: query
           name: dataset_id
           schema:
-            $ref: "#/components/schemas/DatasetId"
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
@@ -69,11 +71,13 @@ paths:
         - in: query
           name: task_id
           schema:
-            $ref: "#/components/schemas/TaskId"
+            type: integer
+            format: int64
         - in: query
           name: dataset_id
           schema:
-            $ref: "#/components/schemas/DatasetId"
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
@@ -90,7 +94,8 @@ paths:
         - in: path
           name: dataset_id
           schema:
-            $ref: "#/components/schemas/DatasetId"
+            type: integer
+            format: int64
           required: true
       responses:
         "200":
@@ -115,13 +120,16 @@ paths:
 components:
   # Reusable schemas (data models)
   schemas:
-    TaskId:
-      type: integer
-      format: int64
+  
+    # The schema for primitive types do not get generated well in flask.
+    # Avoid using them.
+    # TaskId:
+    #   type: integer
+    #   format: int64
 
-    DatasetId:
-      type: integer
-      format: int64
+    # DatasetId:
+    #   type: integer
+    #   format: int64
 
     PaperInfo:
       type: object
@@ -153,9 +161,11 @@ components:
       type: object
       properties:
         task_id:
-          $ref: "#/components/schemas/TaskId"
+          type: integer
+          format: int64
         dataset_id:
-          $ref: "#/components/schemas/DatasetId"
+          type: integer
+          format: int64
         model_name:
           type: string
         paper_info:
@@ -245,11 +255,15 @@ components:
       type: object
       properties:
         dataset_id:
-          $ref: "#/components/schemas/DatasetId"
+          type: integer
+          format: int64
         parent_dataset_id:
-          $ref: "#/components/schemas/DatasetId"
+          type: integer
+          format: int64
+          nullable: true
         task_id:
-          $ref: "#/components/schemas/TaskId"
+          type: integer
+          format: int64
         summary:
           type: string
         homepage:

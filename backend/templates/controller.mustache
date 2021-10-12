@@ -4,7 +4,7 @@ import six
 {{#imports}}{{import}}  # noqa: E501
 {{/imports}}
 from {{packageName}} import util
-import {{packageName}}.impl.default_controllers as controllers_impl
+import {{packageName}}.impl.default_controllers_impl as default_controllers_impl
 {{#operations}}
 {{#operation}}
 {{#contents}}
@@ -109,7 +109,9 @@ def {{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{
             {{/items}}
         {{/isMapContainer}}
     {{/parameters}}
-    return controllers_impl.{{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}})
+
+    # TODO: Should I passing the return type (model) as a parameter or import the models in our implementation?
+    return default_controllers_impl.{{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}})
 {{/contents}}
 {{/operation}}
 {{/operations}}
