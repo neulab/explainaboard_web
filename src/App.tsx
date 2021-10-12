@@ -32,6 +32,7 @@ function Home() {
               {key}: {dataset[key]}
             </option>
           ))}
+          <option></option>
         </div>
       ));
       setDatasets(datasets);
