@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import SwaggerUI from "swagger-ui-react";
 import logo from "./logo.svg";
-import openapiYaml from "./openapi.yaml";
 import "swagger-ui-react/swagger-ui.css";
 import "./App.css";
 
@@ -22,11 +21,21 @@ function App() {
 }
 
 function Home() {
-  const [apiVersion, setApiVersion] = useState<string>();
+  const [datasets, setDatasets] = useState<Array<Record<string, unknown>>>();
   useEffect(() => {
     async function init() {
-      const version = (await (await fetch("api/version")).json()).data;
-      setApiVersion(version);
+      const data = await (await fetch("api/datasets")).json();
+      const datasets = data.payload.map((dataset: Record<string, number>) => (
+        <div key={dataset.dataset_id}>
+          {Object.keys(dataset).map((key) => (
+            <option key={key} value={key}>
+              {key}: {dataset[key]}
+            </option>
+          ))}
+          <option></option>
+        </div>
+      ));
+      setDatasets(datasets);
     }
     init();
   }, []);
@@ -34,7 +43,9 @@ function Home() {
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <p>ExplainaBoard V2 Demo (requesting API version {apiVersion})</p>
+        <p>ExplainaBoard V2 Demo</p>
+        <p>(requesting datasets... )</p>
+        <div>{datasets}</div>
         <a
           className="App-link"
           href="http://explainaboard.nlpedia.ai/"
@@ -49,8 +60,7 @@ function Home() {
 }
 
 function OpenApi() {
-  console.log(openapiYaml);
-  return <SwaggerUI url={openapiYaml} />;
+  return <SwaggerUI url="http://localhost:5000/api/openapi.json" />;
 }
 
 export default App;

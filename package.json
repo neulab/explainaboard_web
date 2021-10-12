@@ -5,6 +5,7 @@
   "scripts": {
     "start": "react-scripts start",
     "start-api": "cd api&&FLASK_APP=app FLASK_ENV=development flask run",
+    "start-backend": "cd backend/src/gen && python -m explainaboard",
     "prettier": "prettier --write --ignore-unknown .",
     "lint": "eslint --ext .js,.ts,.tsx,.js .",
     "start-api:prod": "cd api&&FLASK_APP=app FLASK_ENV=production flask run",
