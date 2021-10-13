@@ -11,10 +11,12 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html" # TODO
 
 servers:
-  - url: http://api.example.com/v1 # TODO
+  - url: http://example.com:5000/api # TODO
     description: Optional server description, e.g. Main (production) server
-  - url: http://staging-api.example.com # TODO
+  - url: http://staging.example.com:5000/api # TODO
     description: Optional server description, e.g. Internal staging server for testing
+  - url: http://localhost:5000/api
+    description: Local server
 
 paths:
   /results:
@@ -28,20 +30,20 @@ paths:
         - in: query
           name: task_id
           schema:
-            $ref: "#/components/schemas/TaskId"
+            type: integer
+            format: int64
         - in: query
           name: dataset_id
           schema:
-            $ref: "#/components/schemas/DatasetId"
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Result"
+                $ref: '#/components/schemas/Results'
   /result:
     post:
       summary: Upload a system prediction result
@@ -69,20 +71,20 @@ paths:
         - in: query
           name: task_id
           schema:
-            $ref: "#/components/schemas/TaskId"
+            type: integer
+            format: int64
         - in: query
           name: dataset_id
           schema:
-            $ref: "#/components/schemas/DatasetId"
+            type: integer
+            format: int64
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/LbResult"
+                $ref: "#/components/schemas/LbResults"
 
   /datasets/{dataset_id}:
     get:
@@ -92,7 +94,8 @@ paths:
         - in: path
           name: dataset_id
           schema:
-            $ref: "#/components/schemas/DatasetId"
+            type: integer
+            format: int64
           required: true
       responses:
         "200":
@@ -112,20 +115,21 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Dataset"
+                $ref: '#/components/schemas/Datasets'
 
 components:
   # Reusable schemas (data models)
   schemas:
-    TaskId:
-      type: integer
-      format: int64
+  
+    # The schema for primitive types do not get generated well in flask.
+    # Avoid using them.
+    # TaskId:
+    #   type: integer
+    #   format: int64
 
-    DatasetId:
-      type: integer
-      format: int64
+    # DatasetId:
+    #   type: integer
+    #   format: int64
 
     PaperInfo:
       type: object
@@ -157,68 +161,93 @@ components:
       type: object
       properties:
         task_id:
-          $ref: "#/components/schemas/TaskId"
+          type: integer
+          format: int64
         dataset_id:
-          $ref: "#/components/schemas/DatasetId"
+          type: integer
+          format: int64
         model_name:
           type: string
         paper_info:
           $ref: "#/components/schemas/PaperInfo"
+      required:
+        - task_id
+        - dataset_id
+        - model_name
+        - paper_info
 
     # result that users upload and view
     Result:
       # extends BasicResult
       allOf:
         - $ref: "#/components/schemas/BasicResult"
+        - type: object
+        - properties:
+            # we might want to group results by tasks (e.g. NER, MLT,...)
+            summary:
+              type: string
+            privacy_setting:
+              type: array
+              # public: [], private: [current user id], list of user ids: [id1, id2, id3]
+              items:
+                type: integer
+            system_prediction:
+              # no strict definition since every task has a different output
+              # if we want to be strict, we can have a schema for each task
+              # and use an enum here.
+              type: object
+            system_metadata:
+              type: object
+            system_confidences:
+              type: object
+        - required:
+            - task_id
+            - dataset_id
+            - model_name
+            - paper_info
+            - privacy_setting
+            - system_prediction
+    
+    # returning array is bad design
+    # so we wrap using an object with key named payload
+    Results:
       type: object
       properties:
-        # we might want to group results by tasks (e.g. NER, MLT,...)
-        summary:
-          type: string
-        privacy_setting:
+        payload:
           type: array
-          # public: [], private: [current user id], list of user ids: [id1, id2, id3]
           items:
-            type: integer
-        system_prediction:
-          # no strict definition since every task has a different output
-          # if we want to be strict, we can have a schema for each task
-          # and use an enum here.
-          type: object
-        system_metadata:
-          type: object
-        system_confidences:
-          type: object
-      required:
-        - task_id
-        - dataset_id
-        - model_name
-        - paper_info
-        - privacy_setting
-        - system_prediction
+            $ref: "#/components/schemas/Result"
 
     # result on leaderboard
     LbResult:
       allOf:
         - $ref: "#/components/schemas/BasicResult"
+        - type: object
+        - properties:
+            # TODO multiple metrics
+            metric:
+              type: string
+            score:
+              type: string
+            # TODO clarify format, applies to all tasks?
+            data_bias:
+              type: object
+        - required:
+            - task_id
+            - dataset_id
+            - model_name
+            - paper_info
+            - metric
+            - score
+            - data_bias
+    
+    LbResults:
       type: object
       properties:
-        # TODO multiple metrics
-        metric:
-          type: string
-        score:
-          type: string
-        # TODO clarify format, applies to all tasks?
-        data_bias:
-          type: object
-      required:
-        - task_id
-        - dataset_id
-        - model_name
-        - paper_info
-        - metric
-        - score
-        - data_bias
+        payload:
+          type: array
+          items:
+            $ref: "#/components/schemas/LbResult"
 
     # TODO API output (evaluation of uploaded result)
 
@@ -226,11 +255,15 @@ components:
       type: object
       properties:
         dataset_id:
-          $ref: "#/components/schemas/DatasetId"
+          type: integer
+          format: int64
         parent_dataset_id:
-          $ref: "#/components/schemas/DatasetId"
+          type: integer
+          format: int64
+          nullable: true
         task_id:
-          $ref: "#/components/schemas/TaskId"
+          type: integer
+          format: int64
         summary:
           type: string
         homepage:
@@ -249,7 +282,15 @@ components:
         - dataset_id
         - summary
         - task_id
-
+    
+    Datasets:
+      type: object
+      properties:
+        payload:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dataset"    
+    
   # Security scheme definitions for authentication
   securitySchemes:
     ApiKeyAuth:

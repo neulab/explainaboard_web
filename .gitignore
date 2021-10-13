@@ -28,3 +28,7 @@ yarn-error.log*
 # flask
 api/venv
 __pycache__
+
+# swagger codegen
+backend/src/gen
+backend/swagger-codegen-cli*.jar
