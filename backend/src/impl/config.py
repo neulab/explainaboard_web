@@ -7,8 +7,10 @@ class Config(object):
     TESTING = False
     DATABASE_URI = ''
 
+
 class DevelopmentConfig(Config):
     DEBUG = True
+
 
 class ProductionConfig(Config):
     DATABASE_URI = ''

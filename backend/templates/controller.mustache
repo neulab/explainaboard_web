@@ -10,7 +10,7 @@ import {{packageName}}.impl.default_controllers_impl as default_controllers_impl
 {{#contents}}
 
 
-def {{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}}):  # noqa: E501
+def {{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}}) -> {{#returnType}}{{.}}{{/returnType}}{{^returnType}}None{{/returnType}}:  # noqa: E501
     """{{#summary}}{{.}}{{/summary}}{{^summary}}{{operationId}}{{/summary}}
 
     {{#notes}}{{.}}{{/notes}} # noqa: E501
@@ -110,7 +110,6 @@ def {{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{
         {{/isMapContainer}}
     {{/parameters}}
 
-    # TODO: Should I passing the return type (model) as a parameter or import the models in our implementation?
     return default_controllers_impl.{{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}})
 {{/contents}}
 {{/operation}}
