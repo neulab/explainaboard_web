@@ -21,21 +21,11 @@ function App() {
 }
 
 function Home() {
-  const [datasets, setDatasets] = useState<Array<Record<string, unknown>>>();
+  const [datasets, setDatasets] = useState<string>();
   useEffect(() => {
     async function init() {
-      const data = await (await fetch("api/datasets")).json();
-      const datasets = data.payload.map((dataset: Record<string, number>) => (
-        <div key={dataset.dataset_id}>
-          {Object.keys(dataset).map((key) => (
-            <option key={key} value={key}>
-              {key}: {dataset[key]}
-            </option>
-          ))}
-          <option></option>
-        </div>
-      ));
-      setDatasets(datasets);
+      const data = await (await fetch("api/lb-results")).text();
+      setDatasets(data);
     }
     init();
   }, []);
