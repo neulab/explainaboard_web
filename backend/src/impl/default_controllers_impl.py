@@ -43,16 +43,16 @@ class DBModel:
     collection_name: str
 
 
-class LeaderBoard_NER(LbResult, DBModel):
+class LeaderBoardNER(LbResult, DBModel):
     collection_name = 'leaderboard_ner'
 
     @classmethod
-    def from_db_object(cls, db_object: Any) -> LeaderBoard_NER:
+    def from_db_object(cls, db_object: Any) -> LeaderBoardNER:
         obj = {**db_object}
         return cls.from_dict(obj)
 
     @classmethod
-    def find_one(cls) -> Union[LeaderBoard_NER, None]:
+    def find_one(cls) -> Union[LeaderBoardNER, None]:
         document = get_db(
         ).cx.explainaboard_dev[cls.collection_name].find_one()
         if document:
@@ -64,6 +64,6 @@ class LeaderBoard_NER(LbResult, DBModel):
 
 
 def lb_results_get(task_id=None, dataset_id=None) -> LbResults:
-    lb_result = LeaderBoard_NER.find_one()
+    lb_result = LeaderBoardNER.find_one()
     if lb_result:
         return lb_result
