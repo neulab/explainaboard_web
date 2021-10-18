@@ -14,7 +14,6 @@ def get_db():
         password: str = current_app.config.get('DB_PASSWORD')
         uri = uri.replace('<username>', username)
         uri = uri.replace('<password>', password)
-        print(uri, username, password)
 
         db = g._database = PyMongo(current_app, uri=uri)
     return db

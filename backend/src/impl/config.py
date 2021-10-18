@@ -1,13 +1,16 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class Config(object):
     SECRET_KEY = os.urandom(12)
     DEBUG = False
     TESTING = False
-    DATABASE_URI = 'mongodb+srv://<username>:<password>@explainaboarddev.dejqa.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
-    DB_USERNAME = 'explainaBoardDev'
-    DB_PASSWORD = 'explainaBoardDev'
+    DATABASE_URI = os.getenv('DATABASE_URI_DEV')
+    DB_USERNAME = os.getenv('DB_USERNAME_DEV')
+    DB_PASSWORD = os.getenv('DB_PASSWORD_DEV')
 
 
 class DevelopmentConfig(Config):

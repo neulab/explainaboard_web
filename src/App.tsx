@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import SwaggerUI from "swagger-ui-react";
 import logo from "./logo.svg";
-import "swagger-ui-react/swagger-ui.css";
 import "./App.css";
 
 function App() {
   return (
     <Router>
       <Switch>
-        <Route path="/openapi">
-          <OpenApi />
-        </Route>
         <Route path="/">
           <Home />
         </Route>
@@ -47,10 +42,6 @@ function Home() {
       </header>
     </div>
   );
-}
-
-function OpenApi() {
-  return <SwaggerUI url="http://localhost:5000/api/openapi.json" />;
 }
 
 export default App;

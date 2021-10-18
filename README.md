@@ -87,7 +87,8 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
     2. `npm run gen-api-code` to generate backend code. Please remember to run this whenever open API definition changes.
     3. `pip install -r backend/src/gen/requirements.txt`
-    4. start backend server `npm run start-backend`
+    4. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
+    5. start backend server `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
 
 For details of the backend, please refer to `README.md` under `backend/`.
