@@ -83,11 +83,12 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
        - To learn React, check out the [React documentation](https://reactjs.org/).
 
 3.  Setup dev environment for the backend
-    1. install `python 3.5.2+`
-       - TODO: write a fixed version
-    2. `bash backend/gen.sh` to generate bakend code.
+    1. install `python 3.9.7` and create a venv or conda environment for this project
+       - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
+    2. `npm run gen-api-code` to generate backend code. Please remember to run this whenever open API definition changes.
     3. `pip install -r backend/src/gen/requirements.txt`
-    4. start backend server `npm run start-backend`
+    4. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
+    5. start backend server `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
 
 For details of the backend, please refer to `README.md` under `backend/`.
@@ -95,6 +96,7 @@ For details of the backend, please refer to `README.md` under `backend/`.
 ## Deployment
 
 - We use docker and gunicorn to deploy both frontend and backend. Frontend is built and copied into the static file folder of Flask. Please see Dockerfile for details.
-- To build: `docker build --pull --rm -f "Dockerfile" -t explainaboard-web:0.1.0 "."`
-- To run: `docker run --rm -p 3001:3001 explainaboard-web:0.1.0`
-- We use 3001 to avoid conflict with dev server.
+- To build: `docker build --pull --rm -f "Dockerfile" -t explainaboard-web:0.2.0 "."`
+- To run: `docker run --rm -p 5000:5000/tcp explainaboard-web:0.2.0`
+- The frontend is served with the flask server at the root url so 5000 is the used to access the UI here.
+- connexion is used by swagger/openapi code generation tool and it does not support gunicorn natively. So, currently we use flask server in production. Another option that connexion supports natively is tornado.

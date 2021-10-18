@@ -1,17 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import SwaggerUI from "swagger-ui-react";
 import logo from "./logo.svg";
-import "swagger-ui-react/swagger-ui.css";
 import "./App.css";
 
 function App() {
   return (
     <Router>
       <Switch>
-        <Route path="/openapi">
-          <OpenApi />
-        </Route>
         <Route path="/">
           <Home />
         </Route>
@@ -21,21 +16,11 @@ function App() {
 }
 
 function Home() {
-  const [datasets, setDatasets] = useState<Array<Record<string, unknown>>>();
+  const [datasets, setDatasets] = useState<string>();
   useEffect(() => {
     async function init() {
-      const data = await (await fetch("api/datasets")).json();
-      const datasets = data.payload.map((dataset: Record<string, number>) => (
-        <div key={dataset.dataset_id}>
-          {Object.keys(dataset).map((key) => (
-            <option key={key} value={key}>
-              {key}: {dataset[key]}
-            </option>
-          ))}
-          <option></option>
-        </div>
-      ));
-      setDatasets(datasets);
+      const data = await (await fetch("api/lb-results")).text();
+      setDatasets(data);
     }
     init();
   }, []);
@@ -57,10 +42,6 @@ function Home() {
       </header>
     </div>
   );
-}
-
-function OpenApi() {
-  return <SwaggerUI url="http://localhost:5000/api/openapi.json" />;
 }
 
 export default App;

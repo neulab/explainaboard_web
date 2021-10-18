@@ -21,3 +21,7 @@ java -jar swagger-codegen-cli-3.0.29.jar generate \
     -o src/gen \
     -t templates \
     -c swagger-codegen-config.json
+
+# Couldn't find a way to config these default 
+cd src/gen/ && \
+rm Dockerfile .gitignore .travis.yml git_push.sh tox.ini test-requirements.txt .dockerignore setup.py
