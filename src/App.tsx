@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import logo from "./logo.svg";
 import "./App.css";
+import { backendClient } from "./clients";
 
 function App() {
   return (
@@ -19,8 +20,8 @@ function Home() {
   const [datasets, setDatasets] = useState<string>();
   useEffect(() => {
     async function init() {
-      const data = await (await fetch("api/lb-results")).text();
-      setDatasets(data);
+      const data = await backendClient.datasetsDatasetIdGet(11);
+      setDatasets(JSON.stringify(data));
     }
     init();
   }, []);
