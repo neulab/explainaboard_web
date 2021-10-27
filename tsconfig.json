@@ -14,7 +14,8 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": false
+    "strict": true,
+    "strictPropertyInitialization": false
   },
   "include": ["src"]
 }

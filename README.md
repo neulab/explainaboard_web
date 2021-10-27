@@ -16,13 +16,14 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
         - src
             - gen # template code generated with openapi, code in this folder should not be modified manually
               - requirements.txt
-              - __main__.py
-              - controllers
-              - models
-              - impl # a sympolic link to the impl folder, any edition made here will "reflect" on the impl folder
+              - explainaboard
+                  - __main__.py
+                  - controllers
+                  - test
+                  - models
+                  - impl # a sympolic link to the impl folder, any edition made here will "reflect" on the impl folder
             - impl # our implementation of the apis
-            - models
-            - test
+
     - public # static resources for frontend
     - src    # frontend code
         - clients # all clients (backend, oauth login, etc.)
