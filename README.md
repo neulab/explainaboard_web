@@ -92,7 +92,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
        - To learn React, check out the [React documentation](https://reactjs.org/).
 
 3.  Setup dev environment for the backend
-    1. install `python 3.9.7` and create a venv or conda environment for this project
+    1. install `python` version >= 3.9.7 and create a venv or conda environment for this project
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
     2. `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever open API definition changes.
     3. `pip install -r backend/src/gen/requirements.txt`
