@@ -8,22 +8,31 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
 1.  Project Structure
 
-    - frontend code structure is a lot more complicated than the backend so I decided to put all the backend code in an `api` directory. We can write scripts to start dev servers and build docker containers and run them with npm. That's another reason why I decided to put frontend code at the root and backend code in a folder.
+    - frontend code structure is a lot more complicated than the backend so I decided to put all the backend code in an `backend` directory. Another reason why I decided to put frontend code at the root is that we can add scripts to `package.json` and run them with npm which is very convenient.
 
     ```
-    - api    # backend code (flask)
-        - app # flask app
-            - __init__.py  # flask app is initialized here
-            - auth.py
-            - config.py    # configuration goes here
-            - db.py
-        - tests
-        - requirements.txt
+    - backend    # backend code (flask)
+        - templates # mustache templates to generate template code
+        - src
+            - gen # template code generated with openapi, code in this folder should not be modified manually
+              - requirements.txt
+              - explainaboard
+                  - __main__.py
+                  - controllers
+                  - test
+                  - models
+                  - impl # a sympolic link to the impl folder, any edition made here will "reflect" on the impl folder
+            - impl # our implementation of the apis
+
     - public # static resources for frontend
     - src    # frontend code
-        - haven't really written any frontend code so there is no structure for now
+        - clients # all clients (backend, oauth login, etc.)
+          - openapi # client code generated with openapi, code in this folder should not be modified manually
+          - index.ts # all clients are exported here
     - openapi
-        - openapi.yaml # backend api specifications
+        - openapi.yaml # api specifications
+        - gen_api_layer.sh # script to generate client and server code according to openapi specifications
+        - swagger-codegen-config.json # config file for swagger(openapi) code gen
     - .eslintignore
     - .eslintrc.json
     - .gitignore
@@ -38,7 +47,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 2.  Setup dev environment for the frontend
 
     1. install `node v14.17.3`
-       - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) ans use nvm to manage node versions.
+       - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use nvm to manage node versions.
        - Any v14+ should probably work fine.
        - Remember to run `nvm install-latest-npm` to get the latest version of npm.
        - verify the installation
@@ -85,11 +94,12 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 3.  Setup dev environment for the backend
     1. install `python 3.9.7` and create a venv or conda environment for this project
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
-    2. `npm run gen-api-code` to generate backend code. Please remember to run this whenever open API definition changes.
+    2. `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever open API definition changes.
     3. `pip install -r backend/src/gen/requirements.txt`
     4. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
     5. start backend server `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
+    - Any code not in `impl` is generated. If you want to modify the generated code, you need to modify the mustache templates.
 
 For details of the backend, please refer to `README.md` under `backend/`.
 

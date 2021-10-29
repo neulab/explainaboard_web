@@ -11,16 +11,12 @@ This folder includes code for backend of the ExplainaBoard web application.
         - gen/ # code generated using swagger. DO NOT edit anything here. gitignored.
         - impl/ # our own code and implementations.
     - templates # flask templates used by swagger to generate code under gen/.
-    - gen.sh # handy script to generate code under gen/
-    - openapi.yaml # backend api specifications
     - README.md
-    - swagger-codegen-cli-3.0.29.jar # swagger codegen tool. auto-downloaded in gen.sh. gitignored.
-    - swagger-codegen-config.json # swagger codegen config
     ```
 
 2.  Usage
 
-    1. Running `bash gen.sh` generates python flask server code under `src/gen/`
+    1. Run `npm run gen-api-code` to generate python flask server code under `src/gen/`
 
     2. Refer to `src/gen/README.md` to start the server. Alternatively, run `npm run start-backend` in the repo root directory (one level above here.)
 
@@ -46,7 +42,7 @@ Because the generated code under `src/gen` is only a skeleton, it does not conta
 To separate the generated code and our own code, we follow an approach similar to [this answer on stackoverflow](https://stackoverflow.com/questions/45680298/cleanest-way-to-glue-generated-flask-app-code-swagger-codegen-to-backend-imple/47554626#47554626):
 
 1. store all generated code under `src/gen` and our own code under `src/impl`.
-2. create a symbolic link to `src/impl` under `src/gen/explainaboard` every time in code generation. See `gen.sh` for details.
+2. create a symbolic link to `src/impl` under `src/gen/explainaboard` every time in code generation. See `openapi/gen_api_layer.sh` for details.
 3. In `templates/controller.mustache`, add 
 
 ```import {{packageName}}.impl.default_controllers_impl as default_controllers_impl```  

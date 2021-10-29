@@ -8,3 +8,5 @@ build/*
 *.py
 *.yaml
 Dockerfile
+src/clients/openapi/*
+openapi/*

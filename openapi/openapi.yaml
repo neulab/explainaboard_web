@@ -43,7 +43,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Results'
+                $ref: "#/components/schemas/Results"
   /result:
     post:
       summary: Upload a system prediction result
@@ -115,12 +115,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Datasets'
+                $ref: "#/components/schemas/Datasets"
 
 components:
   # Reusable schemas (data models)
   schemas:
-  
     # The schema for primitive types do not get generated well in flask.
     # Avoid using them.
     # TaskId:
@@ -207,7 +206,7 @@ components:
             - paper_info
             - privacy_setting
             - system_prediction
-    
+
     # returning array is bad design
     # so we wrap using an object with key named payload
     Results:
@@ -240,7 +239,7 @@ components:
             - metric
             - score
             - data_bias
-    
+
     LbResults:
       type: object
       properties:
@@ -282,15 +281,15 @@ components:
         - dataset_id
         - summary
         - task_id
-    
+
     Datasets:
       type: object
       properties:
         payload:
           type: array
           items:
-            $ref: "#/components/schemas/Dataset"    
-    
+            $ref: "#/components/schemas/Dataset"
+
   # Security scheme definitions for authentication
   securitySchemes:
     ApiKeyAuth:

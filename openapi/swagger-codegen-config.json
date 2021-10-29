@@ -1,0 +1,5 @@
+{
+  "packageName": "explainaboard",
+  "serverPort": 5000,
+  "supportsES6": true
+}
