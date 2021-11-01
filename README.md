@@ -99,7 +99,8 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
     4. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
     5. start backend server `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
-    - Any code not in `impl` is generated. If you want to modify the generated code, you need to modify the mustache templates.
+       - Any code not in `impl` is generated. If you want to modify the generated code, you need to modify the mustache templates.
+    6. If you want to do any testing, you can run `pip install -r backend/src/gen/test-requirements.txt`, then `cd backend/test` and `python -m unittest`
 
 For details of the backend, please refer to `README.md` under `backend/`.
 

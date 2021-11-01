@@ -31,7 +31,7 @@ java -jar $OPENAPI_PATH/swagger-codegen-cli-3.0.29.jar generate \
 
 # Couldn't find a way to omit these default files from the templates so manully remove them
 cd $BACKEND_GEN_PATH && \
-rm Dockerfile .gitignore .travis.yml git_push.sh tox.ini test-requirements.txt .dockerignore setup.py
+rm Dockerfile .gitignore .travis.yml git_push.sh tox.ini .dockerignore setup.py
 
 # # frontend
 cd ../../.. && rm -rf $FRONTEND_GEN_PATH && \
