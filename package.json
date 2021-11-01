@@ -2,6 +2,7 @@
   "name": "explainaboard_web",
   "version": "0.2.0",
   "scripts": {
+    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
     "start-frontend": "npm --prefix frontend run start",
     "start-backend": "cd backend/src/gen && FLASK_ENV=development python -m explainaboard",
     "start-backend:prod": "cd backend/src/gen && FLASK_ENV=production python -m explainaboard",
@@ -19,6 +20,7 @@
   },
   "homepage": "https://github.com/neulab/explainaboard_web#readme",
   "devDependencies": {
+    "concurrently": "^6.3.0",
     "husky": "^7.0.4"
   }
 }
