@@ -20,7 +20,9 @@ function Home() {
   const [datasets, setDatasets] = useState<string>();
   useEffect(() => {
     async function init() {
-      const data = await backendClient.datasetsDatasetIdGet(11);
+      const data = await backendClient.systemsSystemIdGet(
+        "6178746a42455b0303bd8d09"
+      );
       setDatasets(JSON.stringify(data));
     }
     init();

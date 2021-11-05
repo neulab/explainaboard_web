@@ -1,7 +1,7 @@
 openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
-  description: "Backend API for ExplainaBoard"
+  description: "Backend APIs for ExplainaBoard"
   version: "0.1.0"
   termsOfService: "" # TODO
   contact:
@@ -19,8 +19,212 @@ servers:
     description: Local server
 
 paths:
+  /datasets/{dataset_id}:
+    get:
+      summary: Returns dataset metadata by id
+      description: Returns dataset metadata by id. id is the DB id so it is mostly used internally. See datasets MGet endpoints for general use.
+      parameters:
+        - in: path
+          name: dataset_id
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /datasets:
+    get:
+      summary: Returns a list of datasets
+      description: Returns a list of datasets. Returns empty list if current page is empty. Returns `total=0` if no match datasets.
+      parameters:
+        - in: query
+          name: dataset_name
+          description: fuzzy match for dataset name
+          schema:
+            type: string
+        - in: query
+          name: task
+          description: filter by task type
+          schema:
+            type: string
+        - in: query
+          name: page
+          description: page number (0 indexed)
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: page_size
+          description: number of items per page
+          schema:
+            type: integer
+            default: 20
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datasets:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Dataset"
+                  total:
+                    type: integer
+                    description: total number of matching datasets
+                    example: 20
+
+  /systems/{system_id}:
+    get:
+      summary: Returns a system and its report
+      description: Returns a system and its report
+      parameters:
+        - in: path
+          name: system_id
+          required: true
+          example: "6178746a42455b0303bd8d09"
+          schema:
+            type: string
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/System"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      summary: Update a system and its report
+      description: TBD
+      parameters:
+        - in: path
+          name: system_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/System"
+        "401":
+          description: NOT AUTHORIZED
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: INPUT ERROR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /systems:
+    get:
+      summary: Returns a list of systems and their reports
+      description: Returns a list of systems and their reports
+      parameters:
+        - in: query
+          name: system_name
+          description: fuzzy match for system name
+          schema:
+            type: string
+        - in: query
+          name: task
+          description: filter by task type
+          schema:
+            type: string
+        - in: query
+          name: page
+          description: page number (0 indexed)
+          schema:
+            type: integer
+            default: 0
+        - in: query
+          name: page_size
+          description: number of items per page
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  systems:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/System"
+                  total:
+                    type: integer
+                    description: total number of matching datasets
+                    example: 20
+    post:
+      summary: Submits a system
+      description: Submits a system (TBD)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/System"
+        "401":
+          description: NOT AUTHORIZED
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: INPUT ERROR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /results:
     get:
+      deprecated: true
       summary: Returns a list of system prediction results
       description: Returns a list of system prediction results
       security:
@@ -46,6 +250,7 @@ paths:
                 $ref: "#/components/schemas/Results"
   /result:
     post:
+      deprecated: true
       summary: Upload a system prediction result
       description: Upload a system prediction result
       security:
@@ -64,6 +269,7 @@ paths:
 
   /lb-results:
     get:
+      deprecated: true
       summary: Returns a list of leaderboard results
       description: Returns a list of leaderboard results
       security: []
@@ -86,37 +292,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/LbResults"
 
-  /datasets/{dataset_id}:
-    get:
-      summary: Returns a dataset by id
-      description: Returns a dataset by id
-      parameters:
-        - in: path
-          name: dataset_id
-          schema:
-            type: integer
-            format: int64
-          required: true
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Dataset"
-  /datasets:
-    get:
-      summary: Returns a list of datasets
-      description: Returns a list of datasets
-      security: []
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Datasets"
-
 components:
   # Reusable schemas (data models)
   schemas:
@@ -130,9 +305,32 @@ components:
     #   type: integer
     #   format: int64
 
+    Error:
+      type: object
+      properties:
+        error_code:
+          type: integer
+        message:
+          type: string
+          description: error message
+
+    Time:
+      type: object
+      properties:
+        created_at:
+          type: string
+          format: date-time
+          description: UTC
+        last_modified:
+          type: string
+          format: date-time
+          description: UTC
+
     PaperInfo:
       type: object
       properties:
+        year:
+          type: integer
         author:
           type: string
         title:
@@ -142,18 +340,8 @@ components:
           format: uri
         bib:
           type: string
-        year:
-          type: integer
-          format: int64
         conference:
           type: string
-      required:
-        - author
-        - title
-        - link
-        - bib
-        - year
-        - conference
 
     # basic result schema extended by Result and LbResult
     BasicResult:
@@ -250,45 +438,176 @@ components:
 
     # TODO API output (evaluation of uploaded result)
 
-    Dataset:
+    Feature:
       type: object
       properties:
-        dataset_id:
-          type: integer
-          format: int64
-        parent_dataset_id:
-          type: integer
-          format: int64
+        type:
+          type: string
+          enum: ["string", "int"]
+        label:
+          type: boolean
+        raw_feature:
+          type: boolean
+        mapping:
+          type: string
           nullable: true
-        task_id:
-          type: integer
-          format: int64
-        summary:
+        dataset_level:
           type: string
-        homepage:
+          nullable: true
+        sample_level:
           type: string
-          format: uri
-        repository:
-          type: string
-          format: uri
-        # what is paper id? not url?
-        paper_id:
-          type: integer
-        # not email or url?
-        point_of_contact_id:
-          type: integer
-      required:
-        - dataset_id
-        - summary
-        - task_id
+          nullable: true
 
-    Datasets:
+    Dataset:
+      allOf:
+        - type: object
+        - properties:
+            dataset_id:
+              type: string
+              example: "61611a1f99a2c671d611eca5"
+            parent_dataset:
+              type: string
+              description: parent dataset id (TODO)
+              nullable: true
+            sub_dataset:
+              type: string
+              description: sub dataset id (TODO)
+              nullable: true
+            train:
+              type: integer
+            test:
+              type: integer
+            dev:
+              type: integer
+            split:
+              type: object
+              additionalProperties:
+                type: integer
+            field:
+              type: object
+              description: TODO this field seems to allow for anything
+            summary:
+              type: string
+            homepage:
+              type: string
+              format: uri
+              nullable: true
+            repository:
+              type: string
+              format: uri
+              nullable: true
+            # what is paper id? not url?
+            paper:
+              type: string
+              nullable: true
+            leaderboard:
+              type: string
+              nullable: true
+            person_of_contact:
+              type: string
+              nullable: true
+            task:
+              type: array
+              items:
+                type: string
+                description: task name
+            task_category:
+              type: array
+              items:
+                type: string
+                description: task category name
+            languages:
+              type: array
+              items:
+                type: string
+            features:
+              type: object
+              additionalProperties:
+                $ref: "#/components/schemas/Feature"
+            speaker_demographic:
+              type: string
+              nullable: true
+            annotator_demographic:
+              type: string
+              nullable: true
+            speech_situation:
+              type: string
+              nullable: true
+        - $ref: "#/components/schemas/Time"
+
+    MetricResult:
       type: object
       properties:
-        payload:
+        metric_name:
+          type: string
+        value:
+          type: number
+        confidence_score_low:
+          type: number
+        bucket_name:
           type: array
           items:
-            $ref: "#/components/schemas/Dataset"
+            type: string
+        n_samples:
+          type: integer
+        bucket_samples:
+          type: array
+          items:
+            type: string
+
+    System:
+      allOf:
+        - type: object
+        - properties:
+            system_id:
+              type: string
+              description: unique ID (from DB)
+            task_name:
+              type: string
+            system_name:
+              type: string
+              description: title (a description of the system, non unique)
+            metric_names:
+              type: array
+              items:
+                type: string
+            language:
+              type: string
+            code:
+              type: string
+              nullable: true
+            download_link:
+              type: string
+              nullable: true
+            paper_info:
+              $ref: "#/components/schemas/PaperInfo"
+            features:
+              type: object
+              additionalProperties:
+                type: object
+                description: fields seem to be different for different features
+            results:
+              type: object
+              properties:
+                overall:
+                  type: object
+                calibration:
+                  type: string
+                  nullable: true
+                fine_grained:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items:
+                      type: array
+                      items:
+                        $ref: "#/components/schemas/MetricResult"
+            is_print_case:
+              type: boolean
+            is_print_confidence_interval:
+              type: boolean
+
+        - $ref: "#/components/schemas/Time"
 
   # Security scheme definitions for authentication
   securitySchemes:
