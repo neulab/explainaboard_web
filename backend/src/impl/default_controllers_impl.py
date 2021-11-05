@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Union
-from explainaboard.impl.dbModels.SystemModel import SystemModel
+from explainaboard.impl.db_models.system_model import SystemModel
 from explainaboard.models.system import System
 
 

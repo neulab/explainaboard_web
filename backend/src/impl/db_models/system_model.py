@@ -1,7 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Union
-from explainaboard.impl.dbModels.DBModel import DBModel
+from explainaboard.impl.db_models.db_model import DBModel
 from explainaboard.models.system import System
 
 
