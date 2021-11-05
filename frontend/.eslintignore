@@ -1,5 +1,3 @@
-api/*
-backend/*
 *.css
 *.json
 *.md
@@ -7,6 +5,10 @@ backend/*
 build/*
 *.py
 *.yaml
-Dockerfile
 src/clients/openapi/*
-openapi/*
+node_modules
+*.ico
+*.html
+*.png
+*.svg
+*.txt

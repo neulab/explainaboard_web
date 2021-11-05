@@ -5,7 +5,7 @@
 cd "$(dirname "${BASH_SOURCE[0]}")/"
 OPENAPI_PATH="openapi"
 BACKEND_GEN_PATH="backend/src/gen"
-FRONTEND_GEN_PATH="src/clients/openapi"
+FRONTEND_GEN_PATH="frontend/src/clients/openapi"
 
 # download codegen cli if not exists
 if [ ! -f swagger-codegen-cli-3.0.29.jar ]; then
