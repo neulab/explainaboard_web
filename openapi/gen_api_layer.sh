@@ -39,6 +39,7 @@ java -jar $OPENAPI_PATH/swagger-codegen-cli-3.0.29.jar generate \
     -i $OPENAPI_PATH/openapi.yaml \
     -l typescript-fetch \
     -o $FRONTEND_GEN_PATH \
+    -t $OPENAPI_PATH/ts_templates \
     -c $OPENAPI_PATH/swagger-codegen-config.json
 cd $FRONTEND_GEN_PATH && \
 rm git_push.sh .gitignore
