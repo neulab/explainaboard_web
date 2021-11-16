@@ -8,8 +8,7 @@
     "lint": "eslint --ext .js,.ts,.tsx,.js .",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "preinstall": "npx npm-force-resolutions"
+    "eject": "react-scripts eject"
   },
   "dependencies": {
     "@testing-library/jest-dom": "^5.14.1",
@@ -23,17 +22,12 @@
     "antd": "^4.16.13",
     "eslint": "^7.32.0",
     "isomorphic-fetch": "^3.0.0",
-    "npm-force-resolutions": "^0.0.10",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-router-dom": "^5.3.0",
     "react-scripts": "4.0.3",
     "typescript": "^4.4.3",
     "web-vitals": "^1.1.2"
-  },
-  "resolutions": {
-    "immer": "^9.0.6",
-    "set-value": "^4.0.1"
   },
   "lint-staged": {
     "**/*": [
