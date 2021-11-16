@@ -1,49 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import logo from "./logo.svg";
-import "./App.css";
-import { backendClient } from "./clients";
+import { Layout } from "./components";
+import routes from "./routes";
+import "antd/dist/antd.css";
 
 function App() {
   return (
     <Router>
-      <Switch>
-        <Route path="/">
-          <Home />
-        </Route>
-      </Switch>
+      <Layout routes={routes}>
+        <Switch>
+          {routes.map((route, i) => (
+            <Route {...route} key={i} />
+          ))}
+        </Switch>
+      </Layout>
     </Router>
-  );
-}
-
-function Home() {
-  const [datasets, setDatasets] = useState<string>();
-  useEffect(() => {
-    async function init() {
-      const data = await backendClient.systemsSystemIdGet(
-        "6178746a42455b0303bd8d09"
-      );
-      setDatasets(JSON.stringify(data));
-    }
-    init();
-  }, []);
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>ExplainaBoard V2 Demo</p>
-        <p>(requesting datasets... )</p>
-        <div>{datasets}</div>
-        <a
-          className="App-link"
-          href="http://explainaboard.nlpedia.ai/"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          ExplainaBoard
-        </a>
-      </header>
-    </div>
   );
 }
 

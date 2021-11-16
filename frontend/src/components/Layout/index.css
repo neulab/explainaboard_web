@@ -1,0 +1,16 @@
+.logo {
+  height: 32px;
+  margin: 16px;
+  background: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  line-height: 32px;
+}
+
+.site-layout .site-layout-header {
+  background: #fff;
+  height: 55px;
+}
+
+.site-layer-content {
+  height: 100%;
+}
