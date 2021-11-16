@@ -110,3 +110,10 @@ For details of the backend, please refer to `README.md` under `backend/`.
 - To run: `docker run --rm -p 5000:5000/tcp explainaboard-web:0.2.0`
 - The frontend is served with the flask server at the root url so 5000 is the used to access the UI here.
 - connexion is used by swagger/openapi code generation tool and it does not support gunicorn natively. So, currently we use flask server in production. Another option that connexion supports natively is tornado.
+
+## FAQ
+#### `npm install --prefix frontend` says we have x vulnerabilities
+Solution: Run `npm audit --prefix frontend --production`. If it says 0 vulnerabilities, we are fine.
+
+Reason: We use create react app for frontend, and the `react-scripts` dependency in `frontend/package.json` is causing these false alarms. 
+[Here's](https://github.com/facebook/create-react-app/issues/11174) the moderator of create react app explaining why 99.9% of the vulnerability reports in react-scripts are false positives and how to fix them.
