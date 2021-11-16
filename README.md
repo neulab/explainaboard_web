@@ -2,49 +2,55 @@
 
 This repository includes code for frontend and backend of the ExplainaBoard web application. The frontend is built with React and the backend uses Flask.
 
+[Contribution Guide](https://docs.google.com/document/d/1Pfpg1AnrrFHVBya2Io-W2a8wRFnY9V7nN8FEYSufqCE/edit#)
+
 ## Getting Started
 
 > This step-by-step guide assumes a Linux environment. A MacOS environment will likely work similarly.
 
 1.  Project Structure
 
-    - frontend code structure is a lot more complicated than the backend so I decided to put all the backend code in an `backend` directory. Another reason why I decided to put frontend code at the root is that we can add scripts to `package.json` and run them with npm which is very convenient.
+```
+- .husky # for running pre-commit checks
+- openapi
+   - openapi.yaml # api specifications
+   - gen_api_layer.sh # script to generate client and server code according to openapi specifications
+   - swagger-codegen-config.json # config file for swagger(openapi) code gen
 
-    ```
-    - backend    # backend code (flask)
-        - templates # mustache templates to generate template code
-        - src
-            - gen # template code generated with openapi, code in this folder should not be modified manually
-              - requirements.txt
-              - explainaboard
-                  - __main__.py
-                  - controllers
-                  - test
-                  - models
-                  - impl # a sympolic link to the impl folder, any edition made here will "reflect" on the impl folder
-            - impl # our implementation of the apis
+- frontend 
+   - public # static resources for frontend
+   - src    # frontend code
+      - clients # all clients (backend, oauth login, etc.)
+         - index.ts # all generated clients are exported here
+   - .eslintignore
+   - .eslintrc.json
+   - .prettierrc.json
+   - package-lock.json # lock file for frontend dependencies
+   - package.json # package config file for frontend
+   - tsconfig.json # typescript config
 
-    - public # static resources for frontend
-    - src    # frontend code
-        - clients # all clients (backend, oauth login, etc.)
-          - openapi # client code generated with openapi, code in this folder should not be modified manually
-          - index.ts # all clients are exported here
-    - openapi
-        - openapi.yaml # api specifications
-        - gen_api_layer.sh # script to generate client and server code according to openapi specifications
-        - swagger-codegen-config.json # config file for swagger(openapi) code gen
-    - .eslintignore
-    - .eslintrc.json
-    - .gitignore
-    - .prettierignore
-    - .prettierrc.json
-    - package-lock.json # lock file for frontend dependencies
-    - package.json # package config file for frontend
-    - README.md
-    - tsconfig.json # typescript config
-    ```
+- backend
+   - templates # mustache templates to generate template code
+   - src
+      - gen # template code generated with openapi, code in this folder should not be modified manually
+         - requirements.txt
+         - explainaboard
+            - __main__.py
+            - controllers
+            - test
+            - models
+            - impl # a sympolic link to the impl folder, any edition made here will "reflect" on the impl folder
+      - impl # our implementation of the apis
 
-2.  Setup dev environment for the frontend
+- .gitignore
+- README.md
+- Dockerfile
+- package.json # package config file for global dependencies and commands
+- package-lock.json # lock file for global dependencies
+```
+2. Generate code for API layer
+   - run `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever open API definition changes.
+3.  Setup dev environment for the frontend
 
     1. install `node v14.17.3`
        - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use nvm to manage node versions.
@@ -91,13 +97,12 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
        - To learn React, check out the [React documentation](https://reactjs.org/).
 
-3.  Setup dev environment for the backend
+4.  Setup dev environment for the backend
     1. install `python` version >= 3.9.7 and create a venv or conda environment for this project
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
-    2. `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever open API definition changes.
-    3. `pip install -r backend/src/gen/requirements.txt`
-    4. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
-    5. start backend server `npm run start-backend`
+    2. `pip install -r backend/src/gen/requirements.txt`
+    3. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
+    4. start backend server `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
     - Any code not in `impl` is generated. If you want to modify the generated code, you need to modify the mustache templates.
 
