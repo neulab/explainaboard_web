@@ -1,26 +1,26 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Union
-from explainaboard.impl.db_models.db_model import DBModel
-from explainaboard.models.system import System
+from explainaboard.impl.db_models.db_model import MetadataDBModel
+from explainaboard.models.system_metadata import SystemMetadata
 
 
-class SystemModel(DBModel, System):
-    collection_name = "systems"
+class SystemMetadataModel(MetadataDBModel, SystemMetadata):
+    collection_name = "system_metadata"
 
     def __init__(self) -> None:
         super().__init__()
 
     @classmethod
-    def from_dict(cls, dikt) -> SystemModel:
+    def from_dict(cls, dikt) -> SystemMetadata:
         document = {**dikt}
         if dikt.get("_id"):
-            document["system_id"] = str(dikt["_id"])
-        system = super().from_dict(document)
-        return system
+            document[f"{cls.collection_name}_id"] = str(dikt["_id"])
+        system_metadata = super().from_dict(document)
+        return system_metadata
 
     @classmethod
-    def find_one_by_id(cls, id: str) -> Union[SystemModel, None]:
+    def find_one_by_id(cls, id: str) -> Union[SystemMetadata, None]:
         document = super().find_one_by_id(id)
         if not document:
             return None
