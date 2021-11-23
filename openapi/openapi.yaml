@@ -19,6 +19,31 @@ servers:
     description: Local server
 
 paths:
+  /task_metadata/{task_metadata_id}:
+    get:
+      summary: Returns a tasks_metadata by id
+      description: Returns a dataset_metadata by id. id is the DB id so it is mostly used internally.
+      parameters:
+        - in: path
+          name: task_metadata_id
+          schema:
+            type: string
+          required: true
+          example: "615822d5523c6bd2cf3f5c6b"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskMetadata"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /datasets/{dataset_id}:
     get:
       summary: Returns dataset metadata by id
@@ -437,6 +462,21 @@ components:
             $ref: "#/components/schemas/LbResult"
 
     # TODO API output (evaluation of uploaded result)
+    TaskMetadata:
+      type: object
+      properties:
+        task_metadata_id:
+          type: string
+        task_name:
+          type: string
+        task_description:
+          type: string
+        task_category:
+          type: array
+          items:
+            type: string
+        datasets:
+          type: object
 
     Feature:
       type: object
