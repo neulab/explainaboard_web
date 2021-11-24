@@ -4,7 +4,7 @@ from bson.objectid import ObjectId
 
 
 class DBModel:
-    database_name = "explainaboard_dev"
+    database_name: str
     collection_name: str
 
     @classmethod
@@ -32,6 +32,10 @@ class DBModel:
         if not cls.collection_name:
             raise DBModelException("collection_name not defined")
         return cls.get_collection(cls.collection_name).find_one({"_id": ObjectId(id)})
+
+
+class MetadataDBModel(DBModel):
+    database_name = "metadata"
 
 
 class DBModelException(Exception):

@@ -19,6 +19,56 @@ servers:
     description: Local server
 
 paths:
+  /task_metadata/{task_metadata_id}:
+    get:
+      summary: Returns a tasks_metadata by id
+      description: Returns a dataset_metadata by id. id is the DB id so it is mostly used internally.
+      parameters:
+        - in: path
+          name: task_metadata_id
+          schema:
+            type: string
+          required: true
+          example: "615822d5523c6bd2cf3f5c6b"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskMetadata"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /system_metadata/{system_metadata_id}:
+    get:
+      summary: Returns a system_metadata by id
+      description: Returns a system_metadata by id. id is the DB id so it is mostly used internally.
+      parameters:
+        - in: path
+          name: system_metadata_id
+          schema:
+            type: string
+          required: true
+          example: "618c8af297d899127212916f"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemMetadata"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
   /datasets/{dataset_id}:
     get:
       summary: Returns dataset metadata by id
@@ -331,16 +381,16 @@ components:
       properties:
         year:
           type: integer
-        author:
+        venue:
           type: string
         title:
           type: string
-        link:
+        author:
+          type: string
+        url:
           type: string
           format: uri
         bib:
-          type: string
-        conference:
           type: string
 
     # basic result schema extended by Result and LbResult
@@ -437,6 +487,39 @@ components:
             $ref: "#/components/schemas/LbResult"
 
     # TODO API output (evaluation of uploaded result)
+
+    TaskMetadata:
+      type: object
+      properties:
+        task_metadata_id:
+          type: string
+        task_name:
+          type: string
+        task_description:
+          type: string
+        task_category:
+          type: array
+          items:
+            type: string
+        datasets:
+          type: object
+
+    SystemMetadata:
+      type: object
+      properties:
+        task:
+          type: string
+        dataset_metadata_ids:
+          type: array
+          items:
+            type: string
+        model_name:
+          type: string
+        dataset_name:
+          type: string
+        paper_info:
+          $ref: "#/components/schemas/PaperInfo"
+        # TODO complete other fields
 
     Feature:
       type: object

@@ -4,13 +4,13 @@ import logo from "../../logo.svg";
 import "./index.css";
 
 export function Home() {
-  const [system, setSystem] = useState<string>();
+  const [systemMetadata, setSystemMetadata] = useState<string>();
   useEffect(() => {
     async function init() {
-      const data = await backendClient.systemsSystemIdGet(
-        "6178746a42455b0303bd8d09"
+      const data = await backendClient.systemMetadataSystemMetadataIdGet(
+        "618c8af297d899127212916f"
       );
-      setSystem(JSON.stringify(data));
+      setSystemMetadata(JSON.stringify(data));
     }
     init();
   }, []);
@@ -19,8 +19,8 @@ export function Home() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>ExplainaBoard</p>
-        <p>(requesting system id 6178746a42455b0303bd8d09... )</p>
-        <div>{system}</div>
+        <p>(Request system id 618c8af297d899127212916f:)</p>
+        <div>{systemMetadata}</div>
         <a
           className="App-link"
           href="http://explainaboard.nlpedia.ai/"
