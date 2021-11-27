@@ -1,6 +1,8 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Union
+from typing import Union, List
+from explainaboard.models.datasets_return import DatasetsReturn
+from explainaboard.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard.impl.db_models.db_model import MetadataDBModel
 from explainaboard.models.task_metadata import TaskMetadata
 
@@ -20,7 +22,7 @@ class TaskMetadataModel(MetadataDBModel, TaskMetadata):
         return task_metadata
 
     @classmethod
-    def find_one_by_id(cls, id: str) -> Union[TaskMetadata, None]:
+    def find_one_by_id(cls, id: str) -> Union[TaskMetadataModel, None]:
         document = super().find_one_by_id(id)
         if not document:
             return None
@@ -34,3 +36,6 @@ class TaskMetadataModel(MetadataDBModel, TaskMetadata):
         TODO
         """
         raise NotImplementedError
+
+    def find_related_datasets(self, page: int, page_size: int) -> DatasetsReturn:
+        return DatasetMetaDataModel.find(page, page_size, task=self.task_name)
