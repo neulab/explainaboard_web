@@ -13,7 +13,7 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
     def from_dict(cls, dikt) -> DatasetMetaDataModel:
         document = {**dikt}
         if dikt.get("_id"):
-            document[f"{cls.collection_name}_id"] = str(dikt["_id"])
+            document["dataset_id"] = str(dikt["_id"])
         system_metadata = super().from_dict(document)
         return system_metadata
 

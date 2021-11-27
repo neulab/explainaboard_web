@@ -1,5 +1,6 @@
 {
   "packageName": "explainaboard",
   "serverPort": 5000,
-  "supportsES6": true
+  "supportsES6": true,
+  "modelPropertyNaming": "original"
 }

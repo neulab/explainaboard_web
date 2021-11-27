@@ -573,6 +573,8 @@ components:
             dataset_id:
               type: string
               example: "61611c3a414abfb115397ca5"
+            dataset_name:
+              type: string
             sub_dataset:
               type: string
               description: sub dataset id (TODO)
@@ -625,6 +627,11 @@ components:
             huggingface_link:
               type: string
               format: url
+          required:
+            - dataset_id
+            - dataset_name
+            - task
+
         - $ref: "#/components/schemas/Time"
 
     DatasetsReturn:
@@ -638,6 +645,9 @@ components:
           type: integer
           description: total number of matching datasets
           example: 20
+      required:
+        - datasets
+        - total
 
     MetricResult:
       type: object
