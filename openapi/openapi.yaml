@@ -44,6 +44,19 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /task_metadata:
+    get:
+      summary: Returns all tasks
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskMetadata"
+
   /task_metadata/{task_metadata_id}/datasets:
     get:
       summary: Returns a list of datasets related to the task

@@ -32,6 +32,10 @@ def datasets_get(dataset_name: Optional[str], task: Optional[str], page: int, pa
     return DatasetMetaDataModel.find(page, page_size, dataset_name, task)
 
 
+def task_metadata_get() -> List[TaskMetadataModel]:
+    return TaskMetadataModel.find_all()
+
+
 def task_metadata_task_metadata_id_datasets_get(task_id: str, page: int, page_size: int) -> DatasetsReturn:
     task = TaskMetadataModel.find_one_by_id(task_id)
     if not task:

@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Dict, List, Optional, Tuple
 from pymongo.cursor import Cursor
 from pymongo.results import InsertOneResult
 from explainaboard.impl.utils import abort_with_error_message
@@ -47,7 +47,7 @@ class DBModel:
         return cls.get_collection(cls.collection_name).count_documents(filter)
 
     @classmethod
-    def find(cls, filter={}, sort=[], skip=0, limit=10) -> Tuple[Cursor, int]:
+    def find(cls, filter: Optional[Dict] = None, sort: Optional[List] = None, skip=0, limit: int = 10) -> Tuple[Cursor, int]:
         """
         Find multiple documents
         TODO: error handling for find
@@ -55,13 +55,16 @@ class DBModel:
           - filter: filter parameters for find
           - sort: a list of sort parameters e.g. [('field1', pymongo.ASCENDING)]
           - skip: offset
-          - limit: limit
+          - limit: limit, pass in 0 to retrieve all documents (this is consistent with the pyMongo API)
         Return:
           - a cursor that can be iterated over
           - a number that represents the total matching documents without considering skip/limit
         """
         if not cls.collection_name:
             raise DBModelException("collection_name not defined")
+
+        if not filter:
+            filter = {}
 
         cursor = cls.get_collection(cls.collection_name).find(filter)
         if sort:

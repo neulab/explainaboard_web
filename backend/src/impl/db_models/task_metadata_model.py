@@ -28,6 +28,11 @@ class TaskMetadataModel(MetadataDBModel, TaskMetadata):
             return None
         return cls.from_dict(document)
 
+    @classmethod
+    def find_all(cls) -> List[TaskMetadataModel]:
+        cursor, _ = super().find(None, None, 0, 0)
+        return [cls.from_dict(doc) for doc in cursor]
+
     def insert(self) -> str:
         """
         Insert object into database
