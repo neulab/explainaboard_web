@@ -3,6 +3,7 @@
 This repository includes code for frontend and backend of the ExplainaBoard web application. The frontend is built with React and the backend uses Flask.
 
 [Contribution Guide](https://docs.google.com/document/d/1Pfpg1AnrrFHVBya2Io-W2a8wRFnY9V7nN8FEYSufqCE/edit#)
+[Schema Design](https://docs.google.com/document/d/1my-zuIYosrXuoqOk1SvqZDsC2tdMgs_A7HTAtPYXKLI/edit?usp=sharing)
 
 ## Getting Started
 
