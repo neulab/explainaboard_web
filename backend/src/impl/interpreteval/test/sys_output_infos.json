@@ -1,0 +1,354 @@
+{
+    "task_name": "text_classification",
+    "model_name": null,
+    "dataset_name": null,
+    "metric_names": [
+        "Accuracy",
+        "F1score"
+    ],
+    "features": {
+        "text": {
+            "dtype": "string",
+            "is_bucket": false,
+            "is_pre_computed": false,
+            "bucket_info": null,
+            "id": null,
+            "_type": "Value"
+        },
+        "true_label": {
+            "num_classes": 2,
+            "names": [
+                "1",
+                "0"
+            ],
+            "names_file": null,
+            "id": null,
+            "is_bucket": false,
+            "is_pre_computed": false,
+            "bucket_info": null,
+            "_type": "ClassLabel"
+        },
+        "predicted_label": {
+            "num_classes": 2,
+            "names": [
+                "1",
+                "0"
+            ],
+            "names_file": null,
+            "id": null,
+            "is_bucket": false,
+            "is_pre_computed": false,
+            "bucket_info": null,
+            "_type": "ClassLabel"
+        },
+        "label": {
+            "dtype": "string",
+            "is_bucket": true,
+            "is_pre_computed": false,
+            "bucket_info": {
+                "_method": "bucket_attribute_discrete_value",
+                "_number": 4,
+                "_setting": 1
+            },
+            "id": null,
+            "_type": "Value"
+        },
+        "sentence_length": {
+            "dtype": "float32",
+            "is_bucket": true,
+            "is_pre_computed": false,
+            "bucket_info": {
+                "_method": "bucket_attribute_specified_bucket_value",
+                "_number": 4,
+                "_setting": []
+            },
+            "id": null,
+            "_type": "Value"
+        },
+        "token_number": {
+            "dtype": "float32",
+            "is_bucket": true,
+            "is_pre_computed": false,
+            "bucket_info": {
+                "_method": "bucket_attribute_specified_bucket_value",
+                "_number": 4,
+                "_setting": []
+            },
+            "id": null,
+            "_type": "Value"
+        }
+    },
+    "results": {
+        "overall": [
+            {
+                "metric_name": "Accuracy",
+                "value": "0.6667",
+                "confidence_score_low": "0",
+                "confidence_score_up": "1"
+            },
+            {
+                "metric_name": "F1score",
+                "value": "0.6667",
+                "confidence_score_low": "0",
+                "confidence_score_up": "1"
+            }
+        ],
+        "calibration": null,
+        "fine_grained": {
+            "label": [
+                [
+                    {
+                        "metric_name": "Accuracy",
+                        "value": "0.5",
+                        "confidence_score_low": "0",
+                        "confidence_score_up": "1",
+                        "bucket_name": [
+                            "1"
+                        ],
+                        "n_samples": 2,
+                        "bucket_samples": [
+                            {
+                                "true_label": [
+                                    391,
+                                    [
+                                        "true_label"
+                                    ]
+                                ],
+                                "predicted_label": [
+                                    391,
+                                    [
+                                        "predicted_label"
+                                    ]
+                                ],
+                                "text": [
+                                    391,
+                                    [
+                                        "text"
+                                    ]
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "metric_name": "F1score",
+                        "value": "0.5",
+                        "confidence_score_low": "0",
+                        "confidence_score_up": "1",
+                        "bucket_name": [
+                            "1"
+                        ],
+                        "n_samples": 2,
+                        "bucket_samples": [
+                            {
+                                "true_label": [
+                                    391,
+                                    [
+                                        "true_label"
+                                    ]
+                                ],
+                                "predicted_label": [
+                                    391,
+                                    [
+                                        "predicted_label"
+                                    ]
+                                ],
+                                "text": [
+                                    391,
+                                    [
+                                        "text"
+                                    ]
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            ],
+            "sentence_length": [
+                [
+                    {
+                        "metric_name": "Accuracy",
+                        "value": "0",
+                        "confidence_score_low": "0",
+                        "confidence_score_up": "0",
+                        "bucket_name": [
+                            9.0
+                        ],
+                        "n_samples": 1,
+                        "bucket_samples": [
+                            {
+                                "true_label": [
+                                    391,
+                                    [
+                                        "true_label"
+                                    ]
+                                ],
+                                "predicted_label": [
+                                    391,
+                                    [
+                                        "predicted_label"
+                                    ]
+                                ],
+                                "text": [
+                                    391,
+                                    [
+                                        "text"
+                                    ]
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "metric_name": "F1score",
+                        "value": "0",
+                        "confidence_score_low": "0",
+                        "confidence_score_up": "0",
+                        "bucket_name": [
+                            9.0
+                        ],
+                        "n_samples": 1,
+                        "bucket_samples": [
+                            {
+                                "true_label": [
+                                    391,
+                                    [
+                                        "true_label"
+                                    ]
+                                ],
+                                "predicted_label": [
+                                    391,
+                                    [
+                                        "predicted_label"
+                                    ]
+                                ],
+                                "text": [
+                                    391,
+                                    [
+                                        "text"
+                                    ]
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                [
+                    {
+                        "metric_name": "Accuracy",
+                        "value": "1",
+                        "confidence_score_low": "1",
+                        "confidence_score_up": "1",
+                        "bucket_name": [
+                            11.0
+                        ],
+                        "n_samples": 1,
+                        "bucket_samples": []
+                    },
+                    {
+                        "metric_name": "F1score",
+                        "value": "1",
+                        "confidence_score_low": "1",
+                        "confidence_score_up": "1",
+                        "bucket_name": [
+                            11.0
+                        ],
+                        "n_samples": 1,
+                        "bucket_samples": []
+                    }
+                ]
+            ],
+            "token_number": [
+                [
+                    {
+                        "metric_name": "Accuracy",
+                        "value": "0",
+                        "confidence_score_low": "0",
+                        "confidence_score_up": "0",
+                        "bucket_name": [
+                            37.0
+                        ],
+                        "n_samples": 1,
+                        "bucket_samples": [
+                            {
+                                "true_label": [
+                                    391,
+                                    [
+                                        "true_label"
+                                    ]
+                                ],
+                                "predicted_label": [
+                                    391,
+                                    [
+                                        "predicted_label"
+                                    ]
+                                ],
+                                "text": [
+                                    391,
+                                    [
+                                        "text"
+                                    ]
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "metric_name": "F1score",
+                        "value": "0",
+                        "confidence_score_low": "0",
+                        "confidence_score_up": "0",
+                        "bucket_name": [
+                            37.0
+                        ],
+                        "n_samples": 1,
+                        "bucket_samples": [
+                            {
+                                "true_label": [
+                                    391,
+                                    [
+                                        "true_label"
+                                    ]
+                                ],
+                                "predicted_label": [
+                                    391,
+                                    [
+                                        "predicted_label"
+                                    ]
+                                ],
+                                "text": [
+                                    391,
+                                    [
+                                        "text"
+                                    ]
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                [
+                    {
+                        "metric_name": "Accuracy",
+                        "value": "1",
+                        "confidence_score_low": "1",
+                        "confidence_score_up": "1",
+                        "bucket_name": [
+                            69.0
+                        ],
+                        "n_samples": 1,
+                        "bucket_samples": []
+                    },
+                    {
+                        "metric_name": "F1score",
+                        "value": "1",
+                        "confidence_score_low": "1",
+                        "confidence_score_up": "1",
+                        "bucket_name": [
+                            69.0
+                        ],
+                        "n_samples": 1,
+                        "bucket_samples": []
+                    }
+                ]
+            ]
+        },
+        "is_print_case": true,
+        "is_print_confidence_interval": true
+    }
+}
