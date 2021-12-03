@@ -14,8 +14,8 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
         document = {**dikt}
         if dikt.get("_id"):
             document["dataset_id"] = str(dikt["_id"])
-        system_metadata = super().from_dict(document)
-        return system_metadata
+        dataset_metadata = super().from_dict(document)
+        return dataset_metadata
 
     @classmethod
     def find_one_by_id(cls, id: str) -> Union[DatasetMetaDataModel, None]:
