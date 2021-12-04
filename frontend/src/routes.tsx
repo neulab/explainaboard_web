@@ -5,7 +5,7 @@ import {
   DatabaseOutlined,
   TableOutlined,
 } from "@ant-design/icons";
-import { Home } from "./pages";
+import { DatasetsPage, Home } from "./pages";
 
 export interface Route extends RouteProps {
   title: string;
@@ -25,6 +25,7 @@ const routes: Route[] = [
     path: "/datasets",
     title: "Datasets",
     icon: <DatabaseOutlined />,
+    children: <DatasetsPage />,
   },
   {
     path: "/leaderboards",

@@ -44,6 +44,51 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /task_metadata:
+    get:
+      summary: Returns all tasks
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskMetadata"
+
+  /task_metadata/{task_metadata_id}/datasets:
+    get:
+      summary: Returns a list of datasets related to the task
+      parameters:
+        - in: path
+          name: task_metadata_id
+          schema:
+            type: string
+          required: true
+          example: "615822d5523c6bd2cf3f5c6b"
+        - in: query
+          name: page
+          description: page number (0 indexed)
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - in: query
+          name: page_size
+          description: number of items per page
+          schema:
+            type: integer
+            default: 20
+            minimum: 0
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DatasetsReturn"
+
   /system_metadata/{system_metadata_id}:
     get:
       summary: Returns a system_metadata by id
@@ -76,6 +121,7 @@ paths:
       parameters:
         - in: path
           name: dataset_id
+          example: 61611c3a414abfb115397ca5
           schema:
             type: string
           required: true
@@ -85,7 +131,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Dataset"
+                $ref: "#/components/schemas/DatasetMetadata"
         "404":
           description: Not Found
           content:
@@ -114,12 +160,14 @@ paths:
           schema:
             type: integer
             default: 0
+            minimum: 0
         - in: query
           name: page_size
           description: number of items per page
           schema:
             type: integer
             default: 20
+            minimum: 0
 
       responses:
         "200":
@@ -127,16 +175,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  datasets:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Dataset"
-                  total:
-                    type: integer
-                    description: total number of matching datasets
-                    example: 20
+                $ref: "#/components/schemas/DatasetsReturn"
 
   /systems/{system_id}:
     get:
@@ -250,7 +289,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/System"
 
       responses:
         "200":
@@ -360,7 +399,7 @@ components:
       properties:
         error_code:
           type: integer
-        message:
+        detail:
           type: string
           description: error message
 
@@ -526,7 +565,6 @@ components:
       properties:
         type:
           type: string
-          enum: ["string", "int"]
         label:
           type: boolean
         raw_feature:
@@ -541,34 +579,23 @@ components:
           type: string
           nullable: true
 
-    Dataset:
+    DatasetMetadata:
       allOf:
         - type: object
         - properties:
             dataset_id:
               type: string
-              example: "61611a1f99a2c671d611eca5"
-            parent_dataset:
+              example: "61611c3a414abfb115397ca5"
+            dataset_name:
               type: string
-              description: parent dataset id (TODO)
-              nullable: true
             sub_dataset:
               type: string
               description: sub dataset id (TODO)
               nullable: true
-            train:
-              type: integer
-            test:
-              type: integer
-            dev:
-              type: integer
             split:
               type: object
               additionalProperties:
                 type: integer
-            field:
-              type: object
-              description: TODO this field seems to allow for anything
             summary:
               type: string
             homepage:
@@ -579,13 +606,10 @@ components:
               type: string
               format: uri
               nullable: true
-            # what is paper id? not url?
             paper:
-              type: string
-              nullable: true
+              $ref: "#/components/schemas/PaperInfo"
             leaderboard:
               type: string
-              nullable: true
             person_of_contact:
               type: string
               nullable: true
@@ -608,15 +632,35 @@ components:
               additionalProperties:
                 $ref: "#/components/schemas/Feature"
             speaker_demographic:
-              type: string
-              nullable: true
+              type: object
             annotator_demographic:
-              type: string
-              nullable: true
+              type: object
             speech_situation:
+              type: object
+            huggingface_link:
               type: string
-              nullable: true
+              format: url
+          required:
+            - dataset_id
+            - dataset_name
+            - task
+
         - $ref: "#/components/schemas/Time"
+
+    DatasetsReturn:
+      type: object
+      properties:
+        datasets:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatasetMetadata"
+        total:
+          type: integer
+          description: total number of matching datasets
+          example: 20
+      required:
+        - datasets
+        - total
 
     MetricResult:
       type: object

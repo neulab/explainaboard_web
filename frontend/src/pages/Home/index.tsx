@@ -8,7 +8,7 @@ export function Home() {
   useEffect(() => {
     async function init() {
       const data = await backendClient.systemMetadataSystemMetadataIdGet(
-        "618c8af297d899127212916f"
+        "619f8ef56e638da17b06b38a"
       );
       setSystemMetadata(JSON.stringify(data));
     }
@@ -19,7 +19,7 @@ export function Home() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <p>ExplainaBoard</p>
-        <p>(Request system id 618c8af297d899127212916f:)</p>
+        <p>(Request system id 619f8ef56e638da17b06b38a:)</p>
         <div>{systemMetadata}</div>
         <a
           className="App-link"

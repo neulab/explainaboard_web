@@ -1,6 +1,6 @@
 import connexion
 import six
-
+from typing import List
 {{#imports}}{{import}}  # noqa: E501
 {{/imports}}
 from {{packageName}} import util
@@ -10,7 +10,7 @@ import {{packageName}}.impl.default_controllers_impl as default_controllers_impl
 {{#contents}}
 
 
-def {{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}}) -> {{#returnType}}{{.}}{{/returnType}}{{^returnType}}None{{/returnType}}:  # noqa: E501
+def {{operationId}}({{#parameters}}{{paramName}}{{#isPrimitiveType}}: {{>param_type}}{{/isPrimitiveType}}{{#defaultValue}}={{defaultValue}}{{/defaultValue}}{{^defaultValue}}{{^required}}=None{{/required}}{{/defaultValue}}{{#hasMore}}, {{/hasMore}}{{/parameters}}) -> {{#returnType}}{{.}}{{/returnType}}{{^returnType}}None{{/returnType}}:  # noqa: E501
     """{{#summary}}{{.}}{{/summary}}{{^summary}}{{operationId}}{{/summary}}
 
     {{#notes}}{{.}}{{/notes}} # noqa: E501
@@ -110,7 +110,7 @@ def {{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{
         {{/isMapContainer}}
     {{/parameters}}
 
-    return default_controllers_impl.{{operationId}}({{#parameters}}{{paramName}}{{^required}}=None{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}})
+    return default_controllers_impl.{{operationId}}({{#parameters}}{{paramName}}{{^required}}{{/required}}{{#hasMore}}, {{/hasMore}}{{/parameters}})
 {{/contents}}
 {{/operation}}
 {{/operations}}
