@@ -1,13 +1,13 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Optional, Union
-from explainaboard.impl.db_models.db_model import MetadataDBModel
-from explainaboard.models.dataset_metadata import DatasetMetadata
-from explainaboard.models.datasets_return import DatasetsReturn
+from explainaboard_web.impl.db_models.db_model import MetadataDBModel
+from explainaboard_web.models.dataset_metadata import DatasetMetadata
+from explainaboard_web.models.datasets_return import DatasetsReturn
 
 
 class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
-    collection_name = "dataset_metadata"
+    _collection_name = "dataset_metadata"
 
     @classmethod
     def from_dict(cls, dikt) -> DatasetMetaDataModel:

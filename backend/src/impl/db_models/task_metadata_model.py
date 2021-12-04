@@ -1,14 +1,14 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Union, List
-from explainaboard.models.datasets_return import DatasetsReturn
-from explainaboard.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
-from explainaboard.impl.db_models.db_model import MetadataDBModel
-from explainaboard.models.task_metadata import TaskMetadata
+from explainaboard_web.models.datasets_return import DatasetsReturn
+from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
+from explainaboard_web.impl.db_models.db_model import MetadataDBModel
+from explainaboard_web.models.task_metadata import TaskMetadata
 
 
 class TaskMetadataModel(MetadataDBModel, TaskMetadata):
-    collection_name = "task_metadata"
+    _collection_name = "task_metadata"
 
     def __init__(self) -> None:
         super().__init__()
@@ -17,7 +17,7 @@ class TaskMetadataModel(MetadataDBModel, TaskMetadata):
     def from_dict(cls, dikt) -> TaskMetadata:
         document = {**dikt}
         if dikt.get("_id"):
-            document[f"{cls.collection_name}_id"] = str(dikt["_id"])
+            document[f"{cls._collection_name}_id"] = str(dikt["_id"])
         task_metadata = super().from_dict(document)
         return task_metadata
 
