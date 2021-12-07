@@ -6,7 +6,7 @@ import {
   TableOutlined,
   CodeOutlined,
 } from "@ant-design/icons";
-import { DatasetsPage, Home, LeaderboardHome, SystemsPage } from "./pages";
+import { DatasetsPage, Home, LeaderboardHome, SystemsPage, Analyses } from "./pages";
 
 export interface Route extends RouteProps {
   title: string;
@@ -29,10 +29,17 @@ const routes: Route[] = [
     children: <DatasetsPage />,
   },
   {
+<<<<<<< HEAD
     path: "/systems",
     title: "Systems",
     icon: <CodeOutlined />,
     children: <SystemsPage />,
+=======
+    path: "/analyses",
+    title: "Analyses",
+    icon: <DatabaseOutlined />,
+    children: <Analyses />,
+>>>>>>> Install echart, implement clickable bar chart
   },
   {
     path: "/leaderboards",
