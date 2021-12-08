@@ -8,8 +8,7 @@ from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system import System
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
-from explainaboard.loader.loader import Source, get_loader
-from explainaboard.processors.processors import get_processor
+from explainaboard import Source, get_loader, get_processor
 
 
 class SystemModel(MetadataDBModel, System):

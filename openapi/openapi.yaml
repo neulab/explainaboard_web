@@ -306,7 +306,7 @@ components:
                 type: object
             calibration:
               type: string
-            fine_graned:
+            fine_grained:
               type: object
             is_print_case:
               type: boolean
