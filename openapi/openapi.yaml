@@ -467,12 +467,12 @@ components:
             person_of_contact:
               type: string
               nullable: true
-            task:
+            tasks:
               type: array
               items:
                 type: string
                 description: task name
-            task_category:
+            task_categories:
               type: array
               items:
                 type: string
@@ -497,7 +497,7 @@ components:
           required:
             - dataset_id
             - dataset_name
-            - task
+            - tasks
 
         - $ref: "#/components/schemas/Time"
 
