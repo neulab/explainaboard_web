@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { PageHeader, Table, Tag, Typography } from "antd";
+import { Input, PageHeader, Space, Table, Tag, Typography } from "antd";
 import "./index.css";
 import { ColumnsType } from "antd/lib/table";
 import { DatasetMetadata } from "../../clients/openapi";
@@ -7,19 +7,29 @@ import { backendClient } from "../../clients";
 import { PageState } from "../../utils";
 import { useHistory } from "react-router";
 
+/**
+ * Dataset Page
+ * TODO:
+ * 1. debounce for search by name
+ * 2. filter by task
+ */
 export function DatasetsPage() {
   const [pageState, setPageState] = useState(PageState.loading);
   const [datasets, setDatasets] = useState<DatasetMetadata[]>([]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // filters
+  const [nameQuery, setNameQuery] = useState("");
+
   const history = useHistory();
 
   useEffect(() => {
     async function refreshDatasets() {
       setPageState(PageState.loading);
       const { datasets: newDatasets, total } = await backendClient.datasetsGet(
-        undefined,
+        nameQuery ? nameQuery : undefined,
         undefined,
         page,
         pageSize
@@ -29,16 +39,37 @@ export function DatasetsPage() {
       setPageState(PageState.success);
     }
     refreshDatasets();
-  }, [page, pageSize]);
-  console.log(datasets);
+  }, [page, pageSize, nameQuery]);
+
+  function searchName(text: string) {
+    setNameQuery(text);
+    setPage(0);
+  }
+
   return (
     <div className="page">
-      <PageHeader
-        onBack={() => history.goBack()}
-        title="Datasets"
-        subTitle="A list of all supported datasets"
-        className="header"
-      />
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        <PageHeader
+          onBack={() => history.goBack()}
+          title="Datasets"
+          subTitle="A list of all supported datasets"
+          className="header"
+        />
+        <Space>
+          <Input.Search
+            placeholder="Search by dataset name"
+            value={nameQuery}
+            onChange={(e) => searchName(e.target.value)}
+          />
+        </Space>
+      </div>
+
       <Table
         columns={columns}
         dataSource={datasets}

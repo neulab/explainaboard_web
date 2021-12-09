@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Optional, Union
+from typing import Any, Dict, Optional, Union
 from explainaboard_web.impl.db_models.db_model import MetadataDBModel
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
 from explainaboard_web.models.datasets_return import DatasetsReturn
@@ -26,11 +26,13 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
 
     @classmethod
     def find(cls, page: int, page_size: int, dataset_name: Optional[str] = None, task: Optional[str] = None) -> DatasetsReturn:
-        filter = {}
+        """fuzzy match works like a `LIKE {name_prefix}%` operation now. can extend this and allow for 
+        full text search in the future. TODO: add index for name"""
+        filter: Dict[str, Any] = {}
         if dataset_name:
-            filter["dataset_name"] = dataset_name
+            filter["dataset_name"] = {"$regex": rf"^{dataset_name}.*"}
         if task:
-            filter["task"] = task
+            filter["tasks"] = task
         cursor, total = super().find(filter, [], page * page_size, page_size)
         return DatasetsReturn([cls.from_dict(doc) for doc in cursor], total)
 
