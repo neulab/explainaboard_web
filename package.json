@@ -4,8 +4,8 @@
   "scripts": {
     "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
     "start-frontend": "npm --prefix frontend run start",
-    "start-backend": "cd backend/src/gen && FLASK_ENV=development python -m explainaboard",
-    "start-backend:prod": "cd backend/src/gen && FLASK_ENV=production python -m explainaboard",
+    "start-backend": "cd backend/src/gen && FLASK_ENV=development python -m explainaboard_web",
+    "start-backend:prod": "cd backend/src/gen && FLASK_ENV=production python -m explainaboard_web",
     "gen-api-code": "bash openapi/gen_api_layer.sh",
     "prepare": "husky install"
   },

@@ -89,31 +89,6 @@ paths:
               schema:
                 $ref: "#/components/schemas/DatasetsReturn"
 
-  /system_metadata/{system_metadata_id}:
-    get:
-      summary: Returns a system_metadata by id
-      description: Returns a system_metadata by id. id is the DB id so it is mostly used internally.
-      parameters:
-        - in: path
-          name: system_metadata_id
-          schema:
-            type: string
-          required: true
-          example: "618c8af297d899127212916f"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemMetadata"
-        "404":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-
   /datasets/{dataset_id}:
     get:
       summary: Returns dataset metadata by id
@@ -179,16 +154,15 @@ paths:
 
   /systems/{system_id}:
     get:
-      summary: Returns a system and its report
-      description: Returns a system and its report
+      summary: Returns system metadata info by id
+      description: Returns a system_metadata by id. id is the DB id so it is mostly used internally.
       parameters:
         - in: path
           name: system_id
-          required: true
-          example: "6178746a42455b0303bd8d09"
           schema:
             type: string
-
+          required: true
+          example: "619f8ef56e638da17b06b38a"
       responses:
         "200":
           description: OK
@@ -202,46 +176,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-    put:
-      summary: Update a system and its report
-      description: TBD
-      parameters:
-        - in: path
-          name: system_id
-          required: true
-          schema:
-            type: string
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/System"
-        "401":
-          description: NOT AUTHORIZED
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-        "400":
-          description: INPUT ERROR
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
 
   /systems:
     get:
-      summary: Returns a list of systems and their reports
-      description: Returns a list of systems and their reports
+      summary: Returns a list of systems
       parameters:
         - in: query
           name: system_name
@@ -271,25 +209,23 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  systems:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/System"
-                  total:
-                    type: integer
-                    description: total number of matching datasets
-                    example: 20
+                $ref: "#/components/schemas/SystemsReturn"
+
     post:
       summary: Submits a system
-      description: Submits a system (TBD)
+      description: Submits a system
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/System"
+              type: object
+              properties:
+                metadata:
+                  $ref: "#/components/schemas/SystemCreateProps"
+                system_output:
+                  $ref: "#/components/schemas/SystemOutputProps"
+              required: [metadata, system_output]
 
       responses:
         "200":
@@ -298,88 +234,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/System"
-        "401":
-          description: NOT AUTHORIZED
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
         "400":
           description: INPUT ERROR
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
-  /results:
-    get:
-      deprecated: true
-      summary: Returns a list of system prediction results
-      description: Returns a list of system prediction results
-      security:
-        - ApiKeyAuth: []
-        - OAuth2: ["read"]
-      parameters:
-        - in: query
-          name: task_id
-          schema:
-            type: integer
-            format: int64
-        - in: query
-          name: dataset_id
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Results"
-  /result:
-    post:
-      deprecated: true
-      summary: Upload a system prediction result
-      description: Upload a system prediction result
-      security:
-        - ApiKeyAuth: []
-        - OAuth2: ["write"]
-      requestBody:
-        description: A system prediction result
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/Result"
-      responses:
-        "200":
-          description: OK
-
-  /lb-results:
-    get:
-      deprecated: true
-      summary: Returns a list of leaderboard results
-      description: Returns a list of leaderboard results
-      security: []
-      parameters:
-        - in: query
-          name: task_id
-          schema:
-            type: integer
-            format: int64
-        - in: query
-          name: dataset_id
-          schema:
-            type: integer
-            format: int64
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/LbResults"
 
 components:
   # Reusable schemas (data models)
@@ -432,100 +292,26 @@ components:
         bib:
           type: string
 
-    # basic result schema extended by Result and LbResult
-    BasicResult:
+    SystemAnalysis:
       type: object
       properties:
-        task_id:
-          type: integer
-          format: int64
-        dataset_id:
-          type: integer
-          format: int64
-        model_name:
-          type: string
-        paper_info:
-          $ref: "#/components/schemas/PaperInfo"
-      required:
-        - task_id
-        - dataset_id
-        - model_name
-        - paper_info
-
-    # result that users upload and view
-    Result:
-      # extends BasicResult
-      allOf:
-        - $ref: "#/components/schemas/BasicResult"
-        - type: object
-        - properties:
-            # we might want to group results by tasks (e.g. NER, MLT,...)
-            summary:
-              type: string
-            privacy_setting:
+        features:
+          type: object
+        results:
+          type: object
+          properties:
+            overall:
               type: array
-              # public: [], private: [current user id], list of user ids: [id1, id2, id3]
               items:
-                type: integer
-            system_prediction:
-              # no strict definition since every task has a different output
-              # if we want to be strict, we can have a schema for each task
-              # and use an enum here.
-              type: object
-            system_metadata:
-              type: object
-            system_confidences:
-              type: object
-        - required:
-            - task_id
-            - dataset_id
-            - model_name
-            - paper_info
-            - privacy_setting
-            - system_prediction
-
-    # returning array is bad design
-    # so we wrap using an object with key named payload
-    Results:
-      type: object
-      properties:
-        payload:
-          type: array
-          items:
-            $ref: "#/components/schemas/Result"
-
-    # result on leaderboard
-    LbResult:
-      allOf:
-        - $ref: "#/components/schemas/BasicResult"
-        - type: object
-        - properties:
-            # TODO multiple metrics
-            metric:
+                type: object
+            calibration:
               type: string
-            score:
-              type: string
-            # TODO clarify format, applies to all tasks?
-            data_bias:
+            fine_grained:
               type: object
-        - required:
-            - task_id
-            - dataset_id
-            - model_name
-            - paper_info
-            - metric
-            - score
-            - data_bias
-
-    LbResults:
-      type: object
-      properties:
-        payload:
-          type: array
-          items:
-            $ref: "#/components/schemas/LbResult"
-
-    # TODO API output (evaluation of uploaded result)
+            is_print_case:
+              type: boolean
+            is_print_confidence_interval:
+              type: boolean
 
     TaskMetadata:
       type: object
@@ -543,22 +329,90 @@ components:
         datasets:
           type: object
 
-    SystemMetadata:
+    SystemCreateProps:
       type: object
       properties:
         task:
           type: string
-        dataset_metadata_ids:
+          example: "text_classification"
+        dataset_metadata_id:
+          type: string
+        model_name:
+          type: string
+        metric_names:
           type: array
           items:
             type: string
-        model_name:
+          example: [Accuracy]
+        language:
           type: string
-        dataset_name:
+          example: en
+        code:
           type: string
+          format: url
+        download_link:
+          type: string
+          format: url
         paper_info:
           $ref: "#/components/schemas/PaperInfo"
-        # TODO complete other fields
+      required:
+        [task, dataset_metadata_id, model_name, metric_names, paper_info]
+
+    SystemOutputProps:
+      type: object
+      properties:
+        data:
+          type: string
+          format: base64
+          description: base64 encoded file
+        file_type:
+          type: string
+          enum: [tsv]
+        task_output_type:
+          type: string
+          description: describes task-related system output format
+      required: [data, file_type]
+
+    System:
+      allOf:
+        - type: object
+        - properties:
+            system_id:
+              type: string
+            task:
+              type: string
+            dataset_metadata_id:
+              type: string
+            model_name:
+              type: string
+            metric_names:
+              type: array
+              items:
+                type: string
+            paper_info:
+              $ref: "#/components/schemas/PaperInfo"
+            language:
+              type: string
+              example: en
+            code:
+              type: string
+              format: url
+            download_link:
+              type: string
+              format: url
+            analysis:
+              $ref: "#/components/schemas/SystemAnalysis"
+          required:
+            [
+              system_id,
+              task,
+              dataset_metadata_id,
+              model_name,
+              metric_names,
+              paper_info,
+              analysis,
+            ]
+        - $ref: "#/components/schemas/Time"
 
     Feature:
       type: object
@@ -613,12 +467,12 @@ components:
             person_of_contact:
               type: string
               nullable: true
-            task:
+            tasks:
               type: array
               items:
                 type: string
                 description: task name
-            task_category:
+            task_categories:
               type: array
               items:
                 type: string
@@ -643,7 +497,7 @@ components:
           required:
             - dataset_id
             - dataset_name
-            - task
+            - tasks
 
         - $ref: "#/components/schemas/Time"
 
@@ -660,6 +514,21 @@ components:
           example: 20
       required:
         - datasets
+        - total
+
+    SystemsReturn:
+      type: object
+      properties:
+        systems:
+          type: array
+          items:
+            $ref: "#/components/schemas/System"
+        total:
+          type: integer
+          description: total number of matching systems
+          example: 20
+      required:
+        - systems
         - total
 
     MetricResult:
@@ -681,60 +550,6 @@ components:
           type: array
           items:
             type: string
-
-    System:
-      allOf:
-        - type: object
-        - properties:
-            system_id:
-              type: string
-              description: unique ID (from DB)
-            task_name:
-              type: string
-            system_name:
-              type: string
-              description: title (a description of the system, non unique)
-            metric_names:
-              type: array
-              items:
-                type: string
-            language:
-              type: string
-            code:
-              type: string
-              nullable: true
-            download_link:
-              type: string
-              nullable: true
-            paper_info:
-              $ref: "#/components/schemas/PaperInfo"
-            features:
-              type: object
-              additionalProperties:
-                type: object
-                description: fields seem to be different for different features
-            results:
-              type: object
-              properties:
-                overall:
-                  type: object
-                calibration:
-                  type: string
-                  nullable: true
-                fine_grained:
-                  type: object
-                  additionalProperties:
-                    type: array
-                    items:
-                      type: array
-                      items:
-                        $ref: "#/components/schemas/MetricResult"
-            is_print_case:
-              type: boolean
-            is_print_confidence_interval:
-              type: boolean
-
-        - $ref: "#/components/schemas/Time"
 
   # Security scheme definitions for authentication
   securitySchemes:

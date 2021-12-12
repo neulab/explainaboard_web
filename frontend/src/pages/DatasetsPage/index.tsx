@@ -84,8 +84,8 @@ const columns: ColumnsType<DatasetMetadata> = [
     title: "Name",
   },
   {
-    dataIndex: "task",
-    title: "Task",
+    dataIndex: "tasks",
+    title: "Tasks",
     render: (value) => (
       <span>
         {value.map((task: string, i: number) => (

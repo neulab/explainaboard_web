@@ -59,36 +59,36 @@ def _deserialize_object(value):
     return value
 
 
-def deserialize_date(string):
+def deserialize_date(data: typing.Union[str, datetime.date]):
     """Deserializes string to date.
 
-    :param string: str.
-    :type string: str
     :return: date.
     :rtype: date
     """
+    if isinstance(data, datetime.date):
+        return data
     try:
         from dateutil.parser import parse
-        return parse(string).date()
+        return parse(data).date()
     except ImportError:
-        return string
+        return data
 
 
-def deserialize_datetime(string):
+def deserialize_datetime(data: typing.Union[str, datetime.datetime]):
     """Deserializes string to datetime.
 
-    The string should be in iso8601 datetime format.
+    If string, the string should be in iso8601 datetime format.
 
-    :param string: str.
-    :type string: str
     :return: datetime.
     :rtype: datetime
     """
+    if isinstance(data, datetime.datetime):
+        return data
     try:
         from dateutil.parser import parse
-        return parse(string)
+        return parse(data)
     except ImportError:
-        return string
+        return data
 
 
 def deserialize_model(data, klass):
