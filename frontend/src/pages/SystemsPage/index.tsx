@@ -1,22 +1,17 @@
-import {
-  Button,
-  Drawer,
-  PageHeader,
-  Space,
-  Table,
-  Tag,
-  Tooltip,
-  Typography,
-} from "antd";
-import { ColumnsType } from "antd/lib/table";
 import React, { useEffect, useState } from "react";
+import { Button, Input, PageHeader, Space } from "antd";
 import { useHistory } from "react-router-dom";
 import { backendClient } from "../../clients";
 import { System } from "../../clients/openapi";
-import { SystemSubmitDrawer } from "../../components";
+import { SystemsTable, SystemSubmitDrawer } from "../../components";
 import { PageState } from "../../utils";
 import "./index.css";
 
+/**
+ * Systems Page
+ * TODO:
+ * 1. debounce search
+ */
 export function SystemsPage() {
   const [pageState, setPageState] = useState(PageState.loading);
   const [systems, setSystems] = useState<System[]>([]);
@@ -25,18 +20,23 @@ export function SystemsPage() {
   const [total, setTotal] = useState(0);
   const history = useHistory();
 
-  const [activeSystemID, setActiveSystemID] = useState<string>();
-  const activeSystem = systems.find((sys) => sys.system_id === activeSystemID);
-
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);
 
   const [refreshTrigger, setRefreshTrigger] = useState(false);
+
+  // filters
+  const [nameQuery, setNameQuery] = useState("");
+
+  function searchName(text: string) {
+    setNameQuery(text);
+    setPage(0);
+  }
 
   useEffect(() => {
     async function refreshSystems() {
       setPageState(PageState.loading);
       const { systems: newSystems, total } = await backendClient.systemsGet(
-        undefined,
+        nameQuery ? nameQuery : undefined,
         undefined,
         page,
         pageSize
@@ -46,76 +46,12 @@ export function SystemsPage() {
       setPageState(PageState.success);
     }
     refreshSystems();
-  }, [page, pageSize, refreshTrigger]);
+  }, [page, pageSize, refreshTrigger, nameQuery]);
 
   function resetFiltersAndRefresh() {
     setPage(0);
     setRefreshTrigger(!refreshTrigger);
   }
-
-  function showSystemAnalysis(systemID: string) {
-    setActiveSystemID(systemID);
-  }
-
-  function closeSystemAnalysis() {
-    setActiveSystemID(undefined);
-  }
-
-  const columns: ColumnsType<System> = [
-    {
-      dataIndex: "idx",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      align: "center",
-    },
-    {
-      dataIndex: "system_id",
-      title: "ID",
-      width: 230,
-      render: (value) => (
-        <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-          {value}
-        </Typography.Paragraph>
-      ),
-    },
-    {
-      dataIndex: "model_name",
-      title: "Name",
-    },
-    {
-      dataIndex: "task",
-      title: "Task",
-      render: (value) => <Tag>{value}</Tag>,
-    },
-    {
-      dataIndex: "language",
-      title: "Language",
-    },
-    {
-      dataIndex: "created_at",
-      title: "Created At",
-      render: (_, record) => record.created_at!.toString().split("T")[0], // TODO: make created_at required
-    },
-    {
-      dataIndex: "action",
-      title: "",
-      render: (_, record) => (
-        <Space>
-          <Button
-            size="small"
-            onClick={() => showSystemAnalysis(record.system_id)}
-          >
-            Analysis
-          </Button>
-          <Tooltip title="not implemented">
-            <Button size="small" disabled>
-              Dataset Info
-            </Button>
-          </Tooltip>
-        </Space>
-      ),
-    },
-  ];
 
   return (
     <div className="page">
@@ -132,41 +68,30 @@ export function SystemsPage() {
           subTitle="All systems submitted by users"
           className="header"
         />
-        <Button type="primary" onClick={() => setSubmitDrawerVisible(true)}>
-          New
-        </Button>
+        <Space>
+          <Input.Search
+            placeholder="Search by system name"
+            value={nameQuery}
+            onChange={(e) => searchName(e.target.value)}
+          />
+          <Button type="primary" onClick={() => setSubmitDrawerVisible(true)}>
+            New
+          </Button>
+        </Space>
       </div>
 
-      <Table
-        className="table"
-        columns={columns}
-        dataSource={systems}
-        rowKey="datasetId"
-        size="middle"
-        pagination={{
-          total,
-          showTotal: (total, range) =>
-            `${range[0]}-${range[1]} (total: ${total})`,
-          pageSize,
-          current: page + 1,
-          onChange: (newPage, newPageSize) => {
-            setPage(newPage - 1);
-            if (newPageSize) setPageSize(newPageSize);
-          },
-        }}
-        sticky
+      <SystemsTable
+        total={total}
+        page={page}
+        pageSize={pageSize}
         loading={pageState === PageState.loading}
+        systems={systems}
+        onPageChange={(newPage, newPageSize) => {
+          setPage(newPage - 1);
+          if (newPageSize) setPageSize(newPageSize);
+        }}
       />
-      <Drawer
-        visible={activeSystemID != null}
-        onClose={() => closeSystemAnalysis()}
-        title={activeSystem?.model_name + " Analysis Report"}
-        width="60%"
-      >
-        <Typography.Paragraph code>
-          {JSON.stringify(activeSystem?.analysis)}
-        </Typography.Paragraph>
-      </Drawer>
+
       <SystemSubmitDrawer
         visible={submitDrawerVisible}
         onClose={() => {

@@ -1,0 +1,10 @@
+.tasks-grid {
+  padding: 0px 20px;
+}
+
+.task-card {
+  cursor: pointer;
+}
+.task-card:hover {
+  box-shadow: 0px 0px 9px rgba(128, 128, 128, 0.301);
+}

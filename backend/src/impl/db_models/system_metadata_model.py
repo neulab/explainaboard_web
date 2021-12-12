@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Iterable, Optional, Union
+from typing import Any, Dict, Iterable, Optional, Union
 
 from explainaboard_web.models.system_analysis import SystemAnalysis
 from explainaboard_web.models.system_output_props import SystemOutputProps
@@ -75,9 +75,9 @@ class SystemModel(MetadataDBModel, System):
     @classmethod
     def find(cls, page: int, page_size: int, system_name: Optional[str], task: Optional[str]) -> SystemsReturn:
         """find multiple systems that matches the filters"""
-        filter = {}
+        filter: Dict[str, Any] = {}
         if system_name:
-            filter["model_name"] = system_name
+            filter["model_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
             filter["task"] = task
         cursor, total = super().find(filter, [], page * page_size,
