@@ -89,7 +89,8 @@ export function BarChart(props: Props) {
     yAxis: [
       {
         type: "value",
-        beginAtZero: false,
+        min: 0,
+        max: 1,
       },
     ],
     series: [

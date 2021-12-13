@@ -1,6 +1,6 @@
-import { LabelElement } from "./types";
+import { FineGrainedElement } from "./types";
 
-export function parseLabels(labels: Array<LabelElement[]>) {
+export function parse(fineGrainedElements: Array<FineGrainedElement[]>) {
   const bucketNames: string[] = [];
   const values: number[] = [];
   const numbersOfSamples: number[] = [];
@@ -9,15 +9,19 @@ export function parseLabels(labels: Array<LabelElement[]>) {
   // Can be improved by redefining schema.
   let metricName = "";
 
-  for (const labelArr of labels) {
-    // For text classification, labelArr always has length 1
-    const label = labelArr[0];
-    const bucketName = label["bucket_name"][0];
-    const value = parseFloat(label["value"]);
-    const nSamples = label["n_samples"];
-    const confidenceScoreLow = parseFloat(label["confidence_score_low"]);
-    const confidenceScoreUp = parseFloat(label["confidence_score_up"]);
-    metricName = label["metric_name"];
+  for (const fineGrainedArr of fineGrainedElements) {
+    // For text classification, fineGrainedArr always has length 1
+    const fineGrainedElement = fineGrainedArr[0];
+    const bucketName = fineGrainedElement["bucket_name"][0].toString();
+    const value = parseFloat(fineGrainedElement["value"]);
+    const nSamples = fineGrainedElement["n_samples"];
+    const confidenceScoreLow = parseFloat(
+      fineGrainedElement["confidence_score_low"]
+    );
+    const confidenceScoreUp = parseFloat(
+      fineGrainedElement["confidence_score_up"]
+    );
+    metricName = fineGrainedElement["metric_name"];
     bucketNames.push(bucketName);
     values.push(value);
     numbersOfSamples.push(nSamples);

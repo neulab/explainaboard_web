@@ -67,13 +67,13 @@ interface Results {
 }
 
 interface FineGrained {
-  label: Array<LabelElement[]>;
-  sentence_length: Array<SentenceLengthElement[]>;
-  token_number: Array<SentenceLengthElement[]>;
+  label: Array<FineGrainedElement[]>;
+  sentence_length: Array<FineGrainedElement[]>;
+  token_number: Array<FineGrainedElement[]>;
 }
 
-export interface LabelElement {
-  bucket_name: string[];
+export interface FineGrainedElement {
+  bucket_name: string[] | number[];
   bucket_samples: BucketSample[];
   confidence_score_low: string;
   confidence_score_up: string;
@@ -98,16 +98,6 @@ enum TextEnum {
 
 enum TrueLabelEnum {
   TrueLabel = "true_label",
-}
-
-interface SentenceLengthElement {
-  bucket_name: number[];
-  bucket_samples: BucketSample[];
-  confidence_score_low: string;
-  confidence_score_up: string;
-  metric_name: string;
-  n_samples: number;
-  value: string;
 }
 
 interface Overall {

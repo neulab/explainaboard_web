@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Analysis } from "./types";
 import { SystemAnalysis } from "../../clients/openapi";
-import { parseLabels } from "./parser";
+import { parse } from "./parser";
 import { BarChart } from "../../components";
 import { Row, Col } from "antd";
 
@@ -14,44 +14,37 @@ export function AnalysisReport(props: Props) {
 
   const analysis = props.analysis as Analysis;
   const resultsFineGrained = analysis["results"]["fine_grained"];
-  const labels = resultsFineGrained["label"];
-  const sentence_length_analysis = resultsFineGrained["sentence_length"];
-  const token_number_analysis = resultsFineGrained["token_number"];
-  const {
-    metricName,
-    bucketNames,
-    values,
-    numbersOfSamples,
-    confidenceScores,
-  } = parseLabels(labels);
+  const parsedLabels = parse(resultsFineGrained["label"]);
+  const parsedSentenceLengths = parse(resultsFineGrained["sentence_length"]);
+  const parsedTokenNumbers = parse(resultsFineGrained["token_number"]);
 
   return (
     <Row>
       <Col span={8}>
         <BarChart
-          title={metricName}
-          xAxisData={bucketNames}
-          seriesData={values}
-          seriesLabels={numbersOfSamples}
-          confidenceScores={confidenceScores}
+          title={`${parsedLabels.metricName} by label`}
+          xAxisData={parsedLabels.bucketNames}
+          seriesData={parsedLabels.values}
+          seriesLabels={parsedLabels.numbersOfSamples}
+          confidenceScores={parsedLabels.confidenceScores}
         />
       </Col>
       <Col span={8}>
         <BarChart
-          title={metricName}
-          xAxisData={bucketNames}
-          seriesData={values}
-          seriesLabels={numbersOfSamples}
-          confidenceScores={confidenceScores}
+          title={`${parsedLabels.metricName} by sentence length`}
+          xAxisData={parsedSentenceLengths.bucketNames}
+          seriesData={parsedSentenceLengths.values}
+          seriesLabels={parsedSentenceLengths.numbersOfSamples}
+          confidenceScores={parsedSentenceLengths.confidenceScores}
         />
       </Col>
       <Col span={8}>
         <BarChart
-          title={metricName}
-          xAxisData={bucketNames}
-          seriesData={values}
-          seriesLabels={numbersOfSamples}
-          confidenceScores={confidenceScores}
+          title={`${parsedLabels.metricName} by token numbers`}
+          xAxisData={parsedTokenNumbers.bucketNames}
+          seriesData={parsedTokenNumbers.values}
+          seriesLabels={parsedTokenNumbers.numbersOfSamples}
+          confidenceScores={parsedTokenNumbers.confidenceScores}
         />
       </Col>
     </Row>
