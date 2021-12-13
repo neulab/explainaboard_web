@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Typography } from "antd";
 import ReactEChartsCore from "echarts-for-react/lib/core";
 import * as echarts from "echarts/core";
-import { MarkLineComponent } from "echarts/components";
+import { MarkPointComponent, MarkLineComponent } from "echarts/components";
 import { BarChart } from "echarts/charts";
 import {
   GridComponent,
@@ -13,10 +13,10 @@ import { CanvasRenderer } from "echarts/renderers";
 import { Analysis } from "./types";
 import { SystemAnalysis } from "../../clients/openapi";
 
-interface data {
+interface formatterParam {
+  dataIndex: number;
   name: string;
   data: number;
-  test: number;
 }
 
 interface Props {
@@ -29,35 +29,56 @@ export function AnalysisReport(props: Props) {
   // const sentence_length_analysis = analysis["results"]["fine_grained"]["sentence_length"]
   // const token_number_analysis = analysis["results"]["fine_grained"]["token_number"]
 
-  const xAxisData = [];
-  const seriesData = [];
-  const confidence_lines = [];
+  const xAxisData: string[] = [];
+  const seriesData: number[] = [];
+  const seriesLabels: number[] = [];
+  const confidenceScores: [number, number][] = [];
+  const confidencePoints = [];
+  const confidenceLines = [];
 
-  for (const label_arr of labels) {
-    // For text classification, label_arr always has length 1
-    const label = label_arr[0];
-    const x = label["bucket_name"];
+  for (const labelArr of labels) {
+    // For text classification, labelArr always has length 1
+    const label = labelArr[0];
+    const x = label["bucket_name"][0];
     const value = label["value"];
-    const confidence_line_start = {
+    const nSamples = label["n_samples"];
+    const confidenceScoreLow = parseFloat(label["confidence_score_low"]);
+    const confidenceScoreUp = parseFloat(label["confidence_score_up"]);
+    const confidenceLineStart = {
       xAxis: x,
-      yAxis: parseFloat(label["confidence_score_low"]),
+      yAxis: confidenceScoreLow,
     };
-    const confidence_line_end = {
+    const confidenceLineEnd = {
       xAxis: x,
-      yAxis: parseFloat(label["confidence_score_up"]),
+      yAxis: confidenceScoreUp,
     };
     xAxisData.push(x);
     seriesData.push(parseFloat(value));
-    confidence_lines.push([confidence_line_start, confidence_line_end]);
+    seriesLabels.push(nSamples);
+    confidenceScores.push([confidenceScoreLow, confidenceScoreUp]);
+    confidencePoints.push({
+      ...confidenceLineStart,
+      itemStyle: { color: "brown" },
+    });
+    confidencePoints.push({
+      ...confidenceLineEnd,
+      itemStyle: { color: "orange" },
+    });
+    confidenceLines.push([confidenceLineStart, confidenceLineEnd]);
   }
-
-  console.log(xAxisData, seriesData, confidence_lines);
 
   const option = {
     tooltip: {
       trigger: "axis",
       axisPointer: {
-        type: "shadow",
+        type: "none",
+      },
+      formatter: function (params: formatterParam[]) {
+        // Here params always have length 1
+        const param = params[0];
+        const dataIndex = param.dataIndex;
+        const data = param.data.toString();
+        return `${data} [${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}]`;
       },
     },
     grid: {
@@ -78,8 +99,6 @@ export function AnalysisReport(props: Props) {
     yAxis: [
       {
         type: "value",
-        // min: 90,
-        // max: 100,
         beginAtZero: false,
       },
     ],
@@ -91,40 +110,37 @@ export function AnalysisReport(props: Props) {
         label: {
           show: true,
           position: "inside",
-          formatter: function (d: data) {
-            console.log(d);
-            return d.test; // not working
+          fontSize: 14,
+          formatter: function (data: formatterParam) {
+            return seriesLabels[data.dataIndex];
           },
         },
+        color: "rgba(22,130,245,0.78)",
         data: seriesData,
+        test: seriesLabels,
         animation: false,
-        // not working
-        // markPoint: {
-        //   symbol: 'circle',
-        //   symbolSize: '100',
-        //   data: [
-        //       {
-        //         xAxis: "0",
-        //         yAxis: 0.8,
-        //       },
-        //       {
-        //         xAxis: "1",
-        //         yAxis: 0.5,
-        //       }
-        //   ]
-        // },
+
+        markPoint: {
+          label: {
+            show: true,
+          },
+          symbol: "circle",
+          symbolSize: 12,
+          data: confidencePoints,
+        },
+
         markLine: {
-          symbol: ["circle", "circle"],
+          symbol: ["none", "none"],
           lineStyle: {
             type: "solid",
-            color: "black",
+            color: "gray",
             width: 3,
           },
           label: {
             show: true,
             position: "middle",
           },
-          data: confidence_lines,
+          data: confidenceLines,
           animation: false,
         },
       },
@@ -137,6 +153,7 @@ export function AnalysisReport(props: Props) {
     GridComponent,
     BarChart,
     CanvasRenderer,
+    MarkPointComponent,
     MarkLineComponent,
   ]);
 
@@ -153,15 +170,6 @@ export function AnalysisReport(props: Props) {
           params.offsetY,
         ])[0];
         setBarIndex(index);
-      }
-    });
-
-    instance.getZr().on("mousemove", (param) => {
-      const pointInPixel = [param.offsetX, param.offsetY];
-      if (instance.containPixel("grid", pointInPixel)) {
-        instance.getZr().setCursorStyle("pointer");
-      } else {
-        instance.getZr().setCursorStyle("default");
       }
     });
   }
