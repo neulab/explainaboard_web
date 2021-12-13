@@ -72,7 +72,7 @@ interface FineGrained {
   token_number: Array<SentenceLengthElement[]>;
 }
 
-interface LabelElement {
+export interface LabelElement {
   bucket_name: string[];
   bucket_samples: BucketSample[];
   confidence_score_low: string;
