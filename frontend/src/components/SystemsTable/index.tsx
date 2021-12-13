@@ -3,6 +3,7 @@ import "./index.css";
 import { Button, Drawer, Space, Table, Tag, Tooltip, Typography } from "antd";
 import { System } from "../../clients/openapi";
 import { ColumnsType } from "antd/lib/table";
+import { AnalysisReport } from "../../components";
 
 interface Props {
   systems: System[];
@@ -112,11 +113,11 @@ export function SystemsTable({
         visible={activeSystemID != null}
         onClose={() => closeSystemAnalysis()}
         title={activeSystem?.model_name + " Analysis Report"}
-        width="60%"
+        width="80%"
       >
-        <Typography.Paragraph code>
-          {JSON.stringify(activeSystem?.analysis)}
-        </Typography.Paragraph>
+        {activeSystem?.analysis !== undefined && (
+          <AnalysisReport analysis={activeSystem?.analysis} />
+        )}
       </Drawer>
     </div>
   );
