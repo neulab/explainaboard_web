@@ -36,6 +36,9 @@ export function AnalysisReport(props: Props) {
   const confidencePoints = [];
   const confidenceLines = [];
 
+  // Can be improved by redefining schema.
+  let metricName = "";
+
   for (const labelArr of labels) {
     // For text classification, labelArr always has length 1
     const label = labelArr[0];
@@ -44,6 +47,7 @@ export function AnalysisReport(props: Props) {
     const nSamples = label["n_samples"];
     const confidenceScoreLow = parseFloat(label["confidence_score_low"]);
     const confidenceScoreUp = parseFloat(label["confidence_score_up"]);
+    metricName = label["metric_name"];
     const confidenceLineStart = {
       xAxis: x,
       yAxis: confidenceScoreLow,
@@ -68,6 +72,10 @@ export function AnalysisReport(props: Props) {
   }
 
   const option = {
+    title: {
+      text: metricName,
+      left: "center",
+    },
     tooltip: {
       trigger: "axis",
       axisPointer: {
@@ -104,7 +112,7 @@ export function AnalysisReport(props: Props) {
     ],
     series: [
       {
-        name: "",
+        name: "Testing",
         type: "bar",
         barWidth: "60%",
         label: {
