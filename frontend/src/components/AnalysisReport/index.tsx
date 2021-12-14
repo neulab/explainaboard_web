@@ -15,8 +15,20 @@ export function AnalysisReport(props: Props) {
   const analysis = props.analysis as Analysis;
   const resultsFineGrained = analysis["results"]["fine_grained"];
   const parsedLabels = parse(resultsFineGrained["label"]);
-  const parsedSentenceLengths = parse(resultsFineGrained["sentence_length"]);
-  const parsedTokenNumbers = parse(resultsFineGrained["token_number"]);
+  const parseOption = {
+    bucketName: {
+      format: "range",
+    },
+  };
+  const parsedSentenceLengths = parse(
+    resultsFineGrained["sentence_length"],
+    parseOption
+  );
+  const parsedTokenNumbers = parse(
+    resultsFineGrained["token_number"],
+    parseOption
+  );
+  const seriesLabelName = "sample size";
 
   return (
     <Row>
@@ -25,6 +37,7 @@ export function AnalysisReport(props: Props) {
           title={`${parsedLabels.metricName} by label`}
           xAxisData={parsedLabels.bucketNames}
           seriesData={parsedLabels.values}
+          seriesLabelName={seriesLabelName}
           seriesLabels={parsedLabels.numbersOfSamples}
           confidenceScores={parsedLabels.confidenceScores}
         />
@@ -34,6 +47,7 @@ export function AnalysisReport(props: Props) {
           title={`${parsedLabels.metricName} by sentence length`}
           xAxisData={parsedSentenceLengths.bucketNames}
           seriesData={parsedSentenceLengths.values}
+          seriesLabelName={seriesLabelName}
           seriesLabels={parsedSentenceLengths.numbersOfSamples}
           confidenceScores={parsedSentenceLengths.confidenceScores}
         />
@@ -43,6 +57,7 @@ export function AnalysisReport(props: Props) {
           title={`${parsedLabels.metricName} by token numbers`}
           xAxisData={parsedTokenNumbers.bucketNames}
           seriesData={parsedTokenNumbers.values}
+          seriesLabelName={seriesLabelName}
           seriesLabels={parsedTokenNumbers.numbersOfSamples}
           confidenceScores={parsedTokenNumbers.confidenceScores}
         />

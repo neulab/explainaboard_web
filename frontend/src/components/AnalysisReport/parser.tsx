@@ -1,6 +1,19 @@
 import { FineGrainedElement } from "./types";
 
-export function parse(fineGrainedElements: Array<FineGrainedElement[]>) {
+interface Option {
+  bucketName: {
+    format: string;
+  };
+}
+
+const defaultOption = { bucketName: { format: "none" } };
+
+export function parse(
+  fineGrainedElements: Array<FineGrainedElement[]>,
+  option: Option = defaultOption
+) {
+  const bucketNameFormat = option.bucketName.format;
+
   const bucketNames: string[] = [];
   const values: number[] = [];
   const numbersOfSamples: number[] = [];
@@ -9,10 +22,22 @@ export function parse(fineGrainedElements: Array<FineGrainedElement[]>) {
   // Can be improved by redefining schema.
   let metricName = "";
 
-  for (const fineGrainedArr of fineGrainedElements) {
-    // For text classification, fineGrainedArr always has length 1
-    const fineGrainedElement = fineGrainedArr[0];
-    const bucketName = fineGrainedElement["bucket_name"][0].toString();
+  for (let i = 0; i < fineGrainedElements.length; i++) {
+    // For text classification, fineGrainedElements[i] always has length 1
+    const fineGrainedElement = fineGrainedElements[i][0];
+    let bucketName = fineGrainedElement["bucket_name"][0];
+    if (bucketNameFormat === "range") {
+      let bucketNameEnd = "inf";
+      if (i + 1 < fineGrainedElements.length) {
+        const nextBucketName = fineGrainedElements[i + 1][0]["bucket_name"][0];
+        if (typeof nextBucketName === "number") {
+          bucketNameEnd = (nextBucketName - 1).toString();
+        }
+      }
+      bucketName = `${bucketName}\n|\n${bucketNameEnd}`;
+    } else {
+      bucketName = bucketName.toString();
+    }
     const value = parseFloat(fineGrainedElement["value"]);
     const nSamples = fineGrainedElement["n_samples"];
     const confidenceScoreLow = parseFloat(

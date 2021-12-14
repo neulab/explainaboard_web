@@ -19,14 +19,21 @@ interface formatterParam {
 interface Props {
   title: string;
   xAxisData: string[];
+  seriesLabelName: string;
   seriesData: number[];
   seriesLabels: number[];
   confidenceScores: [number, number][];
 }
 
 export function BarChart(props: Props) {
-  const { title, xAxisData, seriesData, seriesLabels, confidenceScores } =
-    props;
+  const {
+    title,
+    xAxisData,
+    seriesData,
+    seriesLabelName,
+    seriesLabels,
+    confidenceScores,
+  } = props;
   const confidencePoints = [];
   const confidenceLines = [];
 
@@ -68,7 +75,7 @@ export function BarChart(props: Props) {
         const param = params[0];
         const dataIndex = param.dataIndex;
         const data = param.data.toString();
-        return `${data} [${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}]`;
+        return `${data} [${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}] <br /> ${seriesLabelName}: ${seriesLabels[dataIndex]}`;
       },
     },
     grid: {
