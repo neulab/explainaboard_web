@@ -103,6 +103,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
     1. install `python` version >= 3.9.7 and create a venv or conda environment for this project
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
     2. `pip install -r backend/src/gen/requirements.txt`
+      - **caveat**: currently, we don't have a CI for SDK releases so the SDK is installed from its GitHub repo. When running pip install, it won't resolve the SDK dependencies automatically. Please manually install all packages for the SDK ([link](https://github.com/ExpressAI/ExplainaBoard/blob/main/requirements.txt)) and run `pip install -r backend/src/gen/requirements.txt` again. We'll fix this in the future.
     3. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
     4. start backend server `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
