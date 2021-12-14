@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import ReactEChartsCore from "echarts-for-react/lib/core";
 import * as echarts from "echarts/core";
 import { MarkPointComponent, MarkLineComponent } from "echarts/components";
@@ -9,6 +9,7 @@ import {
   TitleComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
+import { ECElementEvent } from "echarts/types/src/util/types";
 
 interface formatterParam {
   dataIndex: number;
@@ -23,6 +24,7 @@ interface Props {
   seriesData: number[];
   seriesLabels: number[];
   confidenceScores: [number, number][];
+  onBarClick: (barIndex: number) => void;
 }
 
 export function BarChart(props: Props) {
@@ -33,6 +35,7 @@ export function BarChart(props: Props) {
     seriesLabelName,
     seriesLabels,
     confidenceScores,
+    onBarClick,
   } = props;
   const confidencePoints = [];
   const confidenceLines = [];
@@ -152,25 +155,6 @@ export function BarChart(props: Props) {
     MarkPointComponent,
     MarkLineComponent,
   ]);
-  const [barIndex, setBarIndex] = useState<number>(-1);
-  const [eChartsRef, setEChartsRef] = useState<ReactEChartsCore | null>();
-
-  useEffect(() => {
-    if (eChartsRef != null) {
-      const instance = eChartsRef.getEchartsInstance();
-      instance.resize();
-      instance.getZr().on("click", (params) => {
-        const pointInPixel = [params.offsetX, params.offsetY];
-        if (instance.containPixel("grid", pointInPixel)) {
-          const index = instance.convertFromPixel({ seriesIndex: 0 }, [
-            params.offsetX,
-            params.offsetY,
-          ])[0];
-          setBarIndex(index);
-        }
-      });
-    }
-  });
 
   return (
     <ReactEChartsCore
@@ -179,8 +163,11 @@ export function BarChart(props: Props) {
       notMerge={true}
       lazyUpdate={true}
       theme={"theme_name"}
-      ref={(e) => {
-        setEChartsRef(e);
+      onEvents={{
+        click: (event: ECElementEvent) => {
+          const barIndex = event.dataIndex;
+          onBarClick(barIndex);
+        },
       }}
     />
   );
