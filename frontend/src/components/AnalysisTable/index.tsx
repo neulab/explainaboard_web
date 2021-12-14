@@ -9,10 +9,11 @@ import { useHistory } from "react-router";
 import { SystemOutputProps } from "../../clients/openapi";
 
 export function AnalysisTable() {
-  return;
-  <Table
-    className="table"
-    // columns={}
-    loading={true}
-  />;
+  return (
+    <Table
+      className="table"
+      // columns={}
+      loading={true}
+    />
+  );
 }
