@@ -6,6 +6,7 @@ import { BarChart, AnalysisTable } from "../../components";
 import { Row, Col, Typography } from "antd";
 
 interface Props {
+  systemID: string;
   analysis: SystemAnalysis;
 }
 

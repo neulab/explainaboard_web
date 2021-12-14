@@ -8,11 +8,11 @@ import { useHistory } from "react-router";
 
 import { SystemOutputProps } from "../../clients/openapi";
 
-export function AnalysisTable(systemOutputs) {
-  return <Typography.Paragraph></Typography.Paragraph>;
-  // <Table
-  //     className="table"
-  //     // columns={}
-  //     loading={true}
-  // />
+export function AnalysisTable() {
+  return;
+  <Table
+    className="table"
+    // columns={}
+    loading={true}
+  />;
 }

@@ -115,9 +115,13 @@ export function SystemsTable({
         title={activeSystem?.model_name + " Analysis Report"}
         width="80%"
       >
-        {activeSystem?.analysis !== undefined && (
-          <AnalysisReport analysis={activeSystem?.analysis} />
-        )}
+        {activeSystem?.analysis !== undefined &&
+          activeSystemID !== undefined && (
+            <AnalysisReport
+              systemID={activeSystemID}
+              analysis={activeSystem?.analysis}
+            />
+          )}
       </Drawer>
     </div>
   );
