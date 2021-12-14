@@ -33,12 +33,17 @@ export function AnalysisReport(props: Props) {
   let analysisTable;
   if (bucketOfSamples.length === 0) {
     analysisTable = (
-      <Typography.Paragraph>
+      <Typography.Title level={5}>
         Click a bar to see error cases.
-      </Typography.Paragraph>
+      </Typography.Title>
     );
   } else {
-    analysisTable = <AnalysisTable />;
+    analysisTable = (
+      <div>
+        <Typography.Title level={4}>Error Cases: </Typography.Title>
+        <AnalysisTable systemID={props.systemID} outputIDs={bucketOfSamples} />
+      </div>
+    );
   }
 
   return (
