@@ -2,10 +2,11 @@ from __future__ import annotations
 from typing import List, Optional
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
+from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.impl.db_models.task_metadata_model import TaskMetadataModel
 from explainaboard_web.models.task_metadata import TaskMetadata
-from explainaboard_web.impl.db_models.system_metadata_model import SystemModel
+from explainaboard_web.impl.db_models.system_metadata_model import SystemModel, SystemOutputModel
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.models.datasets_return import DatasetsReturn
 import json
@@ -76,3 +77,7 @@ def systems_post(body: SystemsBody) -> SystemModel:
     body.system_output.data = decode_base64(body.system_output.data)
     system = SystemModel.create(body.metadata, body.system_output)
     return system
+
+
+def systems_system_id_outputs_get(system_id: str, output_ids: Optional[str]) -> SystemOutputsReturn:
+    return SystemOutputModel(system_id).find(output_ids)

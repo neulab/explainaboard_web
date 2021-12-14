@@ -256,6 +256,31 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
 
+  /systems/{system_id}/outputs:
+    get:
+      summary: Returns a list of outputs of a particular system.
+      parameters:
+        - in: path
+          name: system_id
+          description: system id
+          schema:
+            type: string
+          required: true
+          example: "61b02e0baadd2f674845b1c2"
+        - in: query
+          name: output_ids
+          description: multiple output_ids, comma-separated
+          schema:
+            type: string
+          example: "1,5,6"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemOutputsReturn"
+
 components:
   # Reusable schemas (data models)
   schemas:
@@ -327,6 +352,22 @@ components:
               type: boolean
             is_print_confidence_interval:
               type: boolean
+
+    SystemOutput:
+      type: object
+      properties:
+        id:
+          type: integer
+        text:
+          type: string
+        true_label:
+          type: string
+        predicted_label:
+          type: string
+        sentence_length:
+          type: integer
+        token_number:
+          type: integer
 
     TaskMetadata:
       type: object
@@ -530,6 +571,21 @@ components:
           example: 20
       required:
         - datasets
+        - total
+
+    SystemOutputsReturn:
+      type: object
+      properties:
+        system_outputs:
+          type: array
+          items:
+            $ref: "#/components/schemas/SystemOutput"
+        total:
+          type: integer
+          description: total number of matching system outputs
+          example: 20
+      required:
+        - system_outputs
         - total
 
     SystemsReturn:

@@ -20,6 +20,8 @@
     "@types/react-dom": "^17.0.9",
     "@types/react-router-dom": "^5.3.0",
     "antd": "^4.16.13",
+    "echarts": "^5.2.2",
+    "echarts-for-react": "^3.0.2",
     "eslint": "^7.32.0",
     "isomorphic-fetch": "^3.0.0",
     "react": "^17.0.2",
@@ -48,12 +50,12 @@
   },
   "proxy": "http://localhost:5000",
   "devDependencies": {
-    "react-scripts": "4.0.3",
     "@typescript-eslint/eslint-plugin": "^4.32.0",
     "@typescript-eslint/parser": "^4.32.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-react": "^7.26.0",
     "lint-staged": "11.1.2",
-    "prettier": "^2.4.1"
+    "prettier": "^2.4.1",
+    "react-scripts": "4.0.3"
   }
 }

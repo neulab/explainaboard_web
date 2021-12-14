@@ -7,6 +7,8 @@ from explainaboard_web.models.system_output_props import SystemOutputProps
 from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system import System
 from explainaboard_web.models.systems_return import SystemsReturn
+from explainaboard_web.models.system_output import SystemOutput
+from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard import Source, get_loader, get_processor
 
@@ -85,10 +87,11 @@ class SystemModel(MetadataDBModel, System):
         return SystemsReturn([cls.from_dict(doc) for doc in cursor], total)
 
 
-class SystemOutputModel(DBModel):
+class SystemOutputModel(DBModel, SystemOutput):
     _database_name = "system_outputs"
 
-    def __init__(self, system_id: str, data: Iterable[dict]) -> None:
+
+    def __init__(self, system_id: str = "", data: Iterable[dict] = []) -> None:
         super().__init__()
         SystemOutputModel._collection_name = system_id
         self._data = data
@@ -102,3 +105,16 @@ class SystemOutputModel(DBModel):
         if drop_old_data:
             self.drop()
         self.insert_many(self._data, False)
+
+    @classmethod
+    def find(cls, output_ids: Optional[str]) -> SystemOutputsReturn:
+        """
+        find multiple system outputs whose ids are in output_ids
+        """
+        filter: Dict[str, Any] = {}
+        if output_ids:
+            filter["id"] = {
+                "$in": [int(id) for id in output_ids.split(",")]
+            }
+        cursor, total = super().find(filter)
+        return SystemOutputsReturn([cls.from_dict(doc) for doc in cursor], total)
