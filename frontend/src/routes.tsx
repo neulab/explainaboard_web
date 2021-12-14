@@ -4,8 +4,9 @@ import {
   HomeOutlined,
   DatabaseOutlined,
   TableOutlined,
+  CodeOutlined,
 } from "@ant-design/icons";
-import { DatasetsPage, Home } from "./pages";
+import { DatasetsPage, Home, LeaderboardHome, SystemsPage } from "./pages";
 
 export interface Route extends RouteProps {
   title: string;
@@ -28,13 +29,17 @@ const routes: Route[] = [
     children: <DatasetsPage />,
   },
   {
+    path: "/systems",
+    title: "Systems",
+    icon: <CodeOutlined />,
+    children: <SystemsPage />,
+  },
+  {
     path: "/leaderboards",
     title: "Leaderboards",
     icon: <TableOutlined />,
-    subroutes: [
-      { path: "/ner", title: "NER" },
-      { path: "/classification", title: "Text Classification" },
-    ],
+    children: <LeaderboardHome />,
+    exact: true,
   },
 ];
 export default routes;

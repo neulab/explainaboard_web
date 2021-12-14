@@ -4,4 +4,4 @@
 
 import { DefaultApi, Configuration } from "./openapi";
 
-export const backendClient = new DefaultApi(new Configuration({}), "api");
+export const backendClient = new DefaultApi(new Configuration({}), "/api");

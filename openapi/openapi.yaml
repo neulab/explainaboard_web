@@ -19,6 +19,21 @@ servers:
     description: Local server
 
 paths:
+  /tasks:
+    get:
+      summary: Returns all tasks (new version)
+      description: this is a temporary solutioin. it will be updated when the sdk can provide a full list of tasks
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+                  example: text-classification
+
   /task_metadata/{task_metadata_id}:
     get:
       summary: Returns a tasks_metadata by id
@@ -328,6 +343,7 @@ components:
             type: string
         datasets:
           type: object
+      required: [task_metadata_id, task_name]
 
     SystemCreateProps:
       type: object
