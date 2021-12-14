@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import { Analysis } from "./types";
 import { SystemAnalysis } from "../../clients/openapi";
 import { parse } from "./parser";
-import { BarChart } from "../../components";
-import { Row, Col } from "antd";
+import { BarChart, AnalysisTable } from "../../components";
+import { Row, Col, Typography } from "antd";
 
 interface Props {
   analysis: SystemAnalysis;
@@ -28,8 +28,20 @@ export function AnalysisReport(props: Props) {
     parseOption
   );
   const seriesLabelName = "sample size";
+
+  let analysisTable;
+  if (bucketOfSamples.length === 0) {
+    analysisTable = (
+      <Typography.Paragraph>
+        Click a bar to see error cases.
+      </Typography.Paragraph>
+    );
+  } else {
+    analysisTable = <AnalysisTable />;
+  }
+
   return (
-    <div>
+    <div style={{ textAlign: "center" }}>
       <Row>
         <Col span={8}>
           <BarChart
@@ -73,6 +85,7 @@ export function AnalysisReport(props: Props) {
           />
         </Col>
       </Row>
+      {analysisTable}
     </div>
   );
 }

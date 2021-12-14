@@ -3,3 +3,4 @@ export * from "./SystemSubmitDrawer";
 export * from "./SystemsTable";
 export * from "./AnalysisReport";
 export * from "./BarChart";
+export * from "./AnalysisTable";

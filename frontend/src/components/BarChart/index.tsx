@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import ReactEChartsCore from "echarts-for-react/lib/core";
 import * as echarts from "echarts/core";
 import { MarkPointComponent, MarkLineComponent } from "echarts/components";
@@ -146,6 +146,16 @@ export function BarChart(props: Props) {
     ],
   };
 
+  const [eChartsRef, setEChartsRef] = useState<ReactEChartsCore | null>();
+
+  // Must call resize or else echarts has no width and height information.
+  useEffect(() => {
+    if (eChartsRef != null) {
+      const instance = eChartsRef.getEchartsInstance();
+      instance.resize();
+    }
+  });
+
   echarts.use([
     TitleComponent,
     TooltipComponent,
@@ -163,6 +173,9 @@ export function BarChart(props: Props) {
       notMerge={true}
       lazyUpdate={true}
       theme={"theme_name"}
+      ref={(e) => {
+        setEChartsRef(e);
+      }}
       onEvents={{
         click: (event: ECElementEvent) => {
           const barIndex = event.dataIndex;
