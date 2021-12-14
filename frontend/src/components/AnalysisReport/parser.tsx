@@ -46,7 +46,8 @@ export function parse(
       }
       bucketName = `${bucketName}\n|\n${bucketNameEnd}`;
     } else {
-      bucketName = bucketName.toString();
+      // Add two new lines so it is consistent with format "range". The charts will have same height
+      bucketName = `${bucketName.toString()}\n\n`;
     }
     const value = parseFloat(fineGrainedElement.value);
     const nSamples = fineGrainedElement.n_samples;
