@@ -35,6 +35,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
     3. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
 5. Launch explainaboard
     1. run `npm run start` to start the frontend and backend server concurrently.
+        - Both frontend and backend can be started independently as well. Check out "More details on frontend and backend".
 
 ## Deployment
 
@@ -45,9 +46,8 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 - connexion is used by swagger/openapi code generation tool and it does not support gunicorn natively. So, currently we use flask server in production. Another option that connexion supports natively is tornado.
 
 ## More details on frontend and backend
-Both frontend and backend can be started independently.
 1. Frontend:
-    1. To start frontend dev server, run `npm run start-frontend`
+    1. To start frontend dev server only, run `npm run start-frontend`
        - Runs the app in the development mode. Open [http://localhost:3000](http://localhost:3000) to view it in the browser. The page will reload if you make edits. You will also see any lint errors in the console.
     2. linter and formatter
        - eslint is used for linting. Please install eslint VSCode extension to get immediate feedback while writing code.
@@ -79,9 +79,8 @@ Both frontend and backend can be started independently.
        - You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
        - To learn React, check out the [React documentation](https://reactjs.org/).
-    
 2. Backend
-    1. To start backend server, run `npm run start-backend`
+    1. To start backend server only, run `npm run start-backend`
        - Listens on port 5000. Frontend is configured to send all API requests to 5000 via a proxy.
         - Any code not in `impl` is generated. If you want to modify the generated code, you need to modify the mustache templates.
     2. For details of the backend, please refer to `README.md` under `backend/`.
