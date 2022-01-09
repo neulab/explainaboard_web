@@ -18,7 +18,7 @@ class CorsHeaderMiddleware(object):
 
 def main():
     app = connexion.App(__name__, specification_dir='./swagger/', server_args={
-                        'static_folder': '../../frontend', 'static_url_path': '/'})
+                        'static_folder': '../frontend', 'static_url_path': '/'})
     app.app.json_encoder = encoder.JSONEncoder
     app.add_api('swagger.yaml', arguments={'title': '{{appName}}'},
                     pythonic_params=True, validate_responses=True)
