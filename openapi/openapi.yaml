@@ -21,8 +21,7 @@ servers:
 paths:
   /tasks:
     get:
-      summary: Returns all tasks (new version)
-      description: this is a temporary solutioin. it will be updated when the sdk can provide a full list of tasks
+      summary: Returns all task categories and tasks
       responses:
         "200":
           description: OK
@@ -31,8 +30,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
-                  example: text-classification
+                  $ref: "#/components/schemas/TaskCategory"
 
   /task_metadata/{task_metadata_id}:
     get:
@@ -314,6 +312,32 @@ components:
           type: string
           format: date-time
           description: UTC
+
+    TaskCategory:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        tasks:
+          type: array
+          items:
+            $ref: "#/components/schemas/Task"
+      required: [name, description, tasks]
+
+    Task:
+      type: object
+      properties:
+        name:
+          type: string
+        supported:
+          type: boolean
+        supported_metrics:
+          type: array
+          items:
+            type: string
+      required: [name, supported, supported_metrics]
 
     PaperInfo:
       type: object

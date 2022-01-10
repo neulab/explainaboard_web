@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import "./index.css";
-import { Card, Col, PageHeader, Row } from "antd";
+import { Collapse, Card, Col, PageHeader, Row, Space, Typography } from "antd";
 import { backendClient } from "../../clients";
+import { TaskCategory } from "../../clients/openapi";
 
 export function LeaderboardHome() {
   const history = useHistory();
-  const [tasks, setTasks] = useState<string[]>([]);
+  const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
 
   useEffect(() => {
     async function fetchTasks() {
-      setTasks(await backendClient.tasksGet());
+      setTaskCategories(await backendClient.tasksGet());
     }
     fetchTasks();
   }, []);
@@ -22,21 +23,48 @@ export function LeaderboardHome() {
         title="Leaderboards"
         subTitle="All leaderboards"
       />
-      <Row gutter={[16, 16]} className="tasks-grid">
-        {tasks.map((task) => (
-          <Col key={task} span={6}>
-            <Card
-              className="task-card"
-              title={task}
-              onClick={() =>
-                history.push(document.location.pathname + "/" + task)
-              }
-            >
-              {task}
-            </Card>
-          </Col>
+      <Collapse>
+        {taskCategories.map(({ name, tasks, description }) => (
+          <Collapse.Panel
+            key={name}
+            header={
+              <TaskCategoryHeader title={name} description={description} />
+            }
+          >
+            <Row gutter={[16, 16]} className="tasks-grid">
+              {tasks.map(({ name, supported }) => (
+                <Col key={name} span={6}>
+                  <Card
+                    className="task-card"
+                    title={name}
+                    onClick={() =>
+                      history.push(document.location.pathname + "/" + name)
+                    }
+                  >
+                    {name}
+                    {!supported && " (not available at this moment)"}
+                  </Card>
+                </Col>
+              ))}
+            </Row>
+          </Collapse.Panel>
         ))}
-      </Row>
+      </Collapse>
     </div>
+  );
+}
+
+interface TaskCategoryHeaderProps {
+  title: string;
+  description: string;
+}
+function TaskCategoryHeader({ title, description }: TaskCategoryHeaderProps) {
+  return (
+    <Space>
+      <Typography.Title level={5} style={{ marginBottom: 0 }}>
+        {title}
+      </Typography.Title>
+      <span style={{ color: "gray" }}>{description}</span>
+    </Space>
   );
 }

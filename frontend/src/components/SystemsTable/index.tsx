@@ -96,7 +96,7 @@ export function SystemsTable({
         className="table"
         columns={columns}
         dataSource={systems}
-        rowKey="datasetId"
+        rowKey="system_id"
         size="middle"
         pagination={{
           total,
