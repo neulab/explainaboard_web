@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { backendClient } from "../../clients";
+import React from "react";
 import logo from "../../logo.svg";
 import "./index.css";
 
