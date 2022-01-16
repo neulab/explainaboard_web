@@ -1,32 +1,42 @@
-# Dockerfile to deploy frontend and backend using gunicorn
-# FIX: This won't actually work in the deployment pipeline. We need to genearte 
-# template code here. But I am leaving it for a future PR because we haven't 
-# finished the code gen part for TS yet. 
+# Dockerfile to deploy frontend and backend
 
 # Build step #1: build the React front end
-FROM node:14-alpine3.14 as build-step
+FROM node:14-bullseye-slim as build-step
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
-COPY package.json package-lock.json ./
-COPY ./src ./src
-COPY ./public ./public
+RUN apt-get update && apt-get install -y default-jre wget
+RUN mkdir ./frontend
+COPY ./frontend/package.json ./frontend/package-lock.json ./frontend/
+WORKDIR /app/frontend
 RUN npm install
+
+WORKDIR /app
+COPY ./frontend ./frontend
+COPY ./openapi ./openapi
+RUN chmod a+x ./openapi/gen_api_layer.sh
+RUN /bin/bash ./openapi/gen_api_layer.sh frontend
+
+WORKDIR /app/frontend
 RUN npm run build
 
+
 # Build step #2: build the API with the client as static files
-FROM python:3.9
+FROM python:3.9-slim-bullseye
+RUN apt-get update && apt-get install -y default-jre wget
+
 WORKDIR /app
-COPY --from=build-step /app/build ./frontend
+COPY ./backend ./backend
+COPY ./openapi ./openapi
+RUN chmod a+x ./openapi/gen_api_layer.sh
+RUN /bin/bash ./openapi/gen_api_layer.sh backend
 
-RUN mkdir ./backend
-COPY backend/src/gen/* ./backend/explainaboard
-COPY backend/src/impl/* ./backend/explainaboard/impl
-RUN pip install -r ./backend/explainaboard/requirements.txt
+RUN pip install -r ./backend/src/gen/requirements.txt
 
+WORKDIR /app/backend/src/gen
 ENV FLASK_ENV production
+COPY --from=build-step /app/frontend/build ./frontend
 
 # run server
 EXPOSE 5000
-WORKDIR /app/backend
 ENTRYPOINT ["python3"]
-CMD ["-m", "explainaboard"]
+CMD ["-m", "explainaboard_web"]
