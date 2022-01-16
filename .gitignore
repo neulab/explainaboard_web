@@ -36,4 +36,3 @@ swagger-codegen-cli*.jar
 frontend/src/clients/openapi
 
 .env
-.husky
