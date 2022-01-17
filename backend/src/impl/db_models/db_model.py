@@ -3,6 +3,7 @@ from pymongo.cursor import Cursor
 from pymongo.results import InsertManyResult, InsertOneResult
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.impl.db import get_db
+from explainaboard_web.models.delete_return import DeleteReturn
 from bson.objectid import ObjectId, InvalidId
 
 
@@ -97,6 +98,16 @@ class DBModel:
         cursor = cursor.skip(skip).limit(limit)
         total = cls.count(filter)
         return cursor, total
+
+    @classmethod
+    def delete_one_by_id(cls, id: str) -> DeleteReturn:
+        if not cls._collection_name:
+            raise DBModelException("collection_name not defined")
+        try:
+            delete_result = cls.get_collection(cls._collection_name).delete_one({"_id": ObjectId(id)})
+            return DeleteReturn(delete_result.deleted_count)
+        except InvalidId as e:
+            abort_with_error_message(400, f"id: {id} is not a valid ID")
 
 
 class MetadataDBModel(DBModel):

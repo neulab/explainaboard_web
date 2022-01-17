@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Iterable, Optional, Union
+from pymongo.results import DeleteResult
 
 from explainaboard_web.models.system_analysis import SystemAnalysis
 from explainaboard_web.models.system_output_props import SystemOutputProps
@@ -9,6 +10,7 @@ from explainaboard_web.models.system import System
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
+from explainaboard_web.models.delete_return import DeleteReturn
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard import Source, get_loader, get_processor
 
@@ -85,6 +87,12 @@ class SystemModel(MetadataDBModel, System):
         cursor, total = super().find(filter, [], page * page_size,
                                      page_size)
         return SystemsReturn([cls.from_dict(doc) for doc in cursor], total)
+
+    @classmethod
+    def delete_one_by_id(cls, id: str) -> DeleteReturn:
+        SystemOutputModel(id).drop()
+        delete_result = super().delete_one_by_id(id)
+        return DeleteReturn(delete_result.deleted_count)
 
 
 class SystemOutputModel(DBModel, SystemOutput):

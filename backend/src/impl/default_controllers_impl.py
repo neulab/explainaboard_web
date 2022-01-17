@@ -9,6 +9,7 @@ from explainaboard_web.models.task_metadata import TaskMetadata
 from explainaboard_web.impl.db_models.system_metadata_model import SystemModel, SystemOutputModel
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.models.datasets_return import DatasetsReturn
+from explainaboard_web.models.delete_return import DeleteReturn
 import json
 import pathlib
 
@@ -63,6 +64,13 @@ def systems_system_id_get(system_id: str) -> SystemModel:
         abort_with_error_message(
             404, f"system id: {system_id} not found")
     return system
+
+
+def systems_system_id_delete(system_id: str) -> DeleteReturn:
+    """
+    TODO: refine response
+    """
+    return SystemModel.delete_one_by_id(system_id)
 
 
 def systems_get(system_name: Optional[str], task: Optional[str], page: int, page_size: int) -> SystemsReturn:

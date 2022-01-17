@@ -191,6 +191,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    delete:
+      summary: Deletes a system metadata and all its outputs by id
+      description: Deletes a system metadata and all its outputs by id
+      parameters:
+        - in: path
+          name: system_id
+          schema:
+            type: string
+          required: true
+          example: "619f8ef56e638da17b06b38a"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteReturn"
 
   /systems:
     get:
@@ -602,6 +619,13 @@ components:
       required:
         - systems
         - total
+
+    DeleteReturn:
+      type: object
+      properties:
+        deleted_count:
+          type: integer
+          example: 1
 
     MetricResult:
       type: object
