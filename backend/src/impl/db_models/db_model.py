@@ -1,6 +1,7 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, TypeVar
 from pymongo.cursor import Cursor
 from pymongo.results import InsertManyResult, InsertOneResult
+from pymongo.client_session import ClientSession
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.impl.db import get_db
 from bson.objectid import ObjectId, InvalidId
@@ -13,6 +14,10 @@ class DBModel:
     @classmethod
     def get_database(cls):
         return get_db().cx[cls._database_name]
+
+    @classmethod
+    def get_client(cls) -> ClientSession:
+        return get_db().db.client
 
     @classmethod
     def get_collection(cls, collection_name: str, check_collection_exist=True):
@@ -37,16 +42,16 @@ class DBModel:
         cls.get_collection(cls._collection_name, check_collection_exist).drop()
 
     @classmethod
-    def insert_one(cls, document: dict, check_collection_exist=True) -> InsertOneResult:
+    def insert_one(cls, document: dict, check_collection_exist: bool = True, session: ClientSession = None) -> InsertOneResult:
         if not cls._collection_name:
             raise DBModelException("collection_name not defined")
-        return cls.get_collection(cls._collection_name, check_collection_exist).insert_one(document)
+        return cls.get_collection(cls._collection_name, check_collection_exist).insert_one(document, session=session)
 
     @classmethod
-    def insert_many(cls, documents: List[dict], check_collection_exist=True) -> InsertManyResult:
+    def insert_many(cls, documents: List[dict], check_collection_exist=True, session: ClientSession = None) -> InsertManyResult:
         if not cls._collection_name:
             raise DBModelException("collection_name not defined")
-        return cls.get_collection(cls._collection_name, check_collection_exist).insert_many(documents)
+        return cls.get_collection(cls._collection_name, check_collection_exist).insert_many(documents, session=session)
 
     @classmethod
     def find_one_by_id(cls, id: str, projection: Optional[Dict] = None):
@@ -97,6 +102,18 @@ class DBModel:
         cursor = cursor.skip(skip).limit(limit)
         total = cls.count(filter)
         return cursor, total
+
+    CallbackRetType = TypeVar('CallbackRetType')
+
+    @classmethod
+    def execute_transaction(cls, callback: Callable[[ClientSession], CallbackRetType]) -> CallbackRetType:
+        """
+        Executes `callback` in a transaction. Returns the return of callback. An exception is raised if failure.
+        - Ref: https://pymongo.readthedocs.io/en/stable/api/pymongo/client_session.html
+        """
+        with cls.get_client().start_session() as session:
+            with session.start_transaction():
+                return callback(session)
 
 
 class MetadataDBModel(DBModel):

@@ -11,6 +11,7 @@ from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard import Source, get_loader, get_processor
+from pymongo.client_session import ClientSession
 
 
 class SystemModel(MetadataDBModel, System):
@@ -27,8 +28,7 @@ class SystemModel(MetadataDBModel, System):
           5. write to system_metadata (metadata + analysis)
           6. write to system_outputs
         TODO: 
-          1. use session (transaction) to make sure all operations are atomic
-          2. validate if dataset exists
+          1. validate if dataset exists
         """
         system = cls.from_dict(metadata.to_dict())
         system_output_data = get_loader(metadata.task, Source.in_memory,
@@ -37,9 +37,11 @@ class SystemModel(MetadataDBModel, System):
             metadata.task, {**metadata.to_dict(), "task_name": metadata.task}, system_output_data).process()
         system.analysis = SystemAnalysis.from_dict(report.to_dict())
 
-        # DB operations
-        system_id = system.insert()
-        SystemOutputModel(system_id, system_output_data).insert()
+        def db_operations(session: ClientSession) -> str:
+            system_id = system.insert(session)
+            SystemOutputModel(system_id, system_output_data).insert()
+            return system_id
+        system_id = DBModel.execute_transaction(db_operations)
 
         system.system_id = system_id
         return system
@@ -62,7 +64,7 @@ class SystemModel(MetadataDBModel, System):
             return None
         return cls.from_dict(document)
 
-    def insert(self) -> str:
+    def insert(self, session: ClientSession = None) -> str:
         """
         insert system into DB. creates a new record (ignores system_id if provided). Use
         update instead if an existing document needs to be updated.
@@ -72,7 +74,7 @@ class SystemModel(MetadataDBModel, System):
         self.created_at = self.last_modified = datetime.utcnow()  # update timestamps
         document = self.to_dict()
         document.pop("system_id")
-        return str(self.insert_one(document).inserted_id)
+        return str(self.insert_one(document, session=session).inserted_id)
 
     @classmethod
     def find(cls, page: int, page_size: int, system_name: Optional[str], task: Optional[str]) -> SystemsReturn:
@@ -90,13 +92,12 @@ class SystemModel(MetadataDBModel, System):
 class SystemOutputModel(DBModel, SystemOutput):
     _database_name = "system_outputs"
 
-
     def __init__(self, system_id: str = "", data: Iterable[dict] = []) -> None:
         super().__init__()
         SystemOutputModel._collection_name = system_id
         self._data = data
 
-    def insert(self, drop_old_data=True):
+    def insert(self, drop_old_data: bool = True, session: ClientSession = None):
         """
         insert all data into DB
         Parameters:
@@ -104,7 +105,7 @@ class SystemOutputModel(DBModel, SystemOutput):
         """
         if drop_old_data:
             self.drop()
-        self.insert_many(self._data, False)
+        self.insert_many(self._data, False, session)
 
     @classmethod
     def find(cls, output_ids: Optional[str]) -> SystemOutputsReturn:
