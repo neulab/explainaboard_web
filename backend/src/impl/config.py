@@ -4,24 +4,31 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-class Config(object):
-    SECRET_KEY = os.urandom(12)
-    DEBUG = False
-    TESTING = False
-    DATABASE_URI = os.getenv('DATABASE_URI_DEV')
-    DB_USERNAME = os.getenv('DB_USERNAME_DEV')
-    DB_PASSWORD = os.getenv('DB_PASSWORD_DEV')
+class Config:
+    def __init__(self) -> None:
+        self.SECRET_KEY = os.urandom(12)
+        self.DEBUG = False
+        self.TESTING = False
+        self.DATABASE_URI = os.environ['DATABASE_URI_DEV']
+        self.DB_USERNAME = os.environ['DB_USERNAME_DEV']
+        self.DB_PASSWORD = os.environ['DB_PASSWORD_DEV']
 
 
 class DevelopmentConfig(Config):
-    DEBUG = True
+    def __init__(self) -> None:
+        super().__init__()
+        self.DEBUG = True
 
 
 class ProductionConfig(Config):
-    DATABASE_URI = ''
-    DB_USERNAME = os.getenv('DB_USERNAME_PROD', '')
-    DB_PASSWORD = os.getenv('DB_PASSWORD_PROD', '')
+    def __init__(self) -> None:
+        super().__init__()
+        self.DATABASE_URI = os.environ['DATABASE_URI_PROD']
+        self.DB_USERNAME = os.environ['DB_USERNAME_PROD']
+        self.DB_PASSWORD = os.environ['DB_PASSWORD_PROD']
 
 
 class TestingConfig(Config):
-    TESTING = True
+    def __init__(self) -> None:
+        super().__init__()
+        TESTING = True
