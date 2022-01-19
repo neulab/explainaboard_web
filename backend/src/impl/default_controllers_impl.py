@@ -77,3 +77,10 @@ def systems_post(body: SystemsBody) -> SystemModel:
 
 def systems_system_id_outputs_get(system_id: str, output_ids: Optional[str]) -> SystemOutputsReturn:
     return SystemOutputModel(system_id).find(output_ids)
+
+
+def systems_system_id_delete(system_id: str):
+    success = SystemModel.delete_one_by_id(system_id)
+    if success:
+        return "Success"
+    abort_with_error_message(400, f"cannot find system_id: {system_id}")

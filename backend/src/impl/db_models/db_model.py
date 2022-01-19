@@ -1,6 +1,6 @@
 from typing import Callable, Dict, List, Optional, Tuple, TypeVar
 from pymongo.cursor import Cursor
-from pymongo.results import InsertManyResult, InsertOneResult
+from pymongo.results import InsertManyResult, InsertOneResult, DeleteResult
 from pymongo.client_session import ClientSession
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.impl.db import get_db
@@ -67,6 +67,26 @@ class DBModel:
             return cls.get_collection(cls._collection_name).find_one({"_id": ObjectId(id)}, projection)
         except InvalidId as e:
             abort_with_error_message(400, f"id: {id} is not a valid ID")
+
+    @classmethod
+    def delete_one_by_id(cls, id: str):
+        """
+        Delete one document with the given ID
+        Returns: `True` if a single document has been deleted
+        """
+        if not cls._collection_name:
+            raise DBModelException("collection_name not defined")
+        try:
+            result: DeleteResult = cls.get_collection(
+                cls._collection_name).delete_one({"_id": ObjectId(id)})
+            print(result)
+            if int(result.deleted_count) == 1:
+                return True
+            return False
+
+        except InvalidId as e:
+            abort_with_error_message(
+                400, f"id: {id} is not a valid mongodb ID")
 
     @classmethod
     def count(cls, filter={}) -> int:

@@ -76,6 +76,10 @@ class SystemModel(MetadataDBModel, System):
             return None
         return cls.from_dict(document)
 
+    @classmethod
+    def delete_one_by_id(cls, id: str):
+        return super().delete_one_by_id(id)
+
     def insert(self, session: ClientSession = None) -> str:
         """
         insert system into DB. creates a new record (ignores system_id if provided). Use

@@ -55,7 +55,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/APIError"
 
   /task_metadata:
     get:
@@ -125,7 +125,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/APIError"
 
   /datasets:
     get:
@@ -188,7 +188,24 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/APIError"
+    delete:
+      summary: Deletes a system by id
+      parameters:
+        - in: path
+          name: system_id
+          schema:
+            type: string
+          required: true
+          example: "619f8ef56e638da17b06b38a"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
 
   /systems:
     get:
@@ -239,7 +256,6 @@ paths:
                 system_output:
                   $ref: "#/components/schemas/SystemOutputProps"
               required: [metadata, system_output]
-
       responses:
         "200":
           description: OK
@@ -252,7 +268,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: "#/components/schemas/APIError"
 
   /systems/{system_id}/outputs:
     get:
@@ -292,7 +308,7 @@ components:
     #   type: integer
     #   format: int64
 
-    Error:
+    APIError:
       type: object
       properties:
         error_code:
@@ -300,6 +316,7 @@ components:
         detail:
           type: string
           description: error message
+      required: [error_code, detail]
 
     Time:
       type: object
