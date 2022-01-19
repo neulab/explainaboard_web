@@ -121,5 +121,11 @@ class MetadataDBModel(DBModel):
 
 
 class DBModelException(Exception):
+    """
+    An exception type originated from `db_model`. This exception usually means that a developer is not using `db_model` properly. The details of the exception is usually not useful for the users.
+      - `DBModelException` should not be used if a user requests for a system (with id) that does not exist. For 
+    this purpose, use `abort_with_error()` or define some other exception type.
+    """
+
     def __init__(self, message: str) -> None:
         self.message = message

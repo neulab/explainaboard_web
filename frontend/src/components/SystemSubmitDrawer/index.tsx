@@ -16,7 +16,7 @@ import {
   SystemOutputProps,
   TaskCategory,
 } from "../../clients/openapi";
-import { backendClient } from "../../clients";
+import { backendClient, parseBackendError } from "../../clients";
 import { toBase64 } from "../../utils";
 import { UploadOutlined } from "@ant-design/icons";
 import { useForm } from "antd/lib/form/Form";
@@ -38,10 +38,6 @@ enum State {
  * @param props.visible
  * @params supports all other drawer props
  *
- * TODO:
- * 1. add loading for search
- * 2. [bug] select file -> remove -> form validation won't be updated
- * 3. clean up form item if submission successful so we don't have to destry drawer on close.
  */
 export function SystemSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.loading);
@@ -137,8 +133,13 @@ export function SystemSubmitDrawer(props: Props) {
         "sys_out_file_list",
       ]);
     } catch (e) {
-      console.error(e);
-      message.error("[InternalError] Please contact admin.");
+      if (e instanceof Response) {
+        const err = await parseBackendError(e);
+        message.error(err.getErrorMsg());
+      } else {
+        console.dir(e);
+        message.error("[InternalError] Please contact admin");
+      }
     } finally {
       setState(State.other);
     }

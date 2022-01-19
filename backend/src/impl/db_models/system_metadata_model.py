@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Iterable, Optional, Union
+from explainaboard_web.impl.utils import abort_with_error_message
 
 from explainaboard_web.models.system_analysis import SystemAnalysis
 from explainaboard_web.models.system_output_props import SystemOutputProps
@@ -12,6 +13,7 @@ from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard import Source, get_loader, get_processor
 from pymongo.client_session import ClientSession
+from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 
 
 class SystemModel(MetadataDBModel, System):
@@ -27,10 +29,20 @@ class SystemModel(MetadataDBModel, System):
           -- DB --
           5. write to system_metadata (metadata + analysis)
           6. write to system_outputs
-        TODO: 
-          1. validate if dataset exists
         """
         system = cls.from_dict(metadata.to_dict())
+
+        # validation
+        dataset = DatasetMetaDataModel.find_one_by_id(
+            system.dataset_metadata_id)
+        if not dataset:
+            abort_with_error_message(
+                400, f"dataset: {system.dataset_metadata_id} does not exist")
+        if system.task not in dataset.tasks:
+            abort_with_error_message(
+                400, f"dataset {dataset.dataset_name} cannot be used for {system.task} tasks")
+
+        # load system output and generate analysis
         system_output_data = get_loader(metadata.task, Source.in_memory,
                                         system_output.file_type, system_output.data).load()
         report = get_processor(
