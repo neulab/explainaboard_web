@@ -4,6 +4,7 @@ import {
   Button,
   Drawer,
   message,
+  Popconfirm,
   Space,
   Table,
   Tag,
@@ -14,6 +15,7 @@ import { System } from "../../clients/openapi";
 import { ColumnsType } from "antd/lib/table";
 import { AnalysisReport } from "../../components";
 import { backendClient, parseBackendError } from "../../clients";
+import { DeleteOutlined } from "@ant-design/icons";
 
 interface Props {
   systems: System[];
@@ -95,7 +97,7 @@ export function SystemsTable({
       dataIndex: "action",
       title: "",
       fixed: "right",
-      width: 250,
+      width: 210,
       render: (_, record) => (
         <Space>
           <Button
@@ -109,13 +111,12 @@ export function SystemsTable({
               Dataset Info
             </Button>
           </Tooltip>
-          <Button
-            danger
-            size="small"
-            onClick={() => deleteSystem(record.system_id)}
+          <Popconfirm
+            title="Are you sure?"
+            onConfirm={() => deleteSystem(record.system_id)}
           >
-            Delete
-          </Button>
+            <Button danger size="small" icon={<DeleteOutlined />} />
+          </Popconfirm>
         </Space>
       ),
     },
