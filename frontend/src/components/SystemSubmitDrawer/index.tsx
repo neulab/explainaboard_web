@@ -11,12 +11,16 @@ import {
   Space,
   Spin,
 } from "antd";
-import { DatasetMetadata, SystemOutputProps } from "../../clients/openapi";
+import {
+  DatasetMetadata,
+  SystemOutputProps,
+  TaskCategory,
+} from "../../clients/openapi";
 import { backendClient } from "../../clients";
 import { toBase64 } from "../../utils";
 import { UploadOutlined } from "@ant-design/icons";
-import { RcFile } from "antd/lib/upload";
 import { useForm } from "antd/lib/form/Form";
+import { UploadFile } from "antd/lib/upload/interface";
 
 interface Props extends DrawerProps {
   onClose: () => void;
@@ -41,31 +45,41 @@ enum State {
  */
 export function SystemSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.loading);
-  const [selectedTask, setSelectedTask] = useState<string>();
-  const [tasks, setTasks] = useState<string[]>([]);
-  const [selectedDatasetID, setSelectedDatasetID] = useState<string>();
+  const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
   const [datasetOptions, setDatasetOptions] = useState<DatasetMetadata[]>([]);
-  const [systemOutFile, setSystemOutFile] = useState<RcFile>();
 
-  const [form] = useForm();
+  const [form] = useForm<FormData>();
   const { onClose } = props;
 
   useEffect(() => {
     async function fetchTasks() {
-      setTasks(await backendClient.tasksGet());
+      setTaskCategories(await backendClient.tasksGet());
       setState(State.other);
     }
     fetchTasks();
   }, []);
 
-  function selectTask(task_name: string) {
-    setSelectedTask(task_name);
-    setDatasetOptions([]);
-    setSelectedDatasetID(undefined);
+  const selectedTask = form.getFieldValue("task");
+  const metricsOptions = findMetricsOptions();
+
+  /** find the selected task in task info and return supported metrics */
+  function findMetricsOptions(): string[] {
+    if (selectedTask == null) return [];
+    for (const category of taskCategories) {
+      const task = category.tasks.find(({ name }) => name === selectedTask);
+      if (task) return task.supported_metrics;
+    }
+    return [];
   }
 
-  /** TODO: add debounce */
+  /**
+   * Fetch datasets that match the selected task (max: 30)
+   * TODO:
+   * 1. add debounce
+   * 2. error handling
+   * */
   async function searchDatasets(text: string) {
+    setState(State.loading);
     const { datasets } = await backendClient.datasetsGet(
       text,
       selectedTask,
@@ -73,6 +87,7 @@ export function SystemSubmitDrawer(props: Props) {
       30
     );
     setDatasetOptions(datasets);
+    setState(State.other);
   }
 
   /**
@@ -80,38 +95,60 @@ export function SystemSubmitDrawer(props: Props) {
    * TODO:
    * 1. a more robust way to get file extension
    */
-  async function submit({ name }: { name: string }) {
-    if (selectedDatasetID && systemOutFile && selectedTask) {
-      try {
-        setState(State.loading);
-        const systemOutBase64 = (
-          (await toBase64(systemOutFile)) as string
-        ).split(",")[1];
-        const fileExtension = systemOutFile.name.split(".")[1];
-        const system = await backendClient.systemsPost({
-          metadata: {
-            dataset_metadata_id: selectedDatasetID,
-            metric_names: ["Accuracy"],
-            model_name: name,
-            paper_info: {},
-            task: selectedTask,
-          },
-          system_output: {
-            data: systemOutBase64,
-            file_type:
-              fileExtension as unknown as SystemOutputProps.FileTypeEnum,
-          },
-        });
-        message.success(`Successfully submitted system (${system.system_id}).`);
-        onClose();
-      } catch (e) {
-        console.error(e);
-        message.error("Error. Please submit again.");
-      } finally {
-        setState(State.other);
-      }
-    } else {
-      message.error("[fe] missing required parameters");
+  async function submit({
+    name,
+    task,
+    dataset_id,
+    metric_names,
+    language,
+    sys_out_file_list,
+    code,
+  }: FormData) {
+    try {
+      setState(State.loading);
+      const file = sys_out_file_list[0].originFileObj;
+      if (file == null) throw Error("file is undefined");
+      const systemOutBase64 = ((await toBase64(file)) as string).split(",")[1];
+      const fileExtension = file.name.split(".")[1];
+      const system = await backendClient.systemsPost({
+        metadata: {
+          dataset_metadata_id: dataset_id,
+          metric_names,
+          model_name: name,
+          paper_info: {},
+          task: task,
+          language,
+          code,
+        },
+        system_output: {
+          data: systemOutBase64,
+          file_type: fileExtension as unknown as SystemOutputProps.FileTypeEnum,
+        },
+      });
+      message.success(`Successfully submitted system (${system.system_id}).`);
+      onClose();
+      form.resetFields([
+        "name",
+        "task",
+        "dataset_id",
+        "metric_names",
+        "language",
+        "code",
+        "sys_out_file_list",
+      ]);
+    } catch (e) {
+      console.error(e);
+      message.error("[InternalError] Please contact admin.");
+    } finally {
+      setState(State.other);
+    }
+  }
+
+  function onValuesChange(changedFields: Partial<FormData>) {
+    if (changedFields.task != null) {
+      setDatasetOptions([]);
+      // clear dataset and metric_names selections
+      form.setFieldsValue({ dataset_id: undefined, metric_names: [] });
     }
   }
 
@@ -130,6 +167,11 @@ export function SystemSubmitDrawer(props: Props) {
     </Space>
   );
 
+  /** take an event and returns the filelist */
+  function normalizeFile(e: { file: File; fileList: UploadFile[] }) {
+    return e && e.fileList;
+  }
+
   return (
     <Drawer
       width="50%"
@@ -138,8 +180,14 @@ export function SystemSubmitDrawer(props: Props) {
       destroyOnClose
       {...props}
     >
-      <Spin spinning={state === State.loading}>
-        <Form name="test" labelCol={{ span: 7 }} onFinish={submit} form={form}>
+      <Spin spinning={state === State.loading} tip="loading...">
+        <Form
+          labelCol={{ span: 7 }}
+          onFinish={submit}
+          form={form}
+          scrollToFirstError
+          onValuesChange={onValuesChange}
+        >
           <Form.Item
             name="name"
             label="System Name"
@@ -149,25 +197,30 @@ export function SystemSubmitDrawer(props: Props) {
           </Form.Item>
 
           <Form.Item name="task" label="Task" rules={[{ required: true }]}>
-            <Select
-              value={selectedTask}
-              showSearch
-              options={tasks.map((task) => ({
-                value: task,
-                label: task,
-              }))}
-              onSelect={(value) => selectTask(value)}
-            />
+            <Select showSearch>
+              {taskCategories.map(({ name, tasks }) => (
+                <Select.OptGroup label={name} key={name}>
+                  {tasks.map(({ name, supported }) => (
+                    <Select.Option
+                      value={name}
+                      key={name}
+                      disabled={!supported}
+                    >
+                      {name}
+                    </Select.Option>
+                  ))}
+                </Select.OptGroup>
+              ))}
+            </Select>
           </Form.Item>
 
           <Form.Item
-            name="dataset"
+            name="dataset_id"
             label="Dataset"
             rules={[{ required: true }]}
           >
             <Select
               showSearch
-              value={selectedDatasetID}
               placeholder="Please search dataset by name"
               options={datasetOptions.map((dataset) => ({
                 value: dataset.dataset_id,
@@ -175,36 +228,38 @@ export function SystemSubmitDrawer(props: Props) {
               }))}
               onSearch={searchDatasets}
               disabled={selectedTask == null}
-              onSelect={(value) => setSelectedDatasetID(value)}
               filterOption={false} // disable local filter
             />
           </Form.Item>
 
           <Form.Item
-            name="sys_out_file"
-            label="System Output"
+            name="metric_names"
+            label="Metrics"
             rules={[{ required: true }]}
           >
+            <Select
+              mode="multiple"
+              options={metricsOptions.map((opt) => ({ value: opt }))}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="sys_out_file_list"
+            label="System Output"
+            rules={[{ required: true }]}
+            valuePropName="fileList"
+            getValueFromEvent={normalizeFile}
+          >
             <Upload
-              fileList={systemOutFile ? [systemOutFile] : undefined}
               maxCount={1}
-              onRemove={() => setSystemOutFile(undefined)}
               beforeUpload={(file) => {
-                setSystemOutFile(file);
                 return false;
               }}
             >
               <Button icon={<UploadOutlined />}>Select File</Button>
             </Upload>
           </Form.Item>
-          <Form.Item
-            name="metric_names"
-            label="Metrics"
-            initialValue="Accuracy"
-            rules={[{ required: true }]}
-          >
-            <Select options={[{ value: "Accuracy" }]} />
-          </Form.Item>
+
           <Form.Item
             name="language"
             label="Language"
@@ -220,4 +275,14 @@ export function SystemSubmitDrawer(props: Props) {
       </Spin>
     </Drawer>
   );
+}
+
+interface FormData {
+  name: string;
+  task: string;
+  dataset_id: string;
+  metric_names: string[];
+  language: string;
+  code: string;
+  sys_out_file_list: UploadFile[];
 }

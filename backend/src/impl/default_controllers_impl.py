@@ -9,20 +9,16 @@ from explainaboard_web.models.task_metadata import TaskMetadata
 from explainaboard_web.impl.db_models.system_metadata_model import SystemModel, SystemOutputModel
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.models.datasets_return import DatasetsReturn
-import json
-import pathlib
+from explainaboard_web.models.task_category import TaskCategory
+
+from explainaboard import get_task_categories
+
 
 """ /tasks """
 
 
-def tasks_get() -> List[str]:
-    """only a temporary solution. will replace the list with the actual tasks list from sdk"""
-    path = pathlib.Path.joinpath(pathlib.Path(__file__).parent, "tasks.json")
-    print(path)
-    with open(path, "r") as f:
-        text = f.read()
-        tasks = json.loads(text)
-    return [str(name) for name in tasks.keys()]
+def tasks_get() -> List[TaskCategory]:
+    return get_task_categories()
 
 
 def task_metadata_task_metadata_id_get(task_metadata_id: str) -> TaskMetadata:
