@@ -51,7 +51,7 @@ class SystemModel(MetadataDBModel, System):
 
         def db_operations(session: ClientSession) -> str:
             system_id = system.insert(session)
-            SystemOutputs(system_id, system_output_data).insert()
+            SystemOutputsModel(system_id, system_output_data).insert()
             return system_id
         system_id = DBModel.execute_transaction(db_operations)
 
@@ -87,7 +87,7 @@ class SystemModel(MetadataDBModel, System):
             # drop cannot be added to a multi-document transaction, this seems
             # fine because drop is the last operation. If drop fails, delete
             # gets rolled back which is our only requirement here.
-            SystemOutputs(id).drop(True)
+            SystemOutputsModel(id).drop(True)
             return True
         return DBModel.execute_transaction(db_operations)
 
@@ -116,12 +116,12 @@ class SystemModel(MetadataDBModel, System):
         return SystemsReturn([cls.from_dict(doc) for doc in cursor], total)
 
 
-class SystemOutputs(DBModel):
+class SystemOutputsModel(DBModel):
     """System output collection model which holds all system outputs for a system"""
     _database_name = "system_outputs"
 
     def __init__(self, system_id: str, data: Iterable[dict] = []) -> None:
-        SystemOutputs._collection_name = system_id
+        SystemOutputsModel._collection_name = system_id
         self._system_id = system_id
         self._data = data
 
