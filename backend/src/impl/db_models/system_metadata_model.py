@@ -4,11 +4,11 @@ from typing import Any, Dict, Iterable, Optional, Union
 from explainaboard_web.impl.utils import abort_with_error_message
 
 from explainaboard_web.models.system_analysis import SystemAnalysis
+from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_output_props import SystemOutputProps
 from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system import System
 from explainaboard_web.models.systems_return import SystemsReturn
-from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard import Source, get_loader, get_processor
@@ -51,7 +51,7 @@ class SystemModel(MetadataDBModel, System):
 
         def db_operations(session: ClientSession) -> str:
             system_id = system.insert(session)
-            SystemOutputModel(system_id, system_output_data).insert()
+            SystemOutputs(system_id, system_output_data).insert()
             return system_id
         system_id = DBModel.execute_transaction(db_operations)
 
@@ -78,7 +78,18 @@ class SystemModel(MetadataDBModel, System):
 
     @classmethod
     def delete_one_by_id(cls, id: str):
-        return super().delete_one_by_id(id)
+        def db_operations(session: ClientSession) -> bool:
+            """TODO: add logging if error"""
+            result = super(SystemModel, cls).delete_one_by_id(
+                id, session=session)
+            if not result:
+                return False
+            # drop cannot be added to a multi-document transaction, this seems
+            # fine because drop is the last operation. If drop fails, delete
+            # gets rolled back which is our only requirement here.
+            SystemOutputs(id).drop(True)
+            return True
+        return DBModel.execute_transaction(db_operations)
 
     def insert(self, session: ClientSession = None) -> str:
         """
@@ -105,12 +116,13 @@ class SystemModel(MetadataDBModel, System):
         return SystemsReturn([cls.from_dict(doc) for doc in cursor], total)
 
 
-class SystemOutputModel(DBModel, SystemOutput):
+class SystemOutputs(DBModel):
+    """System output collection model which holds all system outputs for a system"""
     _database_name = "system_outputs"
 
-    def __init__(self, system_id: str = "", data: Iterable[dict] = []) -> None:
-        super().__init__()
-        SystemOutputModel._collection_name = system_id
+    def __init__(self, system_id: str, data: Iterable[dict] = []) -> None:
+        SystemOutputs._collection_name = system_id
+        self._system_id = system_id
         self._data = data
 
     def insert(self, drop_old_data: bool = True, session: ClientSession = None):
@@ -127,6 +139,7 @@ class SystemOutputModel(DBModel, SystemOutput):
     def find(cls, output_ids: Optional[str]) -> SystemOutputsReturn:
         """
         find multiple system outputs whose ids are in output_ids
+        TODO: raise error if system doesn't exist
         """
         filter: Dict[str, Any] = {}
         if output_ids:
@@ -134,4 +147,15 @@ class SystemOutputModel(DBModel, SystemOutput):
                 "$in": [int(id) for id in output_ids.split(",")]
             }
         cursor, total = super().find(filter)
-        return SystemOutputsReturn([cls.from_dict(doc) for doc in cursor], total)
+        return SystemOutputsReturn([SystemOutputModel.from_dict(doc) for doc in cursor], total)
+
+
+class SystemOutputModel(SystemOutput):
+    """one sample of system output"""
+    @classmethod
+    def from_dict(cls, dikt) -> SystemOutput:
+        """pop _id because it's not serializable and it is irrelevant for the users"""
+        document = {**dikt}
+        if "_id" in document:
+            document.pop("_id")
+        return super().from_dict(document)

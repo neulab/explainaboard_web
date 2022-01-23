@@ -69,7 +69,7 @@ class DBModel:
             abort_with_error_message(400, f"id: {id} is not a valid ID")
 
     @classmethod
-    def delete_one_by_id(cls, id: str):
+    def delete_one_by_id(cls, id: str, session: ClientSession = None):
         """
         Delete one document with the given ID
         Returns: `True` if a single document has been deleted
@@ -78,8 +78,7 @@ class DBModel:
             raise DBModelException("collection_name not defined")
         try:
             result: DeleteResult = cls.get_collection(
-                cls._collection_name).delete_one({"_id": ObjectId(id)})
-            print(result)
+                cls._collection_name).delete_one({"_id": ObjectId(id)}, session=session)
             if int(result.deleted_count) == 1:
                 return True
             return False

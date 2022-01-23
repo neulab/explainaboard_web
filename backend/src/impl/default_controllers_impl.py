@@ -6,7 +6,7 @@ from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.impl.db_models.task_metadata_model import TaskMetadataModel
 from explainaboard_web.models.task_metadata import TaskMetadata
-from explainaboard_web.impl.db_models.system_metadata_model import SystemModel, SystemOutputModel
+from explainaboard_web.impl.db_models.system_metadata_model import SystemModel, SystemOutputs
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.task_category import TaskCategory
@@ -76,7 +76,7 @@ def systems_post(body: SystemsBody) -> SystemModel:
 
 
 def systems_system_id_outputs_get(system_id: str, output_ids: Optional[str]) -> SystemOutputsReturn:
-    return SystemOutputModel(system_id).find(output_ids)
+    return SystemOutputs(system_id).find(output_ids)
 
 
 def systems_system_id_delete(system_id: str):

@@ -399,16 +399,9 @@ components:
       properties:
         id:
           type: integer
-        text:
-          type: string
-        true_label:
-          type: string
-        predicted_label:
-          type: string
-        sentence_length:
-          type: integer
-        token_number:
-          type: integer
+      additionalProperties: true
+
+      required: [id]
 
     TaskMetadata:
       type: object
