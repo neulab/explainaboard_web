@@ -1,9 +1,21 @@
 import React, { useState } from "react";
 import "./index.css";
-import { Button, Drawer, Space, Table, Tag, Tooltip, Typography } from "antd";
+import {
+  Button,
+  Drawer,
+  message,
+  Popconfirm,
+  Space,
+  Table,
+  Tag,
+  Tooltip,
+  Typography,
+} from "antd";
 import { System } from "../../clients/openapi";
 import { ColumnsType } from "antd/lib/table";
 import { AnalysisReport } from "../../components";
+import { backendClient, parseBackendError } from "../../clients";
+import { DeleteOutlined } from "@ant-design/icons";
 
 interface Props {
   systems: System[];
@@ -29,6 +41,18 @@ export function SystemsTable({
 
   function showSystemAnalysis(systemID: string) {
     setActiveSystemID(systemID);
+  }
+
+  async function deleteSystem(systemID: string) {
+    try {
+      await backendClient.systemsSystemIdDelete(systemID);
+      message.success("Success");
+      document.location.reload();
+    } catch (e) {
+      if (e instanceof Response) {
+        message.error((await parseBackendError(e)).getErrorMsg());
+      }
+    }
   }
 
   function closeSystemAnalysis() {
@@ -72,6 +96,8 @@ export function SystemsTable({
     {
       dataIndex: "action",
       title: "",
+      fixed: "right",
+      width: 210,
       render: (_, record) => (
         <Space>
           <Button
@@ -85,6 +111,12 @@ export function SystemsTable({
               Dataset Info
             </Button>
           </Tooltip>
+          <Popconfirm
+            title="Are you sure?"
+            onConfirm={() => deleteSystem(record.system_id)}
+          >
+            <Button danger size="small" icon={<DeleteOutlined />} />
+          </Popconfirm>
         </Space>
       ),
     },
@@ -108,6 +140,7 @@ export function SystemsTable({
         }}
         sticky
         loading={loading}
+        scroll={{ x: "100%" }}
       />
       <Drawer
         visible={activeSystemID != null}
