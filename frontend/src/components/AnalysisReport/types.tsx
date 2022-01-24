@@ -9,72 +9,42 @@ export interface Analysis {
   results: Results;
 }
 
-interface Features {
-  label: TextClass;
-  predicted_label: Label;
-  sentence_length: FeaturesSentenceLength;
-  text: TextClass;
-  token_number: TextClass;
-  true_label: Label;
+export interface Features {
+  [key: string]: FeatureVal;
 }
 
-interface TextClass {
+export interface FeatureVal {
   _type: string;
-  bucket_info: LabelBucketInfo | null;
-  dtype: string;
+  bucket_info: BucketInfo | null;
   id: null;
   is_bucket: boolean;
   is_pre_computed: boolean;
+  dtype?: string;
+  names?: string[];
+  names_file?: null;
+  num_classes?: number;
 }
 
-interface LabelBucketInfo {
+export interface BucketInfo {
   _method: string;
   _number: number;
-  // _setting: any[] | number;
+  _setting: number[] | number;
 }
 
-interface Label {
-  _type: string;
-  bucket_info: null;
-  id: null;
-  is_bucket: boolean;
-  is_pre_computed: boolean;
-  names: string[];
-  names_file: null;
-  num_classes: number;
-}
-
-interface FeaturesSentenceLength {
-  _type: string;
-  bucket_info: SentenceLengthBucketInfo;
-  dtype: string;
-  id: null;
-  is_bucket: boolean;
-  is_pre_computed: boolean;
-}
-
-interface SentenceLengthBucketInfo {
-  _method: string;
-  _number: number;
-  // _setting: any[];
-}
-
-interface Results {
+export interface Results {
   fine_grained: FineGrained;
   is_print_case: boolean;
   is_print_confidence_interval: boolean;
-  overall: Overall[];
+  overall: OverallElement[];
 }
 
-interface FineGrained {
-  label: Array<FineGrainedElement[]>;
-  sentence_length: Array<FineGrainedElement[]>;
-  token_number: Array<FineGrainedElement[]>;
+export interface FineGrained {
+  [key: string]: Array<FineGrainedElement[]>;
 }
 
 export interface FineGrainedElement {
   bucket_name: string[] | number[];
-  bucket_samples: BucketSample[];
+  bucket_samples: string[];
   confidence_score_low: string;
   confidence_score_up: string;
   metric_name: string;
@@ -82,27 +52,19 @@ export interface FineGrainedElement {
   value: string;
 }
 
-interface BucketSample {
-  predicted_label: Array<PredictedLabelEnum[] | number>;
-  text: Array<TextEnum[] | number>;
-  true_label: Array<TrueLabelEnum[] | number>;
-}
-
-enum PredictedLabelEnum {
-  PredictedLabel = "predicted_label",
-}
-
-enum TextEnum {
-  Text = "text",
-}
-
-enum TrueLabelEnum {
-  TrueLabel = "true_label",
-}
-
-interface Overall {
+export interface OverallElement {
   confidence_score_low: string;
   confidence_score_up: string;
   metric_name: string;
   value: string;
+}
+
+export interface ResultFineGrainedParsed {
+  title: string;
+  metricName: string;
+  bucketNames: string[];
+  bucketsOfSamples: Array<string[]>;
+  values: number[];
+  numbersOfSamples: number[];
+  confidenceScores: Array<[number, number]>;
 }

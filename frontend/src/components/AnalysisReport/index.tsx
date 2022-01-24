@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Analysis } from "./types";
+import { Analysis, ResultFineGrainedParsed } from "./types";
 import { SystemAnalysis } from "../../clients/openapi";
 import { parse } from "./parser";
 import { BarChart, AnalysisTable } from "../../components";
@@ -11,24 +11,41 @@ interface Props {
 }
 
 export function AnalysisReport(props: Props) {
-  const [bucketOfSamples, setBucketOfSample] = useState<number[]>([]);
+  const [bucketOfSamples, setBucketOfSample] = useState<string[]>([]);
   const analysis = props.analysis as Analysis;
   const resultsFineGrained = analysis["results"]["fine_grained"];
-  const parsedLabels = parse(resultsFineGrained["label"]);
-  const parseOption = {
-    bucketName: {
-      format: "range",
-    },
-  };
-  const parsedSentenceLengths = parse(
-    resultsFineGrained["sentence_length"],
-    parseOption
-  );
-  const parsedTokenNumbers = parse(
-    resultsFineGrained["token_number"],
-    parseOption
-  );
-  const seriesLabelName = "sample size";
+
+  // The visualization chart of a fine grained result is displayed using the "Grid" layout by Ant Design.
+  // Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
+  // to be enclosed by <Row></Row>.
+
+  // Must be a factor of 24 since Ant divides a row into 24 sections!
+  const chartNumPerRow = 3;
+  const resultsFineGrainedParsed: Array<ResultFineGrainedParsed[]> = [
+    new Array<ResultFineGrainedParsed>(chartNumPerRow),
+  ];
+  const featureKeys: string[] = [];
+
+  let rowIdx = 0;
+  let chartNum = 0;
+  for (const [key, featureVal] of Object.entries(analysis["features"])) {
+    featureKeys.push(key);
+    if (featureVal.is_bucket) {
+      if (chartNum === chartNumPerRow) {
+        chartNum = 0;
+        resultsFineGrainedParsed.push(
+          new Array<ResultFineGrainedParsed>(chartNumPerRow)
+        );
+        rowIdx += 1;
+      }
+      // TODO: using key as title for now, need SDK to provide an explicit title
+      resultsFineGrainedParsed[rowIdx][chartNum] = parse(
+        key,
+        resultsFineGrained[key]
+      );
+      chartNum += 1;
+    }
+  }
 
   let analysisTable;
   if (bucketOfSamples.length === 0) {
@@ -41,56 +58,37 @@ export function AnalysisReport(props: Props) {
     analysisTable = (
       <div>
         <Typography.Title level={4}>Error Cases: </Typography.Title>
-        <AnalysisTable systemID={props.systemID} outputIDs={bucketOfSamples} />
+        <AnalysisTable
+          systemID={props.systemID}
+          outputIDs={bucketOfSamples}
+          featureKeys={featureKeys}
+        />
       </div>
     );
   }
 
   return (
     <div style={{ textAlign: "center" }}>
-      <Row>
-        <Col span={8}>
-          <BarChart
-            title={`${parsedLabels.metricName} by label`}
-            xAxisData={parsedLabels.bucketNames}
-            seriesData={parsedLabels.values}
-            seriesLabelName={seriesLabelName}
-            seriesLabels={parsedLabels.numbersOfSamples}
-            confidenceScores={parsedLabels.confidenceScores}
-            onBarClick={(barIndex: number) => {
-              setBucketOfSample(parsedLabels.bucketsOfSamples[barIndex]);
-            }}
-          />
-        </Col>
-        <Col span={8}>
-          <BarChart
-            title={`${parsedSentenceLengths.metricName} by sentence length`}
-            xAxisData={parsedSentenceLengths.bucketNames}
-            seriesData={parsedSentenceLengths.values}
-            seriesLabelName={seriesLabelName}
-            seriesLabels={parsedSentenceLengths.numbersOfSamples}
-            confidenceScores={parsedSentenceLengths.confidenceScores}
-            onBarClick={(barIndex: number) => {
-              setBucketOfSample(
-                parsedSentenceLengths.bucketsOfSamples[barIndex]
-              );
-            }}
-          />
-        </Col>
-        <Col span={8}>
-          <BarChart
-            title={`${parsedTokenNumbers.metricName} by token numbers`}
-            xAxisData={parsedTokenNumbers.bucketNames}
-            seriesData={parsedTokenNumbers.values}
-            seriesLabelName={seriesLabelName}
-            seriesLabels={parsedTokenNumbers.numbersOfSamples}
-            confidenceScores={parsedTokenNumbers.confidenceScores}
-            onBarClick={(barIndex: number) => {
-              setBucketOfSample(parsedTokenNumbers.bucketsOfSamples[barIndex]);
-            }}
-          />
-        </Col>
-      </Row>
+      {resultsFineGrainedParsed.map(function (row, rowIdx) {
+        const cols = row.map(function (result) {
+          return (
+            <Col span={Math.floor(24 / chartNumPerRow)} key={result.title}>
+              <BarChart
+                title={`${result.metricName} by ${result.title}`}
+                xAxisData={result.bucketNames}
+                seriesData={result.values}
+                seriesLabels={result.values}
+                numbersOfSamples={result.numbersOfSamples}
+                confidenceScores={result.confidenceScores}
+                onBarClick={(barIndex: number) => {
+                  setBucketOfSample(result.bucketsOfSamples[barIndex]);
+                }}
+              />
+            </Col>
+          );
+        });
+        return <Row key={rowIdx}>{cols}</Row>;
+      })}
       {analysisTable}
     </div>
   );
