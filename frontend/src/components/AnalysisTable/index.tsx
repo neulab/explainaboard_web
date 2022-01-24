@@ -7,7 +7,7 @@ import { PageState } from "../../utils";
 
 interface Props {
   systemID: string;
-  outputIDs: number[];
+  outputIDs: string[];
 }
 
 export function AnalysisTable({ systemID, outputIDs }: Props) {
