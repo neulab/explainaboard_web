@@ -43,30 +43,29 @@ export function BarChart(props: Props) {
 
   for (let i = 0; i < xAxisData.length; i++) {
     const x = xAxisData[i];
-    const [confidenceScoreLow, confidenceScoreHigh] = confidenceScores[i];
-    seriesMaxValue = Math.max(
-      seriesMaxValue,
-      confidenceScoreHigh,
-      seriesData[i]
-    );
+    seriesMaxValue = Math.max(seriesMaxValue, seriesData[i]);
 
-    const confidenceLowPoint = {
-      xAxis: x,
-      yAxis: confidenceScoreLow,
-    };
-    const confidenceHighPoint = {
-      xAxis: x,
-      yAxis: confidenceScoreHigh,
-    };
-    confidencePoints.push({
-      ...confidenceLowPoint,
-      itemStyle: { color: "brown" },
-    });
-    confidencePoints.push({
-      ...confidenceHighPoint,
-      itemStyle: { color: "orange" },
-    });
-    confidenceLines.push([confidenceLowPoint, confidenceHighPoint]);
+    if (i < confidenceScores.length) {
+      const [confidenceScoreLow, confidenceScoreHigh] = confidenceScores[i];
+      seriesMaxValue = Math.max(seriesMaxValue, confidenceScoreHigh);
+      const confidenceLowPoint = {
+        xAxis: x,
+        yAxis: confidenceScoreLow,
+      };
+      const confidenceHighPoint = {
+        xAxis: x,
+        yAxis: confidenceScoreHigh,
+      };
+      confidencePoints.push({
+        ...confidenceLowPoint,
+        itemStyle: { color: "brown" },
+      });
+      confidencePoints.push({
+        ...confidenceHighPoint,
+        itemStyle: { color: "orange" },
+      });
+      confidenceLines.push([confidenceLowPoint, confidenceHighPoint]);
+    }
   }
 
   // config to be passed in echart
@@ -85,7 +84,11 @@ export function BarChart(props: Props) {
         const param = params[0];
         const dataIndex = param.dataIndex;
         const data = param.data.toString();
-        return `${data} [${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}] <br /> sample size: ${numbersOfSamples[dataIndex]}`;
+        const confidenceScoreRange =
+          dataIndex < confidenceScores.length
+            ? `[${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}]`
+            : "";
+        return `${data} ${confidenceScoreRange} <br /> sample size: ${numbersOfSamples[dataIndex]}`;
       },
     },
     grid: {

@@ -58,14 +58,16 @@ export function parse(
     const confidenceScoreLow = parseFloat(
       fineGrainedElement.confidence_score_low
     );
-    const confidenceScoreUp = parseFloat(
+    const confidenceScoreHigh = parseFloat(
       fineGrainedElement.confidence_score_up
     );
     metricName = fineGrainedElement.metric_name;
     bucketNames.push(bucketName);
     values.push(value);
     numbersOfSamples.push(nSamples);
-    confidenceScores.push([confidenceScoreLow, confidenceScoreUp]);
+    if (confidenceScoreLow !== 0 && confidenceScoreHigh !== 0) {
+      confidenceScores.push([confidenceScoreLow, confidenceScoreHigh]);
+    }
   }
 
   return {
