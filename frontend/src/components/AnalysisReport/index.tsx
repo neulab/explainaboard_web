@@ -45,8 +45,6 @@ export function AnalysisReport(props: Props) {
     }
   }
 
-  const seriesLabelName = "sample size";
-
   let analysisTable;
   if (bucketOfSamples.length === 0) {
     analysisTable = (
@@ -73,8 +71,8 @@ export function AnalysisReport(props: Props) {
                 title={`${result.metricName} by ${result.title}`}
                 xAxisData={result.bucketNames}
                 seriesData={result.values}
-                seriesLabelName={seriesLabelName}
-                seriesLabels={result.numbersOfSamples}
+                seriesLabels={result.values}
+                numbersOfSamples={result.numbersOfSamples}
                 confidenceScores={result.confidenceScores}
                 onBarClick={(barIndex: number) => {
                   setBucketOfSample(result.bucketsOfSamples[barIndex]);

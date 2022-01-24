@@ -20,9 +20,9 @@ interface formatterParam {
 interface Props {
   title: string;
   xAxisData: string[];
-  seriesLabelName: string;
   seriesData: number[];
   seriesLabels: number[];
+  numbersOfSamples: number[];
   confidenceScores: [number, number][];
   onBarClick: (barIndex: number) => void;
 }
@@ -32,34 +32,41 @@ export function BarChart(props: Props) {
     title,
     xAxisData,
     seriesData,
-    seriesLabelName,
     seriesLabels,
+    numbersOfSamples,
     confidenceScores,
     onBarClick,
   } = props;
+  let seriesMaxValue = 0;
   const confidencePoints = [];
   const confidenceLines = [];
 
   for (let i = 0; i < xAxisData.length; i++) {
     const x = xAxisData[i];
-    const [confidenceScoreLow, confidenceScoreUp] = confidenceScores[i];
+    const [confidenceScoreLow, confidenceScoreHigh] = confidenceScores[i];
+    seriesMaxValue = Math.max(
+      seriesMaxValue,
+      confidenceScoreHigh,
+      seriesData[i]
+    );
+
     const confidenceLowPoint = {
       xAxis: x,
       yAxis: confidenceScoreLow,
     };
-    const confidenceUpPoint = {
+    const confidenceHighPoint = {
       xAxis: x,
-      yAxis: confidenceScoreUp,
+      yAxis: confidenceScoreHigh,
     };
     confidencePoints.push({
       ...confidenceLowPoint,
       itemStyle: { color: "brown" },
     });
     confidencePoints.push({
-      ...confidenceUpPoint,
+      ...confidenceHighPoint,
       itemStyle: { color: "orange" },
     });
-    confidenceLines.push([confidenceLowPoint, confidenceUpPoint]);
+    confidenceLines.push([confidenceLowPoint, confidenceHighPoint]);
   }
 
   // config to be passed in echart
@@ -78,7 +85,7 @@ export function BarChart(props: Props) {
         const param = params[0];
         const dataIndex = param.dataIndex;
         const data = param.data.toString();
-        return `${data} [${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}] <br /> ${seriesLabelName}: ${seriesLabels[dataIndex]}`;
+        return `${data} [${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}] <br /> sample size: ${numbersOfSamples[dataIndex]}`;
       },
     },
     grid: {
@@ -99,8 +106,9 @@ export function BarChart(props: Props) {
     yAxis: [
       {
         type: "value",
-        min: 0,
-        max: 1,
+        // TODO: get min max from SDK?
+        // min: 0,
+        max: Math.ceil(seriesMaxValue),
       },
     ],
     series: [
