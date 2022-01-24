@@ -8,9 +8,10 @@ import { PageState } from "../../utils";
 interface Props {
   systemID: string;
   outputIDs: string[];
+  featureKeys: string[];
 }
 
-export function AnalysisTable({ systemID, outputIDs }: Props) {
+export function AnalysisTable({ systemID, outputIDs, featureKeys }: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const [total, setTotal] = useState(0);
@@ -38,27 +39,15 @@ export function AnalysisTable({ systemID, outputIDs }: Props) {
         </Typography.Paragraph>
       ),
     },
-    {
-      dataIndex: "true_label",
-      title: "True Label",
-    },
-    {
-      dataIndex: "predicted_label",
-      title: "Predicted Label",
-    },
-    {
-      dataIndex: "sentence_length",
-      title: "Sentence Length",
-    },
-    {
-      dataIndex: "token_number",
-      title: "Number of Tokens",
-    },
-    {
-      dataIndex: "text",
-      title: "Text",
-    },
   ];
+  for (const featureKey of featureKeys) {
+    columns.push({
+      dataIndex: featureKey,
+      // TODO: update SDK to generate title
+      title: featureKey,
+    });
+  }
+  // TODO: pagination
   return (
     <Table
       className="table"

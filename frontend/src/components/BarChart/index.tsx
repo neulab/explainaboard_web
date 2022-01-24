@@ -114,7 +114,7 @@ export function BarChart(props: Props) {
     series: [
       {
         type: "bar",
-        barWidth: "60%",
+        barWidth: 50,
         label: {
           show: true,
           position: "inside",

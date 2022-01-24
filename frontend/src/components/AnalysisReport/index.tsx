@@ -24,10 +24,12 @@ export function AnalysisReport(props: Props) {
   const resultsFineGrainedParsed: Array<ResultFineGrainedParsed[]> = [
     new Array<ResultFineGrainedParsed>(chartNumPerRow),
   ];
+  const featureKeys: string[] = [];
 
   let rowIdx = 0;
   let chartNum = 0;
   for (const [key, featureVal] of Object.entries(analysis["features"])) {
+    featureKeys.push(key);
     if (featureVal.is_bucket) {
       if (chartNum === chartNumPerRow) {
         chartNum = 0;
@@ -56,7 +58,11 @@ export function AnalysisReport(props: Props) {
     analysisTable = (
       <div>
         <Typography.Title level={4}>Error Cases: </Typography.Title>
-        <AnalysisTable systemID={props.systemID} outputIDs={bucketOfSamples} />
+        <AnalysisTable
+          systemID={props.systemID}
+          outputIDs={bucketOfSamples}
+          featureKeys={featureKeys}
+        />
       </div>
     );
   }
