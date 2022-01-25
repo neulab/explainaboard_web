@@ -29,10 +29,17 @@ def main():
     else:
         app.app.config.from_object(DevelopmentConfig())
     
-    # serve the frontend in a docker environment
-    def frontend():
+    # serves the frontend. connexion does not support `path` param type
+    # so there is no good way to add a catch all path. We will probably
+    # serve frontend separately in the future which should fix this. For
+    # this should be good enough (catches pathes up to 4 steps deep)
+    @app.route('/', defaults={'path': ''})
+    @app.route('/<path>')
+    @app.route('/<path1>/<path2>')
+    @app.route('/<path1>/<path2>/<path3>')
+    @app.route('/<path1>/<path2>/<path3>/<path4>')
+    def frontend(**path):
         return app.app.send_static_file('index.html')
-    app.add_url_rule('/', 'frontend', frontend)
     
     app.run(port={{serverPort}})
 
