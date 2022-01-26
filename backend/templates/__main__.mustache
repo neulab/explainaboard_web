@@ -17,8 +17,7 @@ class CorsHeaderMiddleware(object):
         return self.app(environ, custom_start_response)
 
 def main():
-    app = connexion.App(__name__, specification_dir='./swagger/', server_args={
-                        'static_folder': '../frontend', 'static_url_path': '/'})
+    app = connexion.App(__name__, specification_dir='./swagger/')
     app.app.json_encoder = encoder.JSONEncoder
     app.add_api('swagger.yaml', arguments={'title': '{{appName}}'},
                     pythonic_params=True, validate_responses=True)
@@ -29,17 +28,11 @@ def main():
     else:
         app.app.config.from_object(DevelopmentConfig())
     
-    # serves the frontend. connexion does not support `path` param type
-    # so there is no good way to add a catch all path. We will probably
-    # serve frontend separately in the future which should fix this. For
-    # this should be good enough (catches pathes up to 4 steps deep)
-    @app.route('/', defaults={'path': ''})
-    @app.route('/<path>')
-    @app.route('/<path1>/<path2>')
-    @app.route('/<path1>/<path2>/<path3>')
-    @app.route('/<path1>/<path2>/<path3>/<path4>')
-    def frontend(**path):
-        return app.app.send_static_file('index.html')
+    @app.route('/api/info')
+    def info():
+        return {
+            'env': os.getenv('FLASK_ENV')
+        }    
     
     app.run(port={{serverPort}})
 

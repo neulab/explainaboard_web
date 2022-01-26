@@ -22,7 +22,7 @@ RUN npm run build
 
 # Build step #2: build the API with the client as static files
 FROM python:3.9-slim-bullseye
-RUN apt-get update && apt-get install -y default-jre wget
+RUN apt-get update && apt-get install -y default-jre wget nginx
 
 WORKDIR /app
 COPY ./backend ./backend
@@ -34,9 +34,11 @@ RUN pip install -r ./backend/src/gen/requirements.txt
 
 WORKDIR /app/backend/src/gen
 ENV FLASK_ENV production
-COPY --from=build-step /app/frontend/build ./frontend
+
+# configure nginx to serve frontend
+COPY --from=build-step /app/frontend/build /usr/share/nginx/html
+COPY deployment/nginx.conf /etc/nginx/sites-enabled/default
 
 # run server
-EXPOSE 5000
-ENTRYPOINT ["python3"]
-CMD ["-m", "explainaboard_web"]
+EXPOSE 80 5000
+ENTRYPOINT nohup nginx -g "daemon off;" & python3 -m explainaboard_web
