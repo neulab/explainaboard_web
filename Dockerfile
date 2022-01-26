@@ -40,5 +40,5 @@ COPY --from=build-step /app/frontend/build /usr/share/nginx/html
 COPY deployment/nginx.conf /etc/nginx/sites-enabled/default
 
 # run server
-EXPOSE 80 5000
+EXPOSE 80
 ENTRYPOINT nohup nginx -g "daemon off;" & python3 -m explainaboard_web
