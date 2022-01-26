@@ -5,14 +5,11 @@
 import { DefaultApi, Configuration, APIError } from "./openapi";
 
 /** Client for explainaboard open APIs. We deploy frontend and backend in
- * the same containers so it's fine to redirect to localhost:5000 for all
- * situations. In the future, we can use env variables to control the base
- * urls.
+ * the same containers so it's fine to redirect to the same container/instance
+ * for all situations. In the future, we can use env variables to control
+ * the base urls.
  */
-export const backendClient = new DefaultApi(
-  new Configuration({}),
-  "http://localhost:5000/api"
-);
+export const backendClient = new DefaultApi(new Configuration({}), "/api");
 
 /**
  * Parsed error from backend APIs
