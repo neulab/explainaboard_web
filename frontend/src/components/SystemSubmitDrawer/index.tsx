@@ -10,12 +10,10 @@ import {
   message,
   Space,
   Spin,
+  Radio,
+  CheckboxOptionType,
 } from "antd";
-import {
-  DatasetMetadata,
-  SystemOutputProps,
-  TaskCategory,
-} from "../../clients/openapi";
+import { DatasetMetadata, TaskCategory } from "../../clients/openapi";
 import { backendClient, parseBackendError } from "../../clients";
 import { toBase64 } from "../../utils";
 import { UploadOutlined } from "@ant-design/icons";
@@ -57,6 +55,12 @@ export function SystemSubmitDrawer(props: Props) {
 
   const selectedTask = form.getFieldValue("task");
   const metricsOptions = findMetricsOptions();
+  const FILE_TYPES: CheckboxOptionType[] = [
+    { value: "csv", label: "CSV" },
+    { value: "tsv", label: "TSV" },
+    { value: "json", label: "JSON or JSON Line" },
+    { value: "conll", label: "CoNLL" },
+  ];
 
   /** find the selected task in task info and return supported metrics */
   function findMetricsOptions(): string[] {
@@ -99,13 +103,13 @@ export function SystemSubmitDrawer(props: Props) {
     language,
     sys_out_file_list,
     code,
+    fileType,
   }: FormData) {
     try {
       setState(State.loading);
       const file = sys_out_file_list[0].originFileObj;
       if (file == null) throw Error("file is undefined");
       const systemOutBase64 = ((await toBase64(file)) as string).split(",")[1];
-      const fileExtension = file.name.split(".")[1];
       const system = await backendClient.systemsPost({
         metadata: {
           dataset_metadata_id: dataset_id,
@@ -118,7 +122,7 @@ export function SystemSubmitDrawer(props: Props) {
         },
         system_output: {
           data: systemOutBase64,
-          file_type: fileExtension as unknown as SystemOutputProps.FileTypeEnum,
+          file_type: fileType,
         },
       });
       message.success(`Successfully submitted system (${system.system_id}).`);
@@ -131,6 +135,7 @@ export function SystemSubmitDrawer(props: Props) {
         "language",
         "code",
         "sys_out_file_list",
+        "fileType",
       ]);
     } catch (e) {
       if (e instanceof Response) {
@@ -168,9 +173,18 @@ export function SystemSubmitDrawer(props: Props) {
     </Space>
   );
 
-  /** take an event and returns the filelist */
+  /**
+   * 1. take an event and returns the filelist
+   * 2. determines file type according to file extension. user can also override the file type selection
+   * */
   function normalizeFile(e: { file: File; fileList: UploadFile[] }) {
-    return e && e.fileList;
+    const fileList = e && e.fileList;
+    if (!fileList || fileList.length === 0) return undefined;
+    let fileExtension = fileList[0].name.split(".")[1].toLowerCase();
+    if (fileExtension === "jsonl") fileExtension = "json"; // SDK treats them the same
+    const fileType = FILE_TYPES.find((type) => type.value === fileExtension);
+    if (fileType) form.setFieldsValue({ fileType: fileType.value as string });
+    return fileList;
   }
 
   return (
@@ -262,6 +276,14 @@ export function SystemSubmitDrawer(props: Props) {
           </Form.Item>
 
           <Form.Item
+            name="fileType"
+            label="File Type"
+            rules={[{ required: true }]}
+          >
+            <Radio.Group options={FILE_TYPES} />
+          </Form.Item>
+
+          <Form.Item
             name="language"
             label="Language"
             initialValue="en"
@@ -286,4 +308,5 @@ interface FormData {
   language: string;
   code: string;
   sys_out_file_list: UploadFile[];
+  fileType: string;
 }
