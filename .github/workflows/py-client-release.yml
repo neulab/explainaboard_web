@@ -1,0 +1,39 @@
+name: "Python API Client Release"
+
+on:
+  push:
+    branches:
+      - "main"
+
+jobs:
+  build-and-release:
+    name: "Build and Release"
+    runs-on: "ubuntu-latest"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          apt-get update && apt-get install -y default-jre
+          pip install wheel
+      - name: Generate Python Client
+        run: |
+          wget https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar -O swagger-codegen-cli-3.0.29.jar
+          java -jar swagger-codegen-cli-3.0.29.jar generate -i openapi/openapi.yaml -l python -o python_client -DpackageName=explainaboard_api_client
+      - name: "build"
+        run: |
+          cd python_client
+          python setup.py bdist_wheel
+
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "latest"
+          title: "Python API Client"
+          prerelease: true
+          files: |
+            python_client/dist/*.whl
