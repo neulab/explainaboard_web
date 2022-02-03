@@ -144,7 +144,7 @@ class SystemOutputsModel(DBModel):
         filter: Dict[str, Any] = {}
         if output_ids:
             filter["id"] = {
-                "$in": [int(id) for id in output_ids.split(",")]
+                "$in": [str(id) for id in output_ids.split(",")]
             }
         cursor, total = super().find(filter)
         return SystemOutputsReturn([SystemOutputModel.from_dict(doc) for doc in cursor], total)

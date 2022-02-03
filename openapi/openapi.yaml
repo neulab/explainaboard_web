@@ -398,9 +398,8 @@ components:
       type: object
       properties:
         id:
-          type: integer
+          type: string
       additionalProperties: true
-
       required: [id]
 
     TaskMetadata:
@@ -458,7 +457,6 @@ components:
           description: base64 encoded file
         file_type:
           type: string
-          enum: [tsv]
         task_output_type:
           type: string
           description: describes task-related system output format

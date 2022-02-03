@@ -76,6 +76,9 @@ def systems_post(body: SystemsBody) -> SystemModel:
 
 
 def systems_system_id_outputs_get(system_id: str, output_ids: Optional[str]) -> SystemOutputsReturn:
+    """
+    TODO: return special error/warning if some ids cannot be found
+    """
     return SystemOutputsModel(system_id).find(output_ids)
 
 
