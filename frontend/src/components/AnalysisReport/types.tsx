@@ -35,7 +35,7 @@ export interface Results {
   fine_grained: FineGrained;
   is_print_case: boolean;
   is_print_confidence_interval: boolean;
-  overall: OverallElement[];
+  overall: { [key: string]: OverallElement };
 }
 
 export interface FineGrained {
@@ -53,10 +53,10 @@ export interface FineGrainedElement {
 }
 
 export interface OverallElement {
-  confidence_score_low: string;
-  confidence_score_up: string;
+  confidence_score_low: number;
+  confidence_score_up: number;
   metric_name: string;
-  value: string;
+  value: number;
 }
 
 export interface ResultFineGrainedParsed {

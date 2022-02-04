@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Analysis, ResultFineGrainedParsed } from "./types";
-import { SystemAnalysis } from "../../clients/openapi";
 import { parse } from "./parser";
 import { BarChart, AnalysisTable } from "../../components";
 import { Row, Col, Typography } from "antd";
+import { SystemAnalysisModel } from "../../models";
 
 interface Props {
   systemID: string;
-  analysis: SystemAnalysis;
+  analysis: SystemAnalysisModel;
 }
 
 export function AnalysisReport(props: Props) {

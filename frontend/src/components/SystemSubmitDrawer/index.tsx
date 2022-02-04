@@ -12,13 +12,15 @@ import {
   Spin,
   Radio,
   CheckboxOptionType,
+  Tooltip,
 } from "antd";
 import { DatasetMetadata, TaskCategory } from "../../clients/openapi";
 import { backendClient, parseBackendError } from "../../clients";
-import { toBase64 } from "../../utils";
+import { findTask, toBase64 } from "../../utils";
 import { UploadOutlined } from "@ant-design/icons";
 import { useForm } from "antd/lib/form/Form";
 import { UploadFile } from "antd/lib/upload/interface";
+import { TaskSelect } from "..";
 
 interface Props extends DrawerProps {
   onClose: () => void;
@@ -53,36 +55,24 @@ export function SystemSubmitDrawer(props: Props) {
     fetchTasks();
   }, []);
 
-  const selectedTask = form.getFieldValue("task");
-  const metricsOptions = findMetricsOptions();
-  const FILE_TYPES: CheckboxOptionType[] = [
-    { value: "csv", label: "CSV" },
-    { value: "tsv", label: "TSV" },
-    { value: "json", label: "JSON or JSON Line" },
-    { value: "conll", label: "CoNLL" },
-  ];
-
-  /** find the selected task in task info and return supported metrics */
-  function findMetricsOptions(): string[] {
-    if (selectedTask == null) return [];
-    for (const category of taskCategories) {
-      const task = category.tasks.find(({ name }) => name === selectedTask);
-      if (task) return task.supported_metrics;
-    }
-    return [];
-  }
+  const selectedTaskName = form.getFieldValue("task");
+  const selectedTask = findTask(taskCategories, selectedTaskName);
+  const allowedFileType = selectedTask?.supported_formats || [];
 
   /**
    * Fetch datasets that match the selected task (max: 30)
+   *   - if taskName is not specified, use `selectedTaskName`. taskName can be used
+   * when state update isn't complete
+   *
    * TODO:
    * 1. add debounce
    * 2. error handling
    * */
-  async function searchDatasets(text: string) {
+  async function searchDatasets(text: string, taskName = "") {
     setState(State.loading);
     const { datasets } = await backendClient.datasetsGet(
       text,
-      selectedTask,
+      taskName || selectedTaskName,
       0,
       30
     );
@@ -152,6 +142,7 @@ export function SystemSubmitDrawer(props: Props) {
 
   function onValuesChange(changedFields: Partial<FormData>) {
     if (changedFields.task != null) {
+      searchDatasets("", changedFields.task);
       setDatasetOptions([]);
       // clear dataset and metric_names selections
       form.setFieldsValue({ dataset_id: undefined, metric_names: [] });
@@ -183,7 +174,9 @@ export function SystemSubmitDrawer(props: Props) {
     let fileExtension = fileList[0].name.split(".")[1].toLowerCase();
     if (fileExtension === "jsonl") fileExtension = "json"; // SDK treats them the same
     const fileType = FILE_TYPES.find((type) => type.value === fileExtension);
-    if (fileType) form.setFieldsValue({ fileType: fileType.value as string });
+    if (fileType && allowedFileType.includes(fileType.value as string)) {
+      form.setFieldsValue({ fileType: fileType.value as string });
+    }
     return fileList;
   }
 
@@ -211,22 +204,26 @@ export function SystemSubmitDrawer(props: Props) {
             <Input />
           </Form.Item>
 
-          <Form.Item name="task" label="Task" rules={[{ required: true }]}>
-            <Select showSearch>
-              {taskCategories.map(({ name, tasks }) => (
-                <Select.OptGroup label={name} key={name}>
-                  {tasks.map(({ name, supported }) => (
-                    <Select.Option
-                      value={name}
-                      key={name}
-                      disabled={!supported}
-                    >
-                      {name}
-                    </Select.Option>
-                  ))}
-                </Select.OptGroup>
-              ))}
-            </Select>
+          <Form.Item
+            name="task"
+            label="Task"
+            rules={[{ required: true }]}
+            help={
+              selectedTask && (
+                <Tooltip
+                  title={selectedTask.description}
+                  placement="left"
+                  color="white"
+                  overlayInnerStyle={{ color: "black" }}
+                >
+                  <Button type="link" size="small" style={{ padding: 0 }}>
+                    Need help generating system output?
+                  </Button>
+                </Tooltip>
+              )
+            }
+          >
+            <TaskSelect taskCategories={taskCategories} />
           </Form.Item>
 
           <Form.Item
@@ -242,7 +239,7 @@ export function SystemSubmitDrawer(props: Props) {
                 label: dataset.dataset_name,
               }))}
               onSearch={searchDatasets}
-              disabled={selectedTask == null}
+              disabled={selectedTaskName == null}
               filterOption={false} // disable local filter
             />
           </Form.Item>
@@ -254,7 +251,9 @@ export function SystemSubmitDrawer(props: Props) {
           >
             <Select
               mode="multiple"
-              options={metricsOptions.map((opt) => ({ value: opt }))}
+              options={(selectedTask?.supported_metrics || []).map((opt) => ({
+                value: opt,
+              }))}
             />
           </Form.Item>
 
@@ -280,7 +279,12 @@ export function SystemSubmitDrawer(props: Props) {
             label="File Type"
             rules={[{ required: true }]}
           >
-            <Radio.Group options={FILE_TYPES} />
+            <Radio.Group
+              options={FILE_TYPES.map((type) => ({
+                ...type,
+                disabled: !allowedFileType.includes(type.value as string),
+              }))}
+            />
           </Form.Item>
 
           <Form.Item
@@ -310,3 +314,10 @@ interface FormData {
   sys_out_file_list: UploadFile[];
   fileType: string;
 }
+
+const FILE_TYPES: CheckboxOptionType[] = [
+  { value: "csv", label: "CSV" },
+  { value: "tsv", label: "TSV" },
+  { value: "json", label: "JSON or JSON Line" },
+  { value: "conll", label: "CoNLL" },
+];

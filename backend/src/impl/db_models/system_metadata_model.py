@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Any, Dict, Iterable, Optional, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 from explainaboard_web.impl.utils import abort_with_error_message
 
 from explainaboard_web.models.system_analysis import SystemAnalysis
@@ -104,14 +104,14 @@ class SystemModel(MetadataDBModel, System):
         return str(self.insert_one(document, session=session).inserted_id)
 
     @classmethod
-    def find(cls, page: int, page_size: int, system_name: Optional[str], task: Optional[str]) -> SystemsReturn:
+    def find(cls, page: int, page_size: int, system_name: Optional[str], task: Optional[str], sort: Optional[List]) -> SystemsReturn:
         """find multiple systems that matches the filters"""
         filter: Dict[str, Any] = {}
         if system_name:
             filter["model_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
             filter["task"] = task
-        cursor, total = super().find(filter, [], page * page_size,
+        cursor, total = super().find(filter, sort, page * page_size,
                                      page_size)
         return SystemsReturn([cls.from_dict(doc) for doc in cursor], total)
 
