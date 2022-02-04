@@ -1,9 +1,6 @@
-import {
-  System,
-  SystemAnalysis,
-  SystemAnalysisResults,
-} from "../clients/openapi";
+import { System, SystemAnalysis } from "../clients/openapi";
 import moment, { Moment } from "moment";
+import { Features, Results } from "../components/AnalysisReport/types";
 
 /** same as System, but `created_at` is replaced with Moment to make it easier to use*/
 export interface SystemModel extends Omit<System, "created_at"> {
@@ -13,7 +10,7 @@ export interface SystemModel extends Omit<System, "created_at"> {
 
 /** A model that implements SystemAnalysis to provide useful methods */
 export class SystemAnalysisModel implements SystemAnalysis {
-  constructor(public features: any, public results: SystemAnalysisResults) {}
+  constructor(public features: Features, public results: Results) {}
 
   /** returns the metric given the metric name, returns undefined if not available */
   getMetirc(metricName: string) {

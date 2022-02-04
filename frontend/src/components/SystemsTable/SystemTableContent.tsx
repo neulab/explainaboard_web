@@ -136,7 +136,8 @@ export function SystemTableContent({
             `${range[0]}-${range[1]} (total: ${total})`,
           pageSize,
           current: page + 1,
-          onChange: onPageChange,
+          onChange: (newPage, newPageSize) =>
+            onPageChange(newPage - 1, newPageSize),
         }}
         sticky
         loading={loading}

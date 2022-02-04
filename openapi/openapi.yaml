@@ -409,13 +409,15 @@ components:
                 $ref: "#/components/schemas/Metric"
             calibration:
               type: string
-            fine_grained:
-              type: object
             is_print_case:
               type: boolean
             is_print_confidence_interval:
               type: boolean
-          required: [overall]
+            fine_grained:
+              type: object
+              additionalProperties:
+                type: object
+          required: [overall, fine_grained]
       required: [features, results]
 
     SystemOutput:
