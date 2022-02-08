@@ -3,11 +3,13 @@ import { useLocation } from "react-router-dom";
 import jwtDecode from "jwt-decode";
 import moment from "moment";
 import { refreshBackendClient } from "../clients";
+import { useEnv } from ".";
 
 export enum LoginState {
   yes = "yes",
   no = "no",
   expired = "expired",
+  loading = "loading",
 }
 interface IUserContext {
   userInfo: JWTInfo | null;
@@ -26,8 +28,17 @@ interface JWTInfo {
 }
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
-  const [jwt, setJwt] = useState(loadJWT());
+  const { env, authURL } = useEnv();
+  const jwtKey = `explainaboard_${env}_jwt`;
+
+  const [jwt, setJwt] = useState(initJWT());
   const location = useLocation();
+
+  function initJWT() {
+    const savedToken = localStorage.getItem(jwtKey);
+    refreshBackendClient(savedToken);
+    return savedToken;
+  }
 
   /** if path has jwt token, parse and save to localstorage */
   function parseJWTWhenRedirect() {
@@ -41,8 +52,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         const newJWT = jwtSegment.substring("id_token=".length);
         window.location.href = location.pathname; // remove jwt token from url
         setJwt(newJWT);
-        saveJWT(newJWT);
-        refreshBackendClient(newJWT);
+        localStorage.setItem(jwtKey, newJWT);
       }
     }
   }
@@ -61,10 +71,21 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   /** TODO: revoke token */
   const logout = useCallback(() => {
-    localStorage.removeItem("_jwt");
+    localStorage.removeItem(jwtKey);
     setJwt(null);
     refreshBackendClient(null);
-  }, []);
+  }, [jwtKey]);
+
+  /** redirect to login page */
+  const login = useCallback(() => {
+    const redirectURL = `${authURL}&redirect_uri=${
+      window.location.protocol +
+      "//" +
+      window.location.host +
+      window.location.pathname
+    }`;
+    window.location.href = encodeURI(redirectURL);
+  }, [authURL]);
 
   return (
     <UserContext.Provider value={{ state, userInfo, login, jwt, logout }}>
@@ -73,26 +94,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-const loadJWT = () => {
-  return localStorage.getItem("_jwt");
-};
-
-function saveJWT(jwt: string) {
-  localStorage.setItem("_jwt", jwt);
-}
-
+/** use UserContext to get user info, login, logout, etc. */
 export function useUser() {
   return useContext(UserContext);
 }
-
-/**TODO distinguish env */
-const login = () => {
-  window.location.href = encodeURI(
-    `https://explainaboard-dev.auth.us-east-1.amazoncognito.com/oauth2/authorize?client_id=321jpah4jmcdqha7gb9pf9vnqv&response_type=token&scope=email+openid+phone&redirect_uri=${
-      window.location.protocol +
-      "//" +
-      window.location.host +
-      window.location.pathname
-    }`
-  );
-};

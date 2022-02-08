@@ -29,5 +29,3 @@ export function findTask(taskCategories: TaskCategory[], taskName: string) {
   }
   return undefined;
 }
-
-export * from "./useUser";

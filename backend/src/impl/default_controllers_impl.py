@@ -1,5 +1,7 @@
 from __future__ import annotations
+import os
 from typing import List, Optional
+from flask import current_app
 from pymongo import ASCENDING, DESCENDING
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
@@ -12,6 +14,15 @@ from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.task_category import TaskCategory
 
 from explainaboard import get_task_categories
+
+""" /info """
+
+
+def info_get():
+    return {
+        'env': os.getenv('FLASK_ENV'),
+        'auth_url': f"https://explainaboard-dev.auth.{current_app.config.get('REGION')}.amazoncognito.com/oauth2/authorize?client_id={current_app.config.get('USER_POOL_AUDIENCE')}&response_type=token&scope=email+openid+phone"
+    }
 
 
 """ /tasks """

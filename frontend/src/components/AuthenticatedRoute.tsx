@@ -1,7 +1,7 @@
 import React from "react";
 import { Button, Result, Space } from "antd";
 import { Route, RouteProps, useHistory } from "react-router-dom";
-import { LoginState, useUser } from "../utils";
+import { LoginState, useUser } from "../components";
 
 export function AuthenticatedRoute(props: RouteProps) {
   const { state, login } = useUser();

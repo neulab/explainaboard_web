@@ -3,7 +3,7 @@ import { Button, Layout as AntdLayout, Menu, Space } from "antd";
 import { Route } from "../../routes";
 import "./index.css";
 import { useHistory, useLocation } from "react-router";
-import { LoginState, useUser } from "../../utils";
+import { LoginState, useUser } from "..";
 
 interface Props {
   routes: Route[];

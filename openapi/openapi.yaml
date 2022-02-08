@@ -244,6 +244,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemOutputsReturn"
+  /info:
+    get:
+      summary: information for environment identifier, backend version, login URL, etc. (not intent for public users)
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  env:
+                    type: string
+                  auth_url:
+                    type: string
+                    format: url
+                required: [env, auth_url]
 
 components:
   securitySchemes:
@@ -462,10 +480,9 @@ components:
               format: url
             analysis:
               $ref: "#/components/schemas/SystemAnalysis"
-          required:
-            [
+          required: [
               system_id,
-              creator,
+              # creator,
               task,
               model_name,
               metric_names,
