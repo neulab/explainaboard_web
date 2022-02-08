@@ -415,8 +415,6 @@ components:
               type: boolean
             fine_grained:
               type: object
-              additionalProperties:
-                type: object
           required: [overall, fine_grained]
       required: [features, results]
 
