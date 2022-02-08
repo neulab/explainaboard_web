@@ -233,6 +233,19 @@ paths:
           schema:
             type: integer
             default: 20
+        - in: query
+          name: sort_field
+          description: supports `created_at` (default) and metric names.
+          schema:
+            type: string
+            example: Accuracy
+        - in: query
+          name: sort_direction
+          schema:
+            type: string
+            description: default is "desc"
+            example: "desc"
+            enum: ["asc", "desc"]
       responses:
         "200":
           description: OK
@@ -329,6 +342,7 @@ components:
           type: string
           format: date-time
           description: UTC
+      required: [created_at, last_modified]
 
     TaskCategory:
       type: object
@@ -350,11 +364,18 @@ components:
           type: string
         supported:
           type: boolean
+        description:
+          type: string
         supported_metrics:
           type: array
           items:
             type: string
-      required: [name, supported, supported_metrics]
+        supported_formats:
+          type: array
+          items:
+            type: string
+      required:
+        [name, supported, description, supported_metrics, supported_formats]
 
     PaperInfo:
       type: object
@@ -382,17 +403,20 @@ components:
           type: object
           properties:
             overall:
-              type: array
-              items:
-                type: object
+              type: object
+              description: metric_name -> metric_value
+              additionalProperties:
+                $ref: "#/components/schemas/Metric"
             calibration:
               type: string
-            fine_grained:
-              type: object
             is_print_case:
               type: boolean
             is_print_confidence_interval:
               type: boolean
+            fine_grained:
+              type: object
+          required: [overall, fine_grained]
+      required: [features, results]
 
     SystemOutput:
       type: object
@@ -523,72 +547,69 @@ components:
           nullable: true
 
     DatasetMetadata:
-      allOf:
-        - type: object
-        - properties:
-            dataset_id:
-              type: string
-              example: "61611c3a414abfb115397ca5"
-            dataset_name:
-              type: string
-            sub_dataset:
-              type: string
-              description: sub dataset id (TODO)
-              nullable: true
-            split:
-              type: object
-              additionalProperties:
-                type: integer
-            summary:
-              type: string
-            homepage:
-              type: string
-              format: uri
-              nullable: true
-            repository:
-              type: string
-              format: uri
-              nullable: true
-            paper:
-              $ref: "#/components/schemas/PaperInfo"
-            leaderboard:
-              type: string
-            person_of_contact:
-              type: string
-              nullable: true
-            tasks:
-              type: array
-              items:
-                type: string
-                description: task name
-            task_categories:
-              type: array
-              items:
-                type: string
-                description: task category name
-            languages:
-              type: array
-              items:
-                type: string
-            features:
-              type: object
-              additionalProperties:
-                $ref: "#/components/schemas/Feature"
-            speaker_demographic:
-              type: object
-            annotator_demographic:
-              type: object
-            speech_situation:
-              type: object
-            huggingface_link:
-              type: string
-              format: url
-          required:
-            - dataset_id
-            - dataset_name
-            - tasks
-
-        - $ref: "#/components/schemas/Time"
+      type: object
+      properties:
+        dataset_id:
+          type: string
+          example: "61611c3a414abfb115397ca5"
+        dataset_name:
+          type: string
+        sub_dataset:
+          type: string
+          description: sub dataset id (TODO)
+          nullable: true
+        split:
+          type: object
+          additionalProperties:
+            type: integer
+        summary:
+          type: string
+        homepage:
+          type: string
+          format: uri
+          nullable: true
+        repository:
+          type: string
+          format: uri
+          nullable: true
+        paper:
+          $ref: "#/components/schemas/PaperInfo"
+        leaderboard:
+          type: string
+        person_of_contact:
+          type: string
+          nullable: true
+        tasks:
+          type: array
+          items:
+            type: string
+            description: task name
+        task_categories:
+          type: array
+          items:
+            type: string
+            description: task category name
+        languages:
+          type: array
+          items:
+            type: string
+        features:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/Feature"
+        speaker_demographic:
+          type: object
+        annotator_demographic:
+          type: object
+        speech_situation:
+          type: object
+        huggingface_link:
+          type: string
+          format: url
+      required:
+        - dataset_id
+        - dataset_name
+        - tasks
 
     DatasetsReturn:
       type: object
@@ -635,7 +656,7 @@ components:
         - systems
         - total
 
-    MetricResult:
+    Metric:
       type: object
       properties:
         metric_name:
@@ -644,16 +665,9 @@ components:
           type: number
         confidence_score_low:
           type: number
-        bucket_name:
-          type: array
-          items:
-            type: string
-        n_samples:
-          type: integer
-        bucket_samples:
-          type: array
-          items:
-            type: string
+        confidence_score_up:
+          type: number
+      required: [metric_name, value]
 
   # Security scheme definitions for authentication
   securitySchemes:

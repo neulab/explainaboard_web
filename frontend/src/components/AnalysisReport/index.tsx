@@ -1,18 +1,18 @@
 import React, { useState } from "react";
-import { Analysis, ResultFineGrainedParsed } from "./types";
-import { SystemAnalysis } from "../../clients/openapi";
+import { ResultFineGrainedParsed } from "./types";
 import { parse } from "./parser";
 import { BarChart, AnalysisTable } from "../../components";
 import { Row, Col, Typography } from "antd";
+import { SystemAnalysisModel } from "../../models";
 
 interface Props {
   systemID: string;
-  analysis: SystemAnalysis;
+  analysis: SystemAnalysisModel;
 }
 
 export function AnalysisReport(props: Props) {
   const [bucketOfSamples, setBucketOfSample] = useState<string[]>([]);
-  const analysis = props.analysis as Analysis;
+  const analysis = props.analysis;
   const resultsFineGrained = analysis["results"]["fine_grained"];
 
   // The visualization chart of a fine grained result is displayed using the "Grid" layout by Ant Design.

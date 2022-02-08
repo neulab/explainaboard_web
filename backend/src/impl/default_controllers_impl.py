@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import List, Optional
+from pymongo import ASCENDING, DESCENDING
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
@@ -61,8 +62,20 @@ def systems_system_id_get(system_id: str) -> SystemModel:
     return system
 
 
-def systems_get(system_name: Optional[str], task: Optional[str], page: int, page_size: int) -> SystemsReturn:
-    return SystemModel.find(page, page_size, system_name, task)
+def systems_get(system_name: Optional[str], task: Optional[str], page: int, page_size: int, sort_field: str, sort_direction: str) -> SystemsReturn:
+    if not sort_field:
+        sort_field = "created_at"
+    if not sort_direction:
+        sort_direction = "desc"
+    if sort_direction not in ["asc", "desc"]:
+        abort_with_error_message(
+            400, "sort_direction needs to be one of asc or desc")
+    if sort_field != "created_at":
+        sort_field = f"analysis.results.overall.{sort_field}.value"
+
+    dir = ASCENDING if sort_direction == "asc" else DESCENDING
+
+    return SystemModel.find(page, page_size, system_name, task, [(sort_field, dir)])
 
 
 def systems_post(body: SystemsBody) -> SystemModel:

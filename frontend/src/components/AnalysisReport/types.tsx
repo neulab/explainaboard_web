@@ -1,13 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-export interface AnalysisJson {
-  analysis: Analysis;
-}
-
-export interface Analysis {
-  features: Features;
-  results: Results;
-}
+import { Metric } from "../../clients/openapi";
 
 export interface Features {
   [key: string]: FeatureVal;
@@ -33,9 +26,9 @@ export interface BucketInfo {
 
 export interface Results {
   fine_grained: FineGrained;
-  is_print_case: boolean;
-  is_print_confidence_interval: boolean;
-  overall: OverallElement[];
+  is_print_case?: boolean;
+  is_print_confidence_interval?: boolean;
+  overall: { [key: string]: Metric };
 }
 
 export interface FineGrained {
@@ -49,13 +42,6 @@ export interface FineGrainedElement {
   confidence_score_up: string;
   metric_name: string;
   n_samples: number;
-  value: string;
-}
-
-export interface OverallElement {
-  confidence_score_low: string;
-  confidence_score_up: string;
-  metric_name: string;
   value: string;
 }
 

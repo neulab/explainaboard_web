@@ -4,3 +4,4 @@ export * from "./SystemsTable";
 export * from "./AnalysisReport";
 export * from "./BarChart";
 export * from "./AnalysisTable";
+export * from "./TaskSelect";
