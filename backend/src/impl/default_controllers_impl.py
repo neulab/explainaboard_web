@@ -5,7 +5,6 @@ from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
-from explainaboard_web.impl.db_models.task_metadata_model import TaskMetadataModel
 from explainaboard_web.models.task_metadata import TaskMetadata
 from explainaboard_web.impl.db_models.system_metadata_model import SystemModel, SystemOutputsModel
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
@@ -20,21 +19,6 @@ from explainaboard import get_task_categories
 
 def tasks_get() -> List[TaskCategory]:
     return get_task_categories()
-
-
-def task_metadata_task_metadata_id_get(task_metadata_id: str) -> TaskMetadata:
-    return TaskMetadataModel.find_one_by_id(task_metadata_id)
-
-
-def task_metadata_get() -> List[TaskMetadataModel]:
-    return TaskMetadataModel.find_all()
-
-
-def task_metadata_task_metadata_id_datasets_get(task_id: str, page: int, page_size: int) -> DatasetsReturn:
-    task = TaskMetadataModel.find_one_by_id(task_id)
-    if not task:
-        abort_with_error_message(404, f"task id: {task_id} not found")
-    return task.find_related_datasets(page, page_size)
 
 
 """ /datasets """

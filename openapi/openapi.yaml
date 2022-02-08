@@ -11,17 +11,22 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html" # TODO
 
 servers:
-  - url: http://example.com:5000/api # TODO
-    description: Optional server description, e.g. Main (production) server
-  - url: http://staging.example.com:5000/api # TODO
-    description: Optional server description, e.g. Internal staging server for testing
+  - url: http://explainaboard.inspiredco.ai/api
+    description: Production
+  - url: http://dev.explainaboard.inspiredco.ai/api
+    description: Dev
   - url: http://localhost:5000/api
-    description: Local server
+    description: Local dev server
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
 
 paths:
   /tasks:
     get:
       summary: Returns all task categories and tasks
+      security: []
       responses:
         "200":
           description: OK
@@ -32,79 +37,10 @@ paths:
                 items:
                   $ref: "#/components/schemas/TaskCategory"
 
-  /task_metadata/{task_metadata_id}:
-    get:
-      summary: Returns a tasks_metadata by id
-      description: Returns a dataset_metadata by id. id is the DB id so it is mostly used internally.
-      parameters:
-        - in: path
-          name: task_metadata_id
-          schema:
-            type: string
-          required: true
-          example: "615822d5523c6bd2cf3f5c6b"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TaskMetadata"
-        "404":
-          description: Not Found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/APIError"
-
-  /task_metadata:
-    get:
-      summary: Returns all tasks
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TaskMetadata"
-
-  /task_metadata/{task_metadata_id}/datasets:
-    get:
-      summary: Returns a list of datasets related to the task
-      parameters:
-        - in: path
-          name: task_metadata_id
-          schema:
-            type: string
-          required: true
-          example: "615822d5523c6bd2cf3f5c6b"
-        - in: query
-          name: page
-          description: page number (0 indexed)
-          schema:
-            type: integer
-            default: 0
-            minimum: 0
-        - in: query
-          name: page_size
-          description: number of items per page
-          schema:
-            type: integer
-            default: 20
-            minimum: 0
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DatasetsReturn"
-
   /datasets/{dataset_id}:
     get:
       summary: Returns dataset metadata by id
+      security: []
       description: Returns dataset metadata by id. id is the DB id so it is mostly used internally. See datasets MGet endpoints for general use.
       parameters:
         - in: path
@@ -130,6 +66,7 @@ paths:
   /datasets:
     get:
       summary: Returns a list of datasets
+      security: []
       description: Returns a list of datasets. Returns empty list if current page is empty. Returns `total=0` if no match datasets.
       parameters:
         - in: query
@@ -309,7 +246,15 @@ paths:
                 $ref: "#/components/schemas/SystemOutputsReturn"
 
 components:
-  # Reusable schemas (data models)
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+
   schemas:
     # The schema for primitive types do not get generated well in flask.
     # Avoid using them.
@@ -491,6 +436,9 @@ components:
         - properties:
             system_id:
               type: string
+            creator:
+              type: string
+              description: user email
             task:
               type: string
             dataset_metadata_id:
@@ -515,7 +463,15 @@ components:
             analysis:
               $ref: "#/components/schemas/SystemAnalysis"
           required:
-            [system_id, task, model_name, metric_names, paper_info, analysis]
+            [
+              system_id,
+              creator,
+              task,
+              model_name,
+              metric_names,
+              paper_info,
+              analysis,
+            ]
         - $ref: "#/components/schemas/Time"
 
     Feature:
@@ -659,19 +615,3 @@ components:
         confidence_score_up:
           type: number
       required: [metric_name, value]
-
-  # Security scheme definitions for authentication
-  securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-    OAuth2:
-      type: oauth2
-      flows:
-        authorizationCode:
-          authorizationUrl: https://example.com/oauth/authorize
-          tokenUrl: https://example.com/oauth/token
-          scopes:
-            read: Grants read access
-            write: Grants write access

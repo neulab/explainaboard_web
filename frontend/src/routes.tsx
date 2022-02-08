@@ -21,6 +21,7 @@ export interface Route extends RouteProps {
   subroutes?: Route[];
   /** do not display in the menu */
   hideFromMenu?: boolean;
+  requireLogin?: boolean;
 }
 const routes: Route[] = [
   {
@@ -41,6 +42,7 @@ const routes: Route[] = [
     title: "Systems",
     icon: <CodeOutlined />,
     children: <SystemsPage />,
+    requireLogin: true,
   },
   {
     path: "/leaderboards",
@@ -54,6 +56,7 @@ const routes: Route[] = [
     exact: true,
     children: <LeaderboardPage />,
     hideFromMenu: true,
+    requireLogin: true,
   },
 ];
 export default routes;

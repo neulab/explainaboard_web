@@ -14,6 +14,7 @@ from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard import Source, get_loader, get_processor
 from pymongo.client_session import ClientSession
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
+from explainaboard_web.impl.auth import get_user
 
 
 class SystemModel(MetadataDBModel, System):
@@ -31,6 +32,10 @@ class SystemModel(MetadataDBModel, System):
           6. write to system_outputs
         """
         system = cls.from_dict(metadata.to_dict())
+        user = get_user()
+        if not user.is_authenticated:
+            abort_with_error_message(401, "log in required")
+        system.creator = user.email
 
         # validation
         if system.dataset_metadata_id is not None:
@@ -63,7 +68,7 @@ class SystemModel(MetadataDBModel, System):
     def from_dict(cls, dikt) -> SystemModel:
         document = {**dikt}
         if dikt.get("_id"):
-            document[f"system_id"] = str(dikt["_id"])
+            document["system_id"] = str(dikt["_id"])
         system = super().from_dict(document)
         return system
 
@@ -79,8 +84,18 @@ class SystemModel(MetadataDBModel, System):
 
     @classmethod
     def delete_one_by_id(cls, id: str):
+        user = get_user()
+        if not user.is_authenticated:
+            abort_with_error_message(401, "log in required")
+
         def db_operations(session: ClientSession) -> bool:
             """TODO: add logging if error"""
+            sys = SystemModel.find_one_by_id(id)
+            if not sys:
+                return False
+            if sys.creator != user.email:
+                abort_with_error_message(
+                    403, "you can only delete your own systems")
             result = super(SystemModel, cls).delete_one_by_id(
                 id, session=session)
             if not result:

@@ -103,6 +103,7 @@ export function SystemTableContent({
       align: "center",
     },
     ...metricColumns,
+    { dataIndex: "creator", title: "Creator", align: "center" },
     {
       dataIndex: "created_at",
       title: "Created At",
@@ -114,20 +115,15 @@ export function SystemTableContent({
       dataIndex: "action",
       title: "",
       fixed: "right",
-      width: 210,
+      width: 110,
       render: (_, record) => (
-        <Space>
+        <Space size="small">
           <Button
             size="small"
             onClick={() => showSystemAnalysis(record.system_id)}
           >
             Analysis
           </Button>
-          <Tooltip title="not implemented">
-            <Button size="small" disabled>
-              Dataset Info
-            </Button>
-          </Tooltip>
           <Popconfirm
             title="Are you sure?"
             onConfirm={() => deleteSystem(record.system_id)}

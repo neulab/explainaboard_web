@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
-import { Layout } from "./components";
+import { AuthenticatedRoute, Layout } from "./components";
 import routes from "./routes";
 import "antd/dist/antd.css";
 import { UserProvider } from "./utils/useUser";
@@ -11,9 +11,13 @@ function App() {
       <UserProvider>
         <Layout routes={routes}>
           <Switch>
-            {routes.map((route, i) => (
-              <Route {...route} key={i} />
-            ))}
+            {routes.map(({ requireLogin, ...routeProps }, i) =>
+              requireLogin ? (
+                <AuthenticatedRoute {...routeProps} key={i} />
+              ) : (
+                <Route {...routeProps} key={i} />
+              )
+            )}
           </Switch>
         </Layout>
       </UserProvider>
