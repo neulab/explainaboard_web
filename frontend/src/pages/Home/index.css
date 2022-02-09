@@ -35,3 +35,16 @@
     transform: rotate(360deg);
   }
 }
+
+.background {
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.background-mask {
+  background-color: rgba(62, 69, 81, 0.3);
+  height: 100%;
+  display: flex;
+  text-align: center;
+}
