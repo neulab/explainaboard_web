@@ -160,6 +160,7 @@ export function SystemTableContent({
           activeSystemID !== undefined && (
             <AnalysisReport
               systemID={activeSystemID}
+              task={activeSystem?.task}
               analysis={activeSystem?.analysis}
             />
           )}

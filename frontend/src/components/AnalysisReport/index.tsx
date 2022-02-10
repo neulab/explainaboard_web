@@ -7,11 +7,13 @@ import { SystemAnalysisModel } from "../../models";
 
 interface Props {
   systemID: string;
+  task: string;
   analysis: SystemAnalysisModel;
 }
 
 export function AnalysisReport(props: Props) {
   const [bucketOfSamples, setBucketOfSample] = useState<string[]>([]);
+  const task = props.task;
   const analysis = props.analysis;
   const resultsFineGrained = analysis["results"]["fine_grained"];
 
@@ -31,7 +33,7 @@ export function AnalysisReport(props: Props) {
   let chartNum = 0;
   for (const [key, featureVal] of Object.entries(analysis["features"])) {
     let description = featureVal["description"];
-    if (description === null) {
+    if (description === null || description === undefined) {
       description = key;
     }
     featureKeys.push(key);
@@ -45,6 +47,7 @@ export function AnalysisReport(props: Props) {
         rowIdx += 1;
       }
       resultsFineGrainedParsed[rowIdx][chartNum] = parse(
+        task,
         description,
         resultsFineGrained[key]
       );
@@ -65,6 +68,7 @@ export function AnalysisReport(props: Props) {
         <Typography.Title level={4}>Case Study </Typography.Title>
         <AnalysisTable
           systemID={props.systemID}
+          task={task}
           outputIDs={bucketOfSamples}
           featureKeys={featureKeys}
           descriptions={descriptions}

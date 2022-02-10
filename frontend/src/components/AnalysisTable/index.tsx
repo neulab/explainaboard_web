@@ -7,6 +7,7 @@ import { PageState } from "../../utils";
 
 interface Props {
   systemID: string;
+  task: string;
   outputIDs: string[];
   featureKeys: string[];
   descriptions: string[];
@@ -14,6 +15,7 @@ interface Props {
 
 export function AnalysisTable({
   systemID,
+  task,
   outputIDs,
   featureKeys,
   descriptions,
@@ -47,18 +49,38 @@ export function AnalysisTable({
     },
   ];
   for (let i = 0; i < featureKeys.length; i++) {
+    if (featureKeys[i] === "id") {
+      continue;
+    }
     columns.push({
       dataIndex: featureKeys[i],
       title: i < descriptions.length ? descriptions[i] : featureKeys[i],
       ellipsis: true,
     });
   }
+
+  // clone the system output for modification
+  const dataSource = systemOutputs.map(function (s) {
+    return { ...s };
+  });
+
+  for (let i = 0; i < dataSource.length; i++) {
+    if (task === "extractive-qa") {
+      const trueAnswer = systemOutputs[i]["true_answers"];
+      const text = trueAnswer["text"][0];
+      const answerStart = trueAnswer["answer_start"][0];
+      dataSource[i][
+        "true_answers"
+      ] = `- Text: ${text}\n- Start position:${answerStart}`;
+    }
+  }
+
   // TODO: pagination
   return (
     <Table
       className="table"
       columns={columns}
-      dataSource={systemOutputs}
+      dataSource={dataSource}
       loading={pageState === PageState.loading}
     />
   );

@@ -9,7 +9,7 @@ export interface Features {
 export interface FeatureVal {
   _type: string;
   bucket_info: BucketInfo | null;
-  description: string | null;
+  description: string | null | undefined;
   id: null;
   is_bucket: boolean;
   is_pre_computed: boolean;

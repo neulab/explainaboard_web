@@ -11,6 +11,7 @@ function formatName(name: string) {
 }
 
 export function parse(
+  task: string,
   title: string,
   fineGrainedElements: Array<FineGrainedElement[]>
 ) {
