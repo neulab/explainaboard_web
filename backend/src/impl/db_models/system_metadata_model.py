@@ -33,7 +33,7 @@ class SystemModel(MetadataDBModel, System):
         system = cls.from_dict(metadata.to_dict())
 
         # validation
-        if system.dataset_metadata_id is None:
+        if system.dataset_metadata_id is not None:
             dataset = DatasetMetaDataModel.find_one_by_id(
                 system.dataset_metadata_id)
             if not dataset:
