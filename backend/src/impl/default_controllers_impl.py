@@ -57,7 +57,7 @@ def systems_system_id_get(system_id: str) -> SystemModel:
     return system
 
 
-def systems_get(system_name: Optional[str], task: Optional[str], page: int, page_size: int, sort_field: str, sort_direction: str) -> SystemsReturn:
+def systems_get(system_name: Optional[str], task: Optional[str], page: int, page_size: int, sort_field: str, sort_direction: str, creator: Optional[str]) -> SystemsReturn:
     if not sort_field:
         sort_field = "created_at"
     if not sort_direction:
@@ -70,7 +70,7 @@ def systems_get(system_name: Optional[str], task: Optional[str], page: int, page
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
-    return SystemModel.find(page, page_size, system_name, task, [(sort_field, dir)])
+    return SystemModel.find(page, page_size, system_name, task, [(sort_field, dir)], creator)
 
 
 def systems_post(body: SystemsBody) -> SystemModel:

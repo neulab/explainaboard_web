@@ -9,3 +9,4 @@ export * from "./TextWithLink";
 export * from "./AuthenticatedRoute";
 export * from "./useEnv";
 export * from "./useUser";
+export * from "./VisibilityIcon";

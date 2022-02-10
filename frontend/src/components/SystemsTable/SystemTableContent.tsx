@@ -4,7 +4,7 @@ import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
-import { AnalysisReport } from "..";
+import { AnalysisReport, VisibilityIcon } from "..";
 
 interface Props {
   systems: SystemModel[];
@@ -79,13 +79,20 @@ export function SystemTableContent({
       width: 100,
       fixed: "left",
       title: "Name",
+      render: (_, record) => (
+        <div>
+          {record.model_name}
+          <div style={{ paddingLeft: "3px" }}>
+            <VisibilityIcon isPrivate={record.is_private} />
+          </div>
+        </div>
+      ),
     },
     {
       dataIndex: "task",
       width: 150,
       fixed: "left",
       title: "Task",
-      render: (value) => <Tag>{value}</Tag>,
     },
     {
       dataIndex: "language",

@@ -69,6 +69,8 @@ class SystemModel(MetadataDBModel, System):
         document = {**dikt}
         if dikt.get("_id"):
             document["system_id"] = str(dikt["_id"])
+        if dikt.get("is_private") is None:
+            document["is_private"] = True
         system = super().from_dict(document)
         return system
 
@@ -80,7 +82,12 @@ class SystemModel(MetadataDBModel, System):
         document = super().find_one_by_id(id)
         if not document:
             return None
-        return cls.from_dict(document)
+        sys = cls.from_dict(document)
+        if sys.is_private and sys.creator != get_user().email:
+            abort_with_error_message(
+                403, "you do not have permission to view this system")
+        else:
+            return sys
 
     @classmethod
     def delete_one_by_id(cls, id: str):
@@ -120,13 +127,17 @@ class SystemModel(MetadataDBModel, System):
         return str(self.insert_one(document, session=session).inserted_id)
 
     @classmethod
-    def find(cls, page: int, page_size: int, system_name: Optional[str], task: Optional[str], sort: Optional[List]) -> SystemsReturn:
+    def find(cls, page: int, page_size: int, system_name: Optional[str], task: Optional[str], sort: Optional[List], creator: Optional[str]) -> SystemsReturn:
         """find multiple systems that matches the filters"""
         filter: Dict[str, Any] = {}
         if system_name:
             filter["model_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
             filter["task"] = task
+        if creator:
+            filter["creator"] = creator
+        filter["$or"] = [{"is_private": False},
+                         {"creator": get_user().email}]
         cursor, total = super().find(filter, sort, page * page_size,
                                      page_size)
         return SystemsReturn([cls.from_dict(doc) for doc in cursor], total)

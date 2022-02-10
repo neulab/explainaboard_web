@@ -183,6 +183,12 @@ paths:
             description: default is "desc"
             example: "desc"
             enum: ["asc", "desc"]
+        - in: query
+          name: creator
+          schema:
+            type: string
+            description: email of the creator
+
       responses:
         "200":
           description: OK
@@ -412,6 +418,9 @@ components:
         task:
           type: string
           example: "text_classification"
+        is_private:
+          type: boolean
+          default: True
         dataset_metadata_id:
           type: string
         model_name:
@@ -432,7 +441,7 @@ components:
           format: url
         paper_info:
           $ref: "#/components/schemas/PaperInfo"
-      required: [task, model_name, metric_names, paper_info]
+      required: [task, is_private, model_name, metric_names, paper_info]
 
     SystemOutputProps:
       type: object
@@ -457,6 +466,8 @@ components:
             creator:
               type: string
               description: user email
+            is_private:
+              type: boolean
             task:
               type: string
             dataset_metadata_id:
@@ -483,6 +494,7 @@ components:
           required: [
               system_id,
               # creator,
+              is_private,
               task,
               model_name,
               metric_names,
