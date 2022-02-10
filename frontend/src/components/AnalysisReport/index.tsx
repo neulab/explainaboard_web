@@ -29,6 +29,8 @@ export function AnalysisReport(props: Props) {
   let rowIdx = 0;
   let chartNum = 0;
   for (const [key, featureVal] of Object.entries(analysis["features"])) {
+    console.log(featureVal);
+    const description = featureVal["description"];
     featureKeys.push(key);
     if (featureVal.is_bucket) {
       if (chartNum === chartNumPerRow) {
@@ -40,7 +42,7 @@ export function AnalysisReport(props: Props) {
       }
       // TODO: using key as title for now, need SDK to provide an explicit title
       resultsFineGrainedParsed[rowIdx][chartNum] = parse(
-        key,
+        description,
         resultsFineGrained[key]
       );
       chartNum += 1;
@@ -51,13 +53,13 @@ export function AnalysisReport(props: Props) {
   if (bucketOfSamples.length === 0) {
     analysisTable = (
       <Typography.Title level={5}>
-        Click a bar to see error cases.
+        Click a bar to see detailed cases of the system output.
       </Typography.Title>
     );
   } else {
     analysisTable = (
       <div>
-        <Typography.Title level={4}>Error Cases: </Typography.Title>
+        <Typography.Title level={4}>Case Study </Typography.Title>
         <AnalysisTable
           systemID={props.systemID}
           outputIDs={bucketOfSamples}

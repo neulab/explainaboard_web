@@ -2,9 +2,6 @@ import React from "react";
 
 import logo from "../../logo-full.png";
 import "./index.css";
-import { Typography } from "antd";
-
-const { Title } = Typography;
 
 export function Home() {
   return (

@@ -73,6 +73,10 @@ export function BarChart(props: Props) {
     title: {
       text: title,
       left: "center",
+      textStyle: {
+        width: "250",
+        overflow: "break",
+      },
     },
     tooltip: {
       trigger: "axis",

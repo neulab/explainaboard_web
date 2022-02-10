@@ -153,7 +153,7 @@ export function SystemTableContent({
       <Drawer
         visible={activeSystemID != null}
         onClose={() => closeSystemAnalysis()}
-        title={activeSystem?.model_name + " Analysis Report"}
+        title={"Analysis report of " + activeSystem?.model_name}
         width="80%"
       >
         {activeSystem?.analysis !== undefined &&
