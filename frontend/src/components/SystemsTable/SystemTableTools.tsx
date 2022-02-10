@@ -3,6 +3,8 @@ import { Button, Input, Select, Space, Tooltip } from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { green } from "@ant-design/colors";
+import { SystemModel } from "../../models/SystemModel";
 
 export interface Filter {
   name?: string;
@@ -18,6 +20,8 @@ interface Props {
   value: Filter;
   onChange: (value: Partial<Filter>) => void;
   metricOptions: string[];
+  selectedSystems: SystemModel[];
+  setActiveSystems: React.Dispatch<React.SetStateAction<SystemModel[]>>;
 }
 export function SystemTableTools({
   toggleSubmitDrawer,
@@ -25,9 +29,31 @@ export function SystemTableTools({
   value,
   onChange,
   metricOptions,
+  selectedSystems,
+  setActiveSystems,
 }: Props) {
   return (
     <div style={{ width: "100%" }}>
+      <Space style={{ width: "fit-content", float: "left" }}>
+        {selectedSystems.length === 1 && (
+          <Button
+            // size="large"
+            // style={{color: "white", backgroundColor: green[7]}}
+            onClick={() => setActiveSystems(selectedSystems)}
+          >
+            Analysis
+          </Button>
+        )}
+        {selectedSystems.length === 2 && (
+          <Button
+            // size="large"
+            // style={{color: "white", backgroundColor: green[7]}}
+            onClick={() => setActiveSystems(selectedSystems)}
+          >
+            Pair-wise analysis
+          </Button>
+        )}
+      </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
         <TaskSelect
           taskCategories={taskCategories}

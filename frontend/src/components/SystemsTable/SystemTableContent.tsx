@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { Dispatch, SetStateAction, useState } from "react";
 import {
   Button,
   message,
@@ -24,6 +24,9 @@ interface Props {
   loading: boolean;
   onPageChange: (newPage: number, newPageSize: number | undefined) => void;
   metricNames: string[];
+  setSelectedSystems: React.Dispatch<React.SetStateAction<SystemModel[]>>;
+  activeSystems: SystemModel[];
+  setActiveSystems: React.Dispatch<React.SetStateAction<SystemModel[]>>;
 }
 
 export function SystemTableContent({
@@ -34,10 +37,10 @@ export function SystemTableContent({
   loading,
   onPageChange,
   metricNames,
+  setSelectedSystems,
+  activeSystems,
+  setActiveSystems,
 }: Props) {
-  const [activeSystemID, setActiveSystemID] = useState<string>();
-  const activeSystem = systems.find((sys) => sys.system_id === activeSystemID);
-
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
     render: (_, record) => record.analysis.getMetirc(metric)?.value,
@@ -46,8 +49,8 @@ export function SystemTableContent({
     align: "center",
   }));
 
-  function showSystemAnalysis(systemID: string) {
-    setActiveSystemID(systemID);
+  function showSystemAnalysis(system: SystemModel) {
+    setActiveSystems([system]);
   }
 
   async function deleteSystem(systemID: string) {
@@ -63,7 +66,7 @@ export function SystemTableContent({
   }
 
   function closeSystemAnalysis() {
-    setActiveSystemID(undefined);
+    setActiveSystems([]);
   }
   const columns: ColumnsType<SystemModel> = [
     {
@@ -107,10 +110,7 @@ export function SystemTableContent({
       width: 210,
       render: (_, record) => (
         <Space>
-          <Button
-            size="small"
-            onClick={() => showSystemAnalysis(record.system_id)}
-          >
+          <Button size="small" onClick={() => showSystemAnalysis(record)}>
             Analysis
           </Button>
           <Tooltip title="not implemented">
@@ -128,6 +128,13 @@ export function SystemTableContent({
       ),
     },
   ];
+
+  // rowSelection object indicates the need for row selection
+  const rowSelection = {
+    onChange: (selectedRowKeys: React.Key[], selectedRows: SystemModel[]) => {
+      setSelectedSystems(selectedRows);
+    },
+  };
 
   return (
     <div>
@@ -149,21 +156,24 @@ export function SystemTableContent({
         sticky={false}
         loading={loading}
         scroll={{ x: 100 }}
+        rowSelection={{
+          type: "checkbox",
+          ...rowSelection,
+        }}
       />
       <Drawer
-        visible={activeSystemID != null}
+        visible={activeSystems.length !== 0}
         onClose={() => closeSystemAnalysis()}
-        title={"Analysis report of " + activeSystem?.model_name}
+        title={"Analysis report of " + activeSystems[0]?.model_name}
         width="80%"
       >
-        {activeSystem?.analysis !== undefined &&
-          activeSystemID !== undefined && (
-            <AnalysisReport
-              systemID={activeSystemID}
-              task={activeSystem?.task}
-              analysis={activeSystem?.analysis}
-            />
-          )}
+        {activeSystems.length !== 0 && (
+          <AnalysisReport
+            systemID={activeSystems[0].system_id}
+            task={activeSystems[0]?.task}
+            analysis={activeSystems[0]?.analysis}
+          />
+        )}
       </Drawer>
     </div>
   );

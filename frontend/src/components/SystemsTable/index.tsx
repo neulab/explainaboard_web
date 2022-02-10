@@ -34,6 +34,11 @@ export function SystemsTable({ initialTaskFilter }: Props) {
 
   const [refreshTrigger, setRefreshTrigger] = useState(false);
 
+  // systems selected in the table
+  const [selectedSystems, setSelectedSystems] = useState<SystemModel[]>([]);
+  // systems to be analyzed
+  const [activeSystems, setActiveSystems] = useState<SystemModel[]>([]);
+
   /** generate metrics options list */
   function getMetricsNames() {
     const metricNames = new Set<string>();
@@ -115,6 +120,8 @@ export function SystemsTable({ initialTaskFilter }: Props) {
         value={{ task: taskFilter, name: nameFilter, sortField, sortDir }}
         onChange={onFilterChange}
         metricOptions={metricNames}
+        selectedSystems={selectedSystems}
+        setActiveSystems={setActiveSystems}
       />
       <SystemTableContent
         systems={systems}
@@ -127,6 +134,9 @@ export function SystemsTable({ initialTaskFilter }: Props) {
           if (newPageSize) setPageSize(newPageSize);
         }}
         metricNames={metricNames}
+        setSelectedSystems={setSelectedSystems}
+        activeSystems={activeSystems}
+        setActiveSystems={setActiveSystems}
       />
       <SystemSubmitDrawer
         visible={submitDrawerVisible}
