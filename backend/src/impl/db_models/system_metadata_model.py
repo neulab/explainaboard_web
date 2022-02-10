@@ -33,14 +33,15 @@ class SystemModel(MetadataDBModel, System):
         system = cls.from_dict(metadata.to_dict())
 
         # validation
-        dataset = DatasetMetaDataModel.find_one_by_id(
-            system.dataset_metadata_id)
-        if not dataset:
-            abort_with_error_message(
-                400, f"dataset: {system.dataset_metadata_id} does not exist")
-        if system.task not in dataset.tasks:
-            abort_with_error_message(
-                400, f"dataset {dataset.dataset_name} cannot be used for {system.task} tasks")
+        if system.dataset_metadata_id is not None:
+            dataset = DatasetMetaDataModel.find_one_by_id(
+                system.dataset_metadata_id)
+            if not dataset:
+                abort_with_error_message(
+                    400, f"dataset: {system.dataset_metadata_id} does not exist")
+            if system.task not in dataset.tasks:
+                abort_with_error_message(
+                    400, f"dataset {dataset.dataset_name} cannot be used for {system.task} tasks")
 
         # load system output and generate analysis
         system_output_data = get_loader(metadata.task, Source.in_memory,

@@ -102,7 +102,7 @@ export function SystemSubmitDrawer(props: Props) {
       const systemOutBase64 = ((await toBase64(file)) as string).split(",")[1];
       const system = await backendClient.systemsPost({
         metadata: {
-          dataset_metadata_id: dataset_id,
+          dataset_metadata_id: dataset_id || undefined,
           metric_names,
           model_name: name,
           paper_info: {},
@@ -229,10 +229,11 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="dataset_id"
             label="Dataset"
-            rules={[{ required: true }]}
+            help="Please leave this field blank if you couldn't find the dataset"
           >
             <Select
               showSearch
+              allowClear
               placeholder="Please search dataset by name"
               options={datasetOptions.map((dataset) => ({
                 value: dataset.dataset_id,
