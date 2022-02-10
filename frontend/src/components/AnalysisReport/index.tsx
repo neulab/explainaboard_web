@@ -12,6 +12,7 @@ interface Props {
 }
 
 export function AnalysisReport(props: Props) {
+  // TODO the latter type is for NER | {[key: string]: string}[]
   const [bucketOfSamples, setBucketOfSample] = useState<string[]>([]);
   const task = props.task;
   const analysis = props.analysis;
@@ -68,10 +69,12 @@ export function AnalysisReport(props: Props) {
       const numB = Number(b);
       if (Number.isInteger(numA) && Number.isInteger(numB)) {
         return numA - numB;
-      } else if (a > b) {
-        return 1;
-      } else if (a < b) {
-        return -1;
+      } else if (typeof a === "string" && typeof a === "string") {
+        if (a > b) {
+          return 1;
+        } else if (a < b) {
+          return -1;
+        }
       }
       return 0;
     });

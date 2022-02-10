@@ -8,7 +8,8 @@ import { PageState } from "../../utils";
 interface Props {
   systemID: string;
   task: string;
-  outputIDs: string[];
+  // The latter type is for NER
+  outputIDs: string[] | { [key: string]: string }[];
   featureKeys: string[];
   descriptions: string[];
 }
@@ -43,8 +44,28 @@ export function AnalysisTable({
     refreshSystemOutputs();
   }, [systemID, outputIDString, page, pageSize]);
 
-  const columns: ColumnsType<SystemOutput> = [
-    {
+  const columns: ColumnsType<SystemOutput> = [];
+  let dataSource;
+
+  // NER
+  if (task === "named-entity-recognition") {
+    for (const subFeatureKey of Object.keys(outputIDs[0])) {
+      columns.push({
+        dataIndex: subFeatureKey,
+        title: subFeatureKey,
+        ellipsis: true,
+      });
+    }
+    // TODO API request to retrieve text
+    dataSource = outputIDs.map(function (o) {
+      const output = o as { [key: string]: string };
+      return { ...output };
+    });
+
+    // other tasks
+  } else {
+    // ID
+    columns.push({
       dataIndex: "id",
       title: "ID",
       render: (value) => (
@@ -52,23 +73,23 @@ export function AnalysisTable({
           {value}
         </Typography.Paragraph>
       ),
-    },
-  ];
-  for (let i = 0; i < featureKeys.length; i++) {
-    if (featureKeys[i] === "id") {
-      continue;
+    });
+    // other fields
+    for (let i = 0; i < featureKeys.length; i++) {
+      if (featureKeys[i] === "id") {
+        continue;
+      }
+      columns.push({
+        dataIndex: featureKeys[i],
+        title: i < descriptions.length ? descriptions[i] : featureKeys[i],
+        ellipsis: true,
+      });
     }
-    columns.push({
-      dataIndex: featureKeys[i],
-      title: i < descriptions.length ? descriptions[i] : featureKeys[i],
-      ellipsis: true,
+    // clone the system output for modification
+    dataSource = systemOutputs.map(function (s) {
+      return { ...s };
     });
   }
-
-  // clone the system output for modification
-  const dataSource = systemOutputs.map(function (s) {
-    return { ...s };
-  });
 
   for (let i = 0; i < dataSource.length; i++) {
     if (task === "extractive-qa") {

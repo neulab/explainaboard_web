@@ -19,7 +19,7 @@ export function parse(
   const values: number[] = [];
   const numbersOfSamples: number[] = [];
   const confidenceScores: Array<[number, number]> = [];
-  const bucketsOfSamples: Array<string[]> = [];
+  const bucketsOfSamples = [];
 
   let metricName = "";
 
