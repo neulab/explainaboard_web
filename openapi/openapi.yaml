@@ -469,8 +469,7 @@ components:
           format: url
         paper_info:
           $ref: "#/components/schemas/PaperInfo"
-      required:
-        [task, dataset_metadata_id, model_name, metric_names, paper_info]
+      required: [task, model_name, metric_names, paper_info]
 
     SystemOutputProps:
       type: object
@@ -516,15 +515,7 @@ components:
             analysis:
               $ref: "#/components/schemas/SystemAnalysis"
           required:
-            [
-              system_id,
-              task,
-              dataset_metadata_id,
-              model_name,
-              metric_names,
-              paper_info,
-              analysis,
-            ]
+            [system_id, task, model_name, metric_names, paper_info, analysis]
         - $ref: "#/components/schemas/Time"
 
     Feature:
