@@ -21,21 +21,27 @@ export function AnalysisTable({
   descriptions,
 }: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
+  const [page, setPage] = useState(0);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
-  const [total, setTotal] = useState(0);
 
-  const outputIDString = outputIDs.join(",");
+  const pageSize = 10;
+  const total = outputIDs.length;
+  const offset = page * pageSize;
+  const end = Math.min(offset + pageSize, outputIDs.length);
+  const outputIDString = outputIDs.slice(offset, end).join(",");
+
   useEffect(() => {
     async function refreshSystemOutputs() {
       setPageState(PageState.loading);
-      const { system_outputs, total } =
-        await backendClient.systemsSystemIdOutputsGet(systemID, outputIDString);
-      setSystemOutputs(system_outputs);
-      setTotal(total);
+      const result = await backendClient.systemsSystemIdOutputsGet(
+        systemID,
+        outputIDString
+      );
+      setSystemOutputs(result.system_outputs);
       setPageState(PageState.success);
     }
     refreshSystemOutputs();
-  }, [systemID, outputIDString]);
+  }, [systemID, outputIDString, page, pageSize]);
 
   const columns: ColumnsType<SystemOutput> = [
     {
@@ -75,13 +81,24 @@ export function AnalysisTable({
     }
   }
 
-  // TODO: pagination
   return (
     <Table
       className="table"
       columns={columns}
       dataSource={dataSource}
       loading={pageState === PageState.loading}
+      pagination={{
+        total,
+        showTotal: (total, range) =>
+          `${range[0]}-${range[1]} (total: ${total})`,
+        pageSize,
+        // conversion between 0-based and 1-based index
+        current: page + 1,
+        onChange: (newPage, newPageSize) => {
+          setPage(newPage - 1);
+        },
+      }}
+      scroll={{ y: 400 }}
     />
   );
 }

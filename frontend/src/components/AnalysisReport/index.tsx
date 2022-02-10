@@ -63,13 +63,25 @@ export function AnalysisReport(props: Props) {
       </Typography.Title>
     );
   } else {
+    const sortedBucketOfSamples = bucketOfSamples.sort((a, b) => {
+      const numA = Number(a);
+      const numB = Number(b);
+      if (Number.isInteger(numA) && Number.isInteger(numB)) {
+        return numA - numB;
+      } else if (a > b) {
+        return 1;
+      } else if (a < b) {
+        return -1;
+      }
+      return 0;
+    });
     analysisTable = (
       <div>
         <Typography.Title level={4}>Case Study </Typography.Title>
         <AnalysisTable
           systemID={props.systemID}
           task={task}
-          outputIDs={bucketOfSamples}
+          outputIDs={sortedBucketOfSamples}
           featureKeys={featureKeys}
           descriptions={descriptions}
         />
