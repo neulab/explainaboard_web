@@ -25,13 +25,17 @@ export function AnalysisReport(props: Props) {
     new Array<ResultFineGrainedParsed>(chartNumPerRow),
   ];
   const featureKeys: string[] = [];
+  const descriptions: string[] = [];
 
   let rowIdx = 0;
   let chartNum = 0;
   for (const [key, featureVal] of Object.entries(analysis["features"])) {
-    console.log(featureVal);
-    const description = featureVal["description"];
+    let description = featureVal["description"];
+    if (description === null) {
+      description = key;
+    }
     featureKeys.push(key);
+    descriptions.push(description);
     if (featureVal.is_bucket) {
       if (chartNum === chartNumPerRow) {
         chartNum = 0;
@@ -40,7 +44,6 @@ export function AnalysisReport(props: Props) {
         );
         rowIdx += 1;
       }
-      // TODO: using key as title for now, need SDK to provide an explicit title
       resultsFineGrainedParsed[rowIdx][chartNum] = parse(
         description,
         resultsFineGrained[key]
@@ -64,6 +67,7 @@ export function AnalysisReport(props: Props) {
           systemID={props.systemID}
           outputIDs={bucketOfSamples}
           featureKeys={featureKeys}
+          descriptions={descriptions}
         />
       </div>
     );

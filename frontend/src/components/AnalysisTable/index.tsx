@@ -9,9 +9,15 @@ interface Props {
   systemID: string;
   outputIDs: string[];
   featureKeys: string[];
+  descriptions: string[];
 }
 
-export function AnalysisTable({ systemID, outputIDs, featureKeys }: Props) {
+export function AnalysisTable({
+  systemID,
+  outputIDs,
+  featureKeys,
+  descriptions,
+}: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const [total, setTotal] = useState(0);
@@ -40,11 +46,11 @@ export function AnalysisTable({ systemID, outputIDs, featureKeys }: Props) {
       ),
     },
   ];
-  for (const featureKey of featureKeys) {
+  for (let i = 0; i < featureKeys.length; i++) {
     columns.push({
-      dataIndex: featureKey,
-      // TODO: update SDK to generate title
-      title: featureKey,
+      dataIndex: featureKeys[i],
+      title: i < descriptions.length ? descriptions[i] : featureKeys[i],
+      ellipsis: true,
     });
   }
   // TODO: pagination
