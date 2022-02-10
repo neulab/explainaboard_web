@@ -42,6 +42,7 @@ export function SystemTableContent({
     dataIndex: metric,
     render: (_, record) => record.analysis.getMetirc(metric)?.value,
     title: metric,
+    width: 100,
     align: "center",
   }));
 
@@ -69,19 +70,25 @@ export function SystemTableContent({
       dataIndex: "idx",
       render: (text, record, index) => index + 1,
       width: 50,
+      fixed: "left",
       align: "center",
     },
     {
       dataIndex: "model_name",
+      width: 100,
+      fixed: "left",
       title: "Name",
     },
     {
       dataIndex: "task",
+      width: 150,
+      fixed: "left",
       title: "Task",
       render: (value) => <Tag>{value}</Tag>,
     },
     {
       dataIndex: "language",
+      width: 100,
       title: "Language",
       align: "center",
     },
@@ -125,6 +132,7 @@ export function SystemTableContent({
   return (
     <div>
       <Table
+        // style={{"width": "300px"}}
         className="table"
         columns={columns}
         dataSource={systems}
@@ -139,9 +147,9 @@ export function SystemTableContent({
           onChange: (newPage, newPageSize) =>
             onPageChange(newPage - 1, newPageSize),
         }}
-        sticky
+        // sticky={false}
         loading={loading}
-        scroll={{ x: "100%" }}
+        scroll={{ x: 100 }}
       />
       <Drawer
         visible={activeSystemID != null}
