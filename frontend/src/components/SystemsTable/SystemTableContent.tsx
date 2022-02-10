@@ -132,7 +132,6 @@ export function SystemTableContent({
   return (
     <div>
       <Table
-        // style={{"width": "300px"}}
         className="table"
         columns={columns}
         dataSource={systems}
@@ -147,7 +146,7 @@ export function SystemTableContent({
           onChange: (newPage, newPageSize) =>
             onPageChange(newPage - 1, newPageSize),
         }}
-        // sticky={false}
+        sticky={false}
         loading={loading}
         scroll={{ x: 100 }}
       />
