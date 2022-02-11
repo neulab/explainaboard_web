@@ -188,7 +188,7 @@ export function SystemSubmitDrawer(props: Props) {
       destroyOnClose
       {...props}
     >
-      <Spin spinning={state === State.loading} tip="loading...">
+      <Spin spinning={state === State.loading} tip="processing...">
         <Form
           labelCol={{ span: 7 }}
           onFinish={submit}
