@@ -83,7 +83,29 @@ export function SystemsTable({ initialTaskFilter }: Props) {
         sortField,
         sortDir
       );
-      setSystems(newSystems.map((sys) => newSystemModel(sys)));
+      const datasetIDs: string[] = [];
+      for (const sys of newSystems) {
+        if (sys.dataset_metadata_id !== undefined) {
+          datasetIDs.push(sys.dataset_metadata_id);
+        }
+      }
+      const { datasets } = await backendClient.datasetsGet(
+        datasetIDs.join(",")
+      );
+      // gather datasets into a dictionary with datasetID as key for easy look up
+      const normalizedDatasets = Object.assign(
+        {},
+        ...datasets.map((d) => ({ [d.dataset_id]: d }))
+      );
+      setSystems(
+        newSystems.map((sys) => {
+          const datasetName =
+            sys.dataset_metadata_id === undefined
+              ? "unspecified"
+              : normalizedDatasets[sys.dataset_metadata_id].dataset_name;
+          return newSystemModel(sys, datasetName);
+        })
+      );
       setTotal(total);
       setPageState(PageState.success);
     }

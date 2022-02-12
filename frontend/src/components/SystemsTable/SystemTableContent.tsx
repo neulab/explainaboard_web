@@ -8,12 +8,15 @@ import {
   Tooltip,
   Table,
   Drawer,
+  Typography,
 } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
 import { AnalysisReport } from "..";
+
+const { Text } = Typography;
 
 interface Props {
   systems: SystemModel[];
@@ -85,24 +88,33 @@ export function SystemTableContent({
     },
     {
       dataIndex: "model_name",
-      width: 100,
+      width: 150,
       fixed: "left",
       title: "Name",
+      render: (value) => <Text strong>{value}</Text>,
     },
     {
       dataIndex: "task",
-      width: 150,
+      width: 120,
       fixed: "left",
       title: "Task",
-      render: (value) => <Tag>{value}</Tag>,
+      render: (value) => <Tag style={{ whiteSpace: "normal" }}>{value}</Tag>,
     },
+    {
+      dataIndex: "dataset_name",
+      width: 100,
+      title: "Dataset",
+      fixed: "left",
+      align: "center",
+      render: (value) => value,
+    },
+    ...metricColumns,
     {
       dataIndex: "language",
       width: 100,
       title: "Language",
       align: "center",
     },
-    ...metricColumns,
     {
       dataIndex: "created_at",
       title: "Created At",
