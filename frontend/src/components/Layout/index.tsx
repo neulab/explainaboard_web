@@ -3,7 +3,7 @@ import { Button, Layout as AntdLayout, Menu, Space } from "antd";
 import { Route } from "../../routes";
 import "./index.css";
 import { useHistory, useLocation } from "react-router";
-import { LoginState, useUser } from "..";
+import { LoginState, useEnv, useUser } from "..";
 
 interface Props {
   routes: Route[];
@@ -22,6 +22,7 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
   const history = useHistory();
   const location = useLocation();
   const user = useUser();
+  const { env } = useEnv();
 
   const selectedMenus = [location.pathname];
   // first character of path is always "/" so skip first element of levels.
@@ -112,6 +113,7 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
       <AntdLayout className="site-layout">
         <AntdLayout.Header className="site-layout-header">
           <Space>
+            {env === "development" && "(You are in development environment)"}
             {userText}
             <Button size="small" onClick={user.logout}>
               Log out

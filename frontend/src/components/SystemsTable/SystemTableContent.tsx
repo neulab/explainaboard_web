@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Button, message, Popconfirm, Space, Tag, Table, Drawer } from "antd";
+import React from "react";
+import { Button, message, Popconfirm, Space, Table, Drawer } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
@@ -76,15 +76,14 @@ export function SystemTableContent({
     },
     {
       dataIndex: "model_name",
-      width: 100,
       fixed: "left",
       title: "Name",
       render: (_, record) => (
         <div>
           {record.model_name}
-          <div style={{ paddingLeft: "3px" }}>
+          <span style={{ paddingLeft: "3px" }}>
             <VisibilityIcon isPrivate={record.is_private} />
-          </div>
+          </span>
         </div>
       ),
     },

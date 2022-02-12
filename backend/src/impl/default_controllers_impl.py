@@ -21,7 +21,7 @@ from explainaboard import get_task_categories
 def info_get():
     return {
         'env': os.getenv('FLASK_ENV'),
-        'auth_url': f"https://explainaboard-dev.auth.{current_app.config.get('REGION')}.amazoncognito.com/oauth2/authorize?client_id={current_app.config.get('USER_POOL_AUDIENCE')}&response_type=token&scope=email+openid+phone"
+        'auth_url': current_app.config.get("AUTH_URL")
     }
 
 

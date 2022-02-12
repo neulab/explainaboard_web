@@ -1,9 +1,9 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
-import { useLocation } from "react-router-dom";
 import jwtDecode from "jwt-decode";
 import moment from "moment";
 import { refreshBackendClient } from "../clients";
 import { useEnv } from ".";
+import { useHistory } from "react-router-dom";
 
 export enum LoginState {
   yes = "yes",
@@ -17,6 +17,8 @@ interface IUserContext {
   login: () => void;
   logout: () => void;
   state: LoginState;
+  /** update jwt and redirect to the previous page when login is successful (should only be used by callback page) */
+  loginCallback: (jwt: string) => void;
 }
 const UserContext = createContext<IUserContext>({} as IUserContext);
 interface JWTInfo {
@@ -29,34 +31,17 @@ interface JWTInfo {
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const { env, authURL } = useEnv();
+  const history = useHistory();
   const jwtKey = `explainaboard_${env}_jwt`;
+  const redirectPageKey = `explainaboard_${env}_redirect`;
 
   const [jwt, setJwt] = useState(initJWT());
-  const location = useLocation();
 
   function initJWT() {
     const savedToken = localStorage.getItem(jwtKey);
     refreshBackendClient(savedToken);
     return savedToken;
   }
-
-  /** if path has jwt token, parse and save to localstorage */
-  function parseJWTWhenRedirect() {
-    const hash = location.hash;
-    if (hash.length > 0) {
-      const segments = hash.substring(1).split("&");
-      const jwtSegment = segments.find((segment) =>
-        segment.startsWith("id_token=")
-      );
-      if (jwtSegment) {
-        const newJWT = jwtSegment.substring("id_token=".length);
-        window.location.href = location.pathname; // remove jwt token from url
-        setJwt(newJWT);
-        localStorage.setItem(jwtKey, newJWT);
-      }
-    }
-  }
-  parseJWTWhenRedirect();
 
   let userInfo: JWTInfo | null = null;
   let state = LoginState.no;
@@ -69,6 +54,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     } else state = LoginState.yes;
   } else state = LoginState.no;
 
+  /** callback when login success */
+  const loginCallback = useCallback(
+    (newJwt: string) => {
+      setJwt(newJwt);
+      localStorage.setItem(jwtKey, newJwt);
+      refreshBackendClient(newJwt);
+      history.push(localStorage.getItem(redirectPageKey) || "/");
+    },
+    [history, jwtKey, redirectPageKey]
+  );
+
   /** TODO: revoke token */
   const logout = useCallback(() => {
     localStorage.removeItem(jwtKey);
@@ -78,17 +74,17 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   /** redirect to login page */
   const login = useCallback(() => {
-    const redirectURL = `${authURL}&redirect_uri=${
-      window.location.protocol +
-      "//" +
-      window.location.host +
-      window.location.pathname
-    }`;
-    window.location.href = encodeURI(redirectURL);
-  }, [authURL]);
+    localStorage.setItem(redirectPageKey, window.location.pathname);
+    const { protocol, host } = window.location;
+    window.location.href = encodeURI(
+      `${authURL}${protocol}//${host}/login-callback`
+    );
+  }, [authURL, redirectPageKey]);
 
   return (
-    <UserContext.Provider value={{ state, userInfo, login, jwt, logout }}>
+    <UserContext.Provider
+      value={{ state, userInfo, login, jwt, logout, loginCallback }}
+    >
       {children}
     </UserContext.Provider>
   );

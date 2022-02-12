@@ -11,6 +11,7 @@ import {
   Home,
   LeaderboardHome,
   LeaderboardPage,
+  LoginCallback,
   SystemsPage,
 } from "./pages";
 
@@ -57,6 +58,12 @@ const routes: Route[] = [
     children: <LeaderboardPage />,
     hideFromMenu: true,
     requireLogin: true,
+  },
+  {
+    path: "/login-callback",
+    exact: true,
+    children: <LoginCallback />,
+    hideFromMenu: true,
   },
 ];
 export default routes;
