@@ -33,10 +33,7 @@ export function AnalysisReport(props: Props) {
   let rowIdx = 0;
   let chartNum = 0;
   for (const [key, featureVal] of Object.entries(analysis["features"])) {
-    let description = featureVal["description"];
-    if (description === null || description === undefined) {
-      description = key;
-    }
+    const description = featureVal["description"] || key;
     featureKeys.push(key);
     descriptions.push(description);
     if (featureVal.is_bucket) {
