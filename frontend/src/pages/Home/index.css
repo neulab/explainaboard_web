@@ -35,3 +35,129 @@
     transform: rotate(360deg);
   }
 }
+
+.background {
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.background-mask {
+  background-color: rgba(62, 69, 81, 0.3);
+  height: 100%;
+  display: flex;
+  text-align: center;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.text-white {
+  color: #ffffff;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.bg-center {
+  background-position: center;
+}
+
+.bg-cover {
+  background-size: cover;
+}
+
+.flex {
+  display: flex;
+}
+
+.bg-opacity-60 {
+  background-color: rgb(0, 0, 0, 0.6);
+}
+
+.items-center {
+  align-items: center;
+}
+
+.text-xl {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+}
+
+.text-2xl {
+  font-size: 1.5rem;
+}
+
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.text-6xl {
+  font-size: 4rem;
+}
+
+.relative {
+  position: relative;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.min-w-0 {
+  min-width: 0;
+}
+
+.break-words {
+  overflow-wrap: break-word;
+}
+
+.mx-16 {
+  margin-right: 4rem;
+  margin-left: 4rem;
+}
+
+.ml-auto {
+  margin-left: auto;
+}
+
+.mr-auto {
+  margin-right: auto;
+}
+
+.mb-0 {
+  margin-bottom: 0;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+.mx-20 {
+  margin-right: 5rem;
+  margin-left: 5rem;
+}
+
+.bg-white {
+  background-color: #fff;
+}

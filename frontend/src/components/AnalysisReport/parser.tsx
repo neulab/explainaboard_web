@@ -11,6 +11,7 @@ function formatName(name: string) {
 }
 
 export function parse(
+  task: string,
   title: string,
   fineGrainedElements: Array<FineGrainedElement[]>
 ) {
@@ -18,7 +19,7 @@ export function parse(
   const values: number[] = [];
   const numbersOfSamples: number[] = [];
   const confidenceScores: Array<[number, number]> = [];
-  const bucketsOfSamples: Array<string[]> = [];
+  const bucketsOfSamples = [];
 
   let metricName = "";
 

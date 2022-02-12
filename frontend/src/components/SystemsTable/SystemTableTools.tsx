@@ -18,6 +18,8 @@ interface Props {
   value: Filter;
   onChange: (value: Partial<Filter>) => void;
   metricOptions: string[];
+  selectedSystemIDs: string[];
+  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
 }
 export function SystemTableTools({
   toggleSubmitDrawer,
@@ -25,9 +27,45 @@ export function SystemTableTools({
   value,
   onChange,
   metricOptions,
+  selectedSystemIDs,
+  setActiveSystemIDs,
 }: Props) {
   return (
     <div style={{ width: "100%" }}>
+      <Space style={{ width: "fit-content", float: "left" }}>
+        {selectedSystemIDs.length === 0 && (
+          <Tooltip
+            title={
+              <div>
+                <p>
+                  Single Analysis: Click the Analysis button on any system row.
+                </p>
+                <p>
+                  Pair-wise Analysis: Select two systems that uses the same
+                  dataset. A Pair-wise Analysis button will be shown at the top.
+                </p>
+              </div>
+            }
+            placement="bottom"
+            color="white"
+            overlayInnerStyle={{ color: "black" }}
+          >
+            <Button type="link" size="small" style={{ padding: 0 }}>
+              What kind of analyses are supported?
+            </Button>
+          </Tooltip>
+        )}
+        {selectedSystemIDs.length === 1 && (
+          <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
+            Analysis
+          </Button>
+        )}
+        {selectedSystemIDs.length === 2 && (
+          <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
+            Pair-wise Analysis
+          </Button>
+        )}
+      </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
         <TaskSelect
           taskCategories={taskCategories}

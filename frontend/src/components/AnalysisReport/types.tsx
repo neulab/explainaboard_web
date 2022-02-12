@@ -9,6 +9,7 @@ export interface Features {
 export interface FeatureVal {
   _type: string;
   bucket_info: BucketInfo | null;
+  description: string | null | undefined;
   id: null;
   is_bucket: boolean;
   is_pre_computed: boolean;
@@ -37,7 +38,8 @@ export interface FineGrained {
 
 export interface FineGrainedElement {
   bucket_name: string[] | number[];
-  bucket_samples: string[];
+  // TODO the latter type is for NER
+  bucket_samples: string[]; // | {[key: string]: string}[];
   confidence_score_low: string;
   confidence_score_up: string;
   metric_name: string;
@@ -49,7 +51,8 @@ export interface ResultFineGrainedParsed {
   title: string;
   metricName: string;
   bucketNames: string[];
-  bucketsOfSamples: Array<string[]>;
+  // TODO the latter type is for NER
+  bucketsOfSamples: Array<string[]>; // | Array<{[key: string]: string}[]>;
   values: number[];
   numbersOfSamples: number[];
   confidenceScores: Array<[number, number]>;

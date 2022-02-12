@@ -6,16 +6,24 @@ import { Row, Col, Typography } from "antd";
 import { SystemAnalysisModel } from "../../models";
 
 interface Props {
+  systemIDs: string[];
   systemID: string;
+  task: string;
+  analyses: SystemAnalysisModel[];
   analysis: SystemAnalysisModel;
 }
 
 export function AnalysisReport(props: Props) {
+  // TODO the latter type is for NER | {[key: string]: string}[]
   const [bucketOfSamples, setBucketOfSample] = useState<string[]>([]);
+  const task = props.task;
   const analysis = props.analysis;
   const resultsFineGrained = analysis["results"]["fine_grained"];
 
-  // The visualization chart of a fine grained result is displayed using the "Grid" layout by Ant Design.
+  // page number of the analysis table
+  const [page, setPage] = useState(0);
+
+  // The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
   // Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
   // to be enclosed by <Row></Row>.
 
@@ -25,11 +33,14 @@ export function AnalysisReport(props: Props) {
     new Array<ResultFineGrainedParsed>(chartNumPerRow),
   ];
   const featureKeys: string[] = [];
+  const descriptions: string[] = [];
 
   let rowIdx = 0;
   let chartNum = 0;
   for (const [key, featureVal] of Object.entries(analysis["features"])) {
+    const description = featureVal["description"] || key;
     featureKeys.push(key);
+    descriptions.push(description);
     if (featureVal.is_bucket) {
       if (chartNum === chartNumPerRow) {
         chartNum = 0;
@@ -38,9 +49,9 @@ export function AnalysisReport(props: Props) {
         );
         rowIdx += 1;
       }
-      // TODO: using key as title for now, need SDK to provide an explicit title
       resultsFineGrainedParsed[rowIdx][chartNum] = parse(
-        key,
+        task,
+        description,
         resultsFineGrained[key]
       );
       chartNum += 1;
@@ -51,17 +62,35 @@ export function AnalysisReport(props: Props) {
   if (bucketOfSamples.length === 0) {
     analysisTable = (
       <Typography.Title level={5}>
-        Click a bar to see error cases.
+        Click a bar to see detailed cases of the system output.
       </Typography.Title>
     );
   } else {
+    const sortedBucketOfSamples = bucketOfSamples.sort((a, b) => {
+      const numA = Number(a);
+      const numB = Number(b);
+      if (Number.isInteger(numA) && Number.isInteger(numB)) {
+        return numA - numB;
+      } else if (typeof a === "string" && typeof a === "string") {
+        if (a > b) {
+          return 1;
+        } else if (a < b) {
+          return -1;
+        }
+      }
+      return 0;
+    });
     analysisTable = (
       <div>
-        <Typography.Title level={4}>Error Cases: </Typography.Title>
+        <Typography.Title level={4}>Case Study </Typography.Title>
         <AnalysisTable
           systemID={props.systemID}
-          outputIDs={bucketOfSamples}
+          task={task}
+          outputIDs={sortedBucketOfSamples}
           featureKeys={featureKeys}
+          descriptions={descriptions}
+          page={page}
+          setPage={setPage}
         />
       </div>
     );
@@ -82,6 +111,8 @@ export function AnalysisReport(props: Props) {
                 confidenceScores={result.confidenceScores}
                 onBarClick={(barIndex: number) => {
                   setBucketOfSample(result.bucketsOfSamples[barIndex]);
+                  // reset page number
+                  setPage(0);
                 }}
               />
             </Col>

@@ -34,6 +34,11 @@ export function SystemsTable({ initialTaskFilter }: Props) {
 
   const [refreshTrigger, setRefreshTrigger] = useState(false);
 
+  // systems selected in the table
+  const [selectedSystemIDs, setSelectedSystemIDs] = useState<string[]>([]);
+  // systems to be analyzed
+  const [activeSystemIDs, setActiveSystemIDs] = useState<string[]>([]);
+
   /** generate metrics options list */
   function getMetricsNames() {
     const metricNames = new Set<string>();
@@ -105,6 +110,7 @@ export function SystemsTable({ initialTaskFilter }: Props) {
     if (newSortField != null) setSortField(newSortField);
     if (newSortDir != null) setSortDir(newSortDir);
     setPage(0);
+    setSelectedSystemIDs([]);
   }
 
   return (
@@ -115,6 +121,8 @@ export function SystemsTable({ initialTaskFilter }: Props) {
         value={{ task: taskFilter, name: nameFilter, sortField, sortDir }}
         onChange={onFilterChange}
         metricOptions={metricNames}
+        selectedSystemIDs={selectedSystemIDs}
+        setActiveSystemIDs={setActiveSystemIDs}
       />
       <SystemTableContent
         systems={systems}
@@ -125,8 +133,13 @@ export function SystemsTable({ initialTaskFilter }: Props) {
         onPageChange={(newPage, newPageSize) => {
           setPage(newPage);
           if (newPageSize) setPageSize(newPageSize);
+          setSelectedSystemIDs([]);
         }}
         metricNames={metricNames}
+        selectedSystemIDs={selectedSystemIDs}
+        setSelectedSystemIDs={setSelectedSystemIDs}
+        activeSystemIDs={activeSystemIDs}
+        setActiveSystemIDs={setActiveSystemIDs}
       />
       <SystemSubmitDrawer
         visible={submitDrawerVisible}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Button,
   message,
@@ -24,6 +24,10 @@ interface Props {
   loading: boolean;
   onPageChange: (newPage: number, newPageSize: number | undefined) => void;
   metricNames: string[];
+  selectedSystemIDs: string[];
+  setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  activeSystemIDs: string[];
+  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export function SystemTableContent({
@@ -34,19 +38,26 @@ export function SystemTableContent({
   loading,
   onPageChange,
   metricNames,
+  selectedSystemIDs,
+  setSelectedSystemIDs,
+  activeSystemIDs,
+  setActiveSystemIDs,
 }: Props) {
-  const [activeSystemID, setActiveSystemID] = useState<string>();
-  const activeSystem = systems.find((sys) => sys.system_id === activeSystemID);
+  const activeSystems = systems.filter((sys) =>
+    activeSystemIDs.includes(sys.system_id)
+  );
+  const analyses = activeSystems.map((sys) => sys.analysis);
 
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
     render: (_, record) => record.analysis.getMetirc(metric)?.value,
     title: metric,
+    width: 100,
     align: "center",
   }));
 
   function showSystemAnalysis(systemID: string) {
-    setActiveSystemID(systemID);
+    setActiveSystemIDs([systemID]);
   }
 
   async function deleteSystem(systemID: string) {
@@ -62,26 +73,32 @@ export function SystemTableContent({
   }
 
   function closeSystemAnalysis() {
-    setActiveSystemID(undefined);
+    setActiveSystemIDs([]);
   }
   const columns: ColumnsType<SystemModel> = [
     {
       dataIndex: "idx",
       render: (text, record, index) => index + 1,
       width: 50,
+      fixed: "left",
       align: "center",
     },
     {
       dataIndex: "model_name",
+      width: 100,
+      fixed: "left",
       title: "Name",
     },
     {
       dataIndex: "task",
+      width: 150,
+      fixed: "left",
       title: "Task",
       render: (value) => <Tag>{value}</Tag>,
     },
     {
       dataIndex: "language",
+      width: 100,
       title: "Language",
       align: "center",
     },
@@ -122,6 +139,14 @@ export function SystemTableContent({
     },
   ];
 
+  // rowSelection object indicates the need for row selection
+  const rowSelection = {
+    selectedRowKeys: selectedSystemIDs,
+    onChange: (selectedRowKeys: React.Key[], selectedRows: SystemModel[]) => {
+      setSelectedSystemIDs(selectedRowKeys as string[]);
+    },
+  };
+
   return (
     <div>
       <Table
@@ -139,23 +164,29 @@ export function SystemTableContent({
           onChange: (newPage, newPageSize) =>
             onPageChange(newPage - 1, newPageSize),
         }}
-        sticky
+        sticky={false}
         loading={loading}
-        scroll={{ x: "100%" }}
+        scroll={{ x: 100 }}
+        rowSelection={{
+          type: "checkbox",
+          ...rowSelection,
+        }}
       />
       <Drawer
-        visible={activeSystemID != null}
+        visible={activeSystems.length !== 0}
         onClose={() => closeSystemAnalysis()}
-        title={activeSystem?.model_name + " Analysis Report"}
+        title={"Analysis report of " + activeSystems[0]?.model_name}
         width="80%"
       >
-        {activeSystem?.analysis !== undefined &&
-          activeSystemID !== undefined && (
-            <AnalysisReport
-              systemID={activeSystemID}
-              analysis={activeSystem?.analysis}
-            />
-          )}
+        {activeSystems.length !== 0 && (
+          <AnalysisReport
+            systemIDs={activeSystemIDs}
+            systemID={activeSystems[0].system_id}
+            task={activeSystems[0]?.task}
+            analyses={analyses}
+            analysis={activeSystems[0]?.analysis}
+          />
+        )}
       </Drawer>
     </div>
   );
