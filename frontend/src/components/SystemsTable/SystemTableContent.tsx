@@ -46,6 +46,7 @@ export function SystemTableContent({
   const activeSystems = systems.filter((sys) =>
     activeSystemIDs.includes(sys.system_id)
   );
+  const analyses = activeSystems.map((sys) => sys.analysis);
 
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
@@ -179,8 +180,10 @@ export function SystemTableContent({
       >
         {activeSystems.length !== 0 && (
           <AnalysisReport
+            systemIDs={activeSystemIDs}
             systemID={activeSystems[0].system_id}
             task={activeSystems[0]?.task}
+            analyses={analyses}
             analysis={activeSystems[0]?.analysis}
           />
         )}

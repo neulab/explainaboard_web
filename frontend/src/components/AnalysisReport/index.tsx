@@ -6,8 +6,10 @@ import { Row, Col, Typography } from "antd";
 import { SystemAnalysisModel } from "../../models";
 
 interface Props {
+  systemIDs: string[];
   systemID: string;
   task: string;
+  analyses: SystemAnalysisModel[];
   analysis: SystemAnalysisModel;
 }
 
@@ -21,7 +23,7 @@ export function AnalysisReport(props: Props) {
   // page number of the analysis table
   const [page, setPage] = useState(0);
 
-  // The visualization chart of a fine grained result is displayed using the "Grid" layout by Ant Design.
+  // The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
   // Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
   // to be enclosed by <Row></Row>.
 

@@ -38,11 +38,11 @@ export function SystemTableTools({
             title={
               <div>
                 <p>
-                  Single Analysis: Click the Analysis button for any system row.
+                  Single Analysis: Click the Analysis button on any system row.
                 </p>
                 <p>
-                  Pair-wise Analysis: Select two systems using the same dataset.
-                  A Pair-wise Analysis button will be shown at the top.
+                  Pair-wise Analysis: Select two systems that uses the same
+                  dataset. A Pair-wise Analysis button will be shown at the top.
                 </p>
               </div>
             }
