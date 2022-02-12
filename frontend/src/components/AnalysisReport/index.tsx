@@ -18,6 +18,9 @@ export function AnalysisReport(props: Props) {
   const analysis = props.analysis;
   const resultsFineGrained = analysis["results"]["fine_grained"];
 
+  // page number of the analysis table
+  const [page, setPage] = useState(0);
+
   // The visualization chart of a fine grained result is displayed using the "Grid" layout by Ant Design.
   // Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
   // to be enclosed by <Row></Row>.
@@ -84,6 +87,8 @@ export function AnalysisReport(props: Props) {
           outputIDs={sortedBucketOfSamples}
           featureKeys={featureKeys}
           descriptions={descriptions}
+          page={page}
+          setPage={setPage}
         />
       </div>
     );
@@ -104,6 +109,8 @@ export function AnalysisReport(props: Props) {
                 confidenceScores={result.confidenceScores}
                 onBarClick={(barIndex: number) => {
                   setBucketOfSample(result.bucketsOfSamples[barIndex]);
+                  // reset page number
+                  setPage(0);
                 }}
               />
             </Col>

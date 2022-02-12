@@ -3,8 +3,6 @@ import { Button, Input, Select, Space, Tooltip } from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
-import { green } from "@ant-design/colors";
-import { SystemModel } from "../../models/SystemModel";
 
 export interface Filter {
   name?: string;
@@ -20,8 +18,8 @@ interface Props {
   value: Filter;
   onChange: (value: Partial<Filter>) => void;
   metricOptions: string[];
-  selectedSystems: SystemModel[];
-  setActiveSystems: React.Dispatch<React.SetStateAction<SystemModel[]>>;
+  selectedSystemIDs: string[];
+  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
 }
 export function SystemTableTools({
   toggleSubmitDrawer,
@@ -29,28 +27,42 @@ export function SystemTableTools({
   value,
   onChange,
   metricOptions,
-  selectedSystems,
-  setActiveSystems,
+  selectedSystemIDs,
+  setActiveSystemIDs,
 }: Props) {
   return (
     <div style={{ width: "100%" }}>
       <Space style={{ width: "fit-content", float: "left" }}>
-        {selectedSystems.length === 1 && (
-          <Button
-            // size="large"
-            // style={{color: "white", backgroundColor: green[7]}}
-            onClick={() => setActiveSystems(selectedSystems)}
+        {selectedSystemIDs.length === 0 && (
+          <Tooltip
+            title={
+              <div>
+                <p>
+                  Single Analysis: Click the Analysis button for any system row.
+                </p>
+                <p>
+                  Pair-wise Analysis: Select two systems using the same dataset.
+                  A Pair-wise Analysis button will be shown at the top.
+                </p>
+              </div>
+            }
+            placement="bottom"
+            color="white"
+            overlayInnerStyle={{ color: "black" }}
           >
+            <Button type="link" size="small" style={{ padding: 0 }}>
+              What kind of analyses are supported?
+            </Button>
+          </Tooltip>
+        )}
+        {selectedSystemIDs.length === 1 && (
+          <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
             Analysis
           </Button>
         )}
-        {selectedSystems.length === 2 && (
-          <Button
-            // size="large"
-            // style={{color: "white", backgroundColor: green[7]}}
-            onClick={() => setActiveSystems(selectedSystems)}
-          >
-            Pair-wise analysis
+        {selectedSystemIDs.length === 2 && (
+          <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
+            Pair-wise Analysis
           </Button>
         )}
       </Space>

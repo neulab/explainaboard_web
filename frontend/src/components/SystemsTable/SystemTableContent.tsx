@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React from "react";
 import {
   Button,
   message,
@@ -24,9 +24,10 @@ interface Props {
   loading: boolean;
   onPageChange: (newPage: number, newPageSize: number | undefined) => void;
   metricNames: string[];
-  setSelectedSystems: React.Dispatch<React.SetStateAction<SystemModel[]>>;
-  activeSystems: SystemModel[];
-  setActiveSystems: React.Dispatch<React.SetStateAction<SystemModel[]>>;
+  selectedSystemIDs: string[];
+  setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  activeSystemIDs: string[];
+  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 export function SystemTableContent({
@@ -37,10 +38,15 @@ export function SystemTableContent({
   loading,
   onPageChange,
   metricNames,
-  setSelectedSystems,
-  activeSystems,
-  setActiveSystems,
+  selectedSystemIDs,
+  setSelectedSystemIDs,
+  activeSystemIDs,
+  setActiveSystemIDs,
 }: Props) {
+  const activeSystems = systems.filter((sys) =>
+    activeSystemIDs.includes(sys.system_id)
+  );
+
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
     render: (_, record) => record.analysis.getMetirc(metric)?.value,
@@ -49,8 +55,8 @@ export function SystemTableContent({
     align: "center",
   }));
 
-  function showSystemAnalysis(system: SystemModel) {
-    setActiveSystems([system]);
+  function showSystemAnalysis(systemID: string) {
+    setActiveSystemIDs([systemID]);
   }
 
   async function deleteSystem(systemID: string) {
@@ -66,7 +72,7 @@ export function SystemTableContent({
   }
 
   function closeSystemAnalysis() {
-    setActiveSystems([]);
+    setActiveSystemIDs([]);
   }
   const columns: ColumnsType<SystemModel> = [
     {
@@ -110,7 +116,10 @@ export function SystemTableContent({
       width: 210,
       render: (_, record) => (
         <Space>
-          <Button size="small" onClick={() => showSystemAnalysis(record)}>
+          <Button
+            size="small"
+            onClick={() => showSystemAnalysis(record.system_id)}
+          >
             Analysis
           </Button>
           <Tooltip title="not implemented">
@@ -131,8 +140,9 @@ export function SystemTableContent({
 
   // rowSelection object indicates the need for row selection
   const rowSelection = {
+    selectedRowKeys: selectedSystemIDs,
     onChange: (selectedRowKeys: React.Key[], selectedRows: SystemModel[]) => {
-      setSelectedSystems(selectedRows);
+      setSelectedSystemIDs(selectedRowKeys as string[]);
     },
   };
 

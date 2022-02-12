@@ -12,6 +12,8 @@ interface Props {
   outputIDs: string[] | { [key: string]: string }[];
   featureKeys: string[];
   descriptions: string[];
+  page: number;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
 }
 
 export function AnalysisTable({
@@ -20,9 +22,10 @@ export function AnalysisTable({
   outputIDs,
   featureKeys,
   descriptions,
+  page,
+  setPage,
 }: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
-  const [page, setPage] = useState(0);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
 
   const pageSize = 10;
