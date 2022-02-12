@@ -19,7 +19,8 @@ import { AnalysisReport } from "..";
 const { Text } = Typography;
 
 interface Props {
-  systems: SystemModel[];
+  systemIDs: string[];
+  normalizedSystems: { [key: string]: SystemModel };
   total: number;
   pageSize: number;
   /** 0 indexed */
@@ -34,7 +35,8 @@ interface Props {
 }
 
 export function SystemTableContent({
-  systems,
+  systemIDs,
+  normalizedSystems,
   page,
   total,
   pageSize,
@@ -46,10 +48,11 @@ export function SystemTableContent({
   activeSystemIDs,
   setActiveSystemIDs,
 }: Props) {
-  const activeSystems = systems.filter((sys) =>
-    activeSystemIDs.includes(sys.system_id)
+  const systems = systemIDs.map((sysID) => normalizedSystems[sysID]);
+  const activeSystems = activeSystemIDs.map(
+    (sysID) => normalizedSystems[sysID]
   );
-  const analyses = activeSystems.map((sys) => sys.analysis);
+  const analyses = activeSystems.map((sys) => sys["analysis"]);
 
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
@@ -185,7 +188,7 @@ export function SystemTableContent({
         }}
       />
       <Drawer
-        visible={activeSystems.length !== 0}
+        visible={activeSystemIDs.length !== 0}
         onClose={() => closeSystemAnalysis()}
         title={"Analysis report of " + activeSystems[0]?.model_name}
         width="80%"

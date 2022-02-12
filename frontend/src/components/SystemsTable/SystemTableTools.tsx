@@ -3,6 +3,7 @@ import { Button, Input, Select, Space, Tooltip } from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
 import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import { SystemModel } from "../../models";
 
 export interface Filter {
   name?: string;
@@ -12,6 +13,7 @@ export interface Filter {
 }
 
 interface Props {
+  normalizedSystems: { [key: string]: SystemModel };
   /** show/hide submit drawer */
   toggleSubmitDrawer: () => void;
   taskCategories: TaskCategory[];
@@ -22,6 +24,7 @@ interface Props {
   setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
 }
 export function SystemTableTools({
+  normalizedSystems,
   toggleSubmitDrawer,
   taskCategories,
   value,
@@ -30,41 +33,68 @@ export function SystemTableTools({
   selectedSystemIDs,
   setActiveSystemIDs,
 }: Props) {
+  const selectedSystemDatasetNames = new Set<string>(
+    selectedSystemIDs.map((sysIDs) => normalizedSystems[sysIDs].dataset_name)
+  );
+  let analysisButton = (
+    <Tooltip
+      title={
+        <div>
+          <p>Single Analysis: Click the Analysis button on any system row.</p>
+          <p>
+            Pair-wise Analysis: Select two systems that uses the same dataset
+            (cannot be unspecified). A Pair-wise Analysis button will be shown
+            at the top.
+          </p>
+        </div>
+      }
+      placement="bottom"
+      color="white"
+      overlayInnerStyle={{ color: "black" }}
+    >
+      <Button type="link" size="small" style={{ padding: 0 }}>
+        What kind of analyses are supported?
+      </Button>
+    </Tooltip>
+  );
+
+  if (selectedSystemIDs.length === 1) {
+    analysisButton = (
+      <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
+        Analysis
+      </Button>
+    );
+  } else if (selectedSystemIDs.length === 2) {
+    let disabled = false;
+    let tooltipMessage = "";
+    if (selectedSystemDatasetNames.has("unspecified")) {
+      disabled = true;
+      tooltipMessage =
+        "Cannot perform pair-wise analysis on unspecified dataset names.";
+    } else if (selectedSystemDatasetNames.size > 1) {
+      disabled = true;
+      tooltipMessage =
+        "Cannot perform pair-wise analysis on systems with different dataset names.";
+    }
+    analysisButton = (
+      <Button
+        disabled={disabled}
+        onClick={() => setActiveSystemIDs(selectedSystemIDs)}
+      >
+        Pair-wise Analysis
+      </Button>
+    );
+    if (tooltipMessage !== "") {
+      analysisButton = (
+        <Tooltip title={tooltipMessage}>{analysisButton}</Tooltip>
+      );
+    }
+  }
+
   return (
     <div style={{ width: "100%" }}>
       <Space style={{ width: "fit-content", float: "left" }}>
-        {selectedSystemIDs.length === 0 && (
-          <Tooltip
-            title={
-              <div>
-                <p>
-                  Single Analysis: Click the Analysis button on any system row.
-                </p>
-                <p>
-                  Pair-wise Analysis: Select two systems that uses the same
-                  dataset. A Pair-wise Analysis button will be shown at the top.
-                </p>
-              </div>
-            }
-            placement="bottom"
-            color="white"
-            overlayInnerStyle={{ color: "black" }}
-          >
-            <Button type="link" size="small" style={{ padding: 0 }}>
-              What kind of analyses are supported?
-            </Button>
-          </Tooltip>
-        )}
-        {selectedSystemIDs.length === 1 && (
-          <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
-            Analysis
-          </Button>
-        )}
-        {selectedSystemIDs.length === 2 && (
-          <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
-            Pair-wise Analysis
-          </Button>
-        )}
+        {analysisButton}
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
         <TaskSelect
