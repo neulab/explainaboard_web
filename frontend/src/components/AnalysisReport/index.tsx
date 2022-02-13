@@ -82,7 +82,7 @@ export function AnalysisReport(props: Props) {
     });
     analysisTable = (
       <div>
-        <Typography.Title level={4}>Case Study </Typography.Title>
+        <Typography.Title level={4}>Examples</Typography.Title>
         <AnalysisTable
           systemID={props.systemID}
           task={task}

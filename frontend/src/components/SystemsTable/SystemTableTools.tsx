@@ -41,7 +41,7 @@ export function SystemTableTools({
                   Single Analysis: Click the Analysis button on any system row.
                 </p>
                 <p>
-                  Pair-wise Analysis: Select two systems that uses the same
+                  Pair-wise Analysis: Select two systems that use the same
                   dataset. A Pair-wise Analysis button will be shown at the top.
                 </p>
               </div>
