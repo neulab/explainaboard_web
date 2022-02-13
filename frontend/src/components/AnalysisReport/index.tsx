@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { ResultFineGrainedParsed } from "./types";
 import { parse, compareBucketOfSamples } from "./utils";
 import { BarChart, AnalysisTable } from "../../components";
-import { Row, Col, Typography, Space } from "antd";
+import { Row, Col, Typography, Space, Tabs } from "antd";
 import { SystemAnalysisModel } from "../../models";
 
 const { Title, Text } = Typography;
+const { TabPane } = Tabs;
 
 interface SystemAnalysisParsed {
   resultsFineGrainedParsed: Array<ResultFineGrainedParsed[]>;
@@ -29,7 +30,7 @@ interface ActiveSystemExamples {
   descriptions: string[];
 
   // system-dependent information across systems
-  // and depends on which bar or graph is clicked.
+  systemIndex: number;
   // TODO the latter type is for NER | {[key: string]: string}[]
   bucketOfSamplesList: string[][];
 }
@@ -115,8 +116,14 @@ export function AnalysisReport(props: Props) {
 
   // If a bar is selected
   if (activeSystemExamples !== undefined) {
-    const { title, barIndex, featureKeys, descriptions, bucketOfSamplesList } =
-      activeSystemExamples;
+    const {
+      title,
+      barIndex,
+      featureKeys,
+      descriptions,
+      systemIndex,
+      bucketOfSamplesList,
+    } = activeSystemExamples;
 
     // Sort bucket of samples for every system
     const sortedBucketOfSamplesList = bucketOfSamplesList.map(
@@ -125,25 +132,66 @@ export function AnalysisReport(props: Props) {
       }
     );
 
-    analysisTable = (
-      <div>
-        <Title level={4}>{`Examples of bar ${barIndex + 1} in ${title}`}</Title>
-        <Space style={{ width: "fit-content", float: "left" }}>
-          <Text>
-            {
-              "Note: Long texts are truncated. To view the full text, hover your cursor on the truncated text."
-            }
-          </Text>
-        </Space>
+    // single analysis
+    if (systemIDs.length === 1) {
+      analysisTable = (
         <AnalysisTable
-          systemIDs={systemIDs}
+          systemID={systemIDs[0]}
           task={task}
-          outputIDsList={sortedBucketOfSamplesList}
+          outputIDs={sortedBucketOfSamplesList[0]}
           featureKeys={featureKeys}
           descriptions={descriptions}
           page={page}
           setPage={setPage}
         />
+      );
+      // pairwise analysis
+    } else if (systemIDs.length === 2) {
+      analysisTable = (
+        <Space style={{ width: "fit-content" }}>
+          <Tabs
+            activeKey={`${systemIndex}`}
+            onChange={(activeKey) =>
+              setActiveSystemExamples({
+                ...activeSystemExamples,
+                systemIndex: Number(activeKey),
+              })
+            }
+          >
+            {systemIDs.map((_, sysIDIndex) => {
+              return (
+                <TabPane tab={systemNames[sysIDIndex]} key={`${sysIDIndex}`}>
+                  <AnalysisTable
+                    systemID={systemIDs[sysIDIndex]}
+                    task={task}
+                    outputIDs={sortedBucketOfSamplesList[sysIDIndex]}
+                    featureKeys={featureKeys}
+                    descriptions={descriptions}
+                    page={page}
+                    setPage={setPage}
+                  />
+                </TabPane>
+              );
+            })}
+          </Tabs>
+        </Space>
+      );
+    }
+
+    const barText = systemIDs.length === 1 ? "bar" : "bars";
+    analysisTable = (
+      <div>
+        <Title level={4}>{`Examples from ${barText} #${
+          barIndex + 1
+        } in ${title}`}</Title>
+        <Space style={{ width: "fit-content", float: "left" }}>
+          <Text>
+            {
+              "Note: Long texts are truncated. To view the full text, hover your cursor on the cell."
+            }
+          </Text>
+        </Space>
+        {analysisTable}
       </div>
     );
   }
@@ -170,8 +218,6 @@ export function AnalysisReport(props: Props) {
             const resultsNumbersOfSamples: number[][] = [];
             const resultsConfidenceScores: Array<[number, number]>[] = [];
             const resultsBucketsOfSamples: string[][][] = [];
-
-            // const results: ResultFineGrainedParsed[] = []
             for (let i = 0; i < systemAnalysesParsed.length; i++) {
               const result =
                 systemAnalysesParsed[i].resultsFineGrainedParsed[rowIdx][
@@ -196,7 +242,7 @@ export function AnalysisReport(props: Props) {
                   seriesLabelsList={resultsValues}
                   numbersOfSamplesList={resultsNumbersOfSamples}
                   confidenceScoresList={resultsConfidenceScores}
-                  onBarClick={(barIndex: number) => {
+                  onBarClick={(barIndex: number, systemIndex: number) => {
                     // Get examples of a certain bucket from all systems
                     const bucketOfSamplesList = resultsBucketsOfSamples.map(
                       (bucketsOfSamples) => {
@@ -206,6 +252,7 @@ export function AnalysisReport(props: Props) {
                     setActiveSystemExamples({
                       title,
                       barIndex,
+                      systemIndex,
                       featureKeys,
                       descriptions,
                       bucketOfSamplesList,

@@ -40,7 +40,7 @@ interface Props {
   seriesLabelsList: number[][];
   numbersOfSamplesList: number[][];
   confidenceScoresList: [number, number][][];
-  onBarClick: (barIndex: number) => void;
+  onBarClick: (barIndex: number, systemIndex: number) => void;
 }
 
 export function BarChart(props: Props) {
@@ -164,7 +164,7 @@ export function BarChart(props: Props) {
     tooltip: {
       trigger: "axis",
       axisPointer: {
-        type: "shadow",
+        type: "none",
       },
       formatter: function (params: formatterParam[]) {
         // For single analysis, params have length 1
@@ -243,7 +243,8 @@ export function BarChart(props: Props) {
       onEvents={{
         click: (event: ECElementEvent) => {
           const barIndex = event.dataIndex;
-          onBarClick(barIndex);
+          const systemIndex = event.seriesIndex || 0;
+          onBarClick(barIndex, systemIndex);
         },
       }}
     />

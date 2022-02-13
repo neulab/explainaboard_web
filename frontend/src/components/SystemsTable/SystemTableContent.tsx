@@ -14,9 +14,9 @@ import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
-import { AnalysisReport } from "..";
+import { AnalysisReport, ErrorBoundary } from "..";
 
-const { Text } = Typography;
+const { Text, Link } = Typography;
 
 interface Props {
   systemIDs: string[];
@@ -204,14 +204,33 @@ export function SystemTableContent({
         width="80%"
       >
         {activeSystems.length !== 0 && (
-          <AnalysisReport
-            systemIDs={activeSystemIDs}
-            systemNames={activeSystemIDs.map(
-              (sysID) => normalizedSystems[sysID].model_name
-            )}
-            task={activeSystems[0]?.task}
-            analyses={analyses}
-          />
+          // The analysis report is expected to fail if a user selects systems with different datsets.
+          // We use an error boundary component and provide a fall back UI if an error is caught.
+          <ErrorBoundary
+            fallbackUI={
+              <Text>
+                An error occured in the analysis. Double check if the selected
+                systems use the same dataset. If you found a bug, kindly open an
+                issue on{" "}
+                <Link
+                  href="https://github.com/neulab/explainaboard_web"
+                  target="_blank"
+                >
+                  our GitHub repo
+                </Link>
+                . Thanks!
+              </Text>
+            }
+          >
+            <AnalysisReport
+              systemIDs={activeSystemIDs}
+              systemNames={activeSystemIDs.map(
+                (sysID) => normalizedSystems[sysID].model_name
+              )}
+              task={activeSystems[0]?.task}
+              analyses={analyses}
+            />
+          </ErrorBoundary>
         )}
       </Drawer>
     </div>

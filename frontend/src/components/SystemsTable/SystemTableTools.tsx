@@ -72,12 +72,12 @@ export function SystemTableTools({
     // Pairwise analysis
   } else if (selectedSystemIDs.length === 2) {
     let disabled = false;
-    let danger = false;
+    let warning = false;
     let tooltipMessage = "";
     if (selectedSystemDatasetNames.has("unspecified")) {
-      danger = true;
+      warning = true;
       tooltipMessage =
-        "Unspecified data name detected. Proceed if you are certain the systems use the same dataset, or else the frontend might crash.";
+        "Unspecified dataset name detected. Proceed if you are certain the systems use the same dataset.";
     } else if (selectedSystemDatasetNames.size > 1) {
       disabled = true;
       tooltipMessage =
@@ -86,11 +86,10 @@ export function SystemTableTools({
     analysisButton = (
       <Button
         disabled={disabled}
-        danger={danger}
         onClick={() => setActiveSystemIDs(selectedSystemIDs)}
       >
         Pairwise Analysis
-        {danger && <WarningOutlined />}
+        {warning && <WarningOutlined />}
       </Button>
     );
     if (tooltipMessage !== "") {
