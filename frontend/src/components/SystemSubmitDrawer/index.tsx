@@ -20,7 +20,7 @@ import { findTask, toBase64 } from "../../utils";
 import { UploadOutlined } from "@ant-design/icons";
 import { useForm } from "antd/lib/form/Form";
 import { UploadFile } from "antd/lib/upload/interface";
-import { TaskSelect } from "..";
+import { TaskSelect, TextWithLink } from "..";
 
 interface Props extends DrawerProps {
   onClose: () => void;
@@ -189,7 +189,7 @@ export function SystemSubmitDrawer(props: Props) {
       destroyOnClose
       {...props}
     >
-      <Spin spinning={state === State.loading} tip="loading...">
+      <Spin spinning={state === State.loading} tip="processing...">
         <Form
           labelCol={{ span: 7 }}
           onFinish={submit}
@@ -212,7 +212,12 @@ export function SystemSubmitDrawer(props: Props) {
             help={
               selectedTask && (
                 <Tooltip
-                  title={selectedTask.description}
+                  title={
+                    <TextWithLink
+                      text={selectedTask.description}
+                      target="_blank"
+                    />
+                  }
                   placement="left"
                   color="white"
                   overlayInnerStyle={{ color: "black" }}

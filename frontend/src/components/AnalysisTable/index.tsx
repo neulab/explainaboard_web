@@ -100,7 +100,7 @@ export function AnalysisTable({
       const answerStart = trueAnswer["answer_start"][0];
       dataSource[i][
         "true_answers"
-      ] = `Text: ${text}<br/>Start position:${answerStart}`;
+      ] = `Text: ${text}\nStart position: ${answerStart}`;
     }
   }
 

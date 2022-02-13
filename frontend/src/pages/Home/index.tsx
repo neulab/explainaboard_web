@@ -35,7 +35,7 @@ export function Home() {
                   View well-performing systems on a particular dataset, and
                   compare/contrast their strengths and weaknesses:
                   <br />
-                  Go to Systems, select a system and click analysis
+                  Go to Systems, select a system or systems and click Analysis
                 </li>
               </ul>
             </div>
