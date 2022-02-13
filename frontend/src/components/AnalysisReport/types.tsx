@@ -48,7 +48,9 @@ export interface FineGrainedElement {
 }
 
 export interface ResultFineGrainedParsed {
+  systemID: string;
   title: string;
+  task: string;
   metricName: string;
   bucketNames: string[];
   // TODO the latter type is for NER

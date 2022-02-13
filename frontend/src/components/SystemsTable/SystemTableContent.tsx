@@ -162,6 +162,16 @@ export function SystemTableContent({
     },
   };
 
+  let drawerTitle;
+  if (activeSystems.length === 1) {
+    drawerTitle = `Single Analysis of ${activeSystems[0].model_name}`;
+  } else if (activeSystems.length === 2) {
+    const systemNames = activeSystems
+      .map((sys) => sys.model_name)
+      .join(" and ");
+    drawerTitle = `Pair-wise Analysis of ${systemNames}`;
+  }
+
   return (
     <div>
       <Table
@@ -190,7 +200,7 @@ export function SystemTableContent({
       <Drawer
         visible={activeSystemIDs.length !== 0}
         onClose={() => closeSystemAnalysis()}
-        title={"Analysis report of " + activeSystems[0]?.model_name}
+        title={drawerTitle}
         width="80%"
       >
         {activeSystems.length !== 0 && (

@@ -11,6 +11,7 @@ function formatName(name: string) {
 }
 
 export function parse(
+  systemID: string,
   task: string,
   title: string,
   fineGrainedElements: Array<FineGrainedElement[]>
@@ -72,12 +73,14 @@ export function parse(
   }
 
   return {
-    title: title,
-    metricName: metricName,
-    bucketNames: bucketNames,
-    bucketsOfSamples: bucketsOfSamples,
-    values: values,
-    numbersOfSamples: numbersOfSamples,
-    confidenceScores: confidenceScores,
+    systemID,
+    title,
+    task,
+    metricName,
+    bucketNames,
+    bucketsOfSamples,
+    values,
+    numbersOfSamples,
+    confidenceScores,
   };
 }

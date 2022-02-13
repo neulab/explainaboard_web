@@ -42,7 +42,7 @@ export function SystemTableTools({
         <div>
           <p>Single Analysis: Click the Analysis button on any system row.</p>
           <p>
-            Pair-wise Analysis: Select two systems that uses the same dataset
+            Pair-wise Analysis: Select two systems that use the same dataset
             (cannot be unspecified). A Pair-wise Analysis button will be shown
             at the top.
           </p>
@@ -53,17 +53,19 @@ export function SystemTableTools({
       overlayInnerStyle={{ color: "black" }}
     >
       <Button type="link" size="small" style={{ padding: 0 }}>
-        What kind of analyses are supported?
+        What kind of analysis is supported?
       </Button>
     </Tooltip>
   );
 
+  // Single analysis
   if (selectedSystemIDs.length === 1) {
     analysisButton = (
       <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
         Analysis
       </Button>
     );
+    // Pair-wise analysis
   } else if (selectedSystemIDs.length === 2) {
     let disabled = false;
     let tooltipMessage = "";
