@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import ReactEChartsCore from "echarts-for-react/lib/core";
 import * as echarts from "echarts/core";
-import { MarkPointComponent, MarkLineComponent } from "echarts/components";
 import { BarChart as EBarChart } from "echarts/charts";
 import {
+  MarkPointComponent,
+  MarkLineComponent,
   GridComponent,
   TooltipComponent,
   TitleComponent,
+  LegendComponent,
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import { ECElementEvent } from "echarts/types/src/util/types";
@@ -32,6 +34,7 @@ interface formatterParam {
 
 interface Props {
   title: string;
+  seriesNames: string[];
   xAxisData: string[];
   seriesDataList: number[][];
   seriesLabelsList: number[][];
@@ -43,6 +46,7 @@ interface Props {
 export function BarChart(props: Props) {
   const {
     title,
+    seriesNames,
     xAxisData,
     seriesDataList,
     seriesLabelsList,
@@ -98,6 +102,7 @@ export function BarChart(props: Props) {
 
   const series = seriesInfoList.map((info, infoIdx) => {
     return {
+      name: seriesNames[infoIdx],
       type: "bar",
       barWidth: 50,
       label: {
@@ -137,6 +142,14 @@ export function BarChart(props: Props) {
     };
   });
 
+  let legend = undefined;
+  if (series.length > 1) {
+    legend = {
+      orient: "vertical",
+      right: 10,
+    };
+  }
+
   // config to be passed in echart
   const option = {
     title: {
@@ -147,10 +160,11 @@ export function BarChart(props: Props) {
         overflow: "break",
       },
     },
+    legend: legend,
     tooltip: {
       trigger: "axis",
       axisPointer: {
-        type: "none",
+        type: "shadow",
       },
       formatter: function (params: formatterParam[]) {
         // For single analysis, params have length 1
@@ -207,6 +221,7 @@ export function BarChart(props: Props) {
 
   echarts.use([
     TitleComponent,
+    LegendComponent,
     TooltipComponent,
     GridComponent,
     EBarChart,

@@ -206,6 +206,9 @@ export function SystemTableContent({
         {activeSystems.length !== 0 && (
           <AnalysisReport
             systemIDs={activeSystemIDs}
+            systemNames={activeSystemIDs.map(
+              (sysID) => normalizedSystems[sysID].model_name
+            )}
             task={activeSystems[0]?.task}
             analyses={analyses}
           />

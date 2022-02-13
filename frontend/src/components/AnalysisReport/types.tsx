@@ -49,7 +49,7 @@ export interface FineGrainedElement {
 
 export interface ResultFineGrainedParsed {
   systemID: string;
-  title: string;
+  description: string;
   task: string;
   metricName: string;
   bucketNames: string[];

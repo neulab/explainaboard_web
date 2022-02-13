@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { ResultFineGrainedParsed } from "./types";
-import { parse } from "./parser";
+import { parse, compareBucketOfSamples } from "./utils";
 import { BarChart, AnalysisTable } from "../../components";
 import { Row, Col, Typography, Space } from "antd";
 import { SystemAnalysisModel } from "../../models";
@@ -9,35 +9,45 @@ const { Title, Text } = Typography;
 
 interface SystemAnalysisParsed {
   resultsFineGrainedParsed: Array<ResultFineGrainedParsed[]>;
+  // an element is a object key of a feature
+  // used for retrieving the value from resultsFineGrainedParsed
   featureKeys: string[];
+  // an element is a description/name of a feature to be displayed in the UI
   descriptions: string[];
 }
 
-interface activeSystemCaseStudy {
-  systemID: string;
-  task: string;
+// Examples to be shown in the analysis table when a bar is clicked
+interface ActiveSystemExamples {
+  // invariant information across systems
+  // but depends on which bar or graph is clicked.
   title: string;
-  metricName: string;
+  barIndex: number;
+
+  // These are technically not invariant across sytems,
+  // but they may be in the future, and it's easier to keep them here for now.
   featureKeys: string[];
   descriptions: string[];
-  barIndex: number;
+
+  // system-dependent information across systems
+  // and depends on which bar or graph is clicked.
   // TODO the latter type is for NER | {[key: string]: string}[]
-  bucketOfSamples: string[];
+  bucketOfSamplesList: string[][];
 }
 
 interface Props {
   systemIDs: string[];
+  systemNames: string[];
   task: string;
   analyses: SystemAnalysisModel[];
 }
 
 export function AnalysisReport(props: Props) {
-  const [activeSystemCaseStudy, setActiveSystemCaseStudy] =
-    useState<activeSystemCaseStudy>();
+  const [activeSystemExamples, setActiveSystemExamples] =
+    useState<ActiveSystemExamples>();
   // page number of the analysis table
   const [page, setPage] = useState(0);
 
-  const { task, systemIDs, analyses } = props;
+  const { task, systemIDs, systemNames, analyses } = props;
 
   // The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
   // Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
@@ -45,11 +55,12 @@ export function AnalysisReport(props: Props) {
   let chartNumPerRow = 3; // Must be a factor of 24 since Ant divides a row into 24 sections!
   // pairwise analysis
   if (systemIDs.length > 1) {
-    chartNumPerRow = 1;
+    chartNumPerRow = 2;
   }
 
   // Array to store every parsed system analysis
   const systemAnalysesParsed: SystemAnalysisParsed[] = [];
+
   // Loop through each system analysis and parse
   for (let i = 0; i < systemIDs.length; i++) {
     const systemID = systemIDs[i];
@@ -60,9 +71,7 @@ export function AnalysisReport(props: Props) {
     const resultsFineGrainedParsed: Array<ResultFineGrainedParsed[]> = [
       new Array<ResultFineGrainedParsed>(chartNumPerRow),
     ];
-    // the object key of a feature, used for retrieving the value
     const featureKeys: string[] = [];
-    // the description of a feature, used for displaying in the UI
     const descriptions: string[] = [];
 
     let rowIdx = 0;
@@ -81,12 +90,11 @@ export function AnalysisReport(props: Props) {
           );
           rowIdx += 1;
         }
-        resultsFineGrainedParsed[rowIdx][chartNum] = parse(
+        resultsFineGrainedParsed[rowIdx][chartNum] = {
           systemID,
-          task,
           description,
-          resultsFineGrained[key]
-        );
+          ...parse(task, resultsFineGrained[key]),
+        };
         chartNum += 1;
       }
     }
@@ -106,36 +114,20 @@ export function AnalysisReport(props: Props) {
   );
 
   // If a bar is selected
-  if (activeSystemCaseStudy !== undefined) {
-    const {
-      systemID,
-      task,
-      title,
-      metricName,
-      featureKeys,
-      descriptions,
-      barIndex,
-      bucketOfSamples,
-    } = activeSystemCaseStudy;
-    const sortedBucketOfSamples = bucketOfSamples.sort((a, b) => {
-      const numA = Number(a);
-      const numB = Number(b);
-      if (Number.isInteger(numA) && Number.isInteger(numB)) {
-        return numA - numB;
-      } else if (typeof a === "string" && typeof a === "string") {
-        if (a > b) {
-          return 1;
-        } else if (a < b) {
-          return -1;
-        }
+  if (activeSystemExamples !== undefined) {
+    const { title, barIndex, featureKeys, descriptions, bucketOfSamplesList } =
+      activeSystemExamples;
+
+    // Sort bucket of samples for every system
+    const sortedBucketOfSamplesList = bucketOfSamplesList.map(
+      (bucketOfSamples) => {
+        return bucketOfSamples.sort(compareBucketOfSamples);
       }
-      return 0;
-    });
+    );
 
     analysisTable = (
       <div>
-        // TODO detailed title
-        <Title level={4}>`Case Study (Bar ${barIndex + 1} in TODO`</Title>
+        <Title level={4}>{`Examples of bar ${barIndex + 1} in ${title}`}</Title>
         <Space style={{ width: "fit-content", float: "left" }}>
           <Text>
             {
@@ -144,9 +136,9 @@ export function AnalysisReport(props: Props) {
           </Text>
         </Space>
         <AnalysisTable
-          systemID={systemID}
+          systemIDs={systemIDs}
           task={task}
-          outputIDs={sortedBucketOfSamples}
+          outputIDsList={sortedBucketOfSamplesList}
           featureKeys={featureKeys}
           descriptions={descriptions}
           page={page}
@@ -157,8 +149,10 @@ export function AnalysisReport(props: Props) {
   }
 
   // Get the parsed result from the first system for mapping
-  const resultsFineGrainedParsed =
-    systemAnalysesParsed[0].resultsFineGrainedParsed;
+  // featureKeys and descriptions are invariant information
+  // used in
+  const { resultsFineGrainedParsed, featureKeys, descriptions } =
+    systemAnalysesParsed[0];
 
   return (
     <div style={{ textAlign: "center" }}>
@@ -168,7 +162,7 @@ export function AnalysisReport(props: Props) {
         resultsFineGrainedParsed.map((row, rowIdx) => {
           const cols = row.map((resultFirst, resultIdx) => {
             // For invariant variables across all systems, we can simply take from the first result
-            const title = `${resultFirst.metricName} by ${resultFirst.title}`;
+            const title = `${resultFirst.metricName} by ${resultFirst.description}`;
             const xAxisData = resultFirst.bucketNames;
 
             // System-dependent variables must be taken from all systems
@@ -192,25 +186,30 @@ export function AnalysisReport(props: Props) {
             return (
               <Col
                 span={Math.floor(24 / chartNumPerRow)}
-                key={resultFirst.title}
+                key={resultFirst.description}
               >
                 <BarChart
                   title={title}
+                  seriesNames={systemNames}
                   xAxisData={xAxisData}
                   seriesDataList={resultsValues}
                   seriesLabelsList={resultsValues}
                   numbersOfSamplesList={resultsNumbersOfSamples}
                   confidenceScoresList={resultsConfidenceScores}
                   onBarClick={(barIndex: number) => {
-                    // setBucketOfSample(result.bucketsOfSamples[barIndex]);
-                    // setActiveSystemCaseStudy({
-                    //   systemID: result.systemID,
-                    //   task: result.task,
-                    //   title: result.title,
-                    //   metricName: result.metricName,
-                    //   barIndex,
-                    //   bucketOfSamples: result.bucketsOfSamples[barIndex]
-                    // })
+                    // Get examples of a certain bucket from all systems
+                    const bucketOfSamplesList = resultsBucketsOfSamples.map(
+                      (bucketsOfSamples) => {
+                        return bucketsOfSamples[barIndex];
+                      }
+                    );
+                    setActiveSystemExamples({
+                      title,
+                      barIndex,
+                      featureKeys,
+                      descriptions,
+                      bucketOfSamplesList,
+                    });
                     // reset page number
                     setPage(0);
                   }}

@@ -6,10 +6,10 @@ import { backendClient } from "../../clients";
 import { PageState } from "../../utils";
 
 interface Props {
-  systemID: string;
+  systemIDs: string[];
   task: string;
   // The latter type is for NER
-  outputIDs: string[] | { [key: string]: string }[];
+  outputIDsList: Array<string[] | { [key: string]: string }[]>;
   featureKeys: string[];
   descriptions: string[];
   page: number;
@@ -17,17 +17,18 @@ interface Props {
 }
 
 export function AnalysisTable({
-  systemID,
+  systemIDs,
   task,
-  outputIDs,
+  outputIDsList,
   featureKeys,
   descriptions,
   page,
   setPage,
 }: Props) {
+  const systemID = systemIDs[0];
   const [pageState, setPageState] = useState(PageState.loading);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
-
+  const outputIDs = outputIDsList[0];
   const pageSize = 10;
   const total = outputIDs.length;
   const offset = page * pageSize;
@@ -101,7 +102,7 @@ export function AnalysisTable({
       const answerStart = trueAnswer["answer_start"][0];
       dataSource[i][
         "true_answers"
-      ] = `- Text: ${text}\n- Start position:${answerStart}`;
+      ] = `Text: ${text}<br/>Start position:${answerStart}`;
     }
   }
 

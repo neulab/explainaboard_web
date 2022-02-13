@@ -10,10 +10,9 @@ function formatName(name: string) {
   }
 }
 
+// Parses a fineGrainedElements according to its task type.
 export function parse(
-  systemID: string,
   task: string,
-  title: string,
   fineGrainedElements: Array<FineGrainedElement[]>
 ) {
   const bucketNames: string[] = [];
@@ -73,8 +72,6 @@ export function parse(
   }
 
   return {
-    systemID,
-    title,
     task,
     metricName,
     bucketNames,
@@ -83,4 +80,23 @@ export function parse(
     numbersOfSamples,
     confidenceScores,
   };
+}
+
+export function compareBucketOfSamples(
+  // TODO NER types
+  a: string,
+  b: string
+) {
+  const numA = Number(a);
+  const numB = Number(b);
+  if (Number.isInteger(numA) && Number.isInteger(numB)) {
+    return numA - numB;
+  } else if (typeof a === "string" && typeof a === "string") {
+    if (a > b) {
+      return 1;
+    } else if (a < b) {
+      return -1;
+    }
+  }
+  return 0;
 }
