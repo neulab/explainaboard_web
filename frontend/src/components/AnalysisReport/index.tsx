@@ -27,10 +27,8 @@ interface activeSystemCaseStudy {
 
 interface Props {
   systemIDs: string[];
-  systemID: string;
   task: string;
   analyses: SystemAnalysisModel[];
-  analysis: SystemAnalysisModel;
 }
 
 export function AnalysisReport(props: Props) {
@@ -39,23 +37,24 @@ export function AnalysisReport(props: Props) {
   // page number of the analysis table
   const [page, setPage] = useState(0);
 
-  const { systemID, task, analysis, systemIDs, analyses } = props;
-  const resultsFineGrained = analysis["results"]["fine_grained"];
+  const { task, systemIDs, analyses } = props;
 
   // The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
   // Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
   // to be enclosed by <Row></Row>.
   let chartNumPerRow = 3; // Must be a factor of 24 since Ant divides a row into 24 sections!
-  // pair-wise analysis
+  // pairwise analysis
   if (systemIDs.length > 1) {
     chartNumPerRow = 1;
   }
 
   // Array to store every parsed system analysis
-  const systemAnalysisParsed: SystemAnalysisParsed[] = [];
+  const systemAnalysesParsed: SystemAnalysisParsed[] = [];
   // Loop through each system analysis and parse
   for (let i = 0; i < systemIDs.length; i++) {
+    const systemID = systemIDs[i];
     const analysis = analyses[i];
+    const resultsFineGrained = analysis["results"]["fine_grained"];
 
     // the parsed fine-grained results, used for visualization
     const resultsFineGrainedParsed: Array<ResultFineGrainedParsed[]> = [
@@ -92,7 +91,7 @@ export function AnalysisReport(props: Props) {
       }
     }
 
-    systemAnalysisParsed.push({
+    systemAnalysesParsed.push({
       featureKeys,
       descriptions,
       resultsFineGrainedParsed,
@@ -157,42 +156,72 @@ export function AnalysisReport(props: Props) {
     );
   }
 
+  // Get the parsed result from the first system for mapping
   const resultsFineGrainedParsed =
-    systemAnalysisParsed[0].resultsFineGrainedParsed;
-  console.log(systemAnalysisParsed);
+    systemAnalysesParsed[0].resultsFineGrainedParsed;
+
   return (
     <div style={{ textAlign: "center" }}>
-      {/* {resultsFineGrainedParsed.map(function (row, rowIdx) {
-        const cols = row.map(function (result) {
-          return (
-            <Col span={Math.floor(24 / chartNumPerRow)} key={result.title}>
-              <BarChart
-                title={`${result.metricName} by ${result.title}`}
-                xAxisData={result.bucketNames}
-                seriesData={result.values}
-                seriesLabels={result.values}
-                numbersOfSamples={result.numbersOfSamples}
-                confidenceScores={result.confidenceScores}
-                onBarClick={(barIndex: number) => {
-                  setBucketOfSample(result.bucketsOfSamples[barIndex]);
-                  setActiveSystemCaseStudy({
-                    systemID: result.systemID,
-                    task: result.task,
-                    title: result.title,
-                    metricName: result.metricName,
-                    barIndex,
-                    bucketOfSamples: result.bucketsOfSamples[barIndex]
-                  })
-                  // reset page number
-                  setPage(0);
-                }}
-              />
-            </Col>
-          );
-        });
-        return <Row key={rowIdx}>{cols}</Row>;
-      })}
-      {analysisTable} */}
+      {
+        // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
+        // into rows and columns. One column contains a single BarChart.
+        resultsFineGrainedParsed.map((row, rowIdx) => {
+          const cols = row.map((resultFirst, resultIdx) => {
+            // For invariant variables across all systems, we can simply take from the first result
+            const title = `${resultFirst.metricName} by ${resultFirst.title}`;
+            const xAxisData = resultFirst.bucketNames;
+
+            // System-dependent variables must be taken from all systems
+            const resultsValues: number[][] = [];
+            const resultsNumbersOfSamples: number[][] = [];
+            const resultsConfidenceScores: Array<[number, number]>[] = [];
+            const resultsBucketsOfSamples: string[][][] = [];
+
+            // const results: ResultFineGrainedParsed[] = []
+            for (let i = 0; i < systemAnalysesParsed.length; i++) {
+              const result =
+                systemAnalysesParsed[i].resultsFineGrainedParsed[rowIdx][
+                  resultIdx
+                ];
+              resultsValues.push(result.values);
+              resultsNumbersOfSamples.push(result.numbersOfSamples);
+              resultsConfidenceScores.push(result.confidenceScores);
+              resultsBucketsOfSamples.push(result.bucketsOfSamples);
+            }
+
+            return (
+              <Col
+                span={Math.floor(24 / chartNumPerRow)}
+                key={resultFirst.title}
+              >
+                <BarChart
+                  title={title}
+                  xAxisData={xAxisData}
+                  seriesDataList={resultsValues}
+                  seriesLabelsList={resultsValues}
+                  numbersOfSamplesList={resultsNumbersOfSamples}
+                  confidenceScoresList={resultsConfidenceScores}
+                  onBarClick={(barIndex: number) => {
+                    // setBucketOfSample(result.bucketsOfSamples[barIndex]);
+                    // setActiveSystemCaseStudy({
+                    //   systemID: result.systemID,
+                    //   task: result.task,
+                    //   title: result.title,
+                    //   metricName: result.metricName,
+                    //   barIndex,
+                    //   bucketOfSamples: result.bucketsOfSamples[barIndex]
+                    // })
+                    // reset page number
+                    setPage(0);
+                  }}
+                />
+              </Col>
+            );
+          });
+          return <Row key={rowIdx}>{cols}</Row>;
+        })
+      }
+      {analysisTable}
     </div>
   );
 }

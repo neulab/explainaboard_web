@@ -2,7 +2,11 @@ import React from "react";
 import { Button, Input, Select, Space, Tooltip } from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
-import { ArrowDownOutlined, ArrowUpOutlined } from "@ant-design/icons";
+import {
+  ArrowDownOutlined,
+  ArrowUpOutlined,
+  WarningOutlined,
+} from "@ant-design/icons";
 import { SystemModel } from "../../models";
 
 export interface Filter {
@@ -42,9 +46,9 @@ export function SystemTableTools({
         <div>
           <p>Single Analysis: Click the Analysis button on any system row.</p>
           <p>
-            Pair-wise Analysis: Select two systems that use the same dataset
-            (cannot be unspecified). A Pair-wise Analysis button appear at the
-            top.
+            Pairwise Analysis: Select two systems that use the same dataset. A
+            Pairwise Analysis button will appear at the top. The dataset name
+            can be unspecified, but proceed with caution.
           </p>
         </div>
       }
@@ -65,25 +69,28 @@ export function SystemTableTools({
         Analysis
       </Button>
     );
-    // Pair-wise analysis
+    // Pairwise analysis
   } else if (selectedSystemIDs.length === 2) {
     let disabled = false;
+    let danger = false;
     let tooltipMessage = "";
     if (selectedSystemDatasetNames.has("unspecified")) {
-      disabled = true;
+      danger = true;
       tooltipMessage =
-        "Cannot perform pair-wise analysis on unspecified dataset names.";
+        "Unspecified data name detected. Proceed if you are certain the systems use the same dataset, or else the frontend might crash.";
     } else if (selectedSystemDatasetNames.size > 1) {
       disabled = true;
       tooltipMessage =
-        "Cannot perform pair-wise analysis on systems with different dataset names.";
+        "Cannot perform pairwise analysis on systems with different dataset names.";
     }
     analysisButton = (
       <Button
         disabled={disabled}
+        danger={danger}
         onClick={() => setActiveSystemIDs(selectedSystemIDs)}
       >
-        Pair-wise Analysis
+        Pairwise Analysis
+        {danger && <WarningOutlined />}
       </Button>
     );
     if (tooltipMessage !== "") {

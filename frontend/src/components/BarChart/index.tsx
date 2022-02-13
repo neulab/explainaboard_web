@@ -11,6 +11,19 @@ import {
 import { CanvasRenderer } from "echarts/renderers";
 import { ECElementEvent } from "echarts/types/src/util/types";
 
+interface ConfidencePoint {
+  xAxis: string;
+  yAxis: number;
+  itemStyle?: { color: string };
+}
+
+interface SeriesInfo {
+  data: number[];
+  labels: number[];
+  confidencePoints: ConfidencePoint[];
+  confidenceLines: [ConfidencePoint, ConfidencePoint][];
+}
+
 interface formatterParam {
   dataIndex: number;
   name: string;
@@ -20,10 +33,10 @@ interface formatterParam {
 interface Props {
   title: string;
   xAxisData: string[];
-  seriesData: number[];
-  seriesLabels: number[];
-  numbersOfSamples: number[];
-  confidenceScores: [number, number][];
+  seriesDataList: number[][];
+  seriesLabelsList: number[][];
+  numbersOfSamplesList: number[][];
+  confidenceScoresList: [number, number][][];
   onBarClick: (barIndex: number) => void;
 }
 
@@ -31,42 +44,98 @@ export function BarChart(props: Props) {
   const {
     title,
     xAxisData,
-    seriesData,
-    seriesLabels,
-    numbersOfSamples,
-    confidenceScores,
+    seriesDataList,
+    seriesLabelsList,
+    numbersOfSamplesList,
+    confidenceScoresList,
     onBarClick,
   } = props;
-  let seriesMaxValue = 0;
-  const confidencePoints = [];
-  const confidenceLines = [];
 
-  for (let i = 0; i < xAxisData.length; i++) {
-    const x = xAxisData[i];
-    seriesMaxValue = Math.max(seriesMaxValue, seriesData[i]);
+  const seriesInfoList: SeriesInfo[] = [];
+  let globalMaxValue = 0;
 
-    if (i < confidenceScores.length) {
-      const [confidenceScoreLow, confidenceScoreHigh] = confidenceScores[i];
-      seriesMaxValue = Math.max(seriesMaxValue, confidenceScoreHigh);
-      const confidenceLowPoint = {
-        xAxis: x,
-        yAxis: confidenceScoreLow,
-      };
-      const confidenceHighPoint = {
-        xAxis: x,
-        yAxis: confidenceScoreHigh,
-      };
-      confidencePoints.push({
-        ...confidenceLowPoint,
-        itemStyle: { color: "brown" },
-      });
-      confidencePoints.push({
-        ...confidenceHighPoint,
-        itemStyle: { color: "orange" },
-      });
-      confidenceLines.push([confidenceLowPoint, confidenceHighPoint]);
+  for (let i = 0; i < seriesDataList.length; i++) {
+    const seriesData = seriesDataList[i];
+    const seriesLabels = seriesLabelsList[i];
+    const confidenceScores = confidenceScoresList[i];
+
+    const confidencePoints: ConfidencePoint[] = [];
+    const confidenceLines: [ConfidencePoint, ConfidencePoint][] = [];
+
+    for (let j = 0; j < seriesData.length; j++) {
+      globalMaxValue = Math.max(globalMaxValue, seriesData[j]);
+      const x = xAxisData[j];
+
+      if (j < confidenceScores.length) {
+        const [confidenceScoreLow, confidenceScoreHigh] = confidenceScores[j];
+        globalMaxValue = Math.max(globalMaxValue, confidenceScoreHigh);
+        const confidenceLowPoint = {
+          xAxis: x,
+          yAxis: confidenceScoreLow,
+        };
+        const confidenceHighPoint = {
+          xAxis: x,
+          yAxis: confidenceScoreHigh,
+        };
+        confidencePoints.push({
+          ...confidenceLowPoint,
+          itemStyle: { color: "brown" },
+        });
+        confidencePoints.push({
+          ...confidenceHighPoint,
+          itemStyle: { color: "orange" },
+        });
+        confidenceLines.push([confidenceLowPoint, confidenceHighPoint]);
+      }
     }
+    seriesInfoList.push({
+      data: seriesData,
+      labels: seriesLabels,
+      confidencePoints,
+      confidenceLines,
+    });
   }
+
+  const series = seriesInfoList.map((info, infoIdx) => {
+    return {
+      type: "bar",
+      barWidth: 50,
+      label: {
+        show: true,
+        position: "inside",
+        fontSize: 14,
+        formatter: function (data: formatterParam) {
+          return info.labels[data.dataIndex];
+        },
+      },
+      data: info.data,
+      animation: false,
+
+      markPoint: {
+        label: {
+          show: true,
+        },
+        symbol: "circle",
+        symbolSize: 12,
+        data: info.confidencePoints,
+      },
+
+      markLine: {
+        symbol: ["none", "none"],
+        lineStyle: {
+          type: "solid",
+          color: "gray",
+          width: 3,
+        },
+        label: {
+          show: true,
+          position: "middle",
+        },
+        data: info.confidenceLines,
+        animation: false,
+      },
+    };
+  });
 
   // config to be passed in echart
   const option = {
@@ -84,15 +153,20 @@ export function BarChart(props: Props) {
         type: "none",
       },
       formatter: function (params: formatterParam[]) {
-        // For text classification, params always have length 1
-        const param = params[0];
-        const dataIndex = param.dataIndex;
-        const data = param.data.toString();
-        const confidenceScoreRange =
-          dataIndex < confidenceScores.length
-            ? `[${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}]`
-            : "";
-        return `${data} ${confidenceScoreRange} <br /> sample size: ${numbersOfSamples[dataIndex]}`;
+        // For single analysis, params have length 1
+        const texts = params.map((param, paramIdx) => {
+          const dataIndex = param.dataIndex;
+          const data = param.data.toString();
+          const confidenceScores = confidenceScoresList[paramIdx];
+          const numbersOfSamples = numbersOfSamplesList[paramIdx];
+          const confidenceScoreRange =
+            dataIndex < confidenceScores.length
+              ? `[${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}]`
+              : "";
+          return `${data} ${confidenceScoreRange} <br /> sample size: ${numbersOfSamples[dataIndex]}`;
+        });
+
+        return texts.join("<br />");
       },
     },
     grid: {
@@ -115,50 +189,10 @@ export function BarChart(props: Props) {
         type: "value",
         // TODO: get min max from SDK?
         // min: 0,
-        max: Math.ceil(seriesMaxValue),
+        max: Math.ceil(globalMaxValue),
       },
     ],
-    series: [
-      {
-        type: "bar",
-        barWidth: 50,
-        label: {
-          show: true,
-          position: "inside",
-          fontSize: 14,
-          formatter: function (data: formatterParam) {
-            return seriesLabels[data.dataIndex];
-          },
-        },
-        color: "rgba(22,130,245,0.78)",
-        data: seriesData,
-        animation: false,
-
-        markPoint: {
-          label: {
-            show: true,
-          },
-          symbol: "circle",
-          symbolSize: 12,
-          data: confidencePoints,
-        },
-
-        markLine: {
-          symbol: ["none", "none"],
-          lineStyle: {
-            type: "solid",
-            color: "gray",
-            width: 3,
-          },
-          label: {
-            show: true,
-            position: "middle",
-          },
-          data: confidenceLines,
-          animation: false,
-        },
-      },
-    ],
+    series: series,
   };
 
   const [eChartsRef, setEChartsRef] = useState<ReactEChartsCore | null>();

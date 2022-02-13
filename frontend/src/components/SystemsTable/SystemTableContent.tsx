@@ -169,7 +169,7 @@ export function SystemTableContent({
     const systemNames = activeSystems
       .map((sys) => sys.model_name)
       .join(" and ");
-    drawerTitle = `Pair-wise Analysis of ${systemNames}`;
+    drawerTitle = `Pairwise Analysis of ${systemNames}`;
   }
 
   return (
@@ -206,10 +206,8 @@ export function SystemTableContent({
         {activeSystems.length !== 0 && (
           <AnalysisReport
             systemIDs={activeSystemIDs}
-            systemID={activeSystems[0].system_id}
             task={activeSystems[0]?.task}
             analyses={analyses}
-            analysis={activeSystems[0]?.analysis}
           />
         )}
       </Drawer>
