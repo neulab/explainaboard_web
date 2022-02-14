@@ -37,6 +37,10 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
     1. Run `npm run start` to start the frontend and backend server concurrently.
         - Both frontend and backend can be started independently as well. Check out "More details on frontend and backend".
 
+## Important notes on local development
+- As mentioned in quick start step 2, whenever the open API definition (openapi.yaml) changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
+- The frontend and backend dependencies must be reinstalled whenever the associated dependency files are changed, including `package.json`, `frontend/package.json`, `backend/src/gen/requirements.txt` (generated from `backend/templates/requirements.mustache`).
+
 ## Deployment
 
 - We use docker and gunicorn to deploy both frontend and backend. Frontend is built and copied into the static file folder of Flask. Please see Dockerfile for details.
