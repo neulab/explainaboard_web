@@ -13,6 +13,7 @@ import {
   Radio,
   CheckboxOptionType,
   Tooltip,
+  Checkbox,
 } from "antd";
 import { DatasetMetadata, TaskCategory } from "../../clients/openapi";
 import { backendClient, parseBackendError } from "../../clients";
@@ -95,6 +96,7 @@ export function SystemSubmitDrawer(props: Props) {
     sys_out_file_list,
     code,
     fileType,
+    is_private,
   }: FormData) {
     try {
       setState(State.loading);
@@ -110,6 +112,7 @@ export function SystemSubmitDrawer(props: Props) {
           task: task,
           language,
           code,
+          is_private,
         },
         system_output: {
           data: systemOutBase64,
@@ -293,6 +296,16 @@ export function SystemSubmitDrawer(props: Props) {
               }))}
             />
           </Form.Item>
+          <Form.Item
+            name="is_private"
+            label="Make it private?"
+            initialValue={true}
+            rules={[{ required: true }]}
+            valuePropName="checked"
+            tooltip="Check this box if you don't want other users to see your system (We will add support to change the visibility of systems in the future)"
+          >
+            <Checkbox />
+          </Form.Item>
 
           <Form.Item
             name="language"
@@ -320,6 +333,7 @@ interface FormData {
   code: string;
   sys_out_file_list: UploadFile[];
   fileType: string;
+  is_private: boolean;
 }
 
 const FILE_TYPES: CheckboxOptionType[] = [

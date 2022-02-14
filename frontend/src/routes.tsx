@@ -6,13 +6,23 @@ import {
   TableOutlined,
   CodeOutlined,
 } from "@ant-design/icons";
-import { DatasetsPage, Home, LeaderboardHome, SystemsPage } from "./pages";
+import {
+  DatasetsPage,
+  Home,
+  LeaderboardHome,
+  LeaderboardPage,
+  LoginCallback,
+  SystemsPage,
+} from "./pages";
 
 export interface Route extends RouteProps {
-  title: string;
+  title?: string;
   path: string;
   icon?: ReactElement;
   subroutes?: Route[];
+  /** do not display in the menu */
+  hideFromMenu?: boolean;
+  requireLogin?: boolean;
 }
 const routes: Route[] = [
   {
@@ -33,6 +43,7 @@ const routes: Route[] = [
     title: "Systems",
     icon: <CodeOutlined />,
     children: <SystemsPage />,
+    requireLogin: true,
   },
   {
     path: "/leaderboards",
@@ -40,6 +51,19 @@ const routes: Route[] = [
     icon: <TableOutlined />,
     children: <LeaderboardHome />,
     exact: true,
+  },
+  {
+    path: "/leaderboards/:task",
+    exact: true,
+    children: <LeaderboardPage />,
+    hideFromMenu: true,
+    requireLogin: true,
+  },
+  {
+    path: "/login-callback",
+    exact: true,
+    children: <LoginCallback />,
+    hideFromMenu: true,
   },
 ];
 export default routes;

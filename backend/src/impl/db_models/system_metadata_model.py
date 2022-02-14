@@ -14,6 +14,7 @@ from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard import Source, get_loader, get_processor
 from pymongo.client_session import ClientSession
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
+from explainaboard_web.impl.auth import get_user
 
 
 class SystemModel(MetadataDBModel, System):
@@ -31,6 +32,10 @@ class SystemModel(MetadataDBModel, System):
           6. write to system_outputs
         """
         system = cls.from_dict(metadata.to_dict())
+        user = get_user()
+        if not user.is_authenticated:
+            abort_with_error_message(401, "log in required")
+        system.creator = user.email
 
         # validation
         if system.dataset_metadata_id is not None:
@@ -63,7 +68,9 @@ class SystemModel(MetadataDBModel, System):
     def from_dict(cls, dikt) -> SystemModel:
         document = {**dikt}
         if dikt.get("_id"):
-            document[f"system_id"] = str(dikt["_id"])
+            document["system_id"] = str(dikt["_id"])
+        if dikt.get("is_private") is None:
+            document["is_private"] = True
         system = super().from_dict(document)
         return system
 
@@ -75,12 +82,27 @@ class SystemModel(MetadataDBModel, System):
         document = super().find_one_by_id(id)
         if not document:
             return None
-        return cls.from_dict(document)
+        sys = cls.from_dict(document)
+        if sys.is_private and sys.creator != get_user().email:
+            abort_with_error_message(
+                403, "you do not have permission to view this system")
+        else:
+            return sys
 
     @classmethod
     def delete_one_by_id(cls, id: str):
+        user = get_user()
+        if not user.is_authenticated:
+            abort_with_error_message(401, "log in required")
+
         def db_operations(session: ClientSession) -> bool:
             """TODO: add logging if error"""
+            sys = SystemModel.find_one_by_id(id)
+            if not sys:
+                return False
+            if sys.creator != user.email:
+                abort_with_error_message(
+                    403, "you can only delete your own systems")
             result = super(SystemModel, cls).delete_one_by_id(
                 id, session=session)
             if not result:
@@ -105,13 +127,17 @@ class SystemModel(MetadataDBModel, System):
         return str(self.insert_one(document, session=session).inserted_id)
 
     @classmethod
-    def find(cls, page: int, page_size: int, system_name: Optional[str], task: Optional[str], sort: Optional[List]) -> SystemsReturn:
+    def find(cls, page: int, page_size: int, system_name: Optional[str], task: Optional[str], sort: Optional[List], creator: Optional[str]) -> SystemsReturn:
         """find multiple systems that matches the filters"""
         filter: Dict[str, Any] = {}
         if system_name:
             filter["model_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
             filter["task"] = task
+        if creator:
+            filter["creator"] = creator
+        filter["$or"] = [{"is_private": False},
+                         {"creator": get_user().email}]
         cursor, total = super().find(filter, sort, page * page_size,
                                      page_size)
         return SystemsReturn([cls.from_dict(doc) for doc in cursor], total)

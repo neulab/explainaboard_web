@@ -74,7 +74,7 @@ export function DatasetsPage() {
       <Table
         columns={columns}
         dataSource={datasets}
-        rowKey="datasetId"
+        rowKey="dataset_id"
         size="middle"
         pagination={{
           total,

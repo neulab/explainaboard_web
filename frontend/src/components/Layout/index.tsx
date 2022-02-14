@@ -1,8 +1,9 @@
 import React, { ReactNode, useState } from "react";
-import { Layout as AntdLayout, Menu } from "antd";
+import { Button, Layout as AntdLayout, Menu, Space, Tooltip } from "antd";
 import { Route } from "../../routes";
 import "./index.css";
 import { useHistory, useLocation } from "react-router";
+import { LoginState, useEnv, useUser } from "..";
 
 interface Props {
   routes: Route[];
@@ -20,6 +21,8 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const history = useHistory();
   const location = useLocation();
+  const user = useUser();
+  const { env } = useEnv();
 
   const selectedMenus = [location.pathname];
   // first character of path is always "/" so skip first element of levels.
@@ -38,6 +41,27 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
     else setOpenMenus([...openMenus, menuKey]);
   };
 
+  const loginBtn = (
+    <Button size="small" onClick={user.login}>
+      Log in
+    </Button>
+  );
+
+  const userText = (() => {
+    switch (user.state) {
+      case LoginState.no:
+        return loginBtn;
+      case LoginState.expired:
+        return (
+          <Space>
+            {`${user.userInfo?.email} (expired)`} {loginBtn}
+          </Space>
+        );
+      case LoginState.yes:
+        return `${user.userInfo?.email}`;
+    }
+  })();
+
   return (
     <AntdLayout style={{ minHeight: "100vh" }}>
       <AntdLayout.Sider collapsible collapsed={collapsed} onCollapse={toggle}>
@@ -48,45 +72,55 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
           selectedKeys={selectedMenus}
           openKeys={openMenus}
         >
-          {routes.map(({ path, icon, title, subroutes }) => {
-            if (subroutes && subroutes.length > 0) {
+          {routes
+            .filter(({ hideFromMenu }) => !hideFromMenu)
+            .map(({ path, icon, title, subroutes }) => {
+              if (subroutes && subroutes.length > 0) {
+                return (
+                  <Menu.SubMenu
+                    key={path}
+                    icon={icon}
+                    title={title}
+                    onTitleClick={() => toggleSubMenu(path)}
+                  >
+                    {subroutes.map((route) => {
+                      const fullPath = path + route.path;
+                      return (
+                        <Menu.Item
+                          key={fullPath}
+                          icon={route.icon}
+                          onClick={() => history.push(fullPath)}
+                        >
+                          {route.title}
+                        </Menu.Item>
+                      );
+                    })}
+                  </Menu.SubMenu>
+                );
+              }
               return (
-                <Menu.SubMenu
+                <Menu.Item
                   key={path}
                   icon={icon}
-                  title={title}
-                  onTitleClick={() => toggleSubMenu(path)}
+                  onClick={() => history.push(path)}
                 >
-                  {subroutes.map((route) => {
-                    const fullPath = path + route.path;
-                    return (
-                      <Menu.Item
-                        key={fullPath}
-                        icon={route.icon}
-                        onClick={() => history.push(fullPath)}
-                      >
-                        {route.title}
-                      </Menu.Item>
-                    );
-                  })}
-                </Menu.SubMenu>
+                  {title}
+                </Menu.Item>
               );
-            }
-            return (
-              <Menu.Item
-                key={path}
-                icon={icon}
-                onClick={() => history.push(path)}
-              >
-                {title}
-              </Menu.Item>
-            );
-          })}
+            })}
         </Menu>
       </AntdLayout.Sider>
       <AntdLayout className="site-layout">
         <AntdLayout.Header className="site-layout-header">
-          Header bar for user account, and external links.
+          <Space>
+            {env === "development" && "(You are in development environment)"}
+            {userText}
+            <Tooltip title="Currently, logging out from the web interface doesn't immediately invoke your access from our platform. Instead, your access will expire in an hour (at which point, you have logged out completely). The support for a true logout will be added in the future.">
+              <Button size="small" onClick={user.logout}>
+                Log out
+              </Button>
+            </Tooltip>
+          </Space>
         </AntdLayout.Header>
         <AntdLayout.Content>
           <div className="site-layout-content">{children}</div>

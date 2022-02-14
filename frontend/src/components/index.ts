@@ -7,3 +7,7 @@ export * from "./AnalysisTable";
 export * from "./TaskSelect";
 export * from "./ErrorBoundary";
 export * from "./TextWithLink";
+export * from "./AuthenticatedRoute";
+export * from "./useEnv";
+export * from "./useUser";
+export * from "./PrivateIcon";

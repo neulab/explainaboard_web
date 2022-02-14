@@ -4,18 +4,16 @@ import {
   message,
   Popconfirm,
   Space,
-  Tag,
-  Tooltip,
   Table,
   Drawer,
   Typography,
+  Tag,
 } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
-import { AnalysisReport, ErrorBoundary } from "..";
-
+import { AnalysisReport, PrivateIcon, ErrorBoundary } from "..";
 const { Text, Link } = Typography;
 
 interface Props {
@@ -91,10 +89,19 @@ export function SystemTableContent({
     },
     {
       dataIndex: "model_name",
-      width: 150,
       fixed: "left",
       title: "Name",
-      render: (value) => <Text strong>{value}</Text>,
+      render: (_, record) => (
+        <div>
+          <Text strong>{record.model_name}</Text>
+          {record.is_private && (
+            <span style={{ paddingLeft: "3px" }}>
+              <PrivateIcon />
+            </span>
+          )}
+        </div>
+      ),
+      width: 150,
     },
     {
       dataIndex: "task",
@@ -118,6 +125,8 @@ export function SystemTableContent({
       title: "Language",
       align: "center",
     },
+    ...metricColumns,
+    { dataIndex: "creator", title: "Creator", align: "center" },
     {
       dataIndex: "created_at",
       title: "Created At",
@@ -129,20 +138,15 @@ export function SystemTableContent({
       dataIndex: "action",
       title: "",
       fixed: "right",
-      width: 210,
+      width: 110,
       render: (_, record) => (
-        <Space>
+        <Space size="small">
           <Button
             size="small"
             onClick={() => showSystemAnalysis(record.system_id)}
           >
             Analysis
           </Button>
-          <Tooltip title="not implemented">
-            <Button size="small" disabled>
-              Dataset Info
-            </Button>
-          </Tooltip>
           <Popconfirm
             title="Are you sure?"
             onConfirm={() => deleteSystem(record.system_id)}

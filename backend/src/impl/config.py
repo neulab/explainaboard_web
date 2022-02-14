@@ -19,6 +19,12 @@ class DevelopmentConfig(Config):
         self.DB_USERNAME = os.environ['DB_USERNAME_DEV']
         self.DB_PASSWORD = os.environ['DB_PASSWORD_DEV']
 
+        self.REGION = os.environ['REGION']
+        self.USER_POOL_ID = os.environ['USER_POOL_ID_DEV']
+        # client id for frontend because the token is generated for the frontend
+        self.USER_POOL_AUDIENCE = os.environ['USER_POOL_AUDIENCE_DEV']
+        self.AUTH_URL = f"https://explainaboard-dev.auth.{self.REGION}.amazoncognito.com/oauth2/authorize?client_id={self.USER_POOL_AUDIENCE}&response_type=token&scope=email+openid+phone&redirect_uri="
+
 
 class ProductionConfig(Config):
     def __init__(self) -> None:
@@ -26,6 +32,11 @@ class ProductionConfig(Config):
         self.DATABASE_URI = os.environ['DATABASE_URI_PROD']
         self.DB_USERNAME = os.environ['DB_USERNAME_PROD']
         self.DB_PASSWORD = os.environ['DB_PASSWORD_PROD']
+
+        self.REGION = os.environ['REGION']
+        self.USER_POOL_ID = os.environ['USER_POOL_ID_PROD']
+        self.USER_POOL_AUDIENCE = os.environ['USER_POOL_AUDIENCE_PROD']
+        self.AUTH_URL = f"https://explainaboard.auth.{self.REGION}.amazoncognito.com/login?client_id={self.USER_POOL_AUDIENCE}&response_type=token&scope=email+openid+phone&redirect_uri="
 
 
 class TestingConfig(Config):

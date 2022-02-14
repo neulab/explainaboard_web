@@ -28,12 +28,6 @@ def main():
     else:
         app.app.config.from_object(DevelopmentConfig())
     
-    @app.route('/api/info')
-    def info():
-        return {
-            'env': os.getenv('FLASK_ENV')
-        }    
-    
     app.run(port={{serverPort}})
 
 

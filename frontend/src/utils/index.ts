@@ -1,4 +1,4 @@
-import { TaskCategory } from "./clients/openapi";
+import { TaskCategory } from "../clients/openapi";
 
 export enum PageState {
   loading,

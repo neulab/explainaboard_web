@@ -9,12 +9,24 @@ import { DefaultApi, Configuration, APIError } from "./openapi";
  * for all situations. In the future, we can use env variables to control
  * the base urls.
  */
-export const backendClient = new DefaultApi(new Configuration({}), "/api");
+export let backendClient = new DefaultApi(
+  new Configuration({ accessToken: localStorage.getItem("_jwt") || undefined }),
+  "/api"
+);
+
+/** update client to use the latest token. pass in `null` to remove the token */
+export function refreshBackendClient(newJWT: string | null) {
+  backendClient = new DefaultApi(
+    new Configuration({ accessToken: newJWT || undefined }),
+    "/api"
+  );
+}
 
 /**
  * Parsed error from backend APIs
  * - caution! response stream has been read so `response.json()` will throw an
  * error. Error information in the body has been parsed and stored as attributes.
+ * TODO: add error handling for 401 (prompt users to login again when token expired)
  */
 export class BackendError implements APIError {
   constructor(
