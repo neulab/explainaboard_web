@@ -13,13 +13,25 @@ interface Props {
   /**initial value for task filter */
   initialTaskFilter?: string;
 }
+
+interface ApiDataState {
+  systemIDs: string[];
+  normalizedSystems: { [key: string]: SystemModel };
+  total: number;
+}
+
 /** A table that lists all systems */
 export function SystemsTable({ initialTaskFilter }: Props) {
-  const [systems, setSystems] = useState<SystemModel[]>([]);
   const [pageState, setPageState] = useState(PageState.loading);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
+
+  // Maintain a single state for all api data to avoid re-setting state redundantly
+  const [apiDataState, setApiDataState] = useState<ApiDataState>({
+    systemIDs: [],
+    normalizedSystems: {},
+    total: 0,
+  });
 
   // filters
   const [nameFilter, setNameFilter] = useState("");
@@ -42,8 +54,11 @@ export function SystemsTable({ initialTaskFilter }: Props) {
   /** generate metrics options list */
   function getMetricsNames() {
     const metricNames = new Set<string>();
-    for (const sys of systems) {
-      sys.analysis.getMetricNames().forEach((name) => metricNames.add(name));
+    const { systemIDs, normalizedSystems } = apiDataState;
+    for (const sysID of systemIDs) {
+      normalizedSystems[sysID].analysis
+        .getMetricNames()
+        .forEach((name) => metricNames.add(name));
     }
     // if a task is selected, add all supported metrics to the options list
     if (taskFilter) {
@@ -83,8 +98,40 @@ export function SystemsTable({ initialTaskFilter }: Props) {
         sortField,
         sortDir
       );
-      setSystems(newSystems.map((sys) => newSystemModel(sys)));
-      setTotal(total);
+      const datasetIDs: string[] = [];
+      for (const sys of newSystems) {
+        if (sys.dataset_metadata_id !== undefined) {
+          datasetIDs.push(sys.dataset_metadata_id);
+        }
+      }
+      const { datasets } = await backendClient.datasetsGet(
+        datasetIDs.join(",")
+      );
+      // Normalization: gather datasets into a object/dictionary with datasetID as key for easy look up
+      const normalizedDatasets = Object.assign(
+        {},
+        ...datasets.map((d) => ({ [d.dataset_id]: d }))
+      );
+
+      const systemIDs = newSystems.map((sys) => sys.system_id);
+      // Normalization: gather systems into a object/dictionary with systemID as key for easy look up
+      const normalizedSystems = Object.assign(
+        {},
+        ...newSystems.map((sys) => {
+          const datasetName =
+            sys.dataset_metadata_id === undefined
+              ? "unspecified"
+              : normalizedDatasets[sys.dataset_metadata_id].dataset_name;
+          return {
+            [sys.system_id]: newSystemModel(sys, datasetName),
+          };
+        })
+      );
+      setApiDataState({
+        systemIDs,
+        normalizedSystems,
+        total,
+      });
       setPageState(PageState.success);
     }
     refreshSystems();
@@ -113,9 +160,12 @@ export function SystemsTable({ initialTaskFilter }: Props) {
     setSelectedSystemIDs([]);
   }
 
+  const { systemIDs, normalizedSystems, total } = apiDataState;
+
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
       <SystemTableTools
+        normalizedSystems={normalizedSystems}
         toggleSubmitDrawer={() => setSubmitDrawerVisible((visible) => !visible)}
         taskCategories={taskCategories}
         value={{ task: taskFilter, name: nameFilter, sortField, sortDir }}
@@ -125,7 +175,8 @@ export function SystemsTable({ initialTaskFilter }: Props) {
         setActiveSystemIDs={setActiveSystemIDs}
       />
       <SystemTableContent
-        systems={systems}
+        systemIDs={systemIDs}
+        normalizedSystems={normalizedSystems}
         page={page}
         total={total}
         pageSize={pageSize}

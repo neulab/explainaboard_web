@@ -10,32 +10,36 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
 > This step-by-step guide assumes a Linux environment. A MacOS environment will likely work similarly.
 1. Install `node` and `npm`
-       - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use nvm to manage node versions.
-       - We use `node v14.17.3`, but any v14+ should probably work fine. 
-       - Remember to run `nvm install-latest-npm` to get the latest version of npm.
-       - verify the installation
-       ```
-       >> node --version
-       >> v14.17.3
-       >> npm --version
-       >> 7.24.1
-       ```
+    - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use nvm to manage node versions.
+    Run `nvm install-latest-npm` to get the latest version of npm.
+    - We use `node v14.17.3`, but any v14+ should probably work fine. Verify that the installation yields a recent version comparable to the ones below
+
+    ```
+    >> node --version
+    >> v14.17.3
+    >> npm --version
+    >> 7.24.1
+    ```
+       
 2. Generate code for API layer
-   - run `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever open API definition changes.
+   - Run `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever open API definition changes.
 
 3.  Setup dev environment for the frontend
-    1. install project dependencies `npm install`
-    2. install frontend dependencies `npm --prefix frontend install`
+    1. Install project dependencies `npm install`
+    2. Install frontend dependencies `npm --prefix frontend install`
         - Check the FAQ section if `npm` said there are vulnerabilities to verify if they are false alarms.
 4.  Setup dev environment for the backend
-    1. install `python` version >= 3.9.7 and create a venv or conda environment for this project
+    1. Install `python` version >= 3.9.7 and create a venv or conda environment for this project
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
     2. `pip install -r backend/src/gen/requirements.txt`
-      - **caveat**: currently, we don't have a CI for SDK releases so the SDK is installed from its GitHub repo. When running pip install, it won't resolve the SDK dependencies automatically. Please manually install all packages for the SDK ([link](https://github.com/ExpressAI/ExplainaBoard/blob/main/requirements.txt)) and run `pip install -r backend/src/gen/requirements.txt` again. We'll fix this in the future.
-    3. create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
+    3. Create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
 5. Launch explainaboard
-    1. run `npm run start` to start the frontend and backend server concurrently.
+    1. Run `npm run start` to start the frontend and backend server concurrently.
         - Both frontend and backend can be started independently as well. Check out "More details on frontend and backend".
+
+## Important notes on local development
+- As mentioned in quick start step 2, whenever the open API definition (openapi.yaml) changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
+- The frontend and backend dependencies must be reinstalled whenever the associated dependency files are changed, including `package.json`, `frontend/package.json`, `backend/src/gen/requirements.txt` (generated from `backend/templates/requirements.mustache`).
 
 ## Deployment
 
@@ -57,9 +61,9 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
          - configurations can be found in `.prettierignore` and `.prettierrc.json`
        - linting and formatting is enforced automatically at the "pre-commit" stage with husky. Please do not skip it. If you find a rule particularly annoying, please post in Slack and we can remove it.
        - eslint and prettier should not be applied on the python code (backend). I should have already configured both of the tools to ignore python. Please let me know if you think something isn't working properly.
-    3. testing
-       - `npm test` Launches the test runner in the interactive watch mode. See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-    4. build `npm run build`
+    3. Testing
+       - `npm test` launches the test runner in the interactive watch mode. See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+    4. Build `npm run build`
 
        - You do not need to run this manually. It is handled automatically by the docker file.
        - Builds the app for production to the `build` folder. It correctly bundles React in production mode and optimizes the build for the best performance.
@@ -67,7 +71,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
     5. Frontend is created with [Create React App](https://github.com/facebook/create-react-app).
 
-       - a note about `npm run eject`
+       - A note about `npm run eject`
          **Note: this is a one-way operation. Once you `eject`, you can’t go back!**
 
          If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.

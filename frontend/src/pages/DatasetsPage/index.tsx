@@ -29,6 +29,7 @@ export function DatasetsPage() {
     async function refreshDatasets() {
       setPageState(PageState.loading);
       const { datasets: newDatasets, total } = await backendClient.datasetsGet(
+        undefined,
         nameQuery ? nameQuery : undefined,
         undefined,
         page,

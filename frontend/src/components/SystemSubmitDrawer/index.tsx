@@ -72,6 +72,7 @@ export function SystemSubmitDrawer(props: Props) {
   async function searchDatasets(text: string, taskName = "") {
     setState(State.loading);
     const { datasets } = await backendClient.datasetsGet(
+      undefined,
       text,
       taskName || selectedTaskName,
       0,

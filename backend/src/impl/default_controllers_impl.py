@@ -42,8 +42,8 @@ def datasets_dataset_id_get(dataset_id: str) -> DatasetMetaDataModel:
     return dataset
 
 
-def datasets_get(dataset_name: Optional[str], task: Optional[str], page: int, page_size: int) -> DatasetsReturn:
-    return DatasetMetaDataModel.find(page, page_size, dataset_name, task)
+def datasets_get(dataset_ids: Optional[str], dataset_name: Optional[str], task: Optional[str], page: int, page_size: int) -> DatasetsReturn:
+    return DatasetMetaDataModel.find(page, page_size, dataset_ids, dataset_name, task)
 
 
 """ /systems """

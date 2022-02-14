@@ -27,7 +27,6 @@ export function AnalysisTable({
 }: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
-
   const pageSize = 10;
   const total = outputIDs.length;
   const offset = page * pageSize;
@@ -101,7 +100,7 @@ export function AnalysisTable({
       const answerStart = trueAnswer["answer_start"][0];
       dataSource[i][
         "true_answers"
-      ] = `- Text: ${text}\n- Start position:${answerStart}`;
+      ] = `Text: ${text}\nStart position: ${answerStart}`;
     }
   }
 
