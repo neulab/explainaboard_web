@@ -13,7 +13,7 @@ import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
-import { AnalysisReport, VisibilityIcon, ErrorBoundary } from "..";
+import { AnalysisReport, PrivateIcon, ErrorBoundary } from "..";
 const { Text, Link } = Typography;
 
 interface Props {
@@ -94,9 +94,11 @@ export function SystemTableContent({
       render: (_, record) => (
         <div>
           <Text strong>{record.model_name}</Text>
-          <span style={{ paddingLeft: "3px" }}>
-            <VisibilityIcon isPrivate={record.is_private} />
-          </span>
+          {record.is_private && (
+            <span style={{ paddingLeft: "3px" }}>
+              <PrivateIcon />
+            </span>
+          )}
         </div>
       ),
       width: 150,

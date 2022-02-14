@@ -302,6 +302,7 @@ export function SystemSubmitDrawer(props: Props) {
             initialValue={true}
             rules={[{ required: true }]}
             valuePropName="checked"
+            tooltip="Check this box if you don't want other users to see your system (We will add support to change the visibility of systems in the future)"
           >
             <Checkbox />
           </Form.Item>
