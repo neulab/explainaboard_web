@@ -1,5 +1,5 @@
 import React, { ReactNode, useState } from "react";
-import { Button, Layout as AntdLayout, Menu, Space } from "antd";
+import { Button, Layout as AntdLayout, Menu, Space, Tooltip } from "antd";
 import { Route } from "../../routes";
 import "./index.css";
 import { useHistory, useLocation } from "react-router";
@@ -115,9 +115,11 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
           <Space>
             {env === "development" && "(You are in development environment)"}
             {userText}
-            <Button size="small" onClick={user.logout}>
-              Log out
-            </Button>
+            <Tooltip title="Currently, logging out from the web interface doesn't immediately invoke your access from our platform. Instead, your access will expire in an hour (at which point, you have logged out completely). The support for a true logout will be added in the future.">
+              <Button size="small" onClick={user.logout}>
+                Log out
+              </Button>
+            </Tooltip>
           </Space>
         </AntdLayout.Header>
         <AntdLayout.Content>
