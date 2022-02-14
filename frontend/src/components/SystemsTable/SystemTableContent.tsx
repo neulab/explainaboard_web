@@ -8,15 +8,19 @@ import {
   Tooltip,
   Table,
   Drawer,
+  Typography,
 } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
-import { AnalysisReport } from "..";
+import { AnalysisReport, ErrorBoundary } from "..";
+
+const { Text, Link } = Typography;
 
 interface Props {
-  systems: SystemModel[];
+  systemIDs: string[];
+  normalizedSystems: { [key: string]: SystemModel };
   total: number;
   pageSize: number;
   /** 0 indexed */
@@ -31,7 +35,8 @@ interface Props {
 }
 
 export function SystemTableContent({
-  systems,
+  systemIDs,
+  normalizedSystems,
   page,
   total,
   pageSize,
@@ -43,10 +48,11 @@ export function SystemTableContent({
   activeSystemIDs,
   setActiveSystemIDs,
 }: Props) {
-  const activeSystems = systems.filter((sys) =>
-    activeSystemIDs.includes(sys.system_id)
+  const systems = systemIDs.map((sysID) => normalizedSystems[sysID]);
+  const activeSystems = activeSystemIDs.map(
+    (sysID) => normalizedSystems[sysID]
   );
-  const analyses = activeSystems.map((sys) => sys.analysis);
+  const analyses = activeSystems.map((sys) => sys["analysis"]);
 
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
@@ -85,24 +91,33 @@ export function SystemTableContent({
     },
     {
       dataIndex: "model_name",
-      width: 100,
+      width: 150,
       fixed: "left",
       title: "Name",
+      render: (value) => <Text strong>{value}</Text>,
     },
     {
       dataIndex: "task",
-      width: 150,
+      width: 120,
       fixed: "left",
       title: "Task",
-      render: (value) => <Tag>{value}</Tag>,
+      render: (value) => <Tag style={{ whiteSpace: "normal" }}>{value}</Tag>,
     },
+    {
+      dataIndex: "dataset_name",
+      width: 100,
+      title: "Dataset",
+      fixed: "left",
+      align: "center",
+      render: (value) => value,
+    },
+    ...metricColumns,
     {
       dataIndex: "language",
       width: 100,
       title: "Language",
       align: "center",
     },
-    ...metricColumns,
     {
       dataIndex: "created_at",
       title: "Created At",
@@ -147,6 +162,16 @@ export function SystemTableContent({
     },
   };
 
+  let drawerTitle;
+  if (activeSystems.length === 1) {
+    drawerTitle = `Single Analysis of ${activeSystems[0].model_name}`;
+  } else if (activeSystems.length === 2) {
+    const systemNames = activeSystems
+      .map((sys) => sys.model_name)
+      .join(" and ");
+    drawerTitle = `Pairwise Analysis of ${systemNames}`;
+  }
+
   return (
     <div>
       <Table
@@ -173,19 +198,39 @@ export function SystemTableContent({
         }}
       />
       <Drawer
-        visible={activeSystems.length !== 0}
+        visible={activeSystemIDs.length !== 0}
         onClose={() => closeSystemAnalysis()}
-        title={"Analysis report of " + activeSystems[0]?.model_name}
+        title={drawerTitle}
         width="80%"
       >
         {activeSystems.length !== 0 && (
-          <AnalysisReport
-            systemIDs={activeSystemIDs}
-            systemID={activeSystems[0].system_id}
-            task={activeSystems[0]?.task}
-            analyses={analyses}
-            analysis={activeSystems[0]?.analysis}
-          />
+          // The analysis report is expected to fail if a user selects systems with different datsets.
+          // We use an error boundary component and provide a fall back UI if an error is caught.
+          <ErrorBoundary
+            fallbackUI={
+              <Text>
+                An error occured in the analysis. Double check if the selected
+                systems use the same dataset. If you found a bug, kindly open an
+                issue on{" "}
+                <Link
+                  href="https://github.com/neulab/explainaboard_web"
+                  target="_blank"
+                >
+                  our GitHub repo
+                </Link>
+                . Thanks!
+              </Text>
+            }
+          >
+            <AnalysisReport
+              systemIDs={activeSystemIDs}
+              systemNames={activeSystemIDs.map(
+                (sysID) => normalizedSystems[sysID].model_name
+              )}
+              task={activeSystems[0]?.task}
+              analyses={analyses}
+            />
+          </ErrorBoundary>
         )}
       </Drawer>
     </div>

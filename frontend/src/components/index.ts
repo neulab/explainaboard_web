@@ -5,4 +5,5 @@ export * from "./AnalysisReport";
 export * from "./BarChart";
 export * from "./AnalysisTable";
 export * from "./TaskSelect";
+export * from "./ErrorBoundary";
 export * from "./TextWithLink";
