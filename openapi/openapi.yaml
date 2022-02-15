@@ -11,10 +11,10 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0.html" # TODO
 
 servers:
-  - url: http://explainaboard.inspiredco.ai/api
+  - url: https://explainaboard.inspiredco.ai/api
     description: Production
-  - url: http://dev.explainaboard.inspiredco.ai/api
-    description: Dev
+  - url: https://dev.explainaboard.inspiredco.ai/api
+    description: Development
   - url: http://localhost:5000/api
     description: Local dev server
 
