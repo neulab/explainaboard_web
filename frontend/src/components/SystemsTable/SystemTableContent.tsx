@@ -56,7 +56,7 @@ export function SystemTableContent({
     dataIndex: metric,
     render: (_, record) => record.analysis.getMetirc(metric)?.value,
     title: metric,
-    width: 100,
+    ellipsis: true,
     align: "center",
   }));
 
@@ -118,7 +118,6 @@ export function SystemTableContent({
       align: "center",
       render: (value) => value,
     },
-    ...metricColumns,
     {
       dataIndex: "language",
       width: 100,
@@ -126,7 +125,13 @@ export function SystemTableContent({
       align: "center",
     },
     ...metricColumns,
-    { dataIndex: "creator", title: "Creator", align: "center" },
+    {
+      dataIndex: "creator",
+      title: "Creator",
+      align: "center",
+      render: (value) => value.split("@")[0],
+      width: 95,
+    },
     {
       dataIndex: "created_at",
       title: "Created At",
