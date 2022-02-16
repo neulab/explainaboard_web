@@ -228,9 +228,12 @@ export function SystemTableContent({
           >
             <AnalysisReport
               systemIDs={activeSystemIDs}
-              systemNames={activeSystemIDs.map(
-                (sysID) => normalizedSystems[sysID].model_name
-              )}
+              systemInfos={activeSystemIDs.map((sysID) => {
+                return {
+                  modelName: normalizedSystems[sysID].model_name,
+                  metricNames: normalizedSystems[sysID].metric_names,
+                };
+              })}
               task={activeSystems[0]?.task}
               analyses={analyses}
             />
