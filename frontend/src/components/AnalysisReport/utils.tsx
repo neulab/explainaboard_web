@@ -14,21 +14,33 @@ function formatName(name: string) {
 export function parse(
   systemID: string,
   task: string,
+  metricNames: string[],
   description: string,
   fineGrainedElements: Array<FineGrainedElement[]>
 ) {
-  const bucketNames: string[] = [];
-  const values: number[] = [];
-  const numbersOfSamples: number[] = [];
-  const confidenceScores: Array<[number, number]> = [];
-  const bucketsOfSamples = [];
   const parsedResult: { [key: string]: ResultFineGrainedParsed } = {};
+  for (const metricName of metricNames) {
+    const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
+    const values: ResultFineGrainedParsed["values"] = [];
+    const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
+    const confidenceScores: ResultFineGrainedParsed["confidenceScores"] = [];
+    const bucketsOfSamples: ResultFineGrainedParsed["bucketsOfSamples"] = [];
+    parsedResult[metricName] = {
+      systemID,
+      task,
+      description,
+      metricName,
+      bucketNames,
+      values,
+      numbersOfSamples,
+      confidenceScores,
+      bucketsOfSamples,
+    };
+  }
 
   for (let i = 0; i < fineGrainedElements.length; i++) {
     // fineGrainedElements[i] will have length > 1 when there exist multiple metrics.
     for (const fineGrainedElement of fineGrainedElements[i]) {
-      bucketsOfSamples.push(fineGrainedElement.bucket_samples);
-
       const bucketNameArray = fineGrainedElement.bucket_name;
       let bucketName = "";
       switch (bucketNameArray.length) {
@@ -62,23 +74,20 @@ export function parse(
         fineGrainedElement.confidence_score_up
       );
       const metricName = fineGrainedElement.metric_name;
-      bucketNames.push(bucketName);
-      values.push(value);
-      numbersOfSamples.push(nSamples);
+      const resultFineGrainedParsed = parsedResult[metricName];
+      resultFineGrainedParsed.metricName = metricName;
+      resultFineGrainedParsed.bucketsOfSamples.push(
+        fineGrainedElement.bucket_samples
+      );
+      resultFineGrainedParsed.bucketNames.push(bucketName);
+      resultFineGrainedParsed.values.push(value);
+      resultFineGrainedParsed.numbersOfSamples.push(nSamples);
       if (confidenceScoreLow !== 0 && confidenceScoreHigh !== 0) {
-        confidenceScores.push([confidenceScoreLow, confidenceScoreHigh]);
+        resultFineGrainedParsed.confidenceScores.push([
+          confidenceScoreLow,
+          confidenceScoreHigh,
+        ]);
       }
-      parsedResult[metricName] = {
-        systemID,
-        task,
-        description,
-        metricName,
-        bucketNames,
-        bucketsOfSamples,
-        values,
-        numbersOfSamples,
-        confidenceScores,
-      };
     }
   }
   return parsedResult;

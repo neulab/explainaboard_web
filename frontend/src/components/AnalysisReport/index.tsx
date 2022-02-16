@@ -50,24 +50,7 @@ interface Props {
 }
 
 export function AnalysisReport(props: Props) {
-  const [activeSystemExamples, setActiveSystemExamples] =
-    useState<ActiveSystemExamples>();
-  // page number of the analysis table
-  const [page, setPage] = useState(0);
-
   const { task, systemIDs, systemInfos, analyses } = props;
-
-  /* The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
-  Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
-  to be enclosed by <Row></Row>. 
-  */
-  // Must be a factor of 24 since Ant divides a row into 24 sections!
-  let chartNumPerRow = 3;
-  // pairwise analysis
-  if (systemIDs.length > 1) {
-    chartNumPerRow = 2;
-  }
-
   /*
   Take from the first element as the type and number of metrics should be 
   invariant across sytems in pairwise analysis
@@ -78,6 +61,23 @@ export function AnalysisReport(props: Props) {
   for (const metricName of metricNames) {
     // Array to store every parsed system analysis
     metricToSystemAnalysesParsed[metricName] = [];
+  }
+
+  const [activeMetric, setActiveMetric] = useState<string>(metricNames[0]);
+  const [activeSystemExamples, setActiveSystemExamples] =
+    useState<ActiveSystemExamples>();
+  // page number of the analysis table
+  const [page, setPage] = useState(0);
+
+  /* The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
+  Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
+  to be enclosed by <Row></Row>. 
+  */
+  // Must be a factor of 24 since Ant divides a row into 24 sections!
+  let chartNumPerRow = 3;
+  // pairwise analysis
+  if (systemIDs.length > 1) {
+    chartNumPerRow = 2;
   }
 
   // Loop through each system analysis and parse
@@ -94,13 +94,16 @@ export function AnalysisReport(props: Props) {
       };
     } = {};
     for (const metric of metricNames) {
-      // the parsed fine-grained results, used for visualization
-      metricToParsedInfo[metric].resultsFineGrainedParsed = [
-        new Array<ResultFineGrainedParsed>(chartNumPerRow),
-      ];
-      metricToParsedInfo[metric].rowIdx = 0;
-      metricToParsedInfo[metric].chartNum = 0;
+      metricToParsedInfo[metric] = {
+        // the parsed fine-grained results, used for visualization
+        resultsFineGrainedParsed: [
+          new Array<ResultFineGrainedParsed>(chartNumPerRow),
+        ],
+        rowIdx: 0,
+        chartNum: 0,
+      };
     }
+
     const featureKeys: string[] = [];
     const descriptions: string[] = [];
 
@@ -130,6 +133,7 @@ export function AnalysisReport(props: Props) {
       const metricToResultFineGrainedParsed = parse(
         systemID,
         task,
+        metricNames,
         description,
         resultFineGrained
       );
@@ -153,8 +157,6 @@ export function AnalysisReport(props: Props) {
       });
     }
   }
-
-  console.log(metricToSystemAnalysesParsed);
 
   // No bar selected
   let analysisTable = (
@@ -245,78 +247,91 @@ export function AnalysisReport(props: Props) {
     );
   }
 
-  /*Get the parsed result from the first system for mapping.
-  FeatureKeys and descriptions are invariant information
-  */
-  const { resultsFineGrainedParsed, featureKeys, descriptions } =
-    systemAnalysesParsed[0];
-
   return (
-    <div style={{ textAlign: "center" }}>
-      {
-        // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
-        // into rows and columns. One column contains a single BarChart.
-        resultsFineGrainedParsed.map((row, rowIdx) => {
-          const cols = row.map((resultFirst, resultIdx) => {
-            // For invariant variables across all systems, we can simply take from the first result
-            const title = `${resultFirst.metricName} by ${resultFirst.description}`;
-            const xAxisData = resultFirst.bucketNames;
+    <Tabs
+      activeKey={activeMetric}
+      onChange={(activeKey) => {
+        setActiveMetric(activeKey);
+        setActiveSystemExamples(undefined);
+      }}
+    >
+      {metricNames.map((metric, _) => {
+        const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
+        /*Get the parsed result from the first system for mapping.
+          FeatureKeys and descriptions are invariant information
+          */
+        const { resultsFineGrainedParsed, featureKeys, descriptions } =
+          systemAnalysesParsed[0];
+        return (
+          <TabPane tab={metric} key={metric}>
+            {/* <div style={{ textAlign: "center" }}> */}
+            {
+              // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
+              // into rows and columns. One column contains a single BarChart.
+              resultsFineGrainedParsed.map((row, rowIdx) => {
+                const cols = row.map((resultFirst, resultIdx) => {
+                  // For invariant variables across all systems, we can simply take from the first result
+                  const title = `${resultFirst.metricName} by ${resultFirst.description}`;
+                  const xAxisData = resultFirst.bucketNames;
 
-            // System-dependent variables must be taken from all systems
-            const resultsValues: number[][] = [];
-            const resultsNumbersOfSamples: number[][] = [];
-            const resultsConfidenceScores: Array<[number, number]>[] = [];
-            const resultsBucketsOfSamples: string[][][] = [];
-            for (let i = 0; i < systemAnalysesParsed.length; i++) {
-              const result =
-                systemAnalysesParsed[i].resultsFineGrainedParsed[rowIdx][
-                  resultIdx
-                ];
-              resultsValues.push(result.values);
-              resultsNumbersOfSamples.push(result.numbersOfSamples);
-              resultsConfidenceScores.push(result.confidenceScores);
-              resultsBucketsOfSamples.push(result.bucketsOfSamples);
+                  // System-dependent variables must be taken from all systems
+                  const resultsValues: number[][] = [];
+                  const resultsNumbersOfSamples: number[][] = [];
+                  const resultsConfidenceScores: Array<[number, number]>[] = [];
+                  const resultsBucketsOfSamples: string[][][] = [];
+                  for (let i = 0; i < systemAnalysesParsed.length; i++) {
+                    const result =
+                      systemAnalysesParsed[i].resultsFineGrainedParsed[rowIdx][
+                        resultIdx
+                      ];
+                    resultsValues.push(result.values);
+                    resultsNumbersOfSamples.push(result.numbersOfSamples);
+                    resultsConfidenceScores.push(result.confidenceScores);
+                    resultsBucketsOfSamples.push(result.bucketsOfSamples);
+                  }
+
+                  return (
+                    <Col
+                      span={Math.floor(24 / chartNumPerRow)}
+                      key={resultFirst.description}
+                    >
+                      <BarChart
+                        title={title}
+                        seriesNames={systemNames}
+                        xAxisData={xAxisData}
+                        seriesDataList={resultsValues}
+                        seriesLabelsList={resultsValues}
+                        numbersOfSamplesList={resultsNumbersOfSamples}
+                        confidenceScoresList={resultsConfidenceScores}
+                        onBarClick={(barIndex: number, systemIndex: number) => {
+                          // Get examples of a certain bucket from all systems
+                          const bucketOfSamplesList =
+                            resultsBucketsOfSamples.map((bucketsOfSamples) => {
+                              return bucketsOfSamples[barIndex];
+                            });
+                          setActiveSystemExamples({
+                            title,
+                            barIndex,
+                            systemIndex,
+                            featureKeys,
+                            descriptions,
+                            bucketOfSamplesList,
+                          });
+                          // reset page number
+                          setPage(0);
+                        }}
+                      />
+                    </Col>
+                  );
+                });
+                return <Row key={rowIdx}>{cols}</Row>;
+              })
             }
-
-            return (
-              <Col
-                span={Math.floor(24 / chartNumPerRow)}
-                key={resultFirst.description}
-              >
-                <BarChart
-                  title={title}
-                  seriesNames={systemNames}
-                  xAxisData={xAxisData}
-                  seriesDataList={resultsValues}
-                  seriesLabelsList={resultsValues}
-                  numbersOfSamplesList={resultsNumbersOfSamples}
-                  confidenceScoresList={resultsConfidenceScores}
-                  onBarClick={(barIndex: number, systemIndex: number) => {
-                    // Get examples of a certain bucket from all systems
-                    const bucketOfSamplesList = resultsBucketsOfSamples.map(
-                      (bucketsOfSamples) => {
-                        return bucketsOfSamples[barIndex];
-                      }
-                    );
-                    setActiveSystemExamples({
-                      title,
-                      barIndex,
-                      systemIndex,
-                      featureKeys,
-                      descriptions,
-                      bucketOfSamplesList,
-                    });
-                    // reset page number
-                    setPage(0);
-                  }}
-                />
-              </Col>
-            );
-          });
-          return <Row key={rowIdx}>{cols}</Row>;
-        })
-      }
-      {analysisTable}
-    </div>
+            {analysisTable}
+            {/* </div> */}
+          </TabPane>
+        );
+      })}
+    </Tabs>
   );
 }
