@@ -11,7 +11,7 @@ class Config:
         self.TESTING = False
 
 
-class DevelopmentConfig(Config):
+class LocalDevelopmentConfig(Config):
     def __init__(self) -> None:
         super().__init__()
         self.DEBUG = True
@@ -24,6 +24,15 @@ class DevelopmentConfig(Config):
         # client id for frontend because the token is generated for the frontend
         self.USER_POOL_AUDIENCE = os.environ['USER_POOL_AUDIENCE_DEV']
         self.AUTH_URL = f"https://explainaboard-dev-user.auth.{self.REGION}.amazoncognito.com/oauth2/authorize?client_id={self.USER_POOL_AUDIENCE}&response_type=token&scope=email+openid+phone&redirect_uri="
+
+
+class StagingConfig(LocalDevelopmentConfig):
+    """Used for an online staging/test environment. It has exactly the same configuration as local development 
+    except that the debug mode is turned off to prevent auto reload"""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.DEBUG = False
 
 
 class ProductionConfig(Config):
