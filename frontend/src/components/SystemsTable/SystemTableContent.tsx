@@ -53,6 +53,7 @@ export function SystemTableContent({
     dataIndex: metric,
     render: (_, record) => record.analysis.getMetirc(metric)?.value,
     title: metric,
+    width: 100,
     ellipsis: true,
     align: "center",
   }));
