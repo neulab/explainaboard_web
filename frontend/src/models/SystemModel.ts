@@ -6,7 +6,6 @@ import { Features, Results } from "../components/AnalysisReport/types";
 export interface SystemModel extends Omit<System, "created_at"> {
   analysis: SystemAnalysisModel;
   created_at: Moment;
-  dataset_name: string;
 }
 
 /** A model that implements SystemAnalysis to provide useful methods */
@@ -25,13 +24,9 @@ export class SystemAnalysisModel implements SystemAnalysis {
 }
 
 /** construct a `SystemModel` from `System` */
-export const newSystemModel = (
-  system: System,
-  datasetName: string
-): SystemModel => {
+export const newSystemModel = (system: System): SystemModel => {
   return {
     ...system,
-    dataset_name: datasetName,
     created_at: moment(system.created_at),
     analysis: new SystemAnalysisModel(
       system.analysis.features,

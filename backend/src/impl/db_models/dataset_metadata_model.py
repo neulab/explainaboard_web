@@ -26,13 +26,13 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
         return cls.from_dict(document)
 
     @classmethod
-    def find(cls, page: int, page_size: int, dataset_ids: Optional[str] = None, dataset_name: Optional[str] = None, task: Optional[str] = None) -> DatasetsReturn:
+    def find(cls, page: int, page_size: int, dataset_ids: Optional[List[str]] = None, dataset_name: Optional[str] = None, task: Optional[str] = None) -> DatasetsReturn:
         """fuzzy match works like a `LIKE {name_prefix}%` operation now. can extend this and allow for 
         full text search in the future. TODO: add index for name"""
         filter: Dict[str, Any] = {}
         if dataset_ids:
             filter["_id"] = {
-                "$in": [ObjectId(_id) for _id in dataset_ids.split(",")]
+                "$in": [ObjectId(_id) for _id in dataset_ids]
             }
         if dataset_name:
             filter["dataset_name"] = {"$regex": rf"^{dataset_name}.*"}

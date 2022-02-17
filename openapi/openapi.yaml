@@ -476,8 +476,19 @@ components:
               type: boolean
             task:
               type: string
-            dataset_metadata_id:
-              type: string
+            dataset:
+              description: if not specified, it is undefined
+              type: object
+              properties:
+                dataset_id:
+                  type: string
+                dataset_name:
+                  type: string
+                tasks:
+                  type: array
+                  items:
+                    type: string
+              required: [dataset_id, dataset_name, tasks]
             model_name:
               type: string
             metric_names:

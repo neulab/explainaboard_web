@@ -110,6 +110,7 @@ export function AnalysisTable({
       columns={columns}
       dataSource={dataSource}
       loading={pageState === PageState.loading}
+      rowKey="id"
       pagination={{
         total,
         showTotal: (total, range) =>

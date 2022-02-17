@@ -32,27 +32,26 @@ class SystemModel(MetadataDBModel, System):
           6. write to system_outputs
         """
         system = cls.from_dict(metadata.to_dict())
+
         user = get_user()
         if not user.is_authenticated:
             abort_with_error_message(401, "log in required")
         system.creator = user.email
 
         # validation
-        if system.dataset_metadata_id is not None:
-            dataset = DatasetMetaDataModel.find_one_by_id(
-                system.dataset_metadata_id)
-            if not dataset:
+        if metadata.dataset_metadata_id:
+            if not system.dataset:
                 abort_with_error_message(
-                    400, f"dataset: {system.dataset_metadata_id} does not exist")
-            if system.task not in dataset.tasks:
+                    400, f"dataset: {metadata.dataset_metadata_id} does not exist")
+            if system.task not in system.dataset.tasks:
                 abort_with_error_message(
-                    400, f"dataset {dataset.dataset_name} cannot be used for {system.task} tasks")
+                    400, f"dataset {system.dataset.dataset_name} cannot be used for {system.task} tasks")
 
         # load system output and generate analysis
         system_output_data = get_loader(metadata.task, Source.in_memory,
                                         system_output.file_type, system_output.data).load()
         report = get_processor(
-            metadata.task, {**metadata.to_dict(), "task_name": metadata.task}, system_output_data).process()
+            metadata.task, {**metadata.to_dict(), "task_name": metadata.task, "dataset_name": system.dataset.dataset_name if system.dataset else None}, system_output_data).process()
         system.analysis = SystemAnalysis.from_dict(report.to_dict())
 
         def db_operations(session: ClientSession) -> str:
@@ -71,6 +70,16 @@ class SystemModel(MetadataDBModel, System):
             document["system_id"] = str(dikt["_id"])
         if dikt.get("is_private") is None:
             document["is_private"] = True
+        if dikt.get("dataset_metadata_id") and dikt.get("dataset") is None:
+            dataset = DatasetMetaDataModel.find_one_by_id(
+                dikt["dataset_metadata_id"])
+            if dataset:
+                document["dataset"] = {
+                    "dataset_id": dataset.dataset_id, "dataset_name": dataset.dataset_name, "tasks": dataset.tasks}
+            else:
+                document["dataset"] = None
+            dikt.pop("dataset_metadata_id")
+
         system = super().from_dict(document)
         return system
 
@@ -124,6 +133,9 @@ class SystemModel(MetadataDBModel, System):
         self.created_at = self.last_modified = datetime.utcnow()  # update timestamps
         document = self.to_dict()
         document.pop("system_id")
+        document["dataset_metadata_id"] = self.dataset.dataset_id if self.dataset else None
+
+        document.pop("dataset")
         return str(self.insert_one(document, session=session).inserted_id)
 
     @classmethod
@@ -140,7 +152,26 @@ class SystemModel(MetadataDBModel, System):
                          {"creator": get_user().email}]
         cursor, total = super().find(filter, sort, page * page_size,
                                      page_size)
-        return SystemsReturn([cls.from_dict(doc) for doc in cursor], total)
+        documents = list(cursor)
+
+        # query datasets in batch to make it more efficient
+        dataset_ids: List[str] = []
+        for doc in documents:
+            if doc.get("dataset_metadata_id"):
+                dataset_ids.append(doc["dataset_metadata_id"])
+        datasets = DatasetMetaDataModel.find(0, 1000, dataset_ids).datasets
+        dataset_dict = {}
+        for dataset in datasets:
+            dataset_dict[dataset.dataset_id] = dataset
+        for doc in documents:
+            if doc.get("dataset_metadata_id"):
+                dataset = dataset_dict.get(doc["dataset_metadata_id"])
+                if dataset:
+                    doc["dataset"] = {"dataset_id": dataset.dataset_id,
+                                      "dataset_name": dataset.dataset_name, "tasks": dataset.tasks}
+                else:
+                    doc["dataset"] = None
+        return SystemsReturn([cls.from_dict(doc) for doc in documents], total)
 
 
 class SystemOutputsModel(DBModel):

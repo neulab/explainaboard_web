@@ -17,8 +17,7 @@ import { AnalysisReport, PrivateIcon, ErrorBoundary } from "..";
 const { Text, Link } = Typography;
 
 interface Props {
-  systemIDs: string[];
-  normalizedSystems: { [key: string]: SystemModel };
+  systems: SystemModel[];
   total: number;
   pageSize: number;
   /** 0 indexed */
@@ -33,8 +32,7 @@ interface Props {
 }
 
 export function SystemTableContent({
-  systemIDs,
-  normalizedSystems,
+  systems,
   page,
   total,
   pageSize,
@@ -46,9 +44,8 @@ export function SystemTableContent({
   activeSystemIDs,
   setActiveSystemIDs,
 }: Props) {
-  const systems = systemIDs.map((sysID) => normalizedSystems[sysID]);
-  const activeSystems = activeSystemIDs.map(
-    (sysID) => normalizedSystems[sysID]
+  const activeSystems = systems.filter((sys) =>
+    activeSystemIDs.includes(sys.system_id)
   );
   const analyses = activeSystems.map((sys) => sys["analysis"]);
 
@@ -116,7 +113,7 @@ export function SystemTableContent({
       title: "Dataset",
       fixed: "left",
       align: "center",
-      render: (value) => value,
+      render: (_, record) => record.dataset?.dataset_name || "unspecified",
     },
     {
       dataIndex: "language",
@@ -233,9 +230,7 @@ export function SystemTableContent({
           >
             <AnalysisReport
               systemIDs={activeSystemIDs}
-              systemNames={activeSystemIDs.map(
-                (sysID) => normalizedSystems[sysID].model_name
-              )}
+              systemNames={activeSystems.map((sys) => sys.model_name)}
               task={activeSystems[0]?.task}
               analyses={analyses}
             />
