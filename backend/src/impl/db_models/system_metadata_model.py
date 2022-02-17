@@ -159,7 +159,8 @@ class SystemModel(MetadataDBModel, System):
         for doc in documents:
             if doc.get("dataset_metadata_id"):
                 dataset_ids.append(doc["dataset_metadata_id"])
-        datasets = DatasetMetaDataModel.find(0, 1000, dataset_ids).datasets
+        datasets = DatasetMetaDataModel.find(
+            0, 0, dataset_ids, no_limit=True).datasets
         dataset_dict = {}
         for dataset in datasets:
             dataset_dict[dataset.dataset_id] = dataset
@@ -171,6 +172,7 @@ class SystemModel(MetadataDBModel, System):
                                       "dataset_name": dataset.dataset_name, "tasks": dataset.tasks}
                 else:
                     doc["dataset"] = None
+                doc.pop("dataset_metadata_id")
         return SystemsReturn([cls.from_dict(doc) for doc in documents], total)
 
 

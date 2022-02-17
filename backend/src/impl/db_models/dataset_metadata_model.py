@@ -1,6 +1,6 @@
 from __future__ import annotations
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, List
 from bson.objectid import ObjectId
 from explainaboard_web.impl.db_models.db_model import MetadataDBModel
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
@@ -26,9 +26,11 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
         return cls.from_dict(document)
 
     @classmethod
-    def find(cls, page: int, page_size: int, dataset_ids: Optional[List[str]] = None, dataset_name: Optional[str] = None, task: Optional[str] = None) -> DatasetsReturn:
-        """fuzzy match works like a `LIKE {name_prefix}%` operation now. can extend this and allow for 
-        full text search in the future. TODO: add index for name"""
+    def find(cls, page: int, page_size: int, dataset_ids: Optional[List[str]] = None, dataset_name: Optional[str] = None, task: Optional[str] = None, no_limit: bool = False) -> DatasetsReturn:
+        """
+        fuzzy match works like a `LIKE {name_prefix}%` operation now. can extend this and allow for 
+        full text search in the future. 
+          - `no_limit=True` ignores page and page_size to retrieve unlimited records. This option should not be exposed to users."""
         filter: Dict[str, Any] = {}
         if dataset_ids:
             filter["_id"] = {
@@ -38,7 +40,11 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
             filter["dataset_name"] = {"$regex": rf"^{dataset_name}.*"}
         if task:
             filter["tasks"] = task
-        cursor, total = super().find(filter, [], page * page_size, page_size)
+        if no_limit:
+            # limit=0 means no limit in pymongo
+            cursor, total = super().find(filter, limit=0)
+        else:
+            cursor, total = super().find(filter, [], page * page_size, page_size)
         return DatasetsReturn([cls.from_dict(doc) for doc in cursor], total)
 
     def insert(self) -> str:
