@@ -59,3 +59,33 @@ export interface ResultFineGrainedParsed {
   numbersOfSamples: number[];
   confidenceScores: Array<[number, number]>;
 }
+
+export interface SystemAnalysisParsed {
+  resultsFineGrainedParsed: Array<ResultFineGrainedParsed>[];
+  /* key: feature key a object key of a feature
+  for retrieving the value from resultsFineGrainedParsed
+  value: description is a description/name of a feature to be displayed in the UI
+  */
+  featureKeyToDescription: { [key: string]: string };
+}
+
+export interface MetricToSystemAnalysesParsed {
+  [key: string]: SystemAnalysisParsed[];
+}
+
+// Examples to be shown in the analysis table when a bar is clicked
+export interface ActiveSystemExamples {
+  // invariant information across systems
+  // but depends on which bar or graph is clicked.
+  title: string;
+  barIndex: number;
+
+  // These are technically not invariant across sytems,
+  // but they may be in the future, and it's easier to keep them here for now.
+  featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"];
+
+  // system-dependent information across systems
+  systemIndex: number;
+  // TODO the latter type is for NER | {[key: string]: string}[]
+  bucketOfSamplesList: string[][];
+}

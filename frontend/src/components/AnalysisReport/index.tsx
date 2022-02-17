@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { ResultFineGrainedParsed } from "./types";
+import {
+  ResultFineGrainedParsed,
+  SystemAnalysisParsed,
+  MetricToSystemAnalysesParsed,
+  ActiveSystemExamples,
+} from "./types";
 import { parse, compareBucketOfSamples } from "./utils";
 import { BarChart, AnalysisTable } from "../../components";
 import { Row, Col, Typography, Space, Tabs } from "antd";
@@ -7,37 +12,6 @@ import { SystemAnalysisModel, SystemModel } from "../../models";
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
-
-interface SystemAnalysisParsed {
-  resultsFineGrainedParsed: Array<ResultFineGrainedParsed>[];
-  // an element is a object key of a feature
-  // used for retrieving the value from resultsFineGrainedParsed
-  featureKeys: string[];
-  // an element is a description/name of a feature to be displayed in the UI
-  descriptions: string[];
-}
-
-interface MetricToSystemAnalysesParsed {
-  [key: string]: SystemAnalysisParsed[];
-}
-
-// Examples to be shown in the analysis table when a bar is clicked
-interface ActiveSystemExamples {
-  // invariant information across systems
-  // but depends on which bar or graph is clicked.
-  title: string;
-  barIndex: number;
-
-  // These are technically not invariant across sytems,
-  // but they may be in the future, and it's easier to keep them here for now.
-  featureKeys: string[];
-  descriptions: string[];
-
-  // system-dependent information across systems
-  systemIndex: number;
-  // TODO the latter type is for NER | {[key: string]: string}[]
-  bucketOfSamplesList: string[][];
-}
 
 interface Props {
   systemIDs: string[];
@@ -104,8 +78,8 @@ export function AnalysisReport(props: Props) {
       };
     }
 
-    const featureKeys: string[] = [];
-    const descriptions: string[] = [];
+    const featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"] =
+      {};
 
     for (const [key, resultFineGrained] of Object.entries(resultsFineGrained)) {
       // Attempt to get the description of feature from analysis.features.[key]
@@ -117,8 +91,7 @@ export function AnalysisReport(props: Props) {
       ) {
         description = featureVal["description"];
       }
-      featureKeys.push(key);
-      descriptions.push(description);
+      featureKeyToDescription[key] = description;
 
       // Add a row if the current row is full
       for (const parsedInfo of Object.values(metricToParsedInfo)) {
@@ -151,8 +124,7 @@ export function AnalysisReport(props: Props) {
     for (const [metric, parsedInfo] of Object.entries(metricToParsedInfo)) {
       const { resultsFineGrainedParsed } = parsedInfo;
       metricToSystemAnalysesParsed[metric].push({
-        featureKeys,
-        descriptions,
+        featureKeyToDescription,
         resultsFineGrainedParsed,
       });
     }
@@ -170,8 +142,7 @@ export function AnalysisReport(props: Props) {
     const {
       title,
       barIndex,
-      featureKeys,
-      descriptions,
+      featureKeyToDescription,
       systemIndex,
       bucketOfSamplesList,
     } = activeSystemExamples;
@@ -190,8 +161,7 @@ export function AnalysisReport(props: Props) {
           systemID={systemIDs[0]}
           task={task}
           outputIDs={sortedBucketOfSamplesList[0]}
-          featureKeys={featureKeys}
-          descriptions={descriptions}
+          featureKeyToDescription={featureKeyToDescription}
           page={page}
           setPage={setPage}
         />
@@ -216,8 +186,7 @@ export function AnalysisReport(props: Props) {
                     systemID={systemIDs[sysIDIndex]}
                     task={task}
                     outputIDs={sortedBucketOfSamplesList[sysIDIndex]}
-                    featureKeys={featureKeys}
-                    descriptions={descriptions}
+                    featureKeyToDescription={featureKeyToDescription}
                     page={page}
                     setPage={setPage}
                   />
@@ -260,7 +229,7 @@ export function AnalysisReport(props: Props) {
         /*Get the parsed result from the first system for mapping.
           FeatureKeys and descriptions are invariant information
           */
-        const { resultsFineGrainedParsed, featureKeys, descriptions } =
+        const { resultsFineGrainedParsed, featureKeyToDescription } =
           systemAnalysesParsed[0];
         return (
           <TabPane tab={metric} key={metric}>
@@ -313,8 +282,7 @@ export function AnalysisReport(props: Props) {
                             title,
                             barIndex,
                             systemIndex,
-                            featureKeys,
-                            descriptions,
+                            featureKeyToDescription,
                             bucketOfSamplesList,
                           });
                           // reset page number
