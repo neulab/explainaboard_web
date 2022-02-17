@@ -4,14 +4,14 @@ import { ColumnsType } from "antd/lib/table";
 import { SystemOutput } from "../../clients/openapi";
 import { backendClient } from "../../clients";
 import { PageState } from "../../utils";
+import { SystemAnalysisParsed } from "../AnalysisReport/types";
 
 interface Props {
   systemID: string;
   task: string;
   // The latter type is for NER
   outputIDs: string[] | { [key: string]: string }[];
-  featureKeys: string[];
-  descriptions: string[];
+  featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"];
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -20,8 +20,7 @@ export function AnalysisTable({
   systemID,
   task,
   outputIDs,
-  featureKeys,
-  descriptions,
+  featureKeyToDescription,
   page,
   setPage,
 }: Props) {
@@ -49,7 +48,22 @@ export function AnalysisTable({
   const columns: ColumnsType<SystemOutput> = [];
   let dataSource;
 
-  // NER
+  if (systemOutputs.length == 0) {
+    return null;
+  }
+
+  // ID
+  columns.push({
+    dataIndex: "id",
+    title: "ID",
+    render: (value) => (
+      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
+        {value}
+      </Typography.Paragraph>
+    ),
+  });
+
+  // task NER
   if (task === "named-entity-recognition") {
     for (const subFeatureKey of Object.keys(outputIDs[0])) {
       columns.push({
@@ -63,45 +77,38 @@ export function AnalysisTable({
       const output = o as { [key: string]: string };
       return { ...output };
     });
-
-    // other tasks
   } else {
-    // ID
-    columns.push({
-      dataIndex: "id",
-      title: "ID",
-      render: (value) => (
-        <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-          {value}
-        </Typography.Paragraph>
-      ),
-    });
-    // other fields
-    for (let i = 0; i < featureKeys.length; i++) {
-      if (featureKeys[i] === "id") {
+    // other tasks
+    const systemOutputFirst = systemOutputs[0];
+    for (const systemOutputKey of Object.keys(systemOutputFirst)) {
+      if (systemOutputKey === "id") {
         continue;
       }
       columns.push({
-        dataIndex: featureKeys[i],
-        title: i < descriptions.length ? descriptions[i] : featureKeys[i],
+        dataIndex: systemOutputKey,
+        title: featureKeyToDescription[systemOutputKey] || systemOutputKey,
         ellipsis: true,
       });
     }
     // clone the system output for modification
-    dataSource = systemOutputs.map(function (s) {
-      return { ...s };
+    dataSource = systemOutputs.map(function (systemOutput) {
+      const processedSystemOutput = { ...systemOutput };
+      for (const [key, output] of Object.entries(systemOutput)) {
+        /*Task like QA have object output besides string and number.
+          For now we serialize the object to a displayable string.
+          TODO: unnest or use a nested table
+        */
+        if (typeof output === "object") {
+          const processedOutput = Object.entries(output)
+            .map(([subKey, subOutput]) => {
+              return `${subKey}: ${subOutput}`;
+            })
+            .join("\n");
+          processedSystemOutput[key] = processedOutput;
+        }
+      }
+      return processedSystemOutput;
     });
-  }
-
-  for (let i = 0; i < dataSource.length; i++) {
-    if (task === "extractive-qa") {
-      const trueAnswer = systemOutputs[i]["true_answers"];
-      const text = trueAnswer["text"][0];
-      const answerStart = trueAnswer["answer_start"][0];
-      dataSource[i][
-        "true_answers"
-      ] = `Text: ${text}\nStart position: ${answerStart}`;
-    }
   }
 
   return (
