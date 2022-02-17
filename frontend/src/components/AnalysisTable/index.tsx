@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Table, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { SystemOutput } from "../../clients/openapi";
@@ -10,7 +10,7 @@ interface Props {
   systemID: string;
   task: string;
   // The latter type is for NER
-  outputIDs: string[] | { [key: string]: string }[];
+  outputIDs: Array<string | { [key: string]: string }>;
   featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"];
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
@@ -48,21 +48,6 @@ export function AnalysisTable({
   const columns: ColumnsType<SystemOutput> = [];
   let dataSource;
 
-  if (systemOutputs.length == 0) {
-    return null;
-  }
-
-  // ID
-  columns.push({
-    dataIndex: "id",
-    title: "ID",
-    render: (value) => (
-      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-        {value}
-      </Typography.Paragraph>
-    ),
-  });
-
   // task NER
   if (task === "named-entity-recognition") {
     for (const subFeatureKey of Object.keys(outputIDs[0])) {
@@ -72,13 +57,26 @@ export function AnalysisTable({
         ellipsis: true,
       });
     }
-    // TODO API request to retrieve text
+    // TODO API request to retrieve text, should be done on every page change
     dataSource = outputIDs.map(function (o) {
       const output = o as { [key: string]: string };
       return { ...output };
     });
-  } else {
+
     // other tasks
+  } else if (systemOutputs.length !== 0) {
+    // example ID
+    columns.push({
+      dataIndex: "id",
+      title: "ID",
+      render: (value) => (
+        <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
+          {value}
+        </Typography.Paragraph>
+      ),
+    });
+
+    // other fields
     const systemOutputFirst = systemOutputs[0];
     for (const systemOutputKey of Object.keys(systemOutputFirst)) {
       if (systemOutputKey === "id") {
@@ -111,6 +109,7 @@ export function AnalysisTable({
     });
   }
 
+  // TODO scroll to the bottom after rendered?
   return (
     <Table
       className="table"
