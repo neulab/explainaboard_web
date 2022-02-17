@@ -43,7 +43,8 @@ def datasets_dataset_id_get(dataset_id: str) -> DatasetMetaDataModel:
 
 
 def datasets_get(dataset_ids: Optional[str], dataset_name: Optional[str], task: Optional[str], page: int, page_size: int) -> DatasetsReturn:
-    return DatasetMetaDataModel.find(page, page_size, dataset_ids, dataset_name, task)
+    parsed_dataset_ids = dataset_ids.split(",") if dataset_ids else None
+    return DatasetMetaDataModel.find(page, page_size, parsed_dataset_ids, dataset_name, task)
 
 
 """ /systems """

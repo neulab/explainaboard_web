@@ -17,7 +17,7 @@ export interface Filter {
 }
 
 interface Props {
-  normalizedSystems: { [key: string]: SystemModel };
+  systems: SystemModel[];
   /** show/hide submit drawer */
   toggleSubmitDrawer: () => void;
   taskCategories: TaskCategory[];
@@ -28,7 +28,7 @@ interface Props {
   setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
 }
 export function SystemTableTools({
-  normalizedSystems,
+  systems,
   toggleSubmitDrawer,
   taskCategories,
   value,
@@ -37,9 +37,16 @@ export function SystemTableTools({
   selectedSystemIDs,
   setActiveSystemIDs,
 }: Props) {
-  const selectedSystemDatasetNames = new Set<string>(
-    selectedSystemIDs.map((sysIDs) => normalizedSystems[sysIDs].dataset_name)
-  );
+  function findSelectedSystemDatasetNames() {
+    const selectedSystems = systems.filter((sys) =>
+      selectedSystemIDs.includes(sys.system_id)
+    );
+    return new Set<string>(
+      selectedSystems.map((sys) => sys.dataset?.dataset_name || "unspecified")
+    );
+  }
+  const selectedSystemDatasetNames = findSelectedSystemDatasetNames();
+
   let analysisButton = (
     <Tooltip
       title={
