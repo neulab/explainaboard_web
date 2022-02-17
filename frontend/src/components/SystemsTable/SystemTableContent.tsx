@@ -53,6 +53,7 @@ export function SystemTableContent({
     dataIndex: metric,
     render: (_, record) => record.analysis.getMetirc(metric)?.value,
     title: metric,
+    width: 100,
     ellipsis: true,
     align: "center",
   }));
@@ -230,7 +231,12 @@ export function SystemTableContent({
           >
             <AnalysisReport
               systemIDs={activeSystemIDs}
-              systemNames={activeSystems.map((sys) => sys.model_name)}
+              systemInfos={activeSystems.map((sys) => {
+                return {
+                  modelName: sys.model_name,
+                  metricNames: sys.metric_names,
+                };
+              })}
               task={activeSystems[0]?.task}
               analyses={analyses}
             />
