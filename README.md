@@ -134,3 +134,8 @@ Solution: Run `npm audit --prefix frontend --production`. If it says 0 vulnerabi
 
 Reason: We use create react app for frontend, and the `react-scripts` dependency in `frontend/package.json` is causing these false alarms. 
 [Here's](https://github.com/facebook/create-react-app/issues/11174) the moderator of create react app explaining why 99.9% of the vulnerability reports in react-scripts are false positives and how to fix them.
+
+## Credits/Contributing
+
+This software was initially developed by Lyuyang Hu, Chih-Hao Wang, Pengfei Liu, and Graham Neubig, a collaborative effort of Carnegie Mellon University and Inspired Cognition Inc.
+We highly welcome questions, issues, and pull requests. Please get in contact through github issues above.
