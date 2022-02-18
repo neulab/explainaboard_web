@@ -199,9 +199,10 @@ export function AnalysisReport(props: Props) {
     }
 
     const barText = systemIDs.length === 1 ? "bar" : "bars";
+    const exampleText = task === "summarization" ? "Examples" : "Error cases";
     analysisTable = (
       <div>
-        <Title level={4}>{`Examples from ${barText} #${
+        <Title level={4}>{`${exampleText} from ${barText} #${
           barIndex + 1
         } in ${title}`}</Title>
         <Space style={{ width: "fit-content", float: "left" }}>
