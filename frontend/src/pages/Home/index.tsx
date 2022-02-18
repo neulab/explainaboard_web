@@ -37,6 +37,11 @@ export function Home() {
                   <br />
                   Go to Systems, select a system or systems and click Analysis
                 </li>
+                <li className="mb-1">
+                  Ask a question, report an issue, or contribute to ExplainaBoard:
+                  <br />
+                  File an issue on the github for the <a href="https://github.com/neulab/explainaboard">ExplainaBoard backend</a> or <a href="https://github.com/neulab/explainaboard_web">web UI</a>.
+                </li>
               </ul>
             </div>
           </div>
