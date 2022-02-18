@@ -8,6 +8,7 @@
     "start-backend:staging": "cd backend/src/gen && FLASK_ENV=staging python -m explainaboard_web",
     "start-backend:prod": "cd backend/src/gen && FLASK_ENV=production python -m explainaboard_web",
     "gen-api-code": "bash openapi/gen_api_layer.sh project",
+    "setup": "npm install && npm run gen-api-code && pip install -r backend/src/gen/requirements.txt && npm --prefix frontend install",
     "prepare": "husky install"
   },
   "repository": {

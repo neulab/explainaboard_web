@@ -208,7 +208,8 @@ export function SystemTableContent({
         visible={activeSystemIDs.length !== 0}
         onClose={() => closeSystemAnalysis()}
         title={drawerTitle}
-        width="80%"
+        width="90%"
+        bodyStyle={{ minWidth: "800px" }}
       >
         {activeSystems.length !== 0 && (
           // The analysis report is expected to fail if a user selects systems with different datsets.

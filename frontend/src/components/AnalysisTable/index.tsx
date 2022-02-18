@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useRef } from "react";
-import { Table, Typography } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, Tooltip, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { SystemOutput } from "../../clients/openapi";
 import { backendClient } from "../../clients";
@@ -69,6 +69,7 @@ export function AnalysisTable({
     columns.push({
       dataIndex: "id",
       title: "ID",
+      fixed: "left",
       render: (value) => (
         <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
           {value}
@@ -85,7 +86,19 @@ export function AnalysisTable({
       columns.push({
         dataIndex: systemOutputKey,
         title: featureKeyToDescription[systemOutputKey] || systemOutputKey,
-        ellipsis: true,
+        render: (value) =>
+          typeof value === "number" ? (
+            <div style={{ minWidth: "65px" }}>
+              <Tooltip title={value}>{Math.round(value * 1e6) / 1e6}</Tooltip>
+            </div>
+          ) : (
+            <Typography.Paragraph
+              ellipsis={{ rows: 3, tooltip: true, expandable: true }}
+              style={{ marginBottom: 0, minWidth: "80px", maxWidth: "170px" }}
+            >
+              {value}
+            </Typography.Paragraph>
+          ),
       });
     }
     // clone the system output for modification
@@ -112,11 +125,11 @@ export function AnalysisTable({
   // TODO scroll to the bottom after rendered?
   return (
     <Table
-      className="table"
       columns={columns}
       dataSource={dataSource}
       loading={pageState === PageState.loading}
       rowKey="id"
+      size="small"
       pagination={{
         total,
         showTotal: (total, range) =>
@@ -128,7 +141,7 @@ export function AnalysisTable({
           setPage(newPage - 1);
         },
       }}
-      scroll={{ y: 400 }}
+      scroll={{ y: 550, x: "max-content", scrollToFirstRowOnChange: true }}
     />
   );
 }
