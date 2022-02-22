@@ -15,6 +15,8 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
         document = {**dikt}
         if dikt.get("_id"):
             document["dataset_id"] = str(dikt["_id"])
+        if not dikt.get("tasks"):
+            document["tasks"] = []
         dataset_metadata = super().from_dict(document)
         return dataset_metadata
 
@@ -26,17 +28,23 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
         return cls.from_dict(document)
 
     @classmethod
-    def find(cls, page: int, page_size: int, dataset_ids: Optional[List[str]] = None, dataset_name: Optional[str] = None, task: Optional[str] = None, no_limit: bool = False) -> DatasetsReturn:
+    def find(
+        cls,
+        page: int,
+        page_size: int,
+        dataset_ids: Optional[List[str]] = None,
+        dataset_name: Optional[str] = None,
+        task: Optional[str] = None,
+        no_limit: bool = False,
+    ) -> DatasetsReturn:
         """
-        fuzzy match works like a `LIKE {name_prefix}%` operation now. can extend this and allow for 
-        full text search in the future. 
+        fuzzy match works like a `LIKE {name_prefix}%` operation now. can extend this and allow for
+        full text search in the future.
           - `no_limit=True` ignores page and page_size to retrieve unlimited records. This option should not be exposed to users."""
         filter: Dict[str, Any] = {}
-        if dataset_ids:
-            filter["_id"] = {
-                "$in": [ObjectId(_id) for _id in dataset_ids]
-            }
-        if dataset_name:
+        if dataset_ids is not None:
+            filter["_id"] = {"$in": [ObjectId(_id) for _id in dataset_ids]}
+        if dataset_name is not None:
             filter["dataset_name"] = {"$regex": rf"^{dataset_name}.*"}
         if task:
             filter["tasks"] = task
@@ -54,5 +62,6 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
             inserted document ID
         TODO
         """
-        self.created_at = self.last_modified = datetime.utcnow()  # update last modified time
+        # update last modified time
+        self.created_at = self.last_modified = datetime.utcnow()
         return self.insert_one(self.to_dict())
