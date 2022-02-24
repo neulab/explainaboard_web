@@ -29,3 +29,8 @@ export function findTask(taskCategories: TaskCategory[], taskName: string) {
   }
   return undefined;
 }
+
+/**generates datalab URL for a dataset. Simple concatenation (link may not be valid) */
+export function generateDataLabURL(datasetID: string): string {
+  return `http://datalab.nlpedia.ai/normal_dataset/${datasetID}/dataset_metadata`;
+}

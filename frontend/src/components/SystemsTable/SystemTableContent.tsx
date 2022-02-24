@@ -8,12 +8,14 @@ import {
   Drawer,
   Typography,
   Tag,
+  Tooltip,
 } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
 import { AnalysisReport, PrivateIcon, ErrorBoundary } from "..";
+import { generateDataLabURL } from "../../utils";
 const { Text, Link } = Typography;
 
 interface Props {
@@ -114,7 +116,19 @@ export function SystemTableContent({
       title: "Dataset",
       fixed: "left",
       align: "center",
-      render: (_, record) => record.dataset?.dataset_name || "unspecified",
+      render: (_, record) =>
+        record.dataset?.dataset_name ? (
+          <Tooltip title="view dataset in DataLab">
+            <Typography.Link
+              href={generateDataLabURL(record.dataset.dataset_id)}
+              target="_blank"
+            >
+              {record.dataset.dataset_name}
+            </Typography.Link>
+          </Tooltip>
+        ) : (
+          "unspecified"
+        ),
     },
     {
       dataIndex: "language",

@@ -22,6 +22,7 @@ import { UploadOutlined } from "@ant-design/icons";
 import { useForm } from "antd/lib/form/Form";
 import { UploadFile } from "antd/lib/upload/interface";
 import { TaskSelect, TextWithLink } from "..";
+import { DatasetSelectLabel } from "./DatasetSelectLabel";
 
 interface Props extends DrawerProps {
   onClose: () => void;
@@ -246,7 +247,7 @@ export function SystemSubmitDrawer(props: Props) {
               placeholder="Please search dataset by name"
               options={datasetOptions.map((dataset) => ({
                 value: dataset.dataset_id,
-                label: dataset.dataset_name,
+                label: <DatasetSelectLabel {...dataset} />,
               }))}
               onSearch={searchDatasets}
               disabled={selectedTaskName == null}

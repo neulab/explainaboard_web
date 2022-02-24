@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Input, PageHeader, Space, Table, Tag, Typography } from "antd";
+import {
+  Divider,
+  Input,
+  PageHeader,
+  Space,
+  Table,
+  Tag,
+  Typography,
+} from "antd";
 import "./index.css";
 import { ColumnsType } from "antd/lib/table";
 import { DatasetMetadata } from "../../clients/openapi";
 import { backendClient } from "../../clients";
-import { PageState } from "../../utils";
+import { generateDataLabURL, PageState } from "../../utils";
 import { useHistory } from "react-router";
 
 /**
@@ -127,12 +135,25 @@ const columns: ColumnsType<DatasetMetadata> = [
     ),
   },
   {
-    dataIndex: "huggingface_link",
-    title: "Huggingface",
-    render: (value) => (
-      <Typography.Link ellipsis href={value} target="_blank">
-        {value}
-      </Typography.Link>
+    dataIndex: "links",
+    title: "Links",
+    render: (_, record) => (
+      <>
+        <Typography.Link
+          href={generateDataLabURL(record.dataset_id)}
+          target="_blank"
+        >
+          DataLab
+        </Typography.Link>
+        <Divider type="vertical" />
+        <Typography.Link
+          href={record.huggingface_link}
+          target="_blank"
+          disabled={!record.huggingface_link}
+        >
+          Hugging Face
+        </Typography.Link>
+      </>
     ),
   },
 ];
