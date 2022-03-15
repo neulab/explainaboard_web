@@ -2,6 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
 from explainaboard_web.impl.utils import abort_with_error_message
+from explainaboard_web.models.dataset_metadata import DatasetMetadata
 
 from explainaboard_web.models.system_analysis import SystemAnalysis
 from explainaboard_web.models.system_output import SystemOutput
@@ -62,6 +63,9 @@ class SystemModel(MetadataDBModel, System):
                 **metadata.to_dict(),
                 "task_name": metadata.task,
                 "dataset_name": system.dataset.dataset_name if system.dataset else None,
+                "sub_dataset_name": system.dataset.sub_dataset
+                if system.dataset and system.dataset.sub_dataset
+                else "default",
             },
             system_output_data,
         ).process()
@@ -90,6 +94,7 @@ class SystemModel(MetadataDBModel, System):
                 document["dataset"] = {
                     "dataset_id": dataset.dataset_id,
                     "dataset_name": dataset.dataset_name,
+                    "sub_dataset": dataset.sub_dataset,
                     "tasks": dataset.tasks,
                 }
             else:
@@ -185,7 +190,7 @@ class SystemModel(MetadataDBModel, System):
             if doc.get("dataset_metadata_id"):
                 dataset_ids.append(doc["dataset_metadata_id"])
         datasets = DatasetMetaDataModel.find(0, 0, dataset_ids, no_limit=True).datasets
-        dataset_dict = {}
+        dataset_dict: Dict[str, DatasetMetadata] = {}
         for dataset in datasets:
             dataset_dict[dataset.dataset_id] = dataset
         for doc in documents:
@@ -195,6 +200,7 @@ class SystemModel(MetadataDBModel, System):
                     doc["dataset"] = {
                         "dataset_id": dataset.dataset_id,
                         "dataset_name": dataset.dataset_name,
+                        "sub_dataset": dataset.sub_dataset,
                         "tasks": dataset.tasks,
                     }
                 else:

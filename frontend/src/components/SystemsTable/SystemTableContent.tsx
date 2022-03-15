@@ -112,7 +112,7 @@ export function SystemTableContent({
     },
     {
       dataIndex: "dataset_name",
-      width: 100,
+      width: 110,
       title: "Dataset",
       fixed: "left",
       align: "center",
@@ -124,6 +124,7 @@ export function SystemTableContent({
               target="_blank"
             >
               {record.dataset.dataset_name}
+              {record.dataset.sub_dataset && ` (${record.dataset.sub_dataset})`}
             </Typography.Link>
           </Tooltip>
         ) : (

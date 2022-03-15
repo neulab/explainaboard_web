@@ -124,6 +124,10 @@ const columns: ColumnsType<DatasetMetadata> = [
     title: "Name",
   },
   {
+    dataIndex: "sub_dataset",
+    title: "Subdataset",
+  },
+  {
     dataIndex: "tasks",
     title: "Tasks",
     render: (value) => (

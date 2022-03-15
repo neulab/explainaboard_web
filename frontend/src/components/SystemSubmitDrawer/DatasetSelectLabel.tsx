@@ -1,14 +1,24 @@
 import React from "react";
-import { Typography } from "antd";
+import { Divider, Typography } from "antd";
 import { generateDataLabURL } from "../../utils";
+import { DatasetMetadata } from "../../clients/openapi";
 interface Props {
-  dataset_id: string;
-  dataset_name: string;
+  dataset: DatasetMetadata;
 }
-export function DatasetSelectLabel({ dataset_id, dataset_name }: Props) {
+export function DatasetSelectLabel({ dataset }: Props) {
+  const { dataset_id, dataset_name, sub_dataset } = dataset;
   return (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
-      {dataset_name}
+      <span>
+        {dataset_name}
+        {sub_dataset && (
+          <span>
+            <Divider type="vertical" />
+            <span style={{ color: "gray" }}>{sub_dataset}</span>
+          </span>
+        )}
+      </span>
+
       <Typography.Link
         href={generateDataLabURL(dataset_id)}
         target="_blank"

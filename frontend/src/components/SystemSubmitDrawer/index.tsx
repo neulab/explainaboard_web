@@ -247,7 +247,7 @@ export function SystemSubmitDrawer(props: Props) {
               placeholder="Please search dataset by name"
               options={datasetOptions.map((dataset) => ({
                 value: dataset.dataset_id,
-                label: <DatasetSelectLabel {...dataset} />,
+                label: <DatasetSelectLabel dataset={dataset} />,
               }))}
               onSearch={searchDatasets}
               disabled={selectedTaskName == null}

@@ -484,6 +484,8 @@ components:
                   type: string
                 dataset_name:
                   type: string
+                sub_dataset:
+                  type: string
                 tasks:
                   type: array
                   items:
