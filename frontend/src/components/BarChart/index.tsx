@@ -56,7 +56,8 @@ export function BarChart(props: Props) {
   } = props;
 
   const seriesInfoList: SeriesInfo[] = [];
-  let globalMaxValue = 0;
+  let globalMaxValue = -Number.MAX_SAFE_INTEGER;
+  let globalMinValue = Number.MAX_SAFE_INTEGER;
 
   for (let i = 0; i < seriesDataList.length; i++) {
     const seriesData = seriesDataList[i];
@@ -68,11 +69,13 @@ export function BarChart(props: Props) {
 
     for (let j = 0; j < seriesData.length; j++) {
       globalMaxValue = Math.max(globalMaxValue, seriesData[j]);
+      globalMinValue = Math.min(globalMinValue, seriesData[j]);
       const x = xAxisData[j];
 
       if (j < confidenceScores.length) {
         const [confidenceScoreLow, confidenceScoreHigh] = confidenceScores[j];
         globalMaxValue = Math.max(globalMaxValue, confidenceScoreHigh);
+        globalMinValue = Math.min(globalMinValue, confidenceScoreLow);
         const confidenceLowPoint = {
           xAxis: x,
           yAxis: confidenceScoreLow,
@@ -201,9 +204,13 @@ export function BarChart(props: Props) {
     yAxis: [
       {
         type: "value",
-        // TODO: get min max from SDK?
-        // min: 0,
-        max: Math.ceil(globalMaxValue),
+        /*
+        Set the limit slightly higher than the max and slightly lower than the min.
+        Multiplying min/max directly by 0.95 or 1.05 could generate many fraction digits in the UI.
+        Use floor and ceil to round the values to integers and limit these digits.
+        */
+        min: Math.floor(globalMinValue * 95) / 100,
+        max: Math.ceil(globalMaxValue * 105) / 100,
       },
     ],
     series: series,
