@@ -1,10 +1,10 @@
 from __future__ import annotations
+import logging
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
 
-from explainaboard_web.models.system_analysis import SystemAnalysis
 from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_output_props import SystemOutputProps
 from explainaboard_web.models.system_create_props import SystemCreateProps
@@ -19,7 +19,7 @@ from explainaboard_web.impl.auth import get_user
 
 
 class SystemModel(MetadataDBModel, System):
-    _collection_name = "dev_system_metadata"
+    _collection_name = "dev_system_metadata_stats"
 
     @classmethod
     def create(
@@ -31,7 +31,7 @@ class SystemModel(MetadataDBModel, System):
           2. load system_output data
           3. generate analysis report from system_output
           -- DB --
-          5. write to system_metadata (metadata + analysis)
+          5. write to system_metadata (metadata + statistics)
           6. write to system_outputs
         """
         system = cls.from_dict(metadata.to_dict())
@@ -57,19 +57,35 @@ class SystemModel(MetadataDBModel, System):
         system_output_data = get_loader(
             metadata.task, Source.in_memory, system_output.file_type, system_output.data
         ).load()
-        report = get_processor(
-            metadata.task,
-            {
-                **metadata.to_dict(),
-                "task_name": metadata.task,
-                "dataset_name": system.dataset.dataset_name if system.dataset else None,
-                "sub_dataset_name": system.dataset.sub_dataset
-                if system.dataset and system.dataset.sub_dataset
-                else "default",
-            },
-            system_output_data,
-        ).process()
-        system.analysis = SystemAnalysis.from_dict(report.to_dict())
+
+        processor = get_processor(
+            metadata.task
+        )
+
+        metadata = {
+            **metadata.to_dict(),
+            "task_name": metadata.task,
+            "dataset_name": system.dataset.dataset_name if system.dataset else None,
+            "sub_dataset_name": system.dataset.sub_dataset
+            if system.dataset and system.dataset.sub_dataset
+            else "default",
+        }
+
+        overall_statistics = processor.get_overall_statistics(metadata=metadata, sys_output=system_output_data)
+        sys_info = overall_statistics["sys_info"].to_dict()
+        stats = overall_statistics["stats"]
+        active_features = overall_statistics["active_features"]
+        overall_results = overall_statistics["overall_results"]
+        analysis_overall = {metric_name: performance.to_dict() for metric_name, performance in overall_results.items()}
+
+        logging.getLogger('connexion.operation').error(sys_info)
+        logging.getLogger('connexion.operation').error(stats)
+        logging.getLogger('connexion.operation').error(active_features)
+        logging.getLogger('connexion.operation').error(analysis_overall)
+
+        system.stats = stats
+        system.active_features = active_features
+        system.analysis_overall = analysis_overall
 
         def db_operations(session: ClientSession) -> str:
             system_id = system.insert(session)

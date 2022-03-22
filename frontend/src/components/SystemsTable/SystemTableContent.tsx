@@ -49,11 +49,11 @@ export function SystemTableContent({
   const activeSystems = systems.filter((sys) =>
     activeSystemIDs.includes(sys.system_id)
   );
-  const analyses = activeSystems.map((sys) => sys["analysis"]);
+  const analyses = activeSystems.map((sys) => null);
 
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
-    render: (_, record) => record.analysis.getMetirc(metric)?.value,
+    render: (_, record) => record.analysis_overall[metric]?.value,
     title: metric,
     width: 100,
     ellipsis: true,

@@ -4,7 +4,7 @@ import { Features, Results } from "../components/AnalysisReport/types";
 
 /** same as System, but `created_at` is replaced with Moment to make it easier to use*/
 export interface SystemModel extends Omit<System, "created_at"> {
-  analysis: SystemAnalysisModel;
+  // analysis: SystemAnalysisModel;
   created_at: Moment;
 }
 
@@ -28,9 +28,5 @@ export const newSystemModel = (system: System): SystemModel => {
   return {
     ...system,
     created_at: moment(system.created_at),
-    analysis: new SystemAnalysisModel(
-      system.analysis.features,
-      system.analysis.results
-    ),
   };
 };

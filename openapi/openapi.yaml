@@ -508,8 +508,17 @@ components:
             download_link:
               type: string
               format: url
-            analysis:
-              $ref: "#/components/schemas/SystemAnalysis"
+            statistics:
+              type: object
+            active_features:
+              type: array
+              items:
+                type: string
+            analysis_overall:
+              type: object
+              description: metric_name -> metric_value
+              additionalProperties:
+                $ref: "#/components/schemas/Metric"
           required: [
               system_id,
               # creator,
@@ -518,7 +527,9 @@ components:
               model_name,
               metric_names,
               paper_info,
-              analysis,
+              statistics,
+              active_features,
+              analysis_overall
             ]
         - $ref: "#/components/schemas/Time"
 

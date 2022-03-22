@@ -45,7 +45,9 @@ export function SystemsTable({ initialTaskFilter }: Props) {
   function getMetricsNames() {
     const metricNames = new Set<string>();
     for (const sys of systems) {
-      sys.analysis.getMetricNames().forEach((name) => metricNames.add(name));
+      Object.keys(sys.analysis_overall).forEach((name) =>
+        metricNames.add(name)
+      );
     }
     // if a task is selected, add all supported metrics to the options list
     if (taskFilter) {
