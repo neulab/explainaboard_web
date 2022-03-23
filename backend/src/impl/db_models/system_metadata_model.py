@@ -2,6 +2,7 @@ from __future__ import annotations
 import logging
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
+from dataclasses import asdict
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
 
@@ -72,20 +73,31 @@ class SystemModel(MetadataDBModel, System):
         }
 
         overall_statistics = processor.get_overall_statistics(metadata=metadata, sys_output=system_output_data)
-        sys_info = overall_statistics["sys_info"].to_dict()
-        stats = overall_statistics["stats"]
-        active_features = overall_statistics["active_features"]
-        overall_results = overall_statistics["overall_results"]
-        analysis_overall = {metric_name: performance.to_dict() for metric_name, performance in overall_results.items()}
+        sys_info = overall_statistics.sys_info
+        scoring_stats = overall_statistics.scoring_stats
+        active_features = overall_statistics.active_features
+        overall_results = overall_statistics.overall_results
+        overall_results = {metric_name: asdict(performance) for metric_name, performance in overall_results.items()}
+        
+        # TODO(chihhao) This schema is temporary. Used for compatability with the previous analysis schema.
+        analysis = {
+            "results": {
+                "overall": overall_results
+            }
+        }
 
-        logging.getLogger('connexion.operation').error(sys_info)
-        logging.getLogger('connexion.operation').error(stats)
+        logging.getLogger('connexion.operation').error(scoring_stats)
         logging.getLogger('connexion.operation').error(active_features)
-        logging.getLogger('connexion.operation').error(analysis_overall)
+        logging.getLogger('connexion.operation').error(analysis)
 
-        system.stats = stats
+        # TODO(chihhao) any other fields need copying from sys_info to system? E.g. features
+        # system.features = sys_info.features
+
+        # TODO(chihhao) assuming scoring_stats is dict for now
+        # use empty dict insteand of None as "nullable: true" is not working with object type in openapi.yaml
+        system.scoring_stats = {} if scoring_stats is None else scoring_stats
         system.active_features = active_features
-        system.analysis_overall = analysis_overall
+        system.analysis = analysis
 
         def db_operations(session: ClientSession) -> str:
             system_id = system.insert(session)

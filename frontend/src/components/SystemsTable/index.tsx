@@ -45,7 +45,7 @@ export function SystemsTable({ initialTaskFilter }: Props) {
   function getMetricsNames() {
     const metricNames = new Set<string>();
     for (const sys of systems) {
-      Object.keys(sys.analysis_overall).forEach((name) =>
+      Object.keys(sys.analysis.results.overall).forEach((name) =>
         metricNames.add(name)
       );
     }

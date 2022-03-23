@@ -369,6 +369,26 @@ components:
         bib:
           type: string
 
+    SystemAnalysisOverall:
+      type: object
+      properties:
+        results:
+          type: object
+          properties:
+            overall:
+              type: object
+              description: metric_name -> metric_value
+              additionalProperties:
+                $ref: "#/components/schemas/Metric"
+            calibration:
+              type: string
+            is_print_case:
+              type: boolean
+            is_print_confidence_interval:
+              type: boolean
+          required: [overall]
+      required: [results]
+
     SystemAnalysis:
       type: object
       properties:
@@ -508,17 +528,14 @@ components:
             download_link:
               type: string
               format: url
-            statistics:
-              type: object
             active_features:
               type: array
               items:
                 type: string
-            analysis_overall:
+            scoring_stats:
               type: object
-              description: metric_name -> metric_value
-              additionalProperties:
-                $ref: "#/components/schemas/Metric"
+            analysis:
+              $ref: "#/components/schemas/SystemAnalysisOverall"
           required: [
               system_id,
               # creator,
@@ -527,9 +544,10 @@ components:
               model_name,
               metric_names,
               paper_info,
-              statistics,
+              # features,
               active_features,
-              analysis_overall
+              scoring_stats,
+              analysis
             ]
         - $ref: "#/components/schemas/Time"
 
@@ -671,6 +689,8 @@ components:
           type: number
         confidence_score_low:
           type: number
-        confidence_score_up:
+          nullable: true
+        confidence_score_high:
           type: number
+          nullable: true
       required: [metric_name, value]

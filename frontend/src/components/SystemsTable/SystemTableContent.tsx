@@ -14,7 +14,7 @@ import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
-import { AnalysisReport, PrivateIcon, ErrorBoundary } from "..";
+import { PrivateIcon, ErrorBoundary } from "..";
 import { generateDataLabURL } from "../../utils";
 const { Text, Link } = Typography;
 
@@ -53,7 +53,7 @@ export function SystemTableContent({
 
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
-    render: (_, record) => record.analysis_overall[metric]?.value,
+    render: (_, record) => record.analysis.results.overall[metric]?.value,
     title: metric,
     width: 100,
     ellipsis: true,
@@ -245,7 +245,7 @@ export function SystemTableContent({
               </Text>
             }
           >
-            <AnalysisReport
+            {/* <AnalysisReport
               systemIDs={activeSystemIDs}
               systemInfos={activeSystems.map((sys) => {
                 return {
@@ -255,7 +255,7 @@ export function SystemTableContent({
               })}
               task={activeSystems[0]?.task}
               analyses={analyses}
-            />
+            /> */}
           </ErrorBoundary>
         )}
       </Drawer>
