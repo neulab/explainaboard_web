@@ -256,6 +256,39 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemOutputsReturn"
+  
+  /systems/analyses:
+    post:
+      summary: Returns the analysis result(s) of one or multiple systems
+      description: Returns the analysis result(s) of one or multiple systems
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                system_ids:
+                  type: array
+                  items: 
+                    type: string
+                    example: "61b02e0baadd2f674845b1c2"
+              required: [system_ids]
+
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemAnalysesReturn"
+        "400":
+          description: INPUT ERROR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
+
   /info:
     get:
       summary: information for environment identifier, backend version, login URL, etc. (not intent for public users)
@@ -679,6 +712,14 @@ components:
       required:
         - systems
         - total
+      
+    SystemAnalysesReturn:
+      type: object
+      properties:
+        analyses:
+          type: array
+          items:
+            type: object # TODO(chihhao) finer schema
 
     Metric:
       type: object

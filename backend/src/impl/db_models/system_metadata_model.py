@@ -3,9 +3,9 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
 from dataclasses import asdict
+from bson.objectid import ObjectId
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
-
 from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_output_props import SystemOutputProps
 from explainaboard_web.models.system_create_props import SystemCreateProps
@@ -192,15 +192,19 @@ class SystemModel(MetadataDBModel, System):
     @classmethod
     def find(
         cls,
-        page: int,
-        page_size: int,
+        ids: Optional[List[str]],
         system_name: Optional[str],
         task: Optional[str],
-        sort: Optional[List],
         creator: Optional[str],
+        page: int,
+        page_size: int,
+        sort: Optional[List],
+        include_datasets: bool = False,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
         filter: Dict[str, Any] = {}
+        if ids:
+            filter["_id"] = {"$in": [ObjectId(_id) for _id in ids]}
         if system_name:
             filter["model_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
@@ -212,6 +216,9 @@ class SystemModel(MetadataDBModel, System):
         documents = list(cursor)
         if len(documents) == 0:
             return SystemsReturn([], 0)
+        if not include_datasets:
+            return SystemsReturn([cls.from_dict(doc) for doc in documents], total)
+
         # query datasets in batch to make it more efficient
         dataset_ids: List[str] = []
         for doc in documents:
@@ -234,6 +241,7 @@ class SystemModel(MetadataDBModel, System):
                 else:
                     doc["dataset"] = None
                 doc.pop("dataset_metadata_id")
+        
         return SystemsReturn([cls.from_dict(doc) for doc in documents], total)
 
 
