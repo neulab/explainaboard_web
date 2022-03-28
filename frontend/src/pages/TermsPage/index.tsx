@@ -38,7 +38,7 @@ export function TermsPage() {
               </p>
               <h2 className="text-3xl">Data Usage</h2>
               <p className="text-l text-left">
-                By submitting any data to ExplainBoard, you grant Inspired
+                By submitting any data to ExplainaBoard, you grant Inspired
                 Cognition Inc. permission to store, use, process, or analyze
                 this data for any purpose. In addition, by marking any data
                 &quot;public&quot; you agree to allow the site operator to
