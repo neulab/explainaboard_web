@@ -3,12 +3,16 @@ import os
 from typing import List, Optional
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
+from explainaboard_web.impl.auth import get_user
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.models.task_metadata import TaskMetadata
-from explainaboard_web.impl.db_models.system_metadata_model import SystemModel, SystemOutputsModel
+from explainaboard_web.impl.db_models.system_metadata_model import (
+    SystemModel,
+    SystemOutputsModel,
+)
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.task_category import TaskCategory
@@ -20,9 +24,19 @@ from explainaboard import get_task_categories
 
 def info_get():
     return {
-        'env': os.getenv('FLASK_ENV'),
-        'auth_url': current_app.config.get("AUTH_URL")
+        "env": os.getenv("FLASK_ENV"),
+        "auth_url": current_app.config.get("AUTH_URL"),
     }
+
+
+""" /user """
+
+
+def user_get():
+    user = get_user()
+    if not user:
+        abort_with_error_message(401, "login required")
+    return user.get_user_info()
 
 
 """ /tasks """
@@ -42,9 +56,17 @@ def datasets_dataset_id_get(dataset_id: str) -> DatasetMetaDataModel:
     return dataset
 
 
-def datasets_get(dataset_ids: Optional[str], dataset_name: Optional[str], task: Optional[str], page: int, page_size: int) -> DatasetsReturn:
+def datasets_get(
+    dataset_ids: Optional[str],
+    dataset_name: Optional[str],
+    task: Optional[str],
+    page: int,
+    page_size: int,
+) -> DatasetsReturn:
     parsed_dataset_ids = dataset_ids.split(",") if dataset_ids else None
-    return DatasetMetaDataModel.find(page, page_size, parsed_dataset_ids, dataset_name, task)
+    return DatasetMetaDataModel.find(
+        page, page_size, parsed_dataset_ids, dataset_name, task
+    )
 
 
 """ /systems """
@@ -53,25 +75,33 @@ def datasets_get(dataset_ids: Optional[str], dataset_name: Optional[str], task: 
 def systems_system_id_get(system_id: str) -> SystemModel:
     system = SystemModel.find_one_by_id(system_id)
     if not system:
-        abort_with_error_message(
-            404, f"system id: {system_id} not found")
+        abort_with_error_message(404, f"system id: {system_id} not found")
     return system
 
 
-def systems_get(system_name: Optional[str], task: Optional[str], page: int, page_size: int, sort_field: str, sort_direction: str, creator: Optional[str]) -> SystemsReturn:
+def systems_get(
+    system_name: Optional[str],
+    task: Optional[str],
+    page: int,
+    page_size: int,
+    sort_field: str,
+    sort_direction: str,
+    creator: Optional[str],
+) -> SystemsReturn:
     if not sort_field:
         sort_field = "created_at"
     if not sort_direction:
         sort_direction = "desc"
     if sort_direction not in ["asc", "desc"]:
-        abort_with_error_message(
-            400, "sort_direction needs to be one of asc or desc")
+        abort_with_error_message(400, "sort_direction needs to be one of asc or desc")
     if sort_field != "created_at":
         sort_field = f"analysis.results.overall.{sort_field}.value"
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
-    return SystemModel.find(page, page_size, system_name, task, [(sort_field, dir)], creator)
+    return SystemModel.find(
+        page, page_size, system_name, task, [(sort_field, dir)], creator
+    )
 
 
 def systems_post(body: SystemsBody) -> SystemModel:
@@ -84,7 +114,9 @@ def systems_post(body: SystemsBody) -> SystemModel:
     return system
 
 
-def systems_system_id_outputs_get(system_id: str, output_ids: Optional[str]) -> SystemOutputsReturn:
+def systems_system_id_outputs_get(
+    system_id: str, output_ids: Optional[str]
+) -> SystemOutputsReturn:
     """
     TODO: return special error/warning if some ids cannot be found
     """

@@ -1,9 +1,10 @@
 import React, { ReactNode, useState } from "react";
-import { Button, Layout as AntdLayout, Menu, Space, Tooltip } from "antd";
+import { Layout as AntdLayout, Menu } from "antd";
 import { Route } from "../../routes";
 import "./index.css";
 import { useHistory, useLocation } from "react-router";
-import { LoginState, useEnv, useUser } from "..";
+import { useEnv } from "..";
+import { UserPanel } from "../UserPanel";
 
 interface Props {
   routes: Route[];
@@ -21,13 +22,12 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const history = useHistory();
   const location = useLocation();
-  const user = useUser();
   const { env } = useEnv();
 
   const selectedMenus = [location.pathname];
   // first character of path is always "/" so skip first element of levels.
   // add current path's parent to open menu list by default
-  const levels = location.pathname.substr(1).split("/");
+  const levels = location.pathname.substring(1).split("/");
   if (levels.length > 1 && !openMenus.includes("/" + levels[0]))
     setOpenMenus([...openMenus, "/" + levels[0]]);
 
@@ -40,27 +40,6 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
       setOpenMenus(openMenus.filter((key) => key !== menuKey));
     else setOpenMenus([...openMenus, menuKey]);
   };
-
-  const loginBtn = (
-    <Button size="small" onClick={user.login}>
-      Log in
-    </Button>
-  );
-
-  const userText = (() => {
-    switch (user.state) {
-      case LoginState.no:
-        return loginBtn;
-      case LoginState.expired:
-        return (
-          <Space>
-            {`${user.userInfo?.email} (expired)`} {loginBtn}
-          </Space>
-        );
-      case LoginState.yes:
-        return `${user.userInfo?.email}`;
-    }
-  })();
 
   return (
     <AntdLayout style={{ minHeight: "100vh" }}>
@@ -112,15 +91,12 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
       </AntdLayout.Sider>
       <AntdLayout className="site-layout">
         <AntdLayout.Header className="site-layout-header">
-          <Space>
-            {env === "development" && "(You are in development environment)"}
-            {userText}
-            <Tooltip title="Currently, logging out from the web interface doesn't immediately invoke your access from our platform. Instead, your access will expire in an hour (at which point, you have logged out completely). The support for a true logout will be added in the future.">
-              <Button size="small" onClick={user.logout}>
-                Log out
-              </Button>
-            </Tooltip>
-          </Space>
+          <div className="header-items-container">
+            <div style={{ paddingRight: "10px" }}>
+              {env === "development" && "(development environment)"}
+            </div>
+            <UserPanel />
+          </div>
         </AntdLayout.Header>
         <AntdLayout.Content>
           <div className="site-layout-content">{children}</div>

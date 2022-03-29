@@ -3,7 +3,6 @@ info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
   version: "0.1.0"
-  termsOfService: "" # TODO
   contact:
     email: "example@gmail.com" # TODO
   license:
@@ -274,6 +273,16 @@ paths:
                     type: string
                     format: url
                 required: [env, auth_url]
+  /user:
+    get:
+      summary: get user info
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
 
 components:
   securitySchemes:
@@ -663,3 +672,23 @@ components:
         confidence_score_up:
           type: number
       required: [metric_name, value]
+
+    User:
+      type: object
+      properties:
+        email:
+          type: string
+        exp:
+          type: number
+        iat:
+          type: number
+        preferred_username:
+          type: string
+        username:
+          type: string
+        auth_time:
+          type: number
+        api_key:
+          type: string
+      required:
+        [email, exp, iat, preferred_username, username, auth_time, api_key]
