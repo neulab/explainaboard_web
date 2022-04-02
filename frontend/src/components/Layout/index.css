@@ -10,13 +10,17 @@
   background: #fff;
   height: 55px;
   text-align: right;
+  padding: 0 15px;
+  position: relative;
 }
 
 .site-layout-content {
   height: 100%;
 }
 
-/*.ant-spin-nested-loading {*/
-/*  width: fit-content;*/
-/*  max-width: 100% !important;*/
-/*}*/
+.header-items-container {
+  height: 55px;
+  line-height: 55px;
+  display: flex;
+  float: right;
+}

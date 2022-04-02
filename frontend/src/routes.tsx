@@ -5,6 +5,7 @@ import {
   DatabaseOutlined,
   TableOutlined,
   CodeOutlined,
+  FileOutlined,
 } from "@ant-design/icons";
 import {
   DatasetsPage,
@@ -13,6 +14,7 @@ import {
   LeaderboardPage,
   LoginCallback,
   SystemsPage,
+  TermsPage,
 } from "./pages";
 
 export interface Route extends RouteProps {
@@ -51,6 +53,13 @@ const routes: Route[] = [
     icon: <TableOutlined />,
     children: <LeaderboardHome />,
     exact: true,
+  },
+  {
+    path: "/terms",
+    title: "Terms",
+    exact: true,
+    icon: <FileOutlined />,
+    children: <TermsPage />,
   },
   {
     path: "/leaderboards/:task",

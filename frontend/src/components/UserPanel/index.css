@@ -1,0 +1,9 @@
+.menu {
+  float: right;
+}
+.menu-item {
+  text-align: right;
+}
+.menu-item-text {
+  display: inline;
+}

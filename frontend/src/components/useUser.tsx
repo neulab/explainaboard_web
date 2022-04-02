@@ -1,9 +1,14 @@
-import React, { createContext, useCallback, useContext, useState } from "react";
-import jwtDecode from "jwt-decode";
-import moment from "moment";
-import { refreshBackendClient } from "../clients";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
+import { backendClient, refreshBackendClient } from "../clients";
 import { useEnv } from ".";
 import { useHistory } from "react-router-dom";
+import { User } from "../clients/openapi";
 
 export enum LoginState {
   yes = "yes",
@@ -12,7 +17,7 @@ export enum LoginState {
   loading = "loading",
 }
 interface IUserContext {
-  userInfo: JWTInfo | null;
+  userInfo?: User;
   jwt: string | null;
   login: () => void;
   logout: () => void;
@@ -21,13 +26,6 @@ interface IUserContext {
   loginCallback: (jwt: string) => void;
 }
 const UserContext = createContext<IUserContext>({} as IUserContext);
-interface JWTInfo {
-  auth_time: number;
-  cognitousername: string;
-  email: string;
-  email_verified: boolean;
-  exp: number;
-}
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
   const { env, authURL } = useEnv();
@@ -36,6 +34,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const redirectPageKey = `explainaboard_${env}_redirect`;
 
   const [jwt, setJwt] = useState(initJWT());
+  const [state, setState] = useState(LoginState.no);
+  const [userInfo, setUserInfo] = useState<User>();
 
   function initJWT() {
     const savedToken = localStorage.getItem(jwtKey);
@@ -43,16 +43,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     return savedToken;
   }
 
-  let userInfo: JWTInfo | null = null;
-  let state = LoginState.no;
-
-  if (jwt) {
-    userInfo = jwtDecode<JWTInfo>(jwt);
-    if (moment().unix() > userInfo.exp) {
-      // expired
-      state = LoginState.expired;
-    } else state = LoginState.yes;
-  } else state = LoginState.no;
+  useEffect(() => {
+    async function fetchUserInfo() {
+      try {
+        setState(LoginState.loading);
+        const _userInfo = await backendClient.userGet();
+        setUserInfo(_userInfo);
+        setState(LoginState.yes);
+      } catch (e) {
+        setState(LoginState.expired);
+      }
+    }
+    if (jwt) fetchUserInfo();
+    else {
+      setUserInfo(undefined);
+      setState(LoginState.no);
+    }
+  }, [jwt]);
 
   /** callback when login success */
   const loginCallback = useCallback(
