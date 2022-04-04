@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./index.css";
 import { Space } from "antd";
-import { SystemSubmitDrawer } from "../../components";
+import { SystemSubmitDrawer, AnalysisDrawer } from "../../components";
 import { backendClient } from "../../clients";
 import { SystemModel, newSystemModel } from "../../models/SystemModel";
 import { Filter, SystemTableTools } from "./SystemTableTools";
@@ -38,8 +38,12 @@ export function SystemsTable({ initialTaskFilter }: Props) {
 
   // systems selected in the table
   const [selectedSystemIDs, setSelectedSystemIDs] = useState<string[]>([]);
+
   // systems to be analyzed
   const [activeSystemIDs, setActiveSystemIDs] = useState<string[]>([]);
+
+  // analysis
+  const [analysisDrawerVisible, setAnalysisDrawerVisible] = useState(false);
 
   /** generate metrics options list */
   function getMetricsNames() {
@@ -118,6 +122,8 @@ export function SystemsTable({ initialTaskFilter }: Props) {
     setSelectedSystemIDs([]);
   }
 
+  console.log(activeSystemIDs);
+
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
       <SystemTableTools
@@ -144,6 +150,11 @@ export function SystemsTable({ initialTaskFilter }: Props) {
         metricNames={metricNames}
         selectedSystemIDs={selectedSystemIDs}
         setSelectedSystemIDs={setSelectedSystemIDs}
+        setActiveSystemIDs={setActiveSystemIDs}
+      />
+      <AnalysisDrawer
+        visible={activeSystemIDs.length !== 0}
+        systems={systems}
         activeSystemIDs={activeSystemIDs}
         setActiveSystemIDs={setActiveSystemIDs}
       />

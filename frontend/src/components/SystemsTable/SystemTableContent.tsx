@@ -5,7 +5,6 @@ import {
   Popconfirm,
   Space,
   Table,
-  Drawer,
   Typography,
   Tag,
   Tooltip,
@@ -14,7 +13,7 @@ import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
-import { PrivateIcon, ErrorBoundary } from "..";
+import { PrivateIcon } from "..";
 import { generateDataLabURL } from "../../utils";
 const { Text, Link } = Typography;
 
@@ -29,7 +28,6 @@ interface Props {
   metricNames: string[];
   selectedSystemIDs: string[];
   setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
-  activeSystemIDs: string[];
   setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
@@ -43,14 +41,8 @@ export function SystemTableContent({
   metricNames,
   selectedSystemIDs,
   setSelectedSystemIDs,
-  activeSystemIDs,
   setActiveSystemIDs,
 }: Props) {
-  const activeSystems = systems.filter((sys) =>
-    activeSystemIDs.includes(sys.system_id)
-  );
-  const analyses = activeSystems.map((sys) => null);
-
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
     render: (_, record) => record.analysis.results.overall[metric]?.value,
@@ -76,9 +68,6 @@ export function SystemTableContent({
     }
   }
 
-  function closeSystemAnalysis() {
-    setActiveSystemIDs([]);
-  }
   const columns: ColumnsType<SystemModel> = [
     {
       dataIndex: "idx",
@@ -183,16 +172,7 @@ export function SystemTableContent({
       setSelectedSystemIDs(selectedRowKeys as string[]);
     },
   };
-
-  let drawerTitle;
-  if (activeSystems.length === 1) {
-    drawerTitle = `Single Analysis of ${activeSystems[0].model_name}`;
-  } else if (activeSystems.length === 2) {
-    const systemNames = activeSystems
-      .map((sys) => sys.model_name)
-      .join(" and ");
-    drawerTitle = `Pairwise Analysis of ${systemNames}`;
-  }
+  console.log(systems);
 
   return (
     <div>
@@ -219,46 +199,6 @@ export function SystemTableContent({
           ...rowSelection,
         }}
       />
-      <Drawer
-        visible={activeSystemIDs.length !== 0}
-        onClose={() => closeSystemAnalysis()}
-        title={drawerTitle}
-        width="90%"
-        bodyStyle={{ minWidth: "800px" }}
-      >
-        {activeSystems.length !== 0 && (
-          // The analysis report is expected to fail if a user selects systems with different datsets.
-          // We use an error boundary component and provide a fall back UI if an error is caught.
-          <ErrorBoundary
-            fallbackUI={
-              <Text>
-                An error occured in the analysis. Double check if the selected
-                systems use the same dataset. If you found a bug, kindly open an
-                issue on{" "}
-                <Link
-                  href="https://github.com/neulab/explainaboard_web"
-                  target="_blank"
-                >
-                  our GitHub repo
-                </Link>
-                . Thanks!
-              </Text>
-            }
-          >
-            {/* <AnalysisReport
-              systemIDs={activeSystemIDs}
-              systemInfos={activeSystems.map((sys) => {
-                return {
-                  modelName: sys.model_name,
-                  metricNames: sys.metric_names,
-                };
-              })}
-              task={activeSystems[0]?.task}
-              analyses={analyses}
-            /> */}
-          </ErrorBoundary>
-        )}
-      </Drawer>
     </div>
   );
 }
