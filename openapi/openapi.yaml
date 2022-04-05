@@ -574,8 +574,10 @@ components:
               type: array
               items:
                 type: string
-            scoring_stats:
-              type: object
+            metric_stats:
+              type: array
+              items:
+                type: number
             analysis:
               $ref: "#/components/schemas/SystemAnalysisOverall"
           required: [
@@ -588,7 +590,7 @@ components:
               paper_info,
               # features,
               active_features,
-              scoring_stats,
+              metric_stats,
               analysis
             ]
         - $ref: "#/components/schemas/Time"

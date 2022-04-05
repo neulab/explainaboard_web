@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
 from dataclasses import asdict
 from bson.objectid import ObjectId
-from explainaboard_web.impl.utils import abort_with_error_message
+from explainaboard_web.impl.utils import abort_with_error_message, binarize_bson
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
 from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_output_props import SystemOutputProps
@@ -56,7 +56,10 @@ class SystemModel(MetadataDBModel, System):
 
         # load system output and generate analysis
         system_output_data = get_loader(
-            metadata.task, Source.in_memory, system_output.file_type, system_output.data
+            task=metadata.task, 
+            data=system_output.data,
+            source=Source.in_memory,
+            file_type=system_output.file_type 
         ).load()
 
         processor = get_processor(
@@ -74,7 +77,12 @@ class SystemModel(MetadataDBModel, System):
 
         overall_statistics = processor.get_overall_statistics(metadata=metadata, sys_output=system_output_data)
         sys_info = overall_statistics.sys_info
-        scoring_stats = overall_statistics.scoring_stats
+        
+        # TODO(chihhao) assuming metric_stats is list for now
+        if overall_statistics.metric_stats is None:
+            metric_stats = []
+        else:
+            metric_stats = [binarize_bson(metric_stat.get_data()) for metric_stat in overall_statistics.metric_stats]
         active_features = overall_statistics.active_features
         overall_results = overall_statistics.overall_results
         overall_results = {metric_name: asdict(performance) for metric_name, performance in overall_results.items()}
@@ -86,16 +94,14 @@ class SystemModel(MetadataDBModel, System):
             }
         }
 
-        logging.getLogger('connexion.operation').error(scoring_stats)
+        logging.getLogger('connexion.operation').error(metric_stats)
         logging.getLogger('connexion.operation').error(active_features)
         logging.getLogger('connexion.operation').error(analysis)
 
         # TODO(chihhao) any other fields need copying from sys_info to system? E.g. features
         # system.features = sys_info.features
 
-        # TODO(chihhao) assuming scoring_stats is dict for now
-        # use empty dict insteand of None as "nullable: true" is not working with object type in openapi.yaml
-        system.scoring_stats = {} if scoring_stats is None else scoring_stats
+        system.metric_stats = metric_stats
         system.active_features = active_features
         system.analysis = analysis
 
@@ -107,6 +113,9 @@ class SystemModel(MetadataDBModel, System):
         system_id = DBModel.execute_transaction(db_operations)
 
         system.system_id = system_id
+        # TODO(chihhaow) metric_stats is replaced with empty list for now
+        # because bson's Binary is not serializable. If needed, use a diffent method.
+        system.metric_stats = []
         return system
 
     @classmethod
@@ -138,6 +147,9 @@ class SystemModel(MetadataDBModel, System):
         find one system that matches the id and return it.
         """
         document = super().find_one_by_id(id)
+        # TODO(chihhaow) metric_stats is replaced with empty list for now
+        # because bson's Binary is not serializable. If needed, use a diffent method.
+        document["metric_stats"] = []
         if not document:
             return None
         sys = cls.from_dict(document)
@@ -214,6 +226,12 @@ class SystemModel(MetadataDBModel, System):
         filter["$or"] = [{"is_private": False}, {"creator": get_user().email}]
         cursor, total = super().find(filter, sort, page * page_size, page_size)
         documents = list(cursor)
+
+        # TODO(chihhaow) metric_stats is replaced with empty list for now
+        # because bson's Binary is not serializable. If needed, use a diffent method.
+        for doc in documents:
+            doc["metric_stats"] = []
+
         if len(documents) == 0:
             return SystemsReturn([], 0)
         if not include_datasets:
@@ -241,7 +259,7 @@ class SystemModel(MetadataDBModel, System):
                 else:
                     doc["dataset"] = None
                 doc.pop("dataset_metadata_id")
-        
+
         return SystemsReturn([cls.from_dict(doc) for doc in documents], total)
 
 
