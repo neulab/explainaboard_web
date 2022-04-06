@@ -172,7 +172,6 @@ export function SystemTableContent({
       setSelectedSystemIDs(selectedRowKeys as string[]);
     },
   };
-  console.log(systems);
 
   return (
     <div>

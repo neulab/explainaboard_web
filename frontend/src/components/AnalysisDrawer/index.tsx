@@ -17,9 +17,6 @@ export function AnalysisDrawer({
   activeSystemIDs,
   setActiveSystemIDs,
 }: Props) {
-  console.log("Analysis Drawer");
-  console.log(activeSystemIDs);
-
   function closeSystemAnalysis() {
     setActiveSystemIDs([]);
   }
@@ -27,6 +24,8 @@ export function AnalysisDrawer({
   const activeSystems = systems.filter((sys) =>
     activeSystemIDs.includes(sys.system_id)
   );
+
+  console.log(activeSystems);
 
   let drawerTitle;
   if (activeSystems.length === 1) {
@@ -68,6 +67,7 @@ export function AnalysisDrawer({
             </Text>
           }
         >
+          {"TEXT"}
           {/* <AnalysisReport
             systemIDs={activeSystemIDs}
             systemInfos={activeSystems.map((sys) => {

@@ -122,8 +122,6 @@ export function SystemsTable({ initialTaskFilter }: Props) {
     setSelectedSystemIDs([]);
   }
 
-  console.log(activeSystemIDs);
-
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
       <SystemTableTools
