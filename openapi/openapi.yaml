@@ -570,6 +570,9 @@ components:
             download_link:
               type: string
               format: url
+            # TODO(chihhao) field cleaning
+            sys_info:
+              type: object
             active_features:
               type: array
               items:

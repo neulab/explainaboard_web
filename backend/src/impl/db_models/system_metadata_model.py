@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any, Dict, Iterable, List, Optional, Union
 from dataclasses import asdict
 from bson.objectid import ObjectId
-from explainaboard_web.impl.utils import abort_with_error_message, binarize_bson
+from explainaboard_web.impl.utils import abort_with_error_message, binarize_bson, unbinarize_bson
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
 from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_output_props import SystemOutputProps
@@ -75,14 +75,13 @@ class SystemModel(MetadataDBModel, System):
             else "default",
         }
 
-        overall_statistics = processor.get_overall_statistics(metadata=metadata, sys_output=system_output_data)
-        sys_info = overall_statistics.sys_info
-        
+        overall_statistics = processor.get_overall_statistics(metadata=metadata, sys_output=system_output_data)        
         # TODO(chihhao) assuming metric_stats is list for now
         if overall_statistics.metric_stats is None:
             metric_stats = []
         else:
             metric_stats = [binarize_bson(metric_stat.get_data()) for metric_stat in overall_statistics.metric_stats]
+        sys_info = overall_statistics.sys_info.to_dict()
         active_features = overall_statistics.active_features
         overall_results = overall_statistics.overall_results
         overall_results = {metric_name: asdict(performance) for metric_name, performance in overall_results.items()}
@@ -94,13 +93,14 @@ class SystemModel(MetadataDBModel, System):
             }
         }
 
-        logging.getLogger('connexion.operation').error(metric_stats)
-        logging.getLogger('connexion.operation').error(active_features)
-        logging.getLogger('connexion.operation').error(analysis)
+        # logging.getLogger('connexion.operation').error(metric_stats)
+        # logging.getLogger('connexion.operation').error(active_features)
+        # logging.getLogger('connexion.operation').error(analysis)
 
         # TODO(chihhao) any other fields need copying from sys_info to system? E.g. features
         # system.features = sys_info.features
 
+        system.sys_info = sys_info
         system.metric_stats = metric_stats
         system.active_features = active_features
         system.analysis = analysis
@@ -212,6 +212,7 @@ class SystemModel(MetadataDBModel, System):
         page_size: int,
         sort: Optional[List],
         include_datasets: bool = False,
+        include_metric_stats: bool = False,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
         filter: Dict[str, Any] = {}
@@ -226,16 +227,22 @@ class SystemModel(MetadataDBModel, System):
         filter["$or"] = [{"is_private": False}, {"creator": get_user().email}]
         cursor, total = super().find(filter, sort, page * page_size, page_size)
         documents = list(cursor)
-
-        # TODO(chihhaow) metric_stats is replaced with empty list for now
-        # because bson's Binary is not serializable. If needed, use a diffent method.
-        for doc in documents:
-            doc["metric_stats"] = []
-
+        
+        systems = []
         if len(documents) == 0:
-            return SystemsReturn([], 0)
+            return SystemsReturn(systems, 0)
         if not include_datasets:
-            return SystemsReturn([cls.from_dict(doc) for doc in documents], total)
+            for doc in documents:
+                # TODO(chihhao)
+                metric_stats: list = doc["metric_stats"]
+                doc["metric_stats"] = []
+                system = cls.from_dict(doc)
+                if include_metric_stats:
+                    # Set explicityly
+                    system.metric_stats = [unbinarize_bson(stat) for stat in metric_stats]
+                systems.append(system)
+
+            return SystemsReturn(systems, len(documents))
 
         # query datasets in batch to make it more efficient
         dataset_ids: List[str] = []

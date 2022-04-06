@@ -28,3 +28,6 @@ def decode_base64(encoded: str) -> str:
 def binarize_bson(data: Any) -> Binary:
     """convert data to BSON binary data"""
     return Binary(pickle.dumps(data, protocol=2))
+
+def unbinarize_bson(data: Binary) -> Any:
+    return pickle.loads(data)

@@ -3,6 +3,7 @@ import os
 from typing import List, Optional
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
+from dataclasses import asdict
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.models.systems_body import SystemsBody
@@ -19,7 +20,8 @@ from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaD
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.task_category import TaskCategory
 
-from explainaboard import get_task_categories
+from explainaboard import get_task_categories, get_processor
+from explainaboard.info import SysOutputInfo, Features
 
 """ /info """
 
@@ -122,10 +124,47 @@ def systems_system_id_delete(system_id: str):
         return "Success"
     abort_with_error_message(400, f"cannot find system_id: {system_id}")
 
-"""WIP
-def systems_analyses_post(body: SystemsAnalysesBody) -> SystemsAnalysesReturn:
-    # Retrieve sys_info, sys_output, active_features, scoring_stats
-    systems_return: SystemsReturn = SystemModel.find(body.system_ids)
+
+def systems_analyses_post(body: SystemsAnalysesBody) -> SystemAnalysesReturn:
+    system_name = None
+    task = None
+    creator = None
+    page = 0
+    page_size = 10
+    sort = None
+    systems_return: SystemsReturn = SystemModel.find(
+        body.system_ids, 
+        system_name,
+        task,
+        creator,
+        page,
+        page_size,
+        sort,
+        include_metric_stats=True)
     systems = systems_return.systems
-"""
+    if len(systems) == 0:
+        return SystemAnalysesReturn([])
+    
+     # TODO(chihhao) supports only a single system for now
+    system = systems[0]
+
+    system_output_info = SysOutputInfo.from_dict(system.sys_info)
+    
+    # TODO(chihhao) bug in SDK, nested dataclasses must be from_dict()ed properly
+    system_output_info.features = Features(system_output_info.features)
+    # results: Result = field(default_factory=lambda: Result())
+
+    # Get all outputs
+    output_ids = None
+    system_outputs = SystemOutputsModel(system.system_id).find(output_ids).system_outputs
+
+    processor = get_processor(system.task)
+    fine_grained_statistics = processor.get_fine_grained_statistics(
+        system_output_info,
+        system_outputs,
+        system.active_features,
+        system.metric_stats
+    )
+    return SystemAnalysesReturn([asdict(fine_grained_statistics)])
+    
     
