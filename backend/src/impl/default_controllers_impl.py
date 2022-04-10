@@ -1,23 +1,23 @@
 from __future__ import annotations
+
 import os
-from typing import List, Optional
-from flask import current_app
-from pymongo import ASCENDING, DESCENDING
-from explainaboard_web.impl.auth import get_user
-from explainaboard_web.models.systems_body import SystemsBody
-from explainaboard_web.models.systems_return import SystemsReturn
-from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
-from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
-from explainaboard_web.models.task_metadata import TaskMetadata
-from explainaboard_web.impl.db_models.system_metadata_model import (
-    SystemModel,
-    SystemOutputsModel,
-)
-from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
-from explainaboard_web.models.datasets_return import DatasetsReturn
-from explainaboard_web.models.task_category import TaskCategory
+from typing import Optional
 
 from explainaboard import get_task_categories
+from explainaboard_web.impl.auth import get_user
+from explainaboard_web.impl.db_models.dataset_metadata_model import \
+    DatasetMetaDataModel
+from explainaboard_web.impl.db_models.system_metadata_model import (
+    SystemModel, SystemOutputsModel)
+from explainaboard_web.impl.utils import (abort_with_error_message,
+                                          decode_base64)
+from explainaboard_web.models.datasets_return import DatasetsReturn
+from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
+from explainaboard_web.models.systems_body import SystemsBody
+from explainaboard_web.models.systems_return import SystemsReturn
+from explainaboard_web.models.task_category import TaskCategory
+from flask import current_app
+from pymongo import ASCENDING, DESCENDING
 
 """ /info """
 
@@ -42,7 +42,7 @@ def user_get():
 """ /tasks """
 
 
-def tasks_get() -> List[TaskCategory]:
+def tasks_get() -> list[TaskCategory]:
     return get_task_categories()
 
 

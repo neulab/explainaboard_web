@@ -1,21 +1,24 @@
 from __future__ import annotations
+
+from collections.abc import Iterable
 from datetime import datetime
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Optional, Union
+
+from explainaboard import Source, get_loader, get_processor
+from explainaboard_web.impl.auth import get_user
+from explainaboard_web.impl.db_models.dataset_metadata_model import \
+    DatasetMetaDataModel
+from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
-
+from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analysis import SystemAnalysis
+from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_output_props import SystemOutputProps
-from explainaboard_web.models.system_create_props import SystemCreateProps
-from explainaboard_web.models.system import System
-from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
-from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
-from explainaboard import Source, get_loader, get_processor
+from explainaboard_web.models.systems_return import SystemsReturn
 from pymongo.client_session import ClientSession
-from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
-from explainaboard_web.impl.auth import get_user
 
 
 class SystemModel(MetadataDBModel, System):
@@ -50,7 +53,8 @@ class SystemModel(MetadataDBModel, System):
             if system.task not in system.dataset.tasks:
                 abort_with_error_message(
                     400,
-                    f"dataset {system.dataset.dataset_name} cannot be used for {system.task} tasks",
+                    f"dataset {system.dataset.dataset_name} cannot be used for "
+                    f"{system.task} tasks",
                 )
 
         # load system output and generate analysis
@@ -168,11 +172,11 @@ class SystemModel(MetadataDBModel, System):
         page_size: int,
         system_name: Optional[str],
         task: Optional[str],
-        sort: Optional[List],
+        sort: Optional[list],
         creator: Optional[str],
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
-        filter: Dict[str, Any] = {}
+        filter: dict[str, Any] = {}
         if system_name:
             filter["model_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
@@ -185,12 +189,12 @@ class SystemModel(MetadataDBModel, System):
         if len(documents) == 0:
             return SystemsReturn([], 0)
         # query datasets in batch to make it more efficient
-        dataset_ids: List[str] = []
+        dataset_ids: list[str] = []
         for doc in documents:
             if doc.get("dataset_metadata_id"):
                 dataset_ids.append(doc["dataset_metadata_id"])
         datasets = DatasetMetaDataModel.find(0, 0, dataset_ids, no_limit=True).datasets
-        dataset_dict: Dict[str, DatasetMetadata] = {}
+        dataset_dict: dict[str, DatasetMetadata] = {}
         for dataset in datasets:
             dataset_dict[dataset.dataset_id] = dataset
         for doc in documents:
@@ -230,12 +234,12 @@ class SystemOutputsModel(DBModel):
         self.insert_many(self._data, False, session)
 
     @classmethod
-    def find(cls, output_ids: Optional[str]) -> SystemOutputsReturn:
+    def find(cls, output_ids: str | None) -> SystemOutputsReturn:
         """
         find multiple system outputs whose ids are in output_ids
         TODO: raise error if system doesn't exist
         """
-        filter: Dict[str, Any] = {}
+        filter: dict[str, Any] = {}
         if output_ids:
             filter["id"] = {"$in": [str(id) for id in output_ids.split(",")]}
         cursor, total = super().find(filter)

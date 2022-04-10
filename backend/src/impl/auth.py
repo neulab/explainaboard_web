@@ -1,15 +1,16 @@
 import secrets
 from typing import Optional
-import jwt
+
 import boto3
-from flask import g, current_app
+import jwt
 from explainaboard_web.impl.utils import abort_with_error_message
+from flask import current_app, g
 
 
 def check_ApiKeyAuth(api_key: str, required_scopes):
     """
     TODO
-    Returns: empty dict because connextion expects this function to return decoded userInfo.
+    :return: empty dict because connextion expects a decoded userInfo.
     We don't really use that (I don't see how...) so we just leave it like that. See
     `security_handler_factory.py` in connexion source code for details.
     """
@@ -18,7 +19,7 @@ def check_ApiKeyAuth(api_key: str, required_scopes):
 
 def check_BearerAuth(token: str):
     """JWT authentication"""
-    public_key_url = f"https://cognito-idp.{current_app.config.get('AWS_DEFAULT_REGION')}.amazonaws.com/{current_app.config.get('USER_POOL_ID')}/.well-known/jwks.json"
+    public_key_url = f"https://cognito-idp.{current_app.config.get('AWS_DEFAULT_REGION')}.amazonaws.com/{current_app.config.get('USER_POOL_ID')}/.well-known/jwks.json"  # noqa
     public_key = jwt.PyJWKClient(public_key_url).get_signing_key_from_jwt(token)
 
     try:
@@ -29,7 +30,7 @@ def check_BearerAuth(token: str):
             algorithms=["RS256"],
         )
         g._user = User(True, token, decoded_jwt)
-    except jwt.ExpiredSignatureError as e:
+    except jwt.ExpiredSignatureError:
         abort_with_error_message(401, "token expired")
 
     return {}
