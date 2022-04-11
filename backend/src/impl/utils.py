@@ -1,5 +1,8 @@
 import base64
+import pickle
+from typing import Any
 
+from bson.binary import Binary
 from flask import abort, jsonify
 
 
@@ -21,3 +24,13 @@ def abort_with_error_message(status_code: int, err_message: str, err_code=-1):
 def decode_base64(encoded: str) -> str:
     """convert a base64 encoded string to string"""
     return base64.b64decode(encoded).decode("utf-8")
+
+
+# TODO(chihhao) consider moving to SDK?
+def binarize_bson(data: Any) -> Binary:
+    """convert data to BSON binary data"""
+    return Binary(pickle.dumps(data, protocol=2))
+
+
+def unbinarize_bson(data: Binary) -> Any:
+    return pickle.loads(data)

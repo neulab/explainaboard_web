@@ -1,17 +1,22 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Optional
 
+from bson.objectid import ObjectId
 from explainaboard import Source, get_loader, get_processor
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
-from explainaboard_web.impl.utils import abort_with_error_message
+from explainaboard_web.impl.utils import (
+    abort_with_error_message,
+    binarize_bson,
+    unbinarize_bson,
+)
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
 from explainaboard_web.models.system import System
-from explainaboard_web.models.system_analysis import SystemAnalysis
 from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.system_output_props import SystemOutputProps
@@ -19,11 +24,9 @@ from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.models.systems_return import SystemsReturn
 from pymongo.client_session import ClientSession
 
-from explainaboard_web import util
-
 
 class SystemModel(MetadataDBModel, System):
-    _collection_name = "dev_system_metadata"
+    _collection_name = "dev_system_metadata_stats"
 
     @classmethod
     def create(
@@ -35,7 +38,8 @@ class SystemModel(MetadataDBModel, System):
           2. load system_output data
           3. generate analysis report from system_output
           -- DB --
-          5. write to system_metadata (metadata + analysis)
+          5. write to system_metadata
+            (metadata + sufficient statistics + overall analysis)
           6. write to system_outputs
         """
         system = cls.from_dict(metadata.to_dict())
@@ -76,9 +80,29 @@ class SystemModel(MetadataDBModel, System):
             if system.dataset and system.dataset.sub_dataset
             else "default",
         }
-        report = processor.process(processor_metadata, system_output_data)
-        dict_data = report.replace_nonstring_keys(report.to_dict())
-        system.analysis = SystemAnalysis.from_dict(dict_data)
+
+        overall_statistics = processor.get_overall_statistics(
+            metadata=processor_metadata, sys_output=system_output_data
+        )
+        if overall_statistics.metric_stats is None:
+            metric_stats = []
+        else:
+            metric_stats = [
+                binarize_bson(metric_stat.get_data())
+                for metric_stat in overall_statistics.metric_stats
+            ]
+
+        overall_results = overall_statistics.overall_results
+        # TODO(chihhao) declare to_dict to SDK
+        overall_results = {
+            metric_name: asdict(performance)
+            for metric_name, performance in overall_results.items()
+        }
+
+        system.system_info = overall_statistics.sys_info.to_dict()
+        system.metric_stats = metric_stats
+        system.active_features = overall_statistics.active_features
+        system.analysis.results.overall = overall_results
 
         def db_operations(session: ClientSession) -> str:
             system_id = system.insert(session)
@@ -87,6 +111,11 @@ class SystemModel(MetadataDBModel, System):
 
         system_id = DBModel.execute_transaction(db_operations)
 
+        # Metric_stats is replaced with empty list for now as
+        # bson's Binary and numpy array is not directly serializable
+        # in swagger. If the frontend needs it,
+        # we can come up with alternatives.
+        system.metric_stats = []
         system.system_id = system_id
         return system
 
@@ -113,11 +142,15 @@ class SystemModel(MetadataDBModel, System):
         return system
 
     @classmethod
-    def find_one_by_id(cls, id: str, **kwargs) -> SystemModel | None:
+    def find_one_by_id(
+        cls, id: str, include_metric_stats: bool = False
+    ) -> SystemModel | None:
         """
         find one system that matches the id and return it.
         """
         document = super().find_one_by_id(id)
+        if not include_metric_stats:
+            document["metric_stats"] = []
         if document is not None:
             sys = cls.from_dict(document)
             if sys.is_private and sys.creator != get_user().email:
@@ -174,15 +207,21 @@ class SystemModel(MetadataDBModel, System):
     @classmethod
     def find(
         cls,
+        ids: Optional[list[str]],
         page: int,
         page_size: int,
         system_name: Optional[str],
         task: Optional[str],
         sort: Optional[list],
         creator: Optional[str],
+        include_datasets: bool = False,
+        include_metric_stats: bool = False,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
+
         filter: dict[str, Any] = {}
+        if ids:
+            filter["_id"] = {"$in": [ObjectId(_id) for _id in ids]}
         if system_name:
             filter["model_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
@@ -192,8 +231,25 @@ class SystemModel(MetadataDBModel, System):
         filter["$or"] = [{"is_private": False}, {"creator": get_user().email}]
         cursor, total = super().find(filter, sort, page * page_size, page_size)
         documents = list(cursor)
+
+        systems: list[System] = []
         if len(documents) == 0:
-            return SystemsReturn([], 0)
+            return SystemsReturn(systems, 0)
+
+        if not include_datasets:
+            for doc in documents:
+                metric_stats = doc["metric_stats"]
+                doc["metric_stats"] = []
+                system = cls.from_dict(doc)
+                if include_metric_stats:
+                    # Unbinarize to numpy array and set explicityly
+                    system.metric_stats = [
+                        unbinarize_bson(stat) for stat in metric_stats
+                    ]
+                systems.append(system)
+
+            return SystemsReturn(systems, len(documents))
+
         # query datasets in batch to make it more efficient
         dataset_ids: list[str] = []
         for doc in documents:
