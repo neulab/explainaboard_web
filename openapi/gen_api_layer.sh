@@ -10,10 +10,13 @@ OPENAPI_PATH="openapi"
 BACKEND_GEN_PATH="backend/src/gen"
 FRONTEND_GEN_PATH="frontend/src/clients/openapi"
 
+CODEGEN_CLI_JAR_URL="https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.33/swagger-codegen-cli-3.0.33.jar"
+CODEGEN_CLI_JAR="swagger-codegen-cli-3.0.33.jar"
+
 # download codegen cli if not exists
 cd $script_dir
-if [ ! -f swagger-codegen-cli-3.0.29.jar ]; then
-    wget https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar -O swagger-codegen-cli-3.0.29.jar
+if [ ! -f $CODEGEN_CLI_JAR ]; then
+    wget $CODEGEN_CLI_JAR_URL -O $CODEGEN_CLI_JAR
 fi
 
 
@@ -26,7 +29,7 @@ if [[ $mode == "backend" || $mode == "project" ]]; then
     cd $BACKEND_GEN_PATH/explainaboard_web/ && \
     ln -sf ../../impl/ && \
     cd ../../../.. && \
-    java -jar $OPENAPI_PATH/swagger-codegen-cli-3.0.29.jar generate \
+    java -jar $OPENAPI_PATH/$CODEGEN_CLI_JAR generate \
         -i $OPENAPI_PATH/openapi.yaml \
         -l python-flask \
         -o $BACKEND_GEN_PATH \
@@ -42,7 +45,7 @@ fi
 # frontend
 if [[ $mode == "frontend" || $mode == "project" ]]; then
     cd $project_root && rm -rf $FRONTEND_GEN_PATH && \
-    java -jar $OPENAPI_PATH/swagger-codegen-cli-3.0.29.jar generate \
+    java -jar $OPENAPI_PATH/$CODEGEN_CLI_JAR generate \
         -i $OPENAPI_PATH/openapi.yaml \
         -l typescript-fetch \
         -o $FRONTEND_GEN_PATH \
