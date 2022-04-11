@@ -6,6 +6,7 @@ from pymongo import ASCENDING, DESCENDING
 from dataclasses import asdict
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.impl.auth import get_user
+from explainaboard_web.models.system import System
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn

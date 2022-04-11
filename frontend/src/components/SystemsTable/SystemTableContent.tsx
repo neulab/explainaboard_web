@@ -77,7 +77,7 @@ export function SystemTableContent({
       align: "center",
     },
     {
-      dataIndex: "model_name",
+      dataIndex: ["system_info", "model_name"],
       fixed: "left",
       title: "Name",
       render: (_, record) => (
@@ -93,7 +93,7 @@ export function SystemTableContent({
       width: 150,
     },
     {
-      dataIndex: "task",
+      dataIndex: ["system_info", "task_name"],
       width: 120,
       fixed: "left",
       title: "Task",

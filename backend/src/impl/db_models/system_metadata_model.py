@@ -82,25 +82,19 @@ class SystemModel(MetadataDBModel, System):
         else:
             metric_stats = [binarize_bson(metric_stat.get_data()) for metric_stat in overall_statistics.metric_stats]
         sys_info = overall_statistics.sys_info.to_dict()
+
         active_features = overall_statistics.active_features
         overall_results = overall_statistics.overall_results
         overall_results = {metric_name: asdict(performance) for metric_name, performance in overall_results.items()}
         
-        # TODO(chihhao) This schema is temporary. Used for compatability with the previous analysis schema.
+        # TODO(chihhao) This schema used for compatability with the analysis schema.
         analysis = {
             "results": {
                 "overall": overall_results
             }
         }
 
-        # logging.getLogger('connexion.operation').error(metric_stats)
-        # logging.getLogger('connexion.operation').error(active_features)
-        # logging.getLogger('connexion.operation').error(analysis)
-
-        # TODO(chihhao) any other fields need copying from sys_info to system? E.g. features
-        # system.features = sys_info.features
-
-        system.sys_info = sys_info
+        system.system_info = sys_info
         system.metric_stats = metric_stats
         system.active_features = active_features
         system.analysis = analysis

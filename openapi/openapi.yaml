@@ -342,7 +342,9 @@ components:
       oneOf:
         - type: boolean
         - type: integer
+          nullable: true
         - type: string
+          nullable: true
         - type: array
           items: {}
         - type: object
@@ -364,8 +366,10 @@ components:
         bucket_info: 
           # TODO(chihhao) declare concrete fields
           type: object
+          nullable: true
         id:
           type: string
+          nullable: true
         _type:
           type: string
       
@@ -395,14 +399,18 @@ components:
           type: boolean
         bucket_info:
           type: object
+          nullable: true
         _type: 
           type: string
           
     SystemInfoFeature:
-      oneOf:
-        - $ref: '#/components/schemas/Value'
-        - $ref: '#/components/schemas/ClassLabel'
-    
+      # TODO(chihhao) It's not clear why using oneOf causes validaiton failure
+      # oneOf:
+      #   - $ref: '#/components/schemas/Value'
+      #   - $ref: '#/components/schemas/ClassLabel'
+      # TODO(chihhao) more concrete definition
+      type: object
+
     SystemInfo:
       type: object
       properties:
@@ -412,7 +420,6 @@ components:
         model_name: 
           type: string
           example: "sst2-cnn"
-        # TODO check can be none?
         dataset_name:
           type: string
           nullable: true
@@ -434,15 +441,16 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/SystemInfoFeature"
         results:
+          # TODO(chihhao) check concrete type
           type: object
-          properties:
-            overall:
-              # TODO(chihhao) check concrete type
-              $ref: "#/components/schemas/AnyType"
-            calibration:
-              $ref: "#/components/schemas/AnyType"
-            fine_grained:
-              $ref: "#/components/schemas/AnyType"
+          # properties:
+            # TODO(chihhao) It's not clear why using oneOf causes validaiton failure
+            # overall:
+            #   $ref: "#/components/schemas/AnyType"
+            # calibration:
+            #   $ref: "#/components/schemas/AnyType"
+            # fine_grained:
+            #   $ref: "#/components/schemas/AnyType"
 
     APIError:
       type: object
