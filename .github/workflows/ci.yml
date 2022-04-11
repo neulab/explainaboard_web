@@ -1,0 +1,56 @@
+name: Continuous Integration
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python 3
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Python 3
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+      - name: format
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: black --all-files
+  isort:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Python 3
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+      - name: isort
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: isort --all-files
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Python 3
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+      - name: lint
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: flake8 --all-files
+      - name: lint-pep585-compliant
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: upgrade-type-hints --all-files
