@@ -337,6 +337,104 @@ components:
     # DatasetId:
     #   type: integer
     #   format: int64
+    
+    AnyType:
+      oneOf:
+        - type: boolean
+        - type: integer
+        - type: string
+        - type: array
+          items: {}
+        - type: object
+    
+    Value:
+      type: object
+      properties:
+        dtype: 
+          type: string
+        description:
+          type: string
+        is_bucket: 
+          type: boolean
+        require_training_set: 
+          type: boolean
+        is_pre_computed: 
+          type: boolean
+        bucket_info: 
+          # TODO(chihhao) declare concrete fields
+          type: object
+        id:
+          type: string
+        _type:
+          type: string
+      
+    ClassLabel:
+      type: object
+      properties:
+        num_classes:
+          type: integer
+        names:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        names_file:
+          type: string
+        id:
+          type: string
+        is_bucket:
+          type: boolean
+        require_training_set: 
+          type: boolean
+        is_pre_computed: 
+          type: boolean
+        bucket_info:
+          type: object
+        _type: 
+          type: string
+    
+    SystemInfo:
+      type: object
+      properties:
+        task_name:
+          type: string
+          example: "text-classification"
+        model_name: 
+          type: string
+          example: "sst2-cnn"
+        # TODO check can be none?
+        dataset_name:
+          type: string
+        sub_dataset_name:
+          type: string
+        metric_names:
+          type: array
+          items:
+            type: string
+            example: "F1Score"
+        reload_stat:
+          type: boolean
+        is_print_case:
+          type: boolean
+        conf_value:
+          type: number
+        features:
+          type: object
+          additionalProperties:
+            oneOf:
+              - $ref: "#/components/schemas/Value"
+              - $ref: "#/components/schemas/ClassLabel"
+        results:
+          type: object
+          properties:
+            overall:
+              # TODO(chihhao) check concrete type
+              $ref: "#/components/schemas/AnyType"
+            calibration:
+              $ref: "#/components/schemas/AnyType"
+            fine_grained:
+              $ref: "#/components/schemas/AnyType"
 
     APIError:
       type: object
@@ -536,8 +634,9 @@ components:
               description: user email
             is_private:
               type: boolean
-            task:
-              type: string
+            system_info:
+              $ref: "#/components/schemas/SystemInfo"
+            # TODO(chihhao) overlaps with system_info's dataset?
             dataset:
               description: if not specified, it is undefined
               type: object
@@ -553,12 +652,6 @@ components:
                   items:
                     type: string
               required: [dataset_id, dataset_name, tasks]
-            model_name:
-              type: string
-            metric_names:
-              type: array
-              items:
-                type: string
             paper_info:
               $ref: "#/components/schemas/PaperInfo"
             language:
@@ -571,8 +664,6 @@ components:
               type: string
               format: url
             # TODO(chihhao) field cleaning
-            sys_info:
-              type: object
             active_features:
               type: array
               items:
@@ -585,20 +676,16 @@ components:
               $ref: "#/components/schemas/SystemAnalysisOverall"
           required: [
               system_id,
-              # creator,
               is_private,
-              task,
-              model_name,
-              metric_names,
+              system_info
               paper_info,
-              # features,
               active_features,
               metric_stats,
               analysis
             ]
         - $ref: "#/components/schemas/Time"
 
-    Feature:
+    DatasetFeature:
       type: object
       properties:
         type:
@@ -667,7 +754,7 @@ components:
         features:
           type: object
           additionalProperties:
-            $ref: "#/components/schemas/Feature"
+            $ref: "#/components/schemas/DatasetFeature"
         speaker_demographic:
           type: object
         annotator_demographic:
