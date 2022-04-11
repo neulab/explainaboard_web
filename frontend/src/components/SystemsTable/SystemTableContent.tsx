@@ -82,7 +82,7 @@ export function SystemTableContent({
       title: "Name",
       render: (_, record) => (
         <div>
-          <Text strong>{record.model_name}</Text>
+          <Text strong>{record.system_info.model_name}</Text>
           {record.is_private && (
             <span style={{ paddingLeft: "3px" }}>
               <PrivateIcon />

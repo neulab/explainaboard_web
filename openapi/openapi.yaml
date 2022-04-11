@@ -354,6 +354,7 @@ components:
           type: string
         description:
           type: string
+          nullable: true
         is_bucket: 
           type: boolean
         require_training_set: 
@@ -379,10 +380,13 @@ components:
             type: string
         description:
           type: string
+          nullable: true
         names_file:
           type: string
+          nullable: true
         id:
           type: string
+          nullable: true
         is_bucket:
           type: boolean
         require_training_set: 
@@ -393,6 +397,11 @@ components:
           type: object
         _type: 
           type: string
+          
+    SystemInfoFeature:
+      oneOf:
+        - $ref: '#/components/schemas/Value'
+        - $ref: '#/components/schemas/ClassLabel'
     
     SystemInfo:
       type: object
@@ -406,6 +415,7 @@ components:
         # TODO check can be none?
         dataset_name:
           type: string
+          nullable: true
         sub_dataset_name:
           type: string
         metric_names:
@@ -422,9 +432,7 @@ components:
         features:
           type: object
           additionalProperties:
-            oneOf:
-              - $ref: "#/components/schemas/Value"
-              - $ref: "#/components/schemas/ClassLabel"
+            $ref: "#/components/schemas/SystemInfoFeature"
         results:
           type: object
           properties:
@@ -677,7 +685,7 @@ components:
           required: [
               system_id,
               is_private,
-              system_info
+              system_info,
               paper_info,
               active_features,
               metric_stats,

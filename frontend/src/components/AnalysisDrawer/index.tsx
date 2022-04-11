@@ -29,10 +29,10 @@ export function AnalysisDrawer({
 
   let drawerTitle;
   if (activeSystems.length === 1) {
-    drawerTitle = `Single Analysis of ${activeSystems[0].model_name}`;
+    drawerTitle = `Single Analysis of ${activeSystems[0].system_info.model_name}`;
   } else if (activeSystems.length === 2) {
     const systemNames = activeSystems
-      .map((sys) => sys.model_name)
+      .map((sys) => sys.system_info.model_name)
       .join(" and ");
     drawerTitle = `Pairwise Analysis of ${systemNames}`;
   }
