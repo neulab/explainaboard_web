@@ -2,12 +2,11 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from explainaboard import Source, get_loader, get_processor
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.db_models.dataset_metadata_model import \
-    DatasetMetaDataModel
+from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
@@ -19,6 +18,8 @@ from explainaboard_web.models.system_output_props import SystemOutputProps
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.models.systems_return import SystemsReturn
 from pymongo.client_session import ClientSession
+
+from explainaboard_web import util
 
 
 class SystemModel(MetadataDBModel, System):
@@ -58,21 +59,24 @@ class SystemModel(MetadataDBModel, System):
                 )
 
         # load system output and generate analysis
-        system_output_data = get_loader(
-            metadata.task, Source.in_memory, system_output.file_type, system_output.data
-        ).load()
-        report = get_processor(
-            metadata.task,
-            {
-                **metadata.to_dict(),
-                "task_name": metadata.task,
-                "dataset_name": system.dataset.dataset_name if system.dataset else None,
-                "sub_dataset_name": system.dataset.sub_dataset
-                if system.dataset and system.dataset.sub_dataset
-                else "default",
-            },
-            system_output_data,
-        ).process()
+        system_output_data = list(
+            get_loader(
+                task=metadata.task,
+                data=system_output.data,
+                source=Source.in_memory,
+                file_type=system_output.file_type,
+            ).load()
+        )
+        processor = get_processor(metadata.task)
+        processor_metadata = {
+            **metadata.to_dict(),
+            "task_name": metadata.task,
+            "dataset_name": system.dataset.dataset_name if system.dataset else None,
+            "sub_dataset_name": system.dataset.sub_dataset
+            if system.dataset and system.dataset.sub_dataset
+            else "default",
+        }
+        report = processor.process(processor_metadata, system_output_data)
         system.analysis = SystemAnalysis.from_dict(report.to_dict())
 
         def db_operations(session: ClientSession) -> str:
@@ -86,8 +90,8 @@ class SystemModel(MetadataDBModel, System):
         return system
 
     @classmethod
-    def from_dict(cls, dikt) -> SystemModel:
-        document = {**dikt}
+    def from_dict(cls, dikt: dict[str, Any]) -> SystemModel:
+        document: dict[str, Any] = {**dikt}
         if dikt.get("_id"):
             document["system_id"] = str(dikt["_id"])
         if dikt.get("is_private") is None:
@@ -104,35 +108,35 @@ class SystemModel(MetadataDBModel, System):
             else:
                 document["dataset"] = None
             dikt.pop("dataset_metadata_id")
-
-        system = super().from_dict(document)
-        return system
+        return util.deserialize_model(dikt, cls)
 
     @classmethod
-    def find_one_by_id(cls, id: str) -> Union[SystemModel, None]:
+    def find_one_by_id(cls, id: str, **kwargs) -> SystemModel | None:
         """
         find one system that matches the id and return it.
         """
         document = super().find_one_by_id(id)
-        if not document:
-            return None
-        sys = cls.from_dict(document)
-        if sys.is_private and sys.creator != get_user().email:
-            abort_with_error_message(
-                403, "you do not have permission to view this system"
-            )
-        else:
-            return sys
+        if document is not None:
+            sys = cls.from_dict(document)
+            if sys.is_private and sys.creator != get_user().email:
+                abort_with_error_message(
+                    403, "you do not have permission to view this system"
+                )
+            else:
+                return sys
+        return None
 
     @classmethod
-    def delete_one_by_id(cls, id: str):
+    def delete_one_by_id(cls, id: str, **kwargs):
         user = get_user()
         if not user.is_authenticated:
             abort_with_error_message(401, "log in required")
 
         def db_operations(session: ClientSession) -> bool:
             """TODO: add logging if error"""
-            sys = SystemModel.find_one_by_id(id)
+            sys = SystemModel.find_one_by_id(
+                id,
+            )
             if not sys:
                 return False
             if sys.creator != user.email:
@@ -218,10 +222,10 @@ class SystemOutputsModel(DBModel):
 
     _database_name = "system_outputs"
 
-    def __init__(self, system_id: str, data: Iterable[dict] = []) -> None:
+    def __init__(self, system_id: str, data: Iterable[dict] | None = None) -> None:
         SystemOutputsModel._collection_name = system_id
         self._system_id = system_id
-        self._data = data
+        self._data: Iterable[dict] = data if data is not None else list()
 
     def insert(self, drop_old_data: bool = True, session: ClientSession = None):
         """
@@ -231,7 +235,7 @@ class SystemOutputsModel(DBModel):
         """
         if drop_old_data:
             self.drop()
-        self.insert_many(self._data, False, session)
+        self.insert_many(list(self._data), False, session)
 
     @classmethod
     def find(cls, output_ids: str | None) -> SystemOutputsReturn:

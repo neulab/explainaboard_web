@@ -18,6 +18,7 @@ repos:
     hooks:
       - id: isort
         files: '\.py$'
+        args: ["--profile", "black"]
   - repo: https://github.com/sondrelg/pep585-upgrade
     rev: v1.0.1
     hooks:
