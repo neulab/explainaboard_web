@@ -1,5 +1,6 @@
 from __future__ import annotations
 import os
+import logging
 from typing import List, Optional
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
@@ -22,7 +23,8 @@ from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.task_category import TaskCategory
 
 from explainaboard import get_task_categories, get_processor
-from explainaboard.info import SysOutputInfo, Features
+from explainaboard.info import SysOutputInfo, Result
+from explainaboard.feature import BucketInfo, Features
 
 """ /info """
 
@@ -149,17 +151,25 @@ def systems_analyses_post(body: SystemsAnalysesBody) -> SystemAnalysesReturn:
      # TODO(chihhao) supports only a single system for now
     system = systems[0]
 
-    system_output_info = SysOutputInfo.from_dict(system.sys_info)
+    system_info_dict = system.system_info.to_dict()
+    system_output_info = SysOutputInfo.from_dict(system_info_dict)
     
     # TODO(chihhao) bug in SDK, nested dataclasses must be from_dict()ed properly
-    system_output_info.features = Features(system_output_info.features)
-    # results: Result = field(default_factory=lambda: Result())
+    # move this function to SDK in the future or add proper from_dict() methods in SDK
+    for feature_name, feature in system_output_info.features.items():
+        bucket_info = feature["bucket_info"]
+        if bucket_info is not None:
+            bucket_info = BucketInfo(**bucket_info)
+        system_output_info.features[feature_name]["bucket_info"] = bucket_info
+    system_output_info.results = Result(**system_output_info.results)
+
+    logging.getLogger('connexion.operation').error(system_output_info)
 
     # Get all outputs
     output_ids = None
     system_outputs = SystemOutputsModel(system.system_id).find(output_ids).system_outputs
 
-    processor = get_processor(system.task)
+    processor = get_processor(system_output_info.task_name)
     fine_grained_statistics = processor.get_fine_grained_statistics(
         system_output_info,
         system_outputs,
