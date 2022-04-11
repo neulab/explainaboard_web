@@ -48,13 +48,15 @@ class User:
         token: Optional[str] = None,
         info: Optional[dict] = None,
     ) -> None:
-        self._is_authenticated = is_authenticated
-        if self._is_authenticated and (not token or not info):
-            raise Exception("token is required to create an authenticated user")
-        self._token = token
-        info[self._USERNAME_KEY] = info["cognito:username"]
-        info.pop("cognito:username")
-        self._info = info
+        self._is_authenticated: bool = is_authenticated
+        self._token: Optional[str] = token
+        self._info: Optional[dict] = None
+        if self._is_authenticated:
+            if token is None or info is None:
+                raise Exception("token is required to create an authenticated user")
+            info[self._USERNAME_KEY] = info["cognito:username"]
+            info.pop("cognito:username")
+            self._info = info
 
     def get_user_info(self):
         if "api_key" not in self._info or "preferred_username" not in self._info:
