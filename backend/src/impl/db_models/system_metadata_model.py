@@ -77,7 +77,8 @@ class SystemModel(MetadataDBModel, System):
             else "default",
         }
         report = processor.process(processor_metadata, system_output_data)
-        system.analysis = SystemAnalysis.from_dict(report.to_dict())
+        dict_data = report.replace_nonstring_keys(report.to_dict())
+        system.analysis = SystemAnalysis.from_dict(dict_data)
 
         def db_operations(session: ClientSession) -> str:
             system_id = system.insert(session)
@@ -108,7 +109,8 @@ class SystemModel(MetadataDBModel, System):
             else:
                 document["dataset"] = None
             dikt.pop("dataset_metadata_id")
-        return util.deserialize_model(dikt, cls)
+        system = super().from_dict(document)
+        return system
 
     @classmethod
     def find_one_by_id(cls, id: str, **kwargs) -> SystemModel | None:
