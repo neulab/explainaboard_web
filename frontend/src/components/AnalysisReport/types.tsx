@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { Metric } from "../../clients/openapi";
+import { Performance } from "../../clients/openapi";
 
 export interface Features {
   [key: string]: FeatureVal;
@@ -29,7 +29,7 @@ export interface Results {
   fine_grained: FineGrained;
   is_print_case?: boolean;
   is_print_confidence_interval?: boolean;
-  overall: { [key: string]: Metric };
+  overall: { [key: string]: Performance };
 }
 
 export interface FineGrained {
