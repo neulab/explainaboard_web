@@ -33,7 +33,9 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
     2. `pip install -r backend/src/gen/requirements.txt`
     3. Create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
-5. Launch explainaboard
+5. Install pre-commit hooks
+   - Run `npm run prepare` to install the pre-commit hook via husky. The hook auto-checks both frontend and backend code before commits. Please do not skip it.
+6. Launch explainaboard
     1. Run `npm run start` to start the frontend and backend server concurrently.
         - Both frontend and backend can be started independently as well. Check out "More details on frontend and backend".
 
