@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
-from dataclasses import asdict
 from datetime import datetime
 from typing import Any, Optional
 
@@ -92,17 +91,20 @@ class SystemModel(MetadataDBModel, System):
                 for metric_stat in overall_statistics.metric_stats
             ]
 
-        overall_results = overall_statistics.overall_results
-        # TODO(chihhao) declare to_dict to SDK
-        overall_results = {
-            metric_name: asdict(performance)
-            for metric_name, performance in overall_results.items()
-        }
+        # TODO(chihhao) needs proper serializiation & deserializiationin SDK
+        overall_statistics.sys_info.tokenizer = (
+            overall_statistics.sys_info.tokenizer.json_repr()
+        )
+        # TODO avoid None as nullable seems undeclarable for array and object
+        # in openapi.yaml
+        if overall_statistics.sys_info.results.calibration is None:
+            overall_statistics.sys_info.results.calibration = []
+        if overall_statistics.sys_info.results.fine_grained is None:
+            overall_statistics.sys_info.results.fine_grained = {}
 
         system.system_info = overall_statistics.sys_info.to_dict()
         system.metric_stats = metric_stats
         system.active_features = overall_statistics.active_features
-        system.analysis.results.overall = overall_results
 
         def db_operations(session: ClientSession) -> str:
             system_id = system.insert(session)
