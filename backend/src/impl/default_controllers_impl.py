@@ -238,7 +238,9 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
         # Get the entire system outputs
         output_ids = None
         system_outputs = (
-            SystemOutputsModel(system.system_id).find(output_ids).system_outputs
+            SystemOutputsModel(system.system_id)
+            .find(output_ids, limit=0)
+            .system_outputs
         )
 
         fine_grained_statistics = processor.get_fine_grained_statistics(

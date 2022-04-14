@@ -306,7 +306,7 @@ class SystemOutputsModel(DBModel):
         self.insert_many(list(self._data), False, session)
 
     @classmethod
-    def find(cls, output_ids: str | None) -> SystemOutputsReturn:
+    def find(cls, output_ids: str | None, limit=10) -> SystemOutputsReturn:
         """
         find multiple system outputs whose ids are in output_ids
         TODO: raise error if system doesn't exist
@@ -314,7 +314,7 @@ class SystemOutputsModel(DBModel):
         filter: dict[str, Any] = {}
         if output_ids:
             filter["id"] = {"$in": [str(id) for id in output_ids.split(",")]}
-        cursor, total = super().find(filter)
+        cursor, total = super().find(filter, limit=limit)
         return SystemOutputsReturn(
             [SystemOutputModel.from_dict(doc) for doc in cursor], total
         )
