@@ -255,6 +255,35 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemOutputsReturn"
+
+  /systems/analyses:
+    get:
+      summary: Returns analysis result(s) of one or multiple systems
+      description: Returns analysis result(s) of one or multiple systems
+      parameters:
+        - in: query
+          name: system_ids
+          description: a string of comma-separated system ids
+          schema:
+            type: string
+          required: true
+          example: "61b02e0baadd2f674845b1c2,6254e4cd0f1133e7436ef298"
+        - in: query
+          name: pairwise_performance_gap
+          description: returns the pairwise performance gap. Requires the length of systems_ids to be 2.
+          schema:
+            type: string
+            example: "true"
+          required: true
+            
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemAnalysesReturn"
+
   /info:
     get:
       summary: information for environment identifier, backend version, login URL, etc. (not intent for public users)
@@ -773,10 +802,14 @@ components:
     SystemAnalysesReturn:
       type: object
       properties:
-        analyses:
+        single_analyses:
           type: array
           items:
-            type: object # TODO(chihhao) finer schema
+            # TODO(chihhao) finer schema
+            type: object 
+        pairwise_performance_gap:
+          type: object
+      required: [single_analyses]
 
     Performance:
       type: object

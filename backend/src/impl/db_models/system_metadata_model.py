@@ -274,7 +274,15 @@ class SystemModel(MetadataDBModel, System):
                 else:
                     doc["dataset"] = None
                 doc.pop("dataset_metadata_id")
-        return SystemsReturn([cls.from_dict(doc) for doc in documents], total)
+            # TODO(chihhao) duplicated code
+            metric_stats = doc["metric_stats"]
+            doc["metric_stats"] = []
+            system = cls.from_dict(doc)
+            if include_metric_stats:
+                # Unbinarize to numpy array and set explicityly
+                system.metric_stats = [unbinarize_bson(stat) for stat in metric_stats]
+            systems.append(system)
+        return SystemsReturn(systems, total)
 
 
 class SystemOutputsModel(DBModel):
