@@ -798,15 +798,42 @@ components:
       required:
         - systems
         - total
+
+    BucketPerformance:
+      type: object
+      properties:
+        bucket_name:
+          type: array
+          items:
+            type: string
+        n_samples:
+          type: number
+        bucket_samples:
+          type: array
+          items:
+            type: string
+        performances: 
+          type: array
+          items:
+            $ref: "#/components/schemas/Performance"
+      required: [bucket_name, n_samples, bucket_samples, performances]
       
+    SingleAnalysisReturn:
+      type: object
+      description: feature -> bucket interval
+      additionalProperties:
+        type: object
+        description: bucket interval -> BucketPerformance
+        additionalProperties:
+          $ref: "#/components/schemas/BucketPerformance"
+
     SystemAnalysesReturn:
       type: object
       properties:
         single_analyses:
           type: array
           items:
-            # TODO(chihhao) finer schema
-            type: object 
+            $ref: "#/components/schemas/SingleAnalysisReturn"
         pairwise_performance_gap:
           type: object
       required: [single_analyses]

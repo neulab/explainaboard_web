@@ -256,6 +256,9 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
                 bucket_performance = dataclasses.asdict(bucket_performance)
                 new_bucket_key = [str(number) for number in bucket_key]
                 new_bucket_key_str = f"({', '.join(new_bucket_key)})"
+                bucket_performance["bucket_name"] = [
+                    str(num) for num in bucket_performance["bucket_name"]
+                ]
                 performance_over_bucket[feature][
                     new_bucket_key_str
                 ] = bucket_performance
