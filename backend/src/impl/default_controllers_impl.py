@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import dataclasses
+import logging
 import os
 from typing import Optional
 
@@ -32,7 +32,6 @@ from explainaboard_web.impl.utils import (
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
-from explainaboard_web.models.system_info import SystemInfo
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
@@ -190,9 +189,13 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
             + f" only accepts 2 systems, got: {systems_len}",
         )
 
+    # TODO the regular process() in SDK mutates system_info, and
+    # get_pairwise_performance_gap requires system_info as parameter,
+    # so we mutate it here as well. A cleaner solution is preferred.
+    analyzed_system_output_infos: list[SysOutputInfo] = []
     for system in systems:
-        system_info: SystemInfo = system.system_info
-        system_info_dict = system_info.to_dict()
+        system_id = system.system_id
+        system_info_dict = system.system_info.to_dict()
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
         # TODO(chihhao) bug in SDK
@@ -224,13 +227,14 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
             system_output_info.features[feature_name] = feature
 
         system_output_info.results = Result(**system_output_info.results)
+
         # The order of getting the processor first then setting
         # the tokenizer is unnatural, but in the SDK get_default_tokenizer
         # relies on the processor's TaskType inforamtion
-
         processor = get_processor(system_output_info.task_name)
+        language = system.system_info.language
         system_output_info.tokenizer = get_default_tokenizer(
-            task_type=processor.task_type, lang=system_info.language
+            task_type=processor.task_type, lang=language
         )
 
         metric_stats = [MetricStats(stat) for stat in system.metric_stats]
@@ -238,9 +242,7 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
         # Get the entire system outputs
         output_ids = None
         system_outputs = (
-            SystemOutputsModel(system.system_id)
-            .find(output_ids, limit=0)
-            .system_outputs
+            SystemOutputsModel(system_id).find(output_ids, limit=0).system_outputs
         )
 
         fine_grained_statistics = processor.get_fine_grained_statistics(
@@ -249,18 +251,34 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
             system.active_features,
             metric_stats,
         )
+
         performance_over_bucket: dict = fine_grained_statistics.performance_over_bucket
+        performance_over_bucket = processor.sort_bucket_info(performance_over_bucket)
+
+        # Mutate system_output_info
+        system_output_info.results.fine_grained = performance_over_bucket
+
+        # Used for pairwise performance gap
+        system_output_info_dict = system_output_info.to_dict()
+        analyzed_system_output_infos.append(system_output_info_dict)
+
+        # Used for response
+        fine_grained_dict = system_output_info_dict["results"]["fine_grained"]
         # TODO This is a HACK. Should add proper to_dict methods in SDK
-        for feature, feature_dict in performance_over_bucket.items():
+        # Main problem is tuple cannot be serialized
+        for feature, feature_dict in fine_grained_dict.items():
             for bucket_key, bucket_performance in list(feature_dict.items()):
-                bucket_performance = dataclasses.asdict(bucket_performance)
                 new_bucket_key = [str(number) for number in bucket_key]
                 new_bucket_key_str = f"({', '.join(new_bucket_key)})"
-                performance_over_bucket[feature][
-                    new_bucket_key_str
-                ] = bucket_performance
-                performance_over_bucket[feature].pop(bucket_key)
+                fine_grained_dict[feature][new_bucket_key_str] = bucket_performance
+                fine_grained_dict[feature].pop(bucket_key)
+        single_analyses.append(fine_grained_dict)
 
-        single_analyses.append(performance_over_bucket)
+    logging.getLogger("connexion.operation").error(analyzed_system_output_infos)
+    logging.getLogger("connexion.operation").error(single_analyses)
 
-    return SystemAnalysesReturn(single_analyses)
+    pairwise_performance_gap_result = None
+    # TODO
+    # if do_pairwise_performance_gap:
+
+    return SystemAnalysesReturn(single_analyses, pairwise_performance_gap_result)
