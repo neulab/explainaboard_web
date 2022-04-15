@@ -158,6 +158,11 @@
   margin-left: 5rem;
 }
 
+.px-20 {
+  padding-right: 5rem;
+  padding-left: 5rem;
+}
+
 .bg-white {
   background-color: #fff;
 }

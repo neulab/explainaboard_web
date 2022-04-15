@@ -39,8 +39,18 @@ export function parse(
       bucketsOfSamples,
     };
   }
-
+  const bucketPerformances: BucketPerformance[] = [];
   for (const bucketPerformance of Object.values(feature)) {
+    bucketPerformances.push(bucketPerformance);
+  }
+  // Sort by the correct bucket interval order
+  bucketPerformances.sort((a, b) => {
+    return (
+      Number.parseFloat(a.bucket_name[0]) - Number.parseFloat(b.bucket_name[0])
+    );
+  });
+
+  for (const bucketPerformance of bucketPerformances) {
     /* performances will have length > 1 when there exist multiple metrics.
     E.g., Accuracy, F1Score
     */
@@ -48,7 +58,6 @@ export function parse(
       // The bucket interval
       const bucketNameArray = bucketPerformance["bucket_name"];
       let bucketName = "";
-      console.log(bucketNameArray);
       switch (bucketNameArray.length) {
         case 1: {
           /*Add two new lines so its text height is consistent with case 2.

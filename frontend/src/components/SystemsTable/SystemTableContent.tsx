@@ -121,7 +121,7 @@ export function SystemTableContent({
         ),
     },
     {
-      dataIndex: "language",
+      dataIndex: ["system_info", "language"],
       width: 100,
       title: "Language",
       align: "center",
