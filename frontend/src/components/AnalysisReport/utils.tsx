@@ -1,4 +1,5 @@
-import { FineGrainedElement, ResultFineGrainedParsed } from "./types";
+import { ResultFineGrainedParsed } from "./types";
+import { BucketPerformance } from "../../clients/openapi";
 
 function formatName(name: string) {
   if (Number.isNaN(Number(name))) {
@@ -10,14 +11,15 @@ function formatName(name: string) {
   }
 }
 
-// Parses a fineGrainedElements according to its task type.
+// Parses features according to task type.
 export function parse(
   systemID: string,
   task: string,
   metricNames: string[],
   description: string,
-  fineGrainedElements: Array<FineGrainedElement[]>
+  feature: { [key: string]: BucketPerformance }
 ) {
+  const decimalPlaces = 3;
   const parsedResult: { [key: string]: ResultFineGrainedParsed } = {};
   for (const metricName of metricNames) {
     const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
@@ -38,15 +40,20 @@ export function parse(
     };
   }
 
-  for (let i = 0; i < fineGrainedElements.length; i++) {
-    // fineGrainedElements[i] will have length > 1 when there exist multiple metrics.
-    for (const fineGrainedElement of fineGrainedElements[i]) {
-      const bucketNameArray = fineGrainedElement.bucket_name;
+  for (const bucketPerformance of Object.values(feature)) {
+    /* performances will have length > 1 when there exist multiple metrics.
+    E.g., Accuracy, F1Score
+    */
+    for (const performance of bucketPerformance["performances"]) {
+      // The bucket interval
+      const bucketNameArray = bucketPerformance["bucket_name"];
       let bucketName = "";
+      console.log(bucketNameArray);
       switch (bucketNameArray.length) {
         case 1: {
-          // Add two new lines so its text height is consistent with case 2.
-          // This allows the charts to have equal heights
+          /*Add two new lines so its text height is consistent with case 2.
+          This allows the charts to have equal heights
+          */
           const name = bucketNameArray[0] as string;
           bucketName = `${formatName(name).toString()}\n\n`;
           break;
@@ -65,27 +72,28 @@ export function parse(
         }
       }
 
-      const value = parseFloat(fineGrainedElement.value);
-      const nSamples = fineGrainedElement.n_samples;
-      const confidenceScoreLow = parseFloat(
-        fineGrainedElement.confidence_score_low
-      );
-      const confidenceScoreHigh = parseFloat(
-        fineGrainedElement.confidence_score_up
-      );
-      const metricName = fineGrainedElement.metric_name;
+      const value = performance.value;
+      const nSamples = bucketPerformance.n_samples;
+      const confidenceScoreLow = performance.confidence_score_low;
+      const confidenceScoreHigh = performance.confidence_score_high;
+      const metricName = performance.metric_name;
       const resultFineGrainedParsed = parsedResult[metricName];
       resultFineGrainedParsed.metricName = metricName;
       resultFineGrainedParsed.bucketsOfSamples.push(
-        fineGrainedElement.bucket_samples
+        bucketPerformance.bucket_samples
       );
       resultFineGrainedParsed.bucketNames.push(bucketName);
-      resultFineGrainedParsed.values.push(value);
+      resultFineGrainedParsed.values.push(
+        Number.parseFloat(value.toFixed(decimalPlaces))
+      );
       resultFineGrainedParsed.numbersOfSamples.push(nSamples);
-      if (confidenceScoreLow !== 0 && confidenceScoreHigh !== 0) {
+      if (
+        confidenceScoreLow !== undefined &&
+        confidenceScoreHigh !== undefined
+      ) {
         resultFineGrainedParsed.confidenceScores.push([
-          confidenceScoreLow,
-          confidenceScoreHigh,
+          Number.parseFloat(confidenceScoreLow.toFixed(decimalPlaces)),
+          Number.parseFloat(confidenceScoreHigh.toFixed(decimalPlaces)),
         ]);
       }
     }

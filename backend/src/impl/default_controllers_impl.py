@@ -161,7 +161,7 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
         )
     do_pairwise_performance_gap = string_to_boolean(pairwise_performance_gap)
 
-    single_analyses: list[dict] = []
+    single_analyses: dict = {}
     system_ids: list = system_ids_str.split(",")
     system_name = None
     task = None
@@ -264,6 +264,6 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
                 ] = bucket_performance
                 performance_over_bucket[feature].pop(bucket_key)
 
-        single_analyses.append(performance_over_bucket)
+        single_analyses[system.system_id] = performance_over_bucket
 
     return SystemAnalysesReturn(single_analyses)

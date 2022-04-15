@@ -1,5 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 import React, { useState } from "react";
 import {
   ResultFineGrainedParsed,
@@ -10,29 +8,31 @@ import {
 import { parse, compareBucketOfSamples } from "./utils";
 import { BarChart, AnalysisTable } from "../../components";
 import { Row, Col, Typography, Space, Tabs } from "antd";
-import { SystemAnalysisModel, SystemModel } from "../../models";
+import { SystemModel } from "../../models";
+import {
+  SingleAnalysisReturn,
+  SystemAnalysesReturn,
+} from "../../clients/openapi";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { TabPane } = Tabs;
 
 interface Props {
   systemIDs: string[];
-  systemInfos: {
-    modelName: SystemModel["model_name"];
-    metricNames: SystemModel["metric_names"];
-  }[];
-  task: string;
-  analyses: SystemAnalysisModel[];
+  systems: SystemModel[];
+  singleAnalyses: SystemAnalysesReturn["single_analyses"];
 }
 
 export function AnalysisReport(props: Props) {
-  const { task, systemIDs, systemInfos, analyses } = props;
+  const { systemIDs, systems, singleAnalyses } = props;
   /*
-  Take from the first element as the type and number of metrics should be 
+  Take from the first element as the task and type/number of metrics should be 
   invariant across sytems in pairwise analysis
   */
-  const metricNames = systemInfos[0].metricNames;
-  const systemNames = systemInfos.map((sysInfo) => sysInfo.modelName);
+  const firstSystemInfo = systems[0].system_info;
+  const task = firstSystemInfo.task_name;
+  const metricNames = firstSystemInfo.metric_names;
+  const systemNames = systems.map((sys) => sys.system_info.model_name);
   const metricToSystemAnalysesParsed: MetricToSystemAnalysesParsed = {};
   for (const metricName of metricNames) {
     // Array to store every parsed system analysis
@@ -59,8 +59,7 @@ export function AnalysisReport(props: Props) {
   // Loop through each system analysis and parse
   for (let i = 0; i < systemIDs.length; i++) {
     const systemID = systemIDs[i];
-    const analysis = analyses[i];
-    const resultsFineGrained = analysis["results"]["fine_grained"];
+    const singleAnalysis: SingleAnalysisReturn = singleAnalyses[systemID];
 
     const metricToParsedInfo: {
       [key: string]: {
@@ -83,17 +82,9 @@ export function AnalysisReport(props: Props) {
     const featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"] =
       {};
 
-    for (const [key, resultFineGrained] of Object.entries(resultsFineGrained)) {
-      // Attempt to get the description of feature from analysis.features.[key]
-      const featureVal = analysis["features"][key];
-      let description = key;
-      if (
-        featureVal !== undefined &&
-        typeof featureVal["description"] === "string"
-      ) {
-        description = featureVal["description"];
-      }
-      featureKeyToDescription[key] = description;
+    for (const [featureKey, feature] of Object.entries(singleAnalysis)) {
+      // TODO do we need a sentence-like description for each feature?
+      const description = featureKey;
 
       // Add a row if the current row is full
       for (const parsedInfo of Object.values(metricToParsedInfo)) {
@@ -110,7 +101,7 @@ export function AnalysisReport(props: Props) {
         task,
         metricNames,
         description,
-        resultFineGrained
+        feature
       );
       for (const [metric, resultFineGrainedParsed] of Object.entries(
         metricToResultFineGrainedParsed
@@ -207,13 +198,6 @@ export function AnalysisReport(props: Props) {
         <Title level={4}>{`${exampleText} from ${barText} #${
           barIndex + 1
         } in ${title}`}</Title>
-        <Space style={{ width: "fit-content", float: "left" }}>
-          <Text>
-            {
-              "Note: Long texts are truncated. To view the full text, hover your cursor on the cell."
-            }
-          </Text>
-        </Space>
         {analysisTable}
       </div>
     );
@@ -236,7 +220,6 @@ export function AnalysisReport(props: Props) {
           systemAnalysesParsed[0];
         return (
           <TabPane tab={metric} key={metric}>
-            {/* <div style={{ textAlign: "center" }}> */}
             {
               // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
               // into rows and columns. One column contains a single BarChart.
@@ -299,7 +282,6 @@ export function AnalysisReport(props: Props) {
               })
             }
             {analysisTable}
-            {/* </div> */}
           </TabPane>
         );
       })}

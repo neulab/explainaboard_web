@@ -819,7 +819,7 @@ components:
       required: [bucket_name, n_samples, bucket_samples, performances]
       
     SingleAnalysisReturn:
-      type: object
+      type: object   
       description: feature -> bucket interval
       additionalProperties:
         type: object
@@ -831,8 +831,9 @@ components:
       type: object
       properties:
         single_analyses:
-          type: array
-          items:
+          type: object
+          description: system_id -> SingleAnalysisReturn
+          additionalProperties:
             $ref: "#/components/schemas/SingleAnalysisReturn"
         pairwise_performance_gap:
           type: object
