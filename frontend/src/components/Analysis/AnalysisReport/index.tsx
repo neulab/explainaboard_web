@@ -6,13 +6,14 @@ import {
   ActiveSystemExamples,
 } from "./types";
 import { parse, compareBucketOfSamples } from "./utils";
-import { BarChart, AnalysisTable } from "../../components";
+import { BarChart, AnalysisTable } from "../..";
 import { Row, Col, Typography, Space, Tabs } from "antd";
-import { SystemModel } from "../../models";
+import { SystemModel } from "../../../models";
 import {
   SingleAnalysisReturn,
   SystemAnalysesReturn,
-} from "../../clients/openapi";
+} from "../../../clients/openapi";
+import { BucketSlider } from "../BucketSlider";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -227,7 +228,11 @@ export function AnalysisReport(props: Props) {
                 const cols = row.map((resultFirst, resultIdx) => {
                   // For invariant variables across all systems, we can simply take from the first result
                   const title = `${resultFirst.metricName} by ${resultFirst.description}`;
-                  const xAxisData = resultFirst.bucketNames;
+                  const bucketNames = resultFirst.bucketNames;
+                  const bucketMin = resultFirst.bucketMin;
+                  const bucketMax = resultFirst.bucketMax;
+                  const bucketStep = resultFirst.bucketStep;
+                  const bucketRightBounds = resultFirst.bucketRightBounds;
 
                   // System-dependent variables must be taken from all systems
                   const resultsValues: number[][] = [];
@@ -253,7 +258,7 @@ export function AnalysisReport(props: Props) {
                       <BarChart
                         title={title}
                         seriesNames={systemNames}
-                        xAxisData={xAxisData}
+                        xAxisData={bucketNames}
                         seriesDataList={resultsValues}
                         seriesLabelsList={resultsValues}
                         numbersOfSamplesList={resultsNumbersOfSamples}
@@ -274,6 +279,16 @@ export function AnalysisReport(props: Props) {
                           // reset page number
                           setPage(0);
                         }}
+                      />
+                      <BucketSlider
+                        min={bucketMin}
+                        max={bucketMax}
+                        marks={{
+                          [bucketMin]: bucketMin.toFixed(2),
+                          [bucketMax]: bucketMax.toFixed(2),
+                        }}
+                        step={bucketStep}
+                        initialInputValues={bucketRightBounds}
                       />
                     </Col>
                   );

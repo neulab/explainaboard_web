@@ -1,10 +1,10 @@
 import { Drawer, Spin, Typography } from "antd";
 import React, { useEffect, useState } from "react";
-import { SystemModel } from "../../models";
-import { ErrorBoundary, AnalysisReport } from "../../components";
-import { PageState } from "../../utils";
-import { backendClient } from "../../clients";
-import { SystemAnalysesReturn } from "../../clients/openapi";
+import { SystemModel } from "../../../models";
+import { ErrorBoundary, AnalysisReport } from "../..";
+import { PageState } from "../../../utils";
+import { backendClient } from "../../../clients";
+import { SystemAnalysesReturn } from "../../../clients/openapi";
 const { Text, Link } = Typography;
 
 interface Props {

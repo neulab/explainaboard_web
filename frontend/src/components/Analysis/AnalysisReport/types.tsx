@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { Performance } from "../../clients/openapi";
+import { Performance } from "../../../clients/openapi";
 
 export interface Features {
   [key: string]: FeatureVal;
@@ -53,6 +53,11 @@ export interface ResultFineGrainedParsed {
   description: string;
   metricName: string;
   bucketNames: string[];
+  bucketMin: number;
+  bucketMax: number;
+  bucketStep: number;
+  bucketRightBounds: number[];
+  bucketIntervals: Array<number[]>;
   // TODO the latter type is for NER
   bucketsOfSamples: Array<string[]>; // | Array<{[key: string]: string}[]>;
   values: number[];

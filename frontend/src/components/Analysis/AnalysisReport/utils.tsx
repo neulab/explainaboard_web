@@ -1,13 +1,14 @@
 import { ResultFineGrainedParsed } from "./types";
-import { BucketPerformance } from "../../clients/openapi";
+import { BucketPerformance } from "../../../clients/openapi";
 
-function formatName(name: string) {
+function formatName(name: string): number {
   if (Number.isNaN(Number(name))) {
-    return name;
+    // TODO error handling
+    return 0;
   } else if (Number.isInteger(Number(name))) {
     return Number.parseInt(name);
   } else {
-    return Number.parseFloat(name).toFixed(2);
+    return Number.parseFloat(name);
   }
 }
 
@@ -23,6 +24,13 @@ export function parse(
   const parsedResult: { [key: string]: ResultFineGrainedParsed } = {};
   for (const metricName of metricNames) {
     const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
+    const bucketMin: ResultFineGrainedParsed["bucketMin"] =
+      Number.POSITIVE_INFINITY;
+    const bucketMax: ResultFineGrainedParsed["bucketMax"] =
+      Number.NEGATIVE_INFINITY;
+    const bucketStep: ResultFineGrainedParsed["bucketStep"] = 1;
+    const bucketRightBounds: ResultFineGrainedParsed["bucketRightBounds"] = [];
+    const bucketIntervals: ResultFineGrainedParsed["bucketIntervals"] = [];
     const values: ResultFineGrainedParsed["values"] = [];
     const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
     const confidenceScores: ResultFineGrainedParsed["confidenceScores"] = [];
@@ -32,6 +40,11 @@ export function parse(
       task,
       description,
       metricName,
+      bucketIntervals,
+      bucketMin,
+      bucketMax,
+      bucketStep,
+      bucketRightBounds,
       bucketNames,
       values,
       numbersOfSamples,
@@ -54,25 +67,24 @@ export function parse(
     /* performances will have length > 1 when there exist multiple metrics.
     E.g., Accuracy, F1Score
     */
+
     for (const performance of bucketPerformance["performances"]) {
       // The bucket interval
       const bucketNameArray = bucketPerformance["bucket_name"];
+      const bucketInterval = bucketNameArray.map((name) => formatName(name));
       let bucketName = "";
-      switch (bucketNameArray.length) {
+      switch (bucketInterval.length) {
         case 1: {
           /*Add two new lines so its text height is consistent with case 2.
           This allows the charts to have equal heights
           */
-          const name = bucketNameArray[0] as string;
-          bucketName = `${formatName(name).toString()}\n\n`;
+          bucketName = `${bucketInterval[0].toString()}\n\n`;
           break;
         }
         case 2: {
-          const name1 = bucketNameArray[0] as string;
-          const name2 = bucketNameArray[1] as string;
-          bucketName = `${formatName(name1).toString()}\n|\n${formatName(
-            name2
-          ).toString()}`;
+          bucketName = bucketInterval
+            .map((bound) => bound.toFixed(2))
+            .join("\n|\n");
           break;
         }
         default: {
@@ -92,6 +104,7 @@ export function parse(
         bucketPerformance.bucket_samples
       );
       resultFineGrainedParsed.bucketNames.push(bucketName);
+      resultFineGrainedParsed.bucketIntervals.push(bucketInterval);
       resultFineGrainedParsed.values.push(
         Number.parseFloat(value.toFixed(decimalPlaces))
       );
@@ -105,6 +118,25 @@ export function parse(
           Number.parseFloat(confidenceScoreHigh.toFixed(decimalPlaces)),
         ]);
       }
+      resultFineGrainedParsed.bucketMin = Math.min(
+        resultFineGrainedParsed.bucketMin,
+        ...bucketInterval
+      );
+      resultFineGrainedParsed.bucketMax = Math.max(
+        resultFineGrainedParsed.bucketMax,
+        ...bucketInterval
+      );
+      if (
+        resultFineGrainedParsed.bucketMax - resultFineGrainedParsed.bucketMin <=
+        1
+      ) {
+        resultFineGrainedParsed.bucketStep = 0.01;
+      } else {
+        resultFineGrainedParsed.bucketStep = 1;
+      }
+      resultFineGrainedParsed.bucketRightBounds.push(
+        bucketInterval[bucketInterval.length - 1]
+      );
     }
   }
   return parsedResult;
