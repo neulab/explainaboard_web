@@ -83,13 +83,10 @@ class SystemModel(MetadataDBModel, System):
         overall_statistics = processor.get_overall_statistics(
             metadata=processor_metadata, sys_output=system_output_data
         )
-        if overall_statistics.metric_stats is None:
-            metric_stats = []
-        else:
-            metric_stats = [
-                binarize_bson(metric_stat.get_data())
-                for metric_stat in overall_statistics.metric_stats
-            ]
+        metric_stats = [
+            binarize_bson(metric_stat.get_data())
+            for metric_stat in overall_statistics.metric_stats
+        ]
 
         # TODO(chihhao) needs proper serializiation & deserializiationin SDK
         overall_statistics.sys_info.tokenizer = (
@@ -122,7 +119,9 @@ class SystemModel(MetadataDBModel, System):
         return system
 
     @classmethod
-    def from_dict(cls, dikt: dict[str, Any]) -> SystemModel:
+    def from_dict(
+        cls, dikt: dict[str, Any], include_metric_stats: bool = False
+    ) -> SystemModel:
         document: dict[str, Any] = {**dikt}
         if dikt.get("_id"):
             document["system_id"] = str(dikt["_id"])
@@ -140,7 +139,13 @@ class SystemModel(MetadataDBModel, System):
             else:
                 document["dataset"] = None
             dikt.pop("dataset_metadata_id")
+
+        metric_stats = document["metric_stats"]
+        document["metric_stats"] = []
         system = super().from_dict(document)
+        if include_metric_stats:
+            # Unbinarize to numpy array and set explicitly
+            system.metric_stats = [unbinarize_bson(stat) for stat in metric_stats]
         return system
 
     @classmethod
@@ -151,10 +156,8 @@ class SystemModel(MetadataDBModel, System):
         find one system that matches the id and return it.
         """
         document = super().find_one_by_id(id)
-        if not include_metric_stats:
-            document["metric_stats"] = []
         if document is not None:
-            sys = cls.from_dict(document)
+            sys = cls.from_dict(document, include_metric_stats=include_metric_stats)
             if sys.is_private and sys.creator != get_user().email:
                 abort_with_error_message(
                     403, "you do not have permission to view this system"
@@ -240,14 +243,7 @@ class SystemModel(MetadataDBModel, System):
 
         if not include_datasets:
             for doc in documents:
-                metric_stats = doc["metric_stats"]
-                doc["metric_stats"] = []
-                system = cls.from_dict(doc)
-                if include_metric_stats:
-                    # Unbinarize to numpy array and set explicityly
-                    system.metric_stats = [
-                        unbinarize_bson(stat) for stat in metric_stats
-                    ]
+                system = cls.from_dict(doc, include_metric_stats=include_metric_stats)
                 systems.append(system)
 
             return SystemsReturn(systems, len(documents))
@@ -274,14 +270,7 @@ class SystemModel(MetadataDBModel, System):
                 else:
                     doc["dataset"] = None
                 doc.pop("dataset_metadata_id")
-            # TODO(chihhao) duplicated code
-            metric_stats = doc["metric_stats"]
-            doc["metric_stats"] = []
-            system = cls.from_dict(doc)
-            if include_metric_stats:
-                # Unbinarize to numpy array and set explicityly
-                system.metric_stats = [unbinarize_bson(stat) for stat in metric_stats]
-            systems.append(system)
+            system = cls.from_dict(doc, include_metric_stats=include_metric_stats)
         return SystemsReturn(systems, total)
 
 
@@ -306,7 +295,7 @@ class SystemOutputsModel(DBModel):
         self.insert_many(list(self._data), False, session)
 
     @classmethod
-    def find(cls, output_ids: str | None, limit=10) -> SystemOutputsReturn:
+    def find(cls, output_ids: str | None, limit=0) -> SystemOutputsReturn:
         """
         find multiple system outputs whose ids are in output_ids
         TODO: raise error if system doesn't exist

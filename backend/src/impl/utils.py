@@ -34,16 +34,3 @@ def binarize_bson(data: Any) -> Binary:
 
 def unbinarize_bson(data: Binary) -> Any:
     return pickle.loads(data)
-
-
-def is_boolean_string(string: str) -> bool:
-    return string == "true" or string == "false"
-
-
-def string_to_boolean(string: str) -> bool:
-    if string == "true":
-        return True
-    elif string == "false":
-        return False
-    else:
-        raise TypeError(string)

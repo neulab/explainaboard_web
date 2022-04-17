@@ -4,7 +4,7 @@ import dataclasses
 import os
 from typing import Optional
 
-from explainaboard import get_processor, get_task_categories
+from explainaboard import TaskType, get_processor, get_task_categories
 from explainaboard.feature import (
     BucketInfo,
     ClassLabel,
@@ -23,17 +23,13 @@ from explainaboard_web.impl.db_models.system_metadata_model import (
     SystemModel,
     SystemOutputsModel,
 )
-from explainaboard_web.impl.utils import (
-    abort_with_error_message,
-    decode_base64,
-    is_boolean_string,
-    string_to_boolean,
-)
+from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_info import SystemInfo
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
+from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task_category import TaskCategory
@@ -142,7 +138,7 @@ def systems_system_id_outputs_get(
     """
     TODO: return special error/warning if some ids cannot be found
     """
-    return SystemOutputsModel(system_id).find(output_ids)
+    return SystemOutputsModel(system_id).find(output_ids, limit=10)
 
 
 def systems_system_id_delete(system_id: str):
@@ -152,14 +148,10 @@ def systems_system_id_delete(system_id: str):
     abort_with_error_message(400, f"cannot find system_id: {system_id}")
 
 
-def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
-    if not is_boolean_string(pairwise_performance_gap):
-        abort_with_error_message(
-            400,
-            "pairwise_performance_gap is not a boolean string: "
-            + f"{pairwise_performance_gap}",
-        )
-    do_pairwise_performance_gap = string_to_boolean(pairwise_performance_gap)
+def systems_analyses_post(body: SystemsAnalysesBody):
+    system_ids_str = body.system_ids
+    pairwise_performance_gap = body.pairwise_performance_gap
+    custom_feature_to_bucket_info = body.feature_to_bucket_info or {}
 
     single_analyses: dict = {}
     system_ids: list = system_ids_str.split(",")
@@ -183,7 +175,7 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
     if systems_len == 0:
         return SystemAnalysesReturn(single_analyses)
 
-    if do_pairwise_performance_gap and systems_len != 2:
+    if pairwise_performance_gap and systems_len != 2:
         abort_with_error_message(
             400,
             "pairwise_performance_gap=true"
@@ -221,6 +213,16 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
                 feature = Value(**feature)
 
             feature.bucket_info = bucket_info
+            # user-defined bucket info
+            if feature_name in custom_feature_to_bucket_info:
+                custom_bucket_info = custom_feature_to_bucket_info[feature_name]
+                # Hardcoded as SDK doesn't export this name
+                feature.bucket_info.method = (
+                    "bucket_attribute_specified_bucket_interval"
+                )
+                feature.bucket_info.number = custom_bucket_info.number
+                setting = [tuple(interval) for interval in custom_bucket_info.setting]
+                feature.bucket_info.setting = setting
             system_output_info.features[feature_name] = feature
 
         system_output_info.results = Result(**system_output_info.results)
@@ -228,7 +230,7 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
         # the tokenizer is unnatural, but in the SDK get_default_tokenizer
         # relies on the processor's TaskType inforamtion
 
-        processor = get_processor(system_output_info.task_name)
+        processor = get_processor(TaskType(system_output_info.task_name))
         system_output_info.tokenizer = get_default_tokenizer(
             task_type=processor.task_type, lang=system_info.language
         )
