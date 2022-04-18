@@ -1,4 +1,4 @@
-import { Button, Drawer, Spin, Typography } from "antd";
+import { Button, Drawer, Spin, Tooltip, Typography } from "antd";
 import React, { useEffect, useState } from "react";
 import { SystemModel } from "../../../models";
 import { ErrorBoundary, AnalysisReport } from "../../../components";
@@ -196,14 +196,26 @@ export function AnalysisDrawer({
     drawerTitle = `Pairwise Analysis of ${systemNames}`;
   }
 
-  let analysisButton = null;
-  if (bucketInfoUpdated) {
-    analysisButton = (
-      <Button onClick={() => setShouldUpdateAnalysis(true)}>
+  const analysisButton = (
+    <Tooltip
+      title={
+        <div>
+          Adding, removing, or changing the right bounds of any graph activates
+          this button.
+        </div>
+      }
+      placement="bottom"
+      color="white"
+      overlayInnerStyle={{ color: "black" }}
+    >
+      <Button
+        disabled={!bucketInfoUpdated}
+        onClick={() => setShouldUpdateAnalysis(true)}
+      >
         Update analysis
       </Button>
-    );
-  }
+    </Tooltip>
+  );
 
   function fallbackUI(errorType: string) {
     return (
