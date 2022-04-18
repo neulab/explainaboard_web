@@ -1,7 +1,8 @@
-import React, { ReactNode, useState } from "react";
+import React from "react";
 
-import { InputNumber, Row, Col, Space, Typography } from "antd";
+import { InputNumber, Row, Col, Typography, Button } from "antd";
 import { MultiRangeSlider } from "../../../components";
+import { PlusOutlined, MinusOutlined } from "@ant-design/icons";
 
 const { Text } = Typography;
 
@@ -10,15 +11,15 @@ interface Props {
   max: number;
   marks: { [key: number]: string };
   step: number;
-  initialInputValues: number[];
+  inputValues: number[];
+  onChange: (rightBounds: number[]) => void;
 }
 
 export function BucketSlider(props: Props) {
-  const { min, max, marks, initialInputValues, step } = props;
-  const inputValuesOffset = 1;
-  const intputNumbersPerRow = 4;
-  const [inputValues, setInputValues] = useState<number[]>(initialInputValues);
-  const inputValuesLength = initialInputValues.length;
+  const { min, max, marks, inputValues, step, onChange } = props;
+  const inputValuesHeadOffset = 1; // for "Right bounds:" string
+  const inputNumberColSpan = 6;
+
   // Include `number` type for compatibility
   function onSliderChange(inputValues: number | number[]) {
     if (Array.isArray(inputValues)) {
@@ -27,60 +28,63 @@ export function BucketSlider(props: Props) {
           return;
         }
       }
-      // Slice off min (1st element) and max (last element)
-      setInputValues(inputValues.slice(1, 1 + inputValuesLength));
+      // Slice off min (1st element) and max (last element) as they should not be included.
+      onChange(inputValues.slice(1, inputValues.length - 1));
     }
   }
 
-  function onInputNumberChange(index: number, value: number) {
-    setInputValues((prevInputValues) => [
-      ...prevInputValues.slice(0, index),
+  function onInputNumberChange(
+    index: number,
+    value: number,
+    inputValues: number[]
+  ) {
+    // value can be null when the input is blank
+    value = value || 0;
+    const newInputValues = [
+      ...inputValues.slice(0, index),
       value,
-      ...prevInputValues.slice(index + 1),
-    ]);
+      ...inputValues.slice(index + 1),
+    ];
+    onChange(newInputValues);
   }
 
-  const intputNumberRows = Math.ceil(inputValuesLength / intputNumbersPerRow);
+  function addInputValue(inputValues: number[], newValue: number) {
+    inputValues.push(newValue);
+    onChange(inputValues);
+  }
 
-  // + offset because we pad the head, which will be used to display the string
-  let inputNumbersCount = inputValuesLength + inputValuesOffset;
-  const inputNumbers = Array(intputNumberRows)
+  function deleteInputValue(inputValues: number[]) {
+    inputValues.pop();
+    onChange(inputValues);
+  }
+
+  // + offset because we pad the head, which will be used to display the text "Right bounds:"
+  const inputNumbersCount = inputValues.length + inputValuesHeadOffset;
+  const intputNumberCols = Array(inputNumbersCount)
     .fill(null)
-    .map((_, rowIndex) => {
-      const numberOfCols = Math.min(intputNumbersPerRow, inputNumbersCount);
-      const cols = Array(numberOfCols)
-        .fill(null)
-        .map((_, colIndex) => {
-          let col;
-          if (rowIndex == 0 && colIndex == 0) {
-            col = <Text style={{ textAlign: "center" }}>Right bounds:</Text>;
-          } else {
-            // - offset because the index 1 corresponds to the inputValues[0]
-            const inputValuesIdx =
-              rowIndex * intputNumbersPerRow + colIndex - inputValuesOffset;
-            col = (
-              <InputNumber
-                min={min}
-                max={max}
-                step={step}
-                value={inputValues[inputValuesIdx]}
-                onChange={(value) => {
-                  onInputNumberChange(inputValuesIdx, value);
-                }}
-              />
-            );
-          }
-          return (
-            <Col span={Math.floor(24 / intputNumbersPerRow)} key={colIndex}>
-              {col}
-            </Col>
-          );
-        });
-      inputNumbersCount -= intputNumbersPerRow;
+    .map((_, colIndex) => {
+      let col;
+      if (colIndex === 0) {
+        col = <Text style={{ textAlign: "center" }}>Right bounds:</Text>;
+      } else {
+        // - offset because the index 1 corresponds to the inputValues[0]
+        const inputValuesIdx = colIndex - inputValuesHeadOffset;
+        col = (
+          <InputNumber
+            min={min}
+            max={max}
+            step={step}
+            value={inputValues[inputValuesIdx]}
+            onChange={(value) => {
+              onInputNumberChange(inputValuesIdx, value, inputValues);
+            }}
+          />
+        );
+      }
       return (
-        <Row key={rowIndex} style={{ alignItems: "center" }}>
-          {cols}
-        </Row>
+        <Col span={inputNumberColSpan} key={colIndex}>
+          {col}
+        </Col>
       );
     });
 
@@ -96,12 +100,29 @@ export function BucketSlider(props: Props) {
             onChange={onSliderChange}
             value={[min, ...inputValues, max]}
             step={step}
-            allowCross={false}
             style={{ marginLeft: "32px", marginRight: "32px" }}
           />
         </Col>
       </Row>
-      {inputNumbers}
+      <Row style={{ alignItems: "center" }}>
+        {intputNumberCols}
+        <Col span={2}>
+          <Button
+            size="small"
+            shape="circle"
+            icon={<MinusOutlined />}
+            onClick={() => deleteInputValue(inputValues)}
+          />
+        </Col>
+        <Col span={2}>
+          <Button
+            size="small"
+            shape="circle"
+            icon={<PlusOutlined />}
+            onClick={() => addInputValue(inputValues, max)}
+          />
+        </Col>
+      </Row>
     </div>
   );
 }

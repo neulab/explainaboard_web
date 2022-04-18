@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { Performance } from "../../../clients/openapi";
+import { Performance } from "../../clients/openapi";
 
 export interface Features {
   [key: string]: FeatureVal;
@@ -50,6 +50,7 @@ export interface FineGrainedElement {
 export interface ResultFineGrainedParsed {
   systemID: string;
   task: string;
+  featureKey: string;
   description: string;
   metricName: string;
   bucketNames: string[];
@@ -58,6 +59,7 @@ export interface ResultFineGrainedParsed {
   bucketStep: number;
   bucketRightBounds: number[];
   bucketIntervals: Array<number[]>;
+  bucketInfo: SystemInfoFeature["bucket_info"];
   // TODO the latter type is for NER
   bucketsOfSamples: Array<string[]>; // | Array<{[key: string]: string}[]>;
   values: number[];
@@ -66,7 +68,7 @@ export interface ResultFineGrainedParsed {
 }
 
 export interface SystemAnalysisParsed {
-  resultsFineGrainedParsed: Array<ResultFineGrainedParsed>[];
+  resultsFineGrainedParsed: ResultFineGrainedParsed[];
   /* key: feature key a object key of a feature
   for retrieving the value from resultsFineGrainedParsed
   value: description is a description/name of a feature to be displayed in the UI
@@ -93,4 +95,35 @@ export interface ActiveSystemExamples {
   systemIndex: number;
   // TODO the latter type is for NER | {[key: string]: string}[]
   bucketOfSamplesList: string[][];
+}
+
+export interface SystemInfoFeatureBucketInfo {
+  method: string;
+  number: number;
+  setting: number | number[];
+}
+
+export interface SystemInfoFeature {
+  bucket_info: SystemInfoFeatureBucketInfo | null;
+  description: string | null;
+  dtype?: string;
+  is_bucket: boolean;
+  is_pre_computed: boolean;
+  require_training_set: boolean;
+  _type: string;
+}
+
+export interface UIBucketInfo {
+  min: number;
+  max: number;
+  // right bound of each interval, except the last one
+  rightBounds: number[];
+  /* tracks if a bucket info is updated by the user,
+  if true, we add the bucket info in the POST request body
+  */
+  updated: boolean;
+}
+
+export interface FeatureKeyToUIBucketInfo {
+  [featureKey: string]: UIBucketInfo;
 }

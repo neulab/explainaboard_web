@@ -1,5 +1,15 @@
-import { ResultFineGrainedParsed } from "./types";
-import { BucketPerformance } from "../../../clients/openapi";
+import {
+  MetricToSystemAnalysesParsed,
+  ResultFineGrainedParsed,
+  SystemAnalysisParsed,
+  SystemInfoFeature,
+} from "./types";
+import {
+  BucketPerformance,
+  SingleAnalysisReturn,
+  SystemAnalysesReturn,
+} from "../../clients/openapi";
+import { SystemModel } from "../../models";
 
 function formatName(name: string): number {
   if (Number.isNaN(Number(name))) {
@@ -8,7 +18,7 @@ function formatName(name: string): number {
   } else if (Number.isInteger(Number(name))) {
     return Number.parseInt(name);
   } else {
-    return Number.parseFloat(name);
+    return Number.parseFloat(Number.parseFloat(name).toFixed(2));
   }
 }
 
@@ -18,10 +28,12 @@ export function parse(
   task: string,
   metricNames: string[],
   description: string,
-  feature: { [key: string]: BucketPerformance }
+  feature: { [bucketInterval: string]: BucketPerformance },
+  featureKey: string,
+  bucketInfo: SystemInfoFeature["bucket_info"]
 ) {
   const decimalPlaces = 3;
-  const parsedResult: { [key: string]: ResultFineGrainedParsed } = {};
+  const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
   for (const metricName of metricNames) {
     const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
     const bucketMin: ResultFineGrainedParsed["bucketMin"] =
@@ -39,8 +51,10 @@ export function parse(
       systemID,
       task,
       description,
+      featureKey,
       metricName,
       bucketIntervals,
+      bucketInfo,
       bucketMin,
       bucketMax,
       bucketStep,
@@ -83,7 +97,7 @@ export function parse(
         }
         case 2: {
           bucketName = bucketInterval
-            .map((bound) => bound.toFixed(2))
+            .map((bound) => bound.toString())
             .join("\n|\n");
           break;
         }
@@ -137,9 +151,83 @@ export function parse(
       resultFineGrainedParsed.bucketRightBounds.push(
         bucketInterval[bucketInterval.length - 1]
       );
+      // bucketInfo are feature invariant across different metrics
+      resultFineGrainedParsed.bucketInfo = bucketInfo;
+      resultFineGrainedParsed.featureKey = featureKey;
     }
   }
   return parsedResult;
+}
+
+export function getMetricToSystemAnalysesParsed(
+  task: string,
+  metricNames: string[],
+  systems: SystemModel[],
+  singleAnalyses: SystemAnalysesReturn["single_analyses"]
+): MetricToSystemAnalysesParsed {
+  const metricToSystemAnalysesParsed: MetricToSystemAnalysesParsed = {};
+
+  for (const metricName of metricNames) {
+    // Array to store every parsed system analysis
+    metricToSystemAnalysesParsed[metricName] = [];
+  }
+
+  // Loop through each system analysis and parse
+  for (const system of systems) {
+    const systemID = system.system_id;
+    const systemInfoFeatures = system.system_info.features;
+    const systemActiveFeatures = system.active_features.sort();
+    const singleAnalysis: SingleAnalysisReturn = singleAnalyses[systemID];
+    const metricToParsedInfo: {
+      [key: string]: {
+        // the parsed fine-grained results, used for visualization
+        resultsFineGrainedParsed: ResultFineGrainedParsed[];
+      };
+    } = {};
+    for (const metricName of metricNames) {
+      metricToParsedInfo[metricName] = {
+        resultsFineGrainedParsed: [],
+      };
+    }
+
+    const featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"] =
+      {};
+
+    for (const featureKey of systemActiveFeatures) {
+      const feature = singleAnalysis[featureKey];
+      const systemInfoFeature = systemInfoFeatures[
+        featureKey
+      ] as SystemInfoFeature;
+      const bucketInfo = systemInfoFeature["bucket_info"];
+      const description = systemInfoFeature["description"] || featureKey;
+
+      const metricToResultFineGrainedParsed = parse(
+        systemID,
+        task,
+        metricNames,
+        description,
+        feature,
+        featureKey,
+        bucketInfo
+      );
+      for (const [metric, resultFineGrainedParsed] of Object.entries(
+        metricToResultFineGrainedParsed
+      )) {
+        metricToParsedInfo[metric].resultsFineGrainedParsed.push(
+          resultFineGrainedParsed
+        );
+      }
+    }
+
+    for (const [metric, parsedInfo] of Object.entries(metricToParsedInfo)) {
+      const { resultsFineGrainedParsed } = parsedInfo;
+      metricToSystemAnalysesParsed[metric].push({
+        featureKeyToDescription,
+        resultsFineGrainedParsed,
+      });
+    }
+  }
+  return metricToSystemAnalysesParsed;
 }
 
 export function compareBucketOfSamples(
@@ -160,3 +248,13 @@ export function compareBucketOfSamples(
   }
   return 0;
 }
+
+export function valuesToIntervals(values: number[]): number[][] {
+  return values
+    .slice(0, values.length - 1)
+    .map((value, index) => [value, values[index + 1]]);
+}
+
+// export function timeout(ms: number) {
+//   return new Promise(resolve => setTimeout(resolve, ms));
+// }

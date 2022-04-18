@@ -291,6 +291,7 @@ paths:
                           minItems: 2
                           maxItems: 2
                         example: [[0.0, 0.4], [0.4, 1.0]]
+              required: [system_ids, pairwise_performance_gap, feature_to_bucket_info]
   
       responses:
         "200":

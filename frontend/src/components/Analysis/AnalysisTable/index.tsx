@@ -4,7 +4,7 @@ import { ColumnsType } from "antd/lib/table";
 import { SystemOutput } from "../../../clients/openapi";
 import { backendClient } from "../../../clients";
 import { PageState } from "../../../utils";
-import { SystemAnalysisParsed } from "../AnalysisReport/types";
+import { SystemAnalysisParsed } from "../types";
 
 interface Props {
   systemID: string;

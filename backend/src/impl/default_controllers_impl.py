@@ -151,7 +151,7 @@ def systems_system_id_delete(system_id: str):
 def systems_analyses_post(body: SystemsAnalysesBody):
     system_ids_str = body.system_ids
     pairwise_performance_gap = body.pairwise_performance_gap
-    custom_feature_to_bucket_info = body.feature_to_bucket_info or {}
+    custom_feature_to_bucket_info = body.feature_to_bucket_info
 
     single_analyses: dict = {}
     system_ids: list = system_ids_str.split(",")
