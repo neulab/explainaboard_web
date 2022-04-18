@@ -1,4 +1,5 @@
 import { Button, Drawer, Spin, Tooltip, Typography } from "antd";
+import { RedoOutlined } from "@ant-design/icons";
 import React, { useEffect, useState } from "react";
 import { SystemModel } from "../../../models";
 import { ErrorBoundary, AnalysisReport } from "../../../components";
@@ -200,8 +201,8 @@ export function AnalysisDrawer({
     <Tooltip
       title={
         <div>
-          Adding, removing, or changing the right bounds of any graph activates
-          this button.
+          Adding, removing, or changing the right bounds of any graph enables
+          this button. Click it to update the analysis results.
         </div>
       }
       placement="bottom"
@@ -209,6 +210,8 @@ export function AnalysisDrawer({
       overlayInnerStyle={{ color: "black" }}
     >
       <Button
+        icon={<RedoOutlined />}
+        type="primary"
         disabled={!bucketInfoUpdated}
         onClick={() => setShouldUpdateAnalysis(true)}
       >
