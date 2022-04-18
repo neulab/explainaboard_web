@@ -52,8 +52,6 @@ export function AnalysisReport(props: Props) {
     );
   }
 
-  console.log(maxRightBoundsLength);
-
   /* The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
   Specifically, all charts are enclosed by <Col></Col>, which are then enclosed by a single <Row></Row>. 
   Ant design takes care of overflow and auto starts a new line.
