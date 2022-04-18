@@ -4,7 +4,7 @@ import dataclasses
 import os
 from typing import Optional
 
-from explainaboard import get_processor, get_task_categories
+from explainaboard import TaskType, get_processor, get_task_categories
 from explainaboard.feature import (
     BucketInfo,
     ClassLabel,
@@ -230,7 +230,7 @@ def systems_analyses_get(system_ids_str: str, pairwise_performance_gap: str):
 
         processor = get_processor(system_output_info.task_name)
         system_output_info.tokenizer = get_default_tokenizer(
-            task_type=processor.task_type, lang=system_info.language
+            task_type=TaskType(system_output_info.task_name), lang=system_info.language
         )
 
         metric_stats = [MetricStats(stat) for stat in system.metric_stats]

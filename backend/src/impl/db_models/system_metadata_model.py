@@ -83,15 +83,12 @@ class SystemModel(MetadataDBModel, System):
         overall_statistics = processor.get_overall_statistics(
             metadata=processor_metadata, sys_output=system_output_data
         )
-        if overall_statistics.metric_stats is None:
-            metric_stats = []
-        else:
-            metric_stats = [
-                binarize_bson(metric_stat.get_data())
-                for metric_stat in overall_statistics.metric_stats
-            ]
+        metric_stats = [
+            binarize_bson(metric_stat.get_data())
+            for metric_stat in overall_statistics.metric_stats
+        ]
 
-        # TODO(chihhao) needs proper serializiation & deserializiationin SDK
+        # TODO(chihhao) needs proper serializiation & deserializiation in SDK
         overall_statistics.sys_info.tokenizer = (
             overall_statistics.sys_info.tokenizer.json_repr()
         )
