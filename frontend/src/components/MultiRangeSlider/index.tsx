@@ -2,46 +2,10 @@ import * as React from "react";
 import RcSlider, { SliderProps as RcSliderProps } from "rc-slider";
 import classNames from "classnames";
 import { TooltipPlacement } from "antd/lib/tooltip";
+import { SliderBaseProps } from "antd/lib/slider";
 import SliderTooltip from "antd/lib/slider/SliderTooltip";
 import { ConfigContext } from "antd/lib/config-provider";
 import { SliderRef } from "rc-slider/lib/Slider";
-
-export type SliderMarks = RcSliderProps["marks"];
-
-interface HandleGeneratorInfo {
-  value?: number;
-  dragging?: boolean;
-  index: number;
-}
-
-export type HandleGeneratorFn = (config: {
-  tooltipPrefixCls?: string;
-  prefixCls?: string;
-  info: HandleGeneratorInfo;
-}) => React.ReactElement;
-
-export interface SliderBaseProps {
-  prefixCls?: string;
-  tooltipPrefixCls?: string;
-  reverse?: boolean;
-  min?: number;
-  max?: number;
-  step?: null | number;
-  marks?: SliderMarks;
-  dots?: boolean;
-  included?: boolean;
-  disabled?: boolean;
-  vertical?: boolean;
-  tipFormatter?: null | ((value?: number) => React.ReactNode);
-  className?: string;
-  id?: string;
-  style?: React.CSSProperties;
-  tooltipVisible?: boolean;
-  tooltipPlacement?: TooltipPlacement;
-  getTooltipPopupContainer?: (triggerNode: HTMLElement) => HTMLElement;
-  autoFocus?: boolean;
-  allowCross?: boolean;
-}
 
 interface SliderRange {
   draggableTrack?: boolean;

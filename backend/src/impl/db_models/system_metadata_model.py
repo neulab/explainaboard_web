@@ -140,8 +140,10 @@ class SystemModel(MetadataDBModel, System):
                 document["dataset"] = None
             dikt.pop("dataset_metadata_id")
 
-        metric_stats = document["metric_stats"]
-        document["metric_stats"] = []
+        metric_stats = []
+        if "metric_stats" in document:
+            metric_stats = document["metric_stats"]
+            document["metric_stats"] = []
         system = super().from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
@@ -167,7 +169,7 @@ class SystemModel(MetadataDBModel, System):
         return None
 
     @classmethod
-    def delete_one_by_id(cls, id: str, **kwargs):
+    def delete_one_by_id(cls, id: str):
         user = get_user()
         if not user.is_authenticated:
             abort_with_error_message(401, "log in required")
