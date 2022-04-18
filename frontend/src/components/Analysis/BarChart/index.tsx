@@ -242,9 +242,11 @@ export function BarChart(props: Props) {
       }}
       onEvents={{
         click: (event: ECElementEvent) => {
-          const barIndex = event.dataIndex;
+          const { dataIndex, componentType, componentSubType } = event;
           const systemIndex = event.seriesIndex || 0;
-          onBarClick(barIndex, systemIndex);
+          if (componentType === "series" && componentSubType === "bar") {
+            onBarClick(dataIndex, systemIndex);
+          }
         },
       }}
     />

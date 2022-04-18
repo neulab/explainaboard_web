@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Table, Tooltip, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
-import { SystemOutput } from "../../clients/openapi";
-import { backendClient } from "../../clients";
-import { PageState } from "../../utils";
-import { SystemAnalysisParsed } from "../AnalysisReport/types";
+import { SystemOutput } from "../../../clients/openapi";
+import { backendClient } from "../../../clients";
+import { PageState } from "../../../utils";
+import { SystemAnalysisParsed } from "../types";
 
 interface Props {
   systemID: string;

@@ -255,6 +255,52 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemOutputsReturn"
+
+  /systems/analyses:
+    post:
+      summary: Returns analysis result(s) of one or multiple systems
+      description: Returns analysis result(s) of one or multiple systems
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                system_ids:
+                  description: a string of comma-separated system ids
+                  type: string
+                  example: "61b02e0baadd2f674845b1c2,6254e4cd0f1133e7436ef298"
+                pairwise_performance_gap:
+                  description: returns the pairwise performance gap. Requires the length of systems_ids to be 2.
+                  type: boolean
+                feature_to_bucket_info:
+                  description: feature -> bucket info
+                  type: object
+                  additionalProperties:
+                    type: object
+                    properties:
+                      number:
+                        type: integer
+                      setting:
+                        type: array
+                        items:
+                          type: array
+                          items:
+                            type: number
+                          minItems: 2
+                          maxItems: 2
+                        example: [[0.0, 0.4], [0.4, 1.0]]
+              required: [system_ids, pairwise_performance_gap, feature_to_bucket_info]
+  
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemAnalysesReturn"
+
   /info:
     get:
       summary: information for environment identifier, backend version, login URL, etc. (not intent for public users)
@@ -304,6 +350,142 @@ components:
     # DatasetId:
     #   type: integer
     #   format: int64
+    
+    AnyType:
+      oneOf:
+        - type: boolean
+        - type: integer
+          nullable: true
+        - type: string
+          nullable: true
+        - type: array
+          items: {}
+        - type: object
+    
+    Value:
+      type: object
+      properties:
+        dtype: 
+          type: string
+        description:
+          type: string
+          nullable: true
+        is_bucket: 
+          type: boolean
+        require_training_set: 
+          type: boolean
+        is_pre_computed: 
+          type: boolean
+        bucket_info: 
+          # TODO(chihhao) define detailed fields
+          type: object
+          nullable: true
+        id:
+          type: string
+          nullable: true
+        _type:
+          type: string
+      
+    ClassLabel:
+      type: object
+      properties:
+        num_classes:
+          type: integer
+        names:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          nullable: true
+        names_file:
+          type: string
+          nullable: true
+        id:
+          type: string
+          nullable: true
+        is_bucket:
+          type: boolean
+        require_training_set: 
+          type: boolean
+        is_pre_computed: 
+          type: boolean
+        bucket_info:
+          type: object
+          nullable: true
+        _type: 
+          type: string
+          
+    SystemInfoFeature:
+      # TODO(chihhao) Commented out for now as it's not clear why using oneOf causes validaiton failure
+      # oneOf:
+      #   - $ref: '#/components/schemas/Value'
+      #   - $ref: '#/components/schemas/ClassLabel'
+      # TODO(chihhao) define detailed fields
+      type: object
+
+    SystemInfo:
+      description: Information about a system output, used in SDK's fine-grained analysis
+      type: object
+      properties:
+        task_name:
+          type: string
+          example: "text-classification"
+        model_name: 
+          type: string
+          example: "sst2-cnn"
+        dataset_name:
+          type: string
+          nullable: true
+        sub_dataset_name:
+          type: string
+          nullable: true
+        metric_names:
+          type: array
+          items:
+            type: string
+            example: "F1Score"
+        language:
+          type: string
+          example: en
+        reload_stat:
+          type: boolean
+        is_print_case:
+          type: boolean
+        conf_value:
+          type: number
+        system_details:
+          type: object
+          nullable: True
+        metric_configs:
+          type: object
+          nullable: True
+        tokenizer:
+          type: object
+          properties:
+            cls:
+              type: string
+              example: "SingleSpaceTokenizer"
+        features:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/SystemInfoFeature"
+        results:
+          type: object
+          properties:
+            overall:
+              type: object
+              description: metric_name -> metric_value
+              additionalProperties:
+                $ref: "#/components/schemas/Performance"
+            calibration:
+              type: array
+              items:
+                type: string
+            fine_grained:
+              type: object
+          required: [overall, calibration, fine_grained]
+      required: [task_name, model_name, metric_names, language, reload_stat, is_print_case, conf_value, tokenizer, features, results]
 
     APIError:
       type: object
@@ -377,30 +559,6 @@ components:
           format: uri
         bib:
           type: string
-
-    SystemAnalysis:
-      type: object
-      properties:
-        features:
-          type: object
-        results:
-          type: object
-          properties:
-            overall:
-              type: object
-              description: metric_name -> metric_value
-              additionalProperties:
-                $ref: "#/components/schemas/Metric"
-            calibration:
-              type: string
-            is_print_case:
-              type: boolean
-            is_print_confidence_interval:
-              type: boolean
-            fine_grained:
-              type: object
-          required: [overall, fine_grained]
-      required: [features, results]
 
     SystemOutput:
       type: object
@@ -483,8 +641,9 @@ components:
               description: user email
             is_private:
               type: boolean
-            task:
-              type: string
+            system_info:
+              $ref: "#/components/schemas/SystemInfo"
+            # TODO(chihhao) Deduplication of dataset information here and in system_info
             dataset:
               description: if not specified, it is undefined
               type: object
@@ -500,38 +659,35 @@ components:
                   items:
                     type: string
               required: [dataset_id, dataset_name, tasks]
-            model_name:
-              type: string
-            metric_names:
-              type: array
-              items:
-                type: string
             paper_info:
               $ref: "#/components/schemas/PaperInfo"
-            language:
-              type: string
-              example: en
             code:
               type: string
               format: url
             download_link:
               type: string
               format: url
-            analysis:
-              $ref: "#/components/schemas/SystemAnalysis"
+            active_features:
+              description: Active features of a system, used in SDK's fine-grained analysis
+              type: array
+              items:
+                type: string
+            metric_stats:
+              description: An array of sufficient statistics for each metric, used in SDK's fine-grained analysis
+              type: array
+              items:
+                type: number
           required: [
               system_id,
-              # creator,
               is_private,
-              task,
-              model_name,
-              metric_names,
+              system_info,
               paper_info,
-              analysis,
+              active_features,
+              metric_stats
             ]
         - $ref: "#/components/schemas/Time"
 
-    Feature:
+    DatasetFeature:
       type: object
       properties:
         type:
@@ -600,7 +756,7 @@ components:
         features:
           type: object
           additionalProperties:
-            $ref: "#/components/schemas/Feature"
+            $ref: "#/components/schemas/DatasetFeature"
         speaker_demographic:
           type: object
         annotator_demographic:
@@ -660,7 +816,47 @@ components:
         - systems
         - total
 
-    Metric:
+    BucketPerformance:
+      type: object
+      properties:
+        bucket_name:
+          type: array
+          items:
+            type: string
+        n_samples:
+          type: number
+        bucket_samples:
+          type: array
+          items:
+            type: string
+        performances: 
+          type: array
+          items:
+            $ref: "#/components/schemas/Performance"
+      required: [bucket_name, n_samples, bucket_samples, performances]
+      
+    SingleAnalysisReturn:
+      type: object   
+      description: feature -> bucket interval
+      additionalProperties:
+        type: object
+        description: bucket interval -> BucketPerformance
+        additionalProperties:
+          $ref: "#/components/schemas/BucketPerformance"
+
+    SystemAnalysesReturn:
+      type: object
+      properties:
+        single_analyses:
+          type: object
+          description: system_id -> SingleAnalysisReturn
+          additionalProperties:
+            $ref: "#/components/schemas/SingleAnalysisReturn"
+        pairwise_performance_gap:
+          type: object
+      required: [single_analyses]
+
+    Performance:
       type: object
       properties:
         metric_name:
@@ -669,8 +865,10 @@ components:
           type: number
         confidence_score_low:
           type: number
-        confidence_score_up:
+          nullable: true
+        confidence_score_high:
           type: number
+          nullable: true
       required: [metric_name, value]
 
     User:

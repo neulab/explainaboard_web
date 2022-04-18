@@ -15,7 +15,7 @@ export function TermsPage() {
             <h1 className="text-white text-6xl mb-0">
               ExplainaBoard Terms of Use
             </h1>
-            <div className="relative flex flex-col min-w-0 break-words bg-white py-3 mx-20 rounded-lg">
+            <div className="relative flex flex-col min-w-0 break-words bg-white py-3 mx-20 rounded-lg px-20">
               <p className="text-l text-left">
                 Thank you for your interest in ExplainaBoard!
               </p>

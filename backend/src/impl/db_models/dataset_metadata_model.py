@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 from datetime import datetime
-from typing import Any, Dict, Optional, Union, List
+from typing import Any, Optional, Union
+
 from bson.objectid import ObjectId
 from explainaboard_web.impl.db_models.db_model import MetadataDBModel
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
@@ -32,16 +34,18 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
         cls,
         page: int,
         page_size: int,
-        dataset_ids: Optional[List[str]] = None,
+        dataset_ids: Optional[list[str]] = None,
         dataset_name: Optional[str] = None,
         task: Optional[str] = None,
         no_limit: bool = False,
     ) -> DatasetsReturn:
         """
-        fuzzy match works like a `LIKE {name_prefix}%` operation now. can extend this and allow for
-        full text search in the future.
-          - `no_limit=True` ignores page and page_size to retrieve unlimited records. This option should not be exposed to users."""
-        filter: Dict[str, Any] = {}
+        fuzzy match works like a `LIKE {name_prefix}%` operation now. can extend this
+        and allow for full text search in the future.
+          - `no_limit=True` ignores page and page_size to retrieve unlimited records.
+            This option should not be exposed to users.
+        """
+        filter: dict[str, Any] = {}
         if dataset_ids is not None:
             filter["_id"] = {"$in": [ObjectId(_id) for _id in dataset_ids]}
         if dataset_name is not None:

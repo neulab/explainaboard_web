@@ -1,132 +1,73 @@
 import React, { useState } from "react";
 import {
-  ResultFineGrainedParsed,
-  SystemAnalysisParsed,
   MetricToSystemAnalysesParsed,
   ActiveSystemExamples,
-} from "./types";
-import { parse, compareBucketOfSamples } from "./utils";
-import { BarChart, AnalysisTable } from "../../components";
+  FeatureKeyToUIBucketInfo,
+  UIBucketInfo,
+} from "../types";
+import { compareBucketOfSamples } from "../utils";
+import { BarChart, AnalysisTable } from "../../../components";
 import { Row, Col, Typography, Space, Tabs } from "antd";
-import { SystemAnalysisModel, SystemModel } from "../../models";
+import { SystemModel } from "../../../models";
+import { SystemAnalysesReturn } from "../../../clients/openapi";
+import { BucketSlider } from "../BucketSlider";
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { TabPane } = Tabs;
 
 interface Props {
-  systemIDs: string[];
-  systemInfos: {
-    modelName: SystemModel["model_name"];
-    metricNames: SystemModel["metric_names"];
-  }[];
   task: string;
-  analyses: SystemAnalysisModel[];
+  systems: SystemModel[];
+  singleAnalyses: SystemAnalysesReturn["single_analyses"];
+  metricToSystemAnalysesParsed: MetricToSystemAnalysesParsed;
+  featureKeyToBucketInfo: FeatureKeyToUIBucketInfo;
+  updateFeatureKeyToBucketInfo: (
+    featureKey: string,
+    bucketInfo: UIBucketInfo
+  ) => void;
 }
 
 export function AnalysisReport(props: Props) {
-  const { task, systemIDs, systemInfos, analyses } = props;
-  /*
-  Take from the first element as the type and number of metrics should be 
-  invariant across sytems in pairwise analysis
-  */
-  const metricNames = systemInfos[0].metricNames;
-  const systemNames = systemInfos.map((sysInfo) => sysInfo.modelName);
-  const metricToSystemAnalysesParsed: MetricToSystemAnalysesParsed = {};
-  for (const metricName of metricNames) {
-    // Array to store every parsed system analysis
-    metricToSystemAnalysesParsed[metricName] = [];
-  }
-
+  const {
+    task,
+    systems,
+    metricToSystemAnalysesParsed,
+    featureKeyToBucketInfo,
+    updateFeatureKeyToBucketInfo,
+  } = props;
+  const systemIDs = systems.map((system) => system.system_id);
+  const systemNames = systems.map((system) => system.system_info.model_name);
+  const metricNames = Object.keys(metricToSystemAnalysesParsed);
   const [activeMetric, setActiveMetric] = useState<string>(metricNames[0]);
   const [activeSystemExamples, setActiveSystemExamples] =
     useState<ActiveSystemExamples>();
   // page number of the analysis table
   const [page, setPage] = useState(0);
 
-  /* The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
-  Specifically, every chart is enclosed by <Col></Col>, and `chartNumPerRow` sets the number of charts
-  to be enclosed by <Row></Row>. 
-  */
-  // Must be a factor of 24 since Ant divides a row into 24 sections!
-  let chartNumPerRow = 3;
-  // pairwise analysis
-  if (systemIDs.length > 1) {
-    chartNumPerRow = 2;
+  let maxRightBoundsLength = 0;
+  for (const bucketInfo of Object.values(featureKeyToBucketInfo)) {
+    maxRightBoundsLength = Math.max(
+      maxRightBoundsLength,
+      bucketInfo.rightBounds.length
+    );
   }
 
-  // Loop through each system analysis and parse
-  for (let i = 0; i < systemIDs.length; i++) {
-    const systemID = systemIDs[i];
-    const analysis = analyses[i];
-    const resultsFineGrained = analysis["results"]["fine_grained"];
-
-    const metricToParsedInfo: {
-      [key: string]: {
-        resultsFineGrainedParsed: Array<ResultFineGrainedParsed>[];
-        rowIdx: number;
-        chartNum: number;
-      };
-    } = {};
-    for (const metric of metricNames) {
-      metricToParsedInfo[metric] = {
-        // the parsed fine-grained results, used for visualization
-        resultsFineGrainedParsed: [
-          new Array<ResultFineGrainedParsed>(chartNumPerRow),
-        ],
-        rowIdx: 0,
-        chartNum: 0,
-      };
-    }
-
-    const featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"] =
-      {};
-
-    for (const [key, resultFineGrained] of Object.entries(resultsFineGrained)) {
-      // Attempt to get the description of feature from analysis.features.[key]
-      const featureVal = analysis["features"][key];
-      let description = key;
-      if (
-        featureVal !== undefined &&
-        typeof featureVal["description"] === "string"
-      ) {
-        description = featureVal["description"];
-      }
-      featureKeyToDescription[key] = description;
-
-      // Add a row if the current row is full
-      for (const parsedInfo of Object.values(metricToParsedInfo)) {
-        if (parsedInfo.chartNum === chartNumPerRow) {
-          parsedInfo.chartNum = 0;
-          parsedInfo.resultsFineGrainedParsed.push(
-            new Array<ResultFineGrainedParsed>(chartNumPerRow)
-          );
-          parsedInfo.rowIdx += 1;
-        }
-      }
-      const metricToResultFineGrainedParsed = parse(
-        systemID,
-        task,
-        metricNames,
-        description,
-        resultFineGrained
-      );
-      for (const [metric, resultFineGrainedParsed] of Object.entries(
-        metricToResultFineGrainedParsed
-      )) {
-        const rowIdx = metricToParsedInfo[metric].rowIdx;
-        const chartNum = metricToParsedInfo[metric].chartNum;
-        metricToParsedInfo[metric].resultsFineGrainedParsed[rowIdx][chartNum] =
-          resultFineGrainedParsed;
-        metricToParsedInfo[metric].chartNum += 1;
-      }
-    }
-
-    for (const [metric, parsedInfo] of Object.entries(metricToParsedInfo)) {
-      const { resultsFineGrainedParsed } = parsedInfo;
-      metricToSystemAnalysesParsed[metric].push({
-        featureKeyToDescription,
-        resultsFineGrainedParsed,
-      });
+  /* The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
+  Specifically, all charts are enclosed by <Col></Col>, which are then enclosed by a single <Row></Row>. 
+  Ant design takes care of overflow and auto starts a new line.
+  */
+  // Must be a factor of 24 since Ant divides a design area into 24 sections!
+  let colSpan = 8;
+  if (maxRightBoundsLength > 5) {
+    colSpan = 24;
+  } else if (maxRightBoundsLength > 3) {
+    colSpan = 12;
+  }
+  // pairwise analysis needs more column space to display two systems
+  if (systemIDs.length > 1) {
+    colSpan = 12;
+    if (maxRightBoundsLength > 3) {
+      colSpan = 24;
     }
   }
 
@@ -205,13 +146,6 @@ export function AnalysisReport(props: Props) {
         <Title level={4}>{`${exampleText} from ${barText} #${
           barIndex + 1
         } in ${title}`}</Title>
-        <Space style={{ width: "fit-content", float: "left" }}>
-          <Text>
-            {
-              "Note: Long texts are truncated. To view the full text, hover your cursor on the cell."
-            }
-          </Text>
-        </Space>
         {analysisTable}
       </div>
     );
@@ -234,15 +168,47 @@ export function AnalysisReport(props: Props) {
           systemAnalysesParsed[0];
         return (
           <TabPane tab={metric} key={metric}>
-            {/* <div style={{ textAlign: "center" }}> */}
-            {
-              // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
-              // into rows and columns. One column contains a single BarChart.
-              resultsFineGrainedParsed.map((row, rowIdx) => {
-                const cols = row.map((resultFirst, resultIdx) => {
+            <Row>
+              {
+                // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
+                // into columns. One column contains a single BarChart.
+                resultsFineGrainedParsed.map((resultFirst, resultIdx) => {
                   // For invariant variables across all systems, we can simply take from the first result
                   const title = `${resultFirst.metricName} by ${resultFirst.description}`;
-                  const xAxisData = resultFirst.bucketNames;
+                  const bucketNames = resultFirst.bucketNames;
+                  const featureKey = resultFirst.featureKey;
+                  const isBucketAdjustable =
+                    featureKey in featureKeyToBucketInfo;
+                  let bucketSlider = null;
+                  if (isBucketAdjustable) {
+                    const bucketInfo = featureKeyToBucketInfo[featureKey];
+                    const bucketRightBounds = bucketInfo.rightBounds;
+                    if (bucketRightBounds !== undefined) {
+                      const bucketMin = bucketInfo.min;
+                      const bucketMax = bucketInfo.max;
+                      const bucketStep = resultFirst.bucketStep;
+                      bucketSlider = (
+                        <BucketSlider
+                          min={bucketMin}
+                          max={bucketMax}
+                          marks={{
+                            [bucketMin]: bucketMin.toFixed(2),
+                            [bucketMax]: bucketMax.toFixed(2),
+                          }}
+                          step={bucketStep}
+                          inputValues={bucketRightBounds}
+                          onChange={(rightBounds) => {
+                            updateFeatureKeyToBucketInfo(featureKey, {
+                              min: bucketMin,
+                              max: bucketMax,
+                              rightBounds: rightBounds,
+                              updated: true,
+                            });
+                          }}
+                        />
+                      );
+                    }
+                  }
 
                   // System-dependent variables must be taken from all systems
                   const resultsValues: number[][] = [];
@@ -251,7 +217,7 @@ export function AnalysisReport(props: Props) {
                   const resultsBucketsOfSamples: string[][][] = [];
                   for (let i = 0; i < systemAnalysesParsed.length; i++) {
                     const result =
-                      systemAnalysesParsed[i].resultsFineGrainedParsed[rowIdx][
+                      systemAnalysesParsed[i].resultsFineGrainedParsed[
                         resultIdx
                       ];
                     resultsValues.push(result.values);
@@ -261,14 +227,11 @@ export function AnalysisReport(props: Props) {
                   }
 
                   return (
-                    <Col
-                      span={Math.floor(24 / chartNumPerRow)}
-                      key={resultFirst.description}
-                    >
+                    <Col span={colSpan} key={resultFirst.description}>
                       <BarChart
                         title={title}
                         seriesNames={systemNames}
-                        xAxisData={xAxisData}
+                        xAxisData={bucketNames}
                         seriesDataList={resultsValues}
                         seriesLabelsList={resultsValues}
                         numbersOfSamplesList={resultsNumbersOfSamples}
@@ -290,14 +253,13 @@ export function AnalysisReport(props: Props) {
                           setPage(0);
                         }}
                       />
+                      {bucketSlider}
                     </Col>
                   );
-                });
-                return <Row key={rowIdx}>{cols}</Row>;
-              })
-            }
+                })
+              }
+            </Row>
             {analysisTable}
-            {/* </div> */}
           </TabPane>
         );
       })}
