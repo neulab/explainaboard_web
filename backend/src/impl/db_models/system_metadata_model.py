@@ -25,7 +25,7 @@ from pymongo.client_session import ClientSession
 
 
 class SystemModel(MetadataDBModel, System):
-    _collection_name = "dev_system_metadata_stats"
+    _collection_name = "dev_system_metadata"
 
     @classmethod
     def create(
