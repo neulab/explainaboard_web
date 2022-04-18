@@ -88,7 +88,7 @@ class SystemModel(MetadataDBModel, System):
             for metric_stat in overall_statistics.metric_stats
         ]
 
-        # TODO(chihhao) needs proper serializiation & deserializiationin SDK
+        # TODO(chihhao) needs proper serializiation & deserializiation in SDK
         overall_statistics.sys_info.tokenizer = (
             overall_statistics.sys_info.tokenizer.json_repr()
         )

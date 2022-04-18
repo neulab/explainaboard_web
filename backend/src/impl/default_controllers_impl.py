@@ -232,7 +232,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
         processor = get_processor(TaskType(system_output_info.task_name))
         system_output_info.tokenizer = get_default_tokenizer(
-            task_type=processor.task_type, lang=system_info.language
+            task_type=TaskType(system_output_info.task_name), lang=system_info.language
         )
 
         metric_stats = [MetricStats(stat) for stat in system.metric_stats]
