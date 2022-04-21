@@ -50,7 +50,7 @@ class User:
     ) -> None:
         self._is_authenticated: bool = is_authenticated
         self._token: Optional[str] = token
-        self._info: Optional[dict] = None
+        self._info: dict = {}
         if self._is_authenticated:
             if token is None or info is None:
                 raise Exception("token is required to create an authenticated user")
@@ -58,7 +58,7 @@ class User:
             info.pop("cognito:username")
             self._info = info
 
-    def get_user_info(self):
+    def get_user_info(self) -> dict:
         if "api_key" not in self._info or "preferred_username" not in self._info:
             user = CognitoClient().fetch_user_info(self.username)
             if not user:
@@ -72,15 +72,15 @@ class User:
         return self._info
 
     @property
-    def is_authenticated(self):
+    def is_authenticated(self) -> bool:
         return self._is_authenticated
 
     @property
-    def email(self):
+    def email(self) -> str:
         return self._info[self._EMAIL_KEY]
 
     @property
-    def username(self):
+    def username(self) -> str:
         return self._info[self._USERNAME_KEY]
 
     @property
@@ -88,7 +88,7 @@ class User:
         return self._token
 
 
-def get_user() -> Optional[User]:
+def get_user() -> User:
     """returns user information"""
     user = getattr(g, "_user", None)
     if user is None:

@@ -5,7 +5,14 @@ from datetime import datetime
 from typing import Any, Optional
 
 from bson.objectid import ObjectId
-from explainaboard import Source, get_loader, get_processor
+from explainaboard import (
+    DatalabLoaderOption,
+    FileType,
+    Source,
+    get_custom_dataset_loader,
+    get_datalab_loader,
+    get_processor,
+)
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
@@ -29,7 +36,10 @@ class SystemModel(MetadataDBModel, System):
 
     @classmethod
     def create(
-        cls, metadata: SystemCreateProps, system_output: SystemOutputProps
+        cls,
+        metadata: SystemCreateProps,
+        system_output: SystemOutputProps,
+        custom_dataset: SystemOutputProps | None = None,
     ) -> SystemModel:
         """
         create a system
@@ -44,8 +54,6 @@ class SystemModel(MetadataDBModel, System):
         system = cls.from_dict(metadata.to_dict())
 
         user = get_user()
-        if not user.is_authenticated:
-            abort_with_error_message(401, "log in required")
         system.creator = user.email
 
         # validation
@@ -54,69 +62,92 @@ class SystemModel(MetadataDBModel, System):
                 abort_with_error_message(
                     400, f"dataset: {metadata.dataset_metadata_id} does not exist"
                 )
-            if system.task not in system.dataset.tasks:
+            if metadata.task not in system.dataset.tasks:
                 abort_with_error_message(
                     400,
                     f"dataset {system.dataset.dataset_name} cannot be used for "
-                    f"{system.task} tasks",
+                    f"{metadata.task} tasks",
                 )
 
-        # load system output and generate analysis
-        system_output_data = list(
-            get_loader(
-                task=metadata.task,
-                data=system_output.data,
-                source=Source.in_memory,
-                file_type=system_output.file_type,
-            ).load()
-        )
-        processor = get_processor(metadata.task)
-        processor_metadata = {
-            **metadata.to_dict(),
-            "task_name": metadata.task,
-            "dataset_name": system.dataset.dataset_name if system.dataset else None,
-            "sub_dataset_name": system.dataset.sub_dataset
-            if system.dataset and system.dataset.sub_dataset
-            else "default",
-        }
+        def load_sys_output():
+            if custom_dataset:
+                return get_custom_dataset_loader(
+                    task=metadata.task,
+                    dataset_data=custom_dataset.data,
+                    output_data=system_output.data,
+                    dataset_source=Source.in_memory,
+                    output_source=Source.in_memory,
+                    dataset_file_type=custom_dataset.file_type,
+                    output_file_type=system_output.file_type,
+                ).load()
+            else:
+                return get_datalab_loader(
+                    task=metadata.task,
+                    dataset=DatalabLoaderOption(
+                        system.dataset.dataset_name,
+                        system.dataset.sub_dataset,
+                        metadata.dataset_split,
+                    ),
+                    output_data=system_output.data,
+                    output_file_type=FileType(system_output.file_type),
+                    output_source=Source.in_memory,
+                ).load()
 
-        overall_statistics = processor.get_overall_statistics(
-            metadata=processor_metadata, sys_output=system_output_data
-        )
-        metric_stats = [
-            binarize_bson(metric_stat.get_data())
-            for metric_stat in overall_statistics.metric_stats
-        ]
+        try:
+            system_output_data = load_sys_output()
+            processor = get_processor(metadata.task)
+            processor_metadata = {
+                **metadata.to_dict(),
+                "task_name": metadata.task,
+                "dataset_name": system.dataset.dataset_name if system.dataset else None,
+                "sub_dataset_name": system.dataset.sub_dataset
+                if system.dataset
+                else None,
+                "dataset_split": metadata.dataset_split,
+            }
 
-        # TODO(chihhao) needs proper serializiation & deserializiation in SDK
-        overall_statistics.sys_info.tokenizer = (
-            overall_statistics.sys_info.tokenizer.json_repr()
-        )
-        # TODO avoid None as nullable seems undeclarable for array and object
-        # in openapi.yaml
-        if overall_statistics.sys_info.results.calibration is None:
-            overall_statistics.sys_info.results.calibration = []
-        if overall_statistics.sys_info.results.fine_grained is None:
-            overall_statistics.sys_info.results.fine_grained = {}
+            overall_statistics = processor.get_overall_statistics(
+                metadata=processor_metadata, sys_output=system_output_data
+            )
+            metric_stats = [
+                binarize_bson(metric_stat.get_data())
+                for metric_stat in overall_statistics.metric_stats
+            ]
 
-        system.system_info = overall_statistics.sys_info.to_dict()
-        system.metric_stats = metric_stats
-        system.active_features = overall_statistics.active_features
+            # TODO(chihhao) needs proper serializiation & deserializiation in SDK
+            overall_statistics.sys_info.tokenizer = (
+                overall_statistics.sys_info.tokenizer.json_repr()
+            )
+            # TODO avoid None as nullable seems undeclarable for array and object
+            # in openapi.yaml
+            if overall_statistics.sys_info.results.calibration is None:
+                overall_statistics.sys_info.results.calibration = []
+            if overall_statistics.sys_info.results.fine_grained is None:
+                overall_statistics.sys_info.results.fine_grained = {}
 
-        def db_operations(session: ClientSession) -> str:
-            system_id = system.insert(session)
-            SystemOutputsModel(system_id, system_output_data).insert()
-            return system_id
+            system.system_info = overall_statistics.sys_info.to_dict()
+            system.metric_stats = metric_stats
+            system.active_features = overall_statistics.active_features
 
-        system_id = DBModel.execute_transaction(db_operations)
+            def db_operations(session: ClientSession) -> str:
+                system_id = system.insert(session)
+                SystemOutputsModel(system_id, system_output_data).insert()
+                return system_id
 
-        # Metric_stats is replaced with empty list for now as
-        # bson's Binary and numpy array is not directly serializable
-        # in swagger. If the frontend needs it,
-        # we can come up with alternatives.
-        system.metric_stats = []
-        system.system_id = system_id
-        return system
+            system_id = DBModel.execute_transaction(db_operations)
+
+            # Metric_stats is replaced with empty list for now as
+            # bson's Binary and numpy array is not directly serializable
+            # in swagger. If the frontend needs it,
+            # we can come up with alternatives.
+            system.metric_stats = []
+            system.system_id = system_id
+            return system
+        except ValueError as e:
+            abort_with_error_message(400, str(e))
+            # mypy doesn't seem to understand the NoReturn type in an except block.
+            # It's a noop to fix it
+            raise e
 
     @classmethod
     def from_dict(
@@ -130,10 +161,16 @@ class SystemModel(MetadataDBModel, System):
         if dikt.get("dataset_metadata_id") and dikt.get("dataset") is None:
             dataset = DatasetMetaDataModel.find_one_by_id(dikt["dataset_metadata_id"])
             if dataset:
+                split = document.get("dataset_split")
+                # this check only valid for create
+                if split and split not in dataset.split:
+                    abort_with_error_message(
+                        400, f"{split} is not a valid split for {dataset.dataset_name}"
+                    )
                 document["dataset"] = {
                     "dataset_id": dataset.dataset_id,
                     "dataset_name": dataset.dataset_name,
-                    "sub_dataset": dataset.sub_dataset,
+                    "sub_dataset": dataset.sub_dataset or "default",
                     "tasks": dataset.tasks,
                 }
             else:

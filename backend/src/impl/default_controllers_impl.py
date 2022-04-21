@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import binascii
 import dataclasses
 import os
 from typing import Optional
@@ -127,9 +128,30 @@ def systems_post(body: SystemsBody) -> SystemModel:
     aborts with error if fails
     TODO: error handling
     """
-    body.system_output.data = decode_base64(body.system_output.data)
-    system = SystemModel.create(body.metadata, body.system_output)
-    return system
+    if body.metadata.dataset_metadata_id:
+        if not body.metadata.dataset_split:
+            abort_with_error_message(
+                400, "dataset split is required if a dataset is chosen"
+            )
+        if body.custom_dataset:
+            abort_with_error_message(
+                400,
+                "both datalab dataset and custom dataset are "
+                "provided. please only select one.",
+            )
+
+    try:
+        body.system_output.data = decode_base64(body.system_output.data)
+        if body.custom_dataset and body.custom_dataset.data:
+            body.custom_dataset.data = decode_base64(body.custom_dataset.data)
+        system = SystemModel.create(
+            body.metadata, body.system_output, body.custom_dataset
+        )
+        return system
+    except binascii.Error as e:
+        abort_with_error_message(
+            400, f"file should be sent in plain text base64. ({e})"
+        )
 
 
 def systems_system_id_outputs_get(
