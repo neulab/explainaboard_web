@@ -6,23 +6,19 @@ import {
   DrawerProps,
   Form,
   Input,
-  Upload,
   message,
   Space,
   Spin,
-  Radio,
-  CheckboxOptionType,
   Tooltip,
   Checkbox,
 } from "antd";
-import { DatasetMetadata, TaskCategory } from "../../clients/openapi";
+import { DatasetMetadata, System, TaskCategory } from "../../clients/openapi";
 import { backendClient, parseBackendError } from "../../clients";
-import { findTask, toBase64 } from "../../utils";
-import { UploadOutlined } from "@ant-design/icons";
+import { findTask, toBase64, unwrap } from "../../utils";
 import { useForm } from "antd/lib/form/Form";
-import { UploadFile } from "antd/lib/upload/interface";
 import { TaskSelect, TextWithLink } from "..";
-import { DatasetSelectLabel } from "./DatasetSelectLabel";
+import { DatasetSelect, DatasetValue } from "./DatasetSelect";
+import { DataFileUpload, DataFileValue } from "./FileSelect";
 
 interface Props extends DrawerProps {
   onClose: () => void;
@@ -45,6 +41,7 @@ export function SystemSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.loading);
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
   const [datasetOptions, setDatasetOptions] = useState<DatasetMetadata[]>([]);
+  const [useCustomDataset, setUseCustomDataset] = useState(false);
 
   const [form] = useForm<FormData>();
   const { onClose } = props;
@@ -59,7 +56,10 @@ export function SystemSubmitDrawer(props: Props) {
 
   const selectedTaskName = form.getFieldValue("task");
   const selectedTask = findTask(taskCategories, selectedTaskName);
-  const allowedFileType = selectedTask?.supported_formats || [];
+  const allowedFileType = selectedTask?.supported_formats || {
+    system_output: [],
+    custom_dataset: [],
+  };
 
   /**
    * Fetch datasets that match the selected task (max: 30)
@@ -83,6 +83,13 @@ export function SystemSubmitDrawer(props: Props) {
     setState(State.other);
   }
 
+  async function extractAndEncodeFile(fileValue: DataFileValue) {
+    const fileList = unwrap(fileValue.fileList);
+    const file = fileList[0].originFileObj;
+    if (file == null) throw new Error("file is undefined");
+    return ((await toBase64(file)) as string).split(",")[1];
+  }
+
   /**
    *
    * TODO:
@@ -91,46 +98,73 @@ export function SystemSubmitDrawer(props: Props) {
   async function submit({
     name,
     task,
-    dataset_id,
+    dataset,
     metric_names,
     language,
-    sys_out_file_list,
+    sys_out_file,
+    custom_dataset_file,
     code,
-    fileType,
     is_private,
   }: FormData) {
     try {
       setState(State.loading);
-      const file = sys_out_file_list[0].originFileObj;
-      if (file == null) throw Error("file is undefined");
-      const systemOutBase64 = ((await toBase64(file)) as string).split(",")[1];
-      const system = await backendClient.systemsPost({
-        metadata: {
-          dataset_metadata_id: dataset_id || undefined,
-          metric_names,
-          model_name: name,
-          paper_info: {},
-          task: task,
-          language,
-          code,
-          is_private,
-        },
-        system_output: {
-          data: systemOutBase64,
-          file_type: fileType,
-        },
-      });
+      const systemOutBase64 = await extractAndEncodeFile(sys_out_file);
+      let system: System;
+      if (useCustomDataset) {
+        const customDatasetBase64 = await extractAndEncodeFile(
+          custom_dataset_file
+        );
+        system = await backendClient.systemsPost({
+          metadata: {
+            metric_names,
+            model_name: name,
+            paper_info: {},
+            task: task,
+            language,
+            code,
+            is_private,
+          },
+          system_output: {
+            data: systemOutBase64,
+            file_type: unwrap(sys_out_file.fileType),
+          },
+          custom_dataset: {
+            data: customDatasetBase64,
+            file_type: unwrap(custom_dataset_file.fileType),
+          },
+        });
+      } else {
+        const { datasetID, split } = dataset;
+        system = await backendClient.systemsPost({
+          metadata: {
+            dataset_metadata_id: datasetID,
+            dataset_split: split,
+            metric_names,
+            model_name: name,
+            paper_info: {},
+            task: task,
+            language,
+            code,
+            is_private,
+          },
+          system_output: {
+            data: systemOutBase64,
+            file_type: unwrap(sys_out_file.fileType),
+          },
+        });
+      }
+
       message.success(`Successfully submitted system (${system.system_id}).`);
       onClose();
       form.resetFields([
         "name",
         "task",
-        "dataset_id",
+        "dataset",
+        "sys_out_file",
+        "custom_dataset_file",
         "metric_names",
         "language",
         "code",
-        "sys_out_file_list",
-        "fileType",
       ]);
     } catch (e) {
       if (e instanceof Response) {
@@ -150,7 +184,10 @@ export function SystemSubmitDrawer(props: Props) {
       searchDatasets("", changedFields.task);
       setDatasetOptions([]);
       // clear dataset and metric_names selections
-      form.setFieldsValue({ dataset_id: undefined, metric_names: [] });
+      form.setFieldsValue({
+        dataset: { datasetID: undefined, split: undefined },
+        metric_names: [],
+      });
     }
   }
 
@@ -169,25 +206,34 @@ export function SystemSubmitDrawer(props: Props) {
     </Space>
   );
 
-  /**
-   * 1. take an event and returns the filelist
-   * 2. determines file type according to file extension. user can also override the file type selection
-   * */
-  function normalizeFile(e: { file: File; fileList: UploadFile[] }) {
-    const fileList = e && e.fileList;
-    if (!fileList || fileList.length === 0) return undefined;
-    let fileExtension = fileList[0].name.split(".")[1].toLowerCase();
-    if (fileExtension === "jsonl") fileExtension = "json"; // SDK treats them the same
-    const fileType = FILE_TYPES.find((type) => type.value === fileExtension);
-    if (fileType && allowedFileType.includes(fileType.value as string)) {
-      form.setFieldsValue({ fileType: fileType.value as string });
+  function onUseCustomDatasetChange(checked: boolean) {
+    setUseCustomDataset(checked);
+    if (checked)
+      form.setFieldsValue({
+        dataset: { datasetID: undefined, split: undefined },
+      });
+  }
+
+  function getDataFileValidator(isRequired: boolean, fieldName: string) {
+    if (!isRequired) return () => Promise.resolve();
+    else
+      return (_: any, value: DataFileValue) => {
+        if (value && value.fileList && value.fileType) return Promise.resolve();
+        else return Promise.reject(`'${fieldName}' and file type are required`);
+      };
+  }
+
+  function validateDataset(_: any, value: DatasetValue) {
+    if (useCustomDataset) return Promise.resolve();
+    else {
+      if (value && value.datasetID && value.split) return Promise.resolve();
+      else return Promise.reject("Dataset name and split are required");
     }
-    return fileList;
   }
 
   return (
     <Drawer
-      width="50%"
+      width="60%"
       title="New System"
       footer={footer}
       destroyOnClose
@@ -237,22 +283,57 @@ export function SystemSubmitDrawer(props: Props) {
           </Form.Item>
 
           <Form.Item
-            name="dataset_id"
-            label="Dataset"
-            help="Please leave this field blank if you couldn't find the dataset"
+            label="Use custom dataset?"
+            tooltip="Custom dataset will not be shown on the leaderboard"
           >
-            <Select
-              showSearch
-              allowClear
-              placeholder="Please search dataset by name"
-              options={datasetOptions.map((dataset) => ({
-                value: dataset.dataset_id,
-                label: <DatasetSelectLabel dataset={dataset} />,
-              }))}
-              onSearch={searchDatasets}
-              disabled={selectedTaskName == null}
-              filterOption={false} // disable local filter
+            <Checkbox
+              checked={useCustomDataset}
+              onChange={(e) => onUseCustomDatasetChange(e.target.checked)}
             />
+          </Form.Item>
+
+          {useCustomDataset ? (
+            <>
+              <Form.Item
+                name="custom_dataset_file"
+                label="Custom Dataset"
+                required
+                rules={[
+                  {
+                    validator: getDataFileValidator(
+                      useCustomDataset,
+                      "Custom Dataset"
+                    ),
+                  },
+                ]}
+              >
+                <DataFileUpload
+                  allowedFileTypes={allowedFileType.custom_dataset}
+                />
+              </Form.Item>
+            </>
+          ) : (
+            <Form.Item
+              name="dataset"
+              label="Dataset"
+              required
+              rules={[{ validator: validateDataset }]}
+            >
+              <DatasetSelect
+                options={datasetOptions}
+                disabled={selectedTaskName == null}
+                onSearchDataset={(query) => searchDatasets(query)}
+              />
+            </Form.Item>
+          )}
+
+          <Form.Item
+            name="sys_out_file"
+            label="System Output"
+            required
+            rules={[{ validator: getDataFileValidator(true, "System Output") }]}
+          >
+            <DataFileUpload allowedFileTypes={allowedFileType.system_output} />
           </Form.Item>
 
           <Form.Item
@@ -268,35 +349,6 @@ export function SystemSubmitDrawer(props: Props) {
             />
           </Form.Item>
 
-          <Form.Item
-            name="sys_out_file_list"
-            label="System Output"
-            rules={[{ required: true }]}
-            valuePropName="fileList"
-            getValueFromEvent={normalizeFile}
-          >
-            <Upload
-              maxCount={1}
-              beforeUpload={(file) => {
-                return false;
-              }}
-            >
-              <Button icon={<UploadOutlined />}>Select File</Button>
-            </Upload>
-          </Form.Item>
-
-          <Form.Item
-            name="fileType"
-            label="File Type"
-            rules={[{ required: true }]}
-          >
-            <Radio.Group
-              options={FILE_TYPES.map((type) => ({
-                ...type,
-                disabled: !allowedFileType.includes(type.value as string),
-              }))}
-            />
-          </Form.Item>
           <Form.Item
             name="is_private"
             label="Make it private?"
@@ -316,7 +368,7 @@ export function SystemSubmitDrawer(props: Props) {
           >
             <Select options={[{ value: "en" }]} />
           </Form.Item>
-          <Form.Item name="code" label="Code">
+          <Form.Item name="code" label="Source code link">
             <Input type="url" />
           </Form.Item>
         </Form>
@@ -328,18 +380,12 @@ export function SystemSubmitDrawer(props: Props) {
 interface FormData {
   name: string;
   task: string;
-  dataset_id: string;
+  dataset: DatasetValue;
+  sys_out_file: DataFileValue;
+  custom_dataset_file: DataFileValue;
+
   metric_names: string[];
   language: string;
   code: string;
-  sys_out_file_list: UploadFile[];
-  fileType: string;
   is_private: boolean;
 }
-
-const FILE_TYPES: CheckboxOptionType[] = [
-  { value: "csv", label: "CSV" },
-  { value: "tsv", label: "TSV" },
-  { value: "json", label: "JSON or JSON Line" },
-  { value: "conll", label: "CoNLL" },
-];

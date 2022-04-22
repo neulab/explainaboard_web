@@ -216,6 +216,8 @@ paths:
                   $ref: "#/components/schemas/SystemCreateProps"
                 system_output:
                   $ref: "#/components/schemas/SystemOutputProps"
+                custom_dataset:
+                  $ref: "#/components/schemas/SystemOutputProps"
               required: [metadata, system_output]
       responses:
         "200":
@@ -291,8 +293,9 @@ paths:
                           minItems: 2
                           maxItems: 2
                         example: [[0.0, 0.4], [0.4, 1.0]]
-              required: [system_ids, pairwise_performance_gap, feature_to_bucket_info]
-  
+              required:
+                [system_ids, pairwise_performance_gap, feature_to_bucket_info]
+
       responses:
         "200":
           description: OK
@@ -350,7 +353,7 @@ components:
     # DatasetId:
     #   type: integer
     #   format: int64
-    
+
     AnyType:
       oneOf:
         - type: boolean
@@ -361,22 +364,22 @@ components:
         - type: array
           items: {}
         - type: object
-    
+
     Value:
       type: object
       properties:
-        dtype: 
+        dtype:
           type: string
         description:
           type: string
           nullable: true
-        is_bucket: 
+        is_bucket:
           type: boolean
-        require_training_set: 
+        require_training_set:
           type: boolean
-        is_pre_computed: 
+        is_pre_computed:
           type: boolean
-        bucket_info: 
+        bucket_info:
           # TODO(chihhao) define detailed fields
           type: object
           nullable: true
@@ -385,7 +388,7 @@ components:
           nullable: true
         _type:
           type: string
-      
+
     ClassLabel:
       type: object
       properties:
@@ -406,16 +409,16 @@ components:
           nullable: true
         is_bucket:
           type: boolean
-        require_training_set: 
+        require_training_set:
           type: boolean
-        is_pre_computed: 
+        is_pre_computed:
           type: boolean
         bucket_info:
           type: object
           nullable: true
-        _type: 
+        _type:
           type: string
-          
+
     SystemInfoFeature:
       # TODO(chihhao) Commented out for now as it's not clear why using oneOf causes validaiton failure
       # oneOf:
@@ -431,13 +434,16 @@ components:
         task_name:
           type: string
           example: "text-classification"
-        model_name: 
+        model_name:
           type: string
           example: "sst2-cnn"
         dataset_name:
           type: string
           nullable: true
         sub_dataset_name:
+          type: string
+          nullable: true
+        dataset_split:
           type: string
           nullable: true
         metric_names:
@@ -485,7 +491,19 @@ components:
             fine_grained:
               type: object
           required: [overall, calibration, fine_grained]
-      required: [task_name, model_name, metric_names, language, reload_stat, is_print_case, conf_value, tokenizer, features, results]
+      required:
+        [
+          task_name,
+          model_name,
+          metric_names,
+          language,
+          reload_stat,
+          is_print_case,
+          conf_value,
+          tokenizer,
+          features,
+          results,
+        ]
 
     APIError:
       type: object
@@ -537,9 +555,17 @@ components:
           items:
             type: string
         supported_formats:
-          type: array
-          items:
-            type: string
+          type: object
+          properties:
+            custom_dataset:
+              type: array
+              items:
+                type: string
+            system_output:
+              type: array
+              items:
+                type: string
+          required: [custom_dataset, system_output]
       required:
         [name, supported, description, supported_metrics, supported_formats]
 
@@ -596,6 +622,10 @@ components:
           default: True
         dataset_metadata_id:
           type: string
+        dataset_split:
+          type: string
+          description: required if dataset_metadata_id specified
+          example: test
         model_name:
           type: string
         metric_names:
@@ -625,9 +655,6 @@ components:
           description: base64 encoded file
         file_type:
           type: string
-        task_output_type:
-          type: string
-          description: describes task-related system output format
       required: [data, file_type]
 
     System:
@@ -654,11 +681,12 @@ components:
                   type: string
                 sub_dataset:
                   type: string
+                  default: default
                 tasks:
                   type: array
                   items:
                     type: string
-              required: [dataset_id, dataset_name, tasks]
+              required: [dataset_id, dataset_name, sub_dataset, tasks]
             paper_info:
               $ref: "#/components/schemas/PaperInfo"
             code:
@@ -677,13 +705,14 @@ components:
               type: array
               items:
                 type: number
-          required: [
+          required:
+            [
               system_id,
               is_private,
               system_info,
               paper_info,
               active_features,
-              metric_stats
+              metric_stats,
             ]
         - $ref: "#/components/schemas/Time"
 
@@ -829,14 +858,14 @@ components:
           type: array
           items:
             type: string
-        performances: 
+        performances:
           type: array
           items:
             $ref: "#/components/schemas/Performance"
       required: [bucket_name, n_samples, bucket_samples, performances]
-      
+
     SingleAnalysisReturn:
-      type: object   
+      type: object
       description: feature -> bucket interval
       additionalProperties:
         type: object
