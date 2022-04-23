@@ -214,9 +214,9 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         # move this function to SDK in the future or
         # add proper from_dict() methods in SDK
         for feature_name, feature in system_output_info.features.items():
-            bucket_info = feature["bucket_info"]
-            if bucket_info is not None:
-                bucket_info = BucketInfo(**bucket_info)
+            
+            bucket_info = None if feature["_type"] in set(
+                ["Sequence", "Set"]) else feature["bucket_info"]
 
             # TODO Feature is not getting from_dict()ed properly, hardcode for now:
             _type = feature["_type"]
@@ -233,6 +233,11 @@ def systems_analyses_post(body: SystemsAnalysesBody):
                 feature = Span(**feature)
             elif _type == Value._type:
                 feature = Value(**feature)
+
+  
+            if bucket_info is not None:
+                bucket_info = BucketInfo(**bucket_info)
+
 
             feature.bucket_info = bucket_info
             # user-defined bucket info
@@ -290,4 +295,5 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
         single_analyses[system.system_id] = performance_over_bucket
 
+    
     return SystemAnalysesReturn(single_analyses)
