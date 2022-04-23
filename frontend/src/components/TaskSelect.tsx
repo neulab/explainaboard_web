@@ -9,8 +9,8 @@ interface Props extends SelectProps<string> {
 export function TaskSelect({ taskCategories, ...props }: Props) {
   return (
     <Select showSearch {...props}>
-      {taskCategories.map(({ name, tasks }) => (
-        <Select.OptGroup label={name} key={name}>
+      {taskCategories.map(({ name, tasks }, i) => (
+        <Select.OptGroup label={name} key={i}>
           {tasks.map(({ name, supported }) => (
             <Select.Option value={name} key={name} disabled={!supported}>
               {name}
