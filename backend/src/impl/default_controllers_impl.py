@@ -233,7 +233,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             bucket_info = (
                 None
                 if isinstance(feature, Sequence) or isinstance(feature, Set)
-                else feature["bucket_info"]
+                else feature.bucket_info
             )
 
             if bucket_info is not None:
