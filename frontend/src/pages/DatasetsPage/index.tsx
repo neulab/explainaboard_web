@@ -12,8 +12,13 @@ import "./index.css";
 import { ColumnsType } from "antd/lib/table";
 import { DatasetMetadata } from "../../clients/openapi";
 import { backendClient } from "../../clients";
-import { generateDataLabURL, PageState } from "../../utils";
+import {
+  generateDataLabURL,
+  generateLeaderboardURL,
+  PageState,
+} from "../../utils";
 import { useHistory } from "react-router";
+import { Link } from "react-router-dom";
 
 /**
  * Dataset Page
@@ -136,6 +141,19 @@ const columns: ColumnsType<DatasetMetadata> = [
           <Tag key={i}>{task}</Tag>
         ))}
       </span>
+    ),
+  },
+  {
+    dataIndex: "",
+    title: "Leaderboard",
+    render: (_, record) => (
+      <Typography.Link href={""} target="_blank">
+        <Link
+          to={generateLeaderboardURL(record.dataset_name, record.sub_dataset)}
+        >
+          Leaderboard
+        </Link>
+      </Typography.Link>
     ),
   },
   {

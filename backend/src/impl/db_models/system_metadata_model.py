@@ -272,6 +272,8 @@ class SystemModel(MetadataDBModel, System):
         page_size: int,
         system_name: Optional[str],
         task: Optional[str],
+        dataset_name: Optional[str],
+        subdataset_name: Optional[str],
         sort: Optional[list],
         creator: Optional[str],
         include_datasets: bool = False,
@@ -285,10 +287,15 @@ class SystemModel(MetadataDBModel, System):
         if system_name:
             filter["model_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
-            filter["task"] = task
+            filter["system_info.task_name"] = task
+        if dataset_name:
+            filter["system_info.dataset_name"] = dataset_name
+        if subdataset_name:
+            filter["system_info.sub_dataset_name"] = subdataset_name
         if creator:
             filter["creator"] = creator
         filter["$or"] = [{"is_private": False}, {"creator": get_user().email}]
+
         cursor, total = super().find(filter, sort, page * page_size, page_size)
         documents = list(cursor)
 

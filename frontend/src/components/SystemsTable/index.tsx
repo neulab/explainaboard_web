@@ -12,10 +12,16 @@ import { TaskCategory } from "../../clients/openapi";
 interface Props {
   /**initial value for task filter */
   initialTaskFilter?: string;
+  dataset?: string;
+  subdataset?: string;
 }
 
 /** A table that lists all systems */
-export function SystemsTable({ initialTaskFilter }: Props) {
+export function SystemsTable({
+  initialTaskFilter,
+  dataset,
+  subdataset,
+}: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -84,6 +90,8 @@ export function SystemsTable({ initialTaskFilter }: Props) {
         await backendClient.systemsGet(
           nameFilter || undefined,
           taskFilter,
+          dataset || undefined,
+          subdataset || undefined,
           page,
           pageSize,
           sortField,
@@ -97,6 +105,8 @@ export function SystemsTable({ initialTaskFilter }: Props) {
   }, [
     nameFilter,
     taskFilter,
+    dataset,
+    subdataset,
     page,
     pageSize,
     sortField,

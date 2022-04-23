@@ -35,4 +35,15 @@ export function generateDataLabURL(datasetID: string): string {
   return `http://datalab.nlpedia.ai/normal_dataset/${datasetID}/dataset_metadata`;
 }
 
+export function generateLeaderboardURL(
+  dataset: string,
+  subdataset: string | undefined
+): string {
+  const url = `/leaderboards?dataset=${dataset}`;
+  if (subdataset === undefined) {
+    return url;
+  }
+  return `${url}&subdataset=${subdataset}`;
+}
+
 export * from "./typing_utils";

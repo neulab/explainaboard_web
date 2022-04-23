@@ -10,7 +10,6 @@ import {
 import {
   DatasetsPage,
   Home,
-  LeaderboardHome,
   LeaderboardPage,
   LoginCallback,
   SystemsPage,
@@ -51,8 +50,8 @@ const routes: Route[] = [
     path: "/leaderboards",
     title: "Leaderboards",
     icon: <TableOutlined />,
-    children: <LeaderboardHome />,
-    exact: true,
+    children: <LeaderboardPage />,
+    requireLogin: true,
   },
   {
     path: "/terms",
@@ -60,13 +59,6 @@ const routes: Route[] = [
     exact: true,
     icon: <FileOutlined />,
     children: <TermsPage />,
-  },
-  {
-    path: "/leaderboards/:task",
-    exact: true,
-    children: <LeaderboardPage />,
-    hideFromMenu: true,
-    requireLogin: true,
   },
   {
     path: "/login-callback",

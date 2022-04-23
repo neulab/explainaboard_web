@@ -125,6 +125,8 @@ def systems_system_id_get(system_id: str) -> SystemModel:
 def systems_get(
     system_name: Optional[str],
     task: Optional[str],
+    dataset: Optional[str],
+    subdataset: Optional[str],
     page: int,
     page_size: int,
     sort_field: str,
@@ -144,7 +146,15 @@ def systems_get(
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
     return SystemModel.find(
-        ids, page, page_size, system_name, task, [(sort_field, dir)], creator
+        ids,
+        page,
+        page_size,
+        system_name,
+        task,
+        dataset,
+        subdataset,
+        [(sort_field, dir)],
+        creator,
     )
 
 

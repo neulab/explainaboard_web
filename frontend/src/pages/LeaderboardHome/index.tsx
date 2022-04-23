@@ -38,7 +38,7 @@ export function LeaderboardHome() {
                     className="task-card"
                     title={name}
                     onClick={() =>
-                      history.push(document.location.pathname + "/" + name)
+                      history.push(`${document.location.pathname}?task=${name}`)
                     }
                   >
                     {name}
