@@ -5,7 +5,12 @@ import dataclasses
 import os
 from typing import Optional
 
-from explainaboard import TaskType, get_processor, get_task_categories
+from explainaboard import (
+    DatalabLoaderOption,
+    TaskType,
+    get_processor,
+    get_task_categories,
+)
 from explainaboard.feature import (
     BucketInfo,
     ClassLabel,
@@ -24,6 +29,7 @@ from explainaboard_web.impl.db_models.system_metadata_model import (
     SystemModel,
     SystemOutputsModel,
 )
+from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
@@ -160,6 +166,19 @@ def systems_system_id_outputs_get(
     """
     TODO: return special error/warning if some ids cannot be found
     """
+    sys = SystemModel.find_one_by_id(system_id)
+    if not sys:
+        abort_with_error_message(400, "system does not exist")
+    if is_private_dataset(
+        DatalabLoaderOption(
+            sys.system_info.dataset_name,
+            sys.system_info.sub_dataset_name,
+            sys.system_info.dataset_split,
+        )
+    ):
+        abort_with_error_message(
+            403, f"{sys.system_info.dataset_name} is a private dataset", 40301
+        )
     return SystemOutputsModel(system_id).find(output_ids, limit=10)
 
 

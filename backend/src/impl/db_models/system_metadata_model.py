@@ -170,7 +170,7 @@ class SystemModel(MetadataDBModel, System):
                 document["dataset"] = {
                     "dataset_id": dataset.dataset_id,
                     "dataset_name": dataset.dataset_name,
-                    "sub_dataset": dataset.sub_dataset or "default",
+                    "sub_dataset": dataset.sub_dataset,
                     "tasks": dataset.tasks,
                 }
             else:

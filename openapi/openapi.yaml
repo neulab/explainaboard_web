@@ -681,12 +681,12 @@ components:
                   type: string
                 sub_dataset:
                   type: string
-                  default: default
+                  nullable: true
                 tasks:
                   type: array
                   items:
                     type: string
-              required: [dataset_id, dataset_name, sub_dataset, tasks]
+              required: [dataset_id, dataset_name, tasks]
             paper_info:
               $ref: "#/components/schemas/PaperInfo"
             code:
