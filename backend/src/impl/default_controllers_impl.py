@@ -21,7 +21,9 @@ from explainaboard.feature import (
     Value,
 )
 from explainaboard.info import Result, SysOutputInfo
+from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
 from explainaboard.metric import MetricStats
+from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.tokenizer import get_default_tokenizer
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
@@ -39,6 +41,7 @@ from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
+from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
@@ -67,7 +70,22 @@ def user_get():
 
 
 def tasks_get() -> list[TaskCategory]:
-    return get_task_categories()
+    _categories = get_task_categories()
+    categories: list[TaskCategory] = []
+    for _category in _categories:
+        tasks: list[Task] = []
+        for _task in _category.tasks:
+            supported_formats = get_supported_file_types_for_loader(_task.name)
+            supported_metrics = [
+                metric.name for metric in get_metric_list_for_processor(_task.name)
+            ]
+            tasks.append(
+                Task(
+                    _task.name, _task.description, supported_metrics, supported_formats
+                )
+            )
+        categories.append(TaskCategory(_category.name, _category.description, tasks))
+    return categories
 
 
 """ /datasets """
@@ -270,7 +288,6 @@ def systems_analyses_post(body: SystemsAnalysesBody):
                 setting = [tuple(interval) for interval in custom_bucket_info.setting]
                 feature.bucket_info.setting = setting
             system_output_info.features[feature_name] = feature
-
         system_output_info.results = Result(**system_output_info.results)
         # The order of getting the processor first then setting
         # the tokenizer is unnatural, but in the SDK get_default_tokenizer

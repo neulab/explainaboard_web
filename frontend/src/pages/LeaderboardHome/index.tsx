@@ -32,7 +32,7 @@ export function LeaderboardHome() {
             }
           >
             <Row gutter={[16, 16]} className="tasks-grid">
-              {tasks.map(({ name, supported }) => (
+              {tasks.map(({ name }) => (
                 <Col key={name} span={6}>
                   <Card
                     className="task-card"
@@ -42,7 +42,6 @@ export function LeaderboardHome() {
                     }
                   >
                     {name}
-                    {!supported && " (not available at this moment)"}
                   </Card>
                 </Col>
               ))}
