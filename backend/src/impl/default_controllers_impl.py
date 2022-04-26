@@ -142,7 +142,7 @@ def systems_get(
     if sort_direction not in ["asc", "desc"]:
         abort_with_error_message(400, "sort_direction needs to be one of asc or desc")
     if sort_field != "created_at":
-        sort_field = f"analysis.results.overall.{sort_field}.value"
+        sort_field = f"system_info.results.overall.{sort_field}.value"
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
