@@ -11,6 +11,7 @@ from explainaboard import (
     get_processor,
     get_task_categories,
 )
+from explainaboard import metric as exb_metric
 from explainaboard.feature import (
     BucketInfo,
     ClassLabel,
@@ -20,7 +21,7 @@ from explainaboard.feature import (
     Span,
     Value,
 )
-from explainaboard.info import Result, SysOutputInfo
+from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
 from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
@@ -288,7 +289,14 @@ def systems_analyses_post(body: SystemsAnalysesBody):
                 setting = [tuple(interval) for interval in custom_bucket_info.setting]
                 feature.bucket_info.setting = setting
             system_output_info.features[feature_name] = feature
-        system_output_info.results = Result(**system_output_info.results)
+
+        metric_configs = [
+            getattr(exb_metric, metric_config_dict["cls"])(**metric_config_dict)
+            for metric_config_dict in system_output_info.metric_configs
+        ]
+
+        system_output_info.metric_configs = metric_configs
+
         # The order of getting the processor first then setting
         # the tokenizer is unnatural, but in the SDK get_default_tokenizer
         # relies on the processor's TaskType inforamtion

@@ -508,6 +508,7 @@ components:
           tokenizer,
           features,
           results,
+          metric_configs,
         ]
 
     APIError:
