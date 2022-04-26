@@ -229,6 +229,9 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     system_ids: list = system_ids_str.split(",")
     system_name = None
     task = None
+    dataset_name = None
+    subdataset_name = None
+    split = None
     creator = None
     page = 0
     page_size = len(system_ids)
@@ -237,8 +240,11 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_ids,
         page,
         page_size,
-        system_name,
         task,
+        system_name,
+        dataset_name,
+        subdataset_name,
+        split,
         sort,
         creator,
         include_metric_stats=True,
