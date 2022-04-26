@@ -122,6 +122,14 @@ export function SystemTableContent({
     },
     {
       dataIndex: ["system_info", "language"],
+      width: 110,
+      title: "Dataset split",
+      fixed: "left",
+      align: "center",
+      render: (_, record) => record.system_info.dataset_split || "unspecified",
+    },
+    {
+      dataIndex: ["system_info", "language"],
       width: 100,
       title: "Language",
       align: "center",

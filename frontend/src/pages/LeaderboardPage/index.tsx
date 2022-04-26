@@ -1,8 +1,14 @@
 import React from "react";
 import "./index.css";
 import { PageHeader } from "antd";
-import { useHistory, useParams } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
 import { SystemsTable } from "../../components";
+import { LeaderboardHome } from "../LeaderboardHome";
+
+function useQuery() {
+  const { search } = useLocation();
+  return React.useMemo(() => new URLSearchParams(search), [search]);
+}
 
 /**
  * TODO:
@@ -10,18 +16,38 @@ import { SystemsTable } from "../../components";
  */
 export function LeaderboardPage() {
   const history = useHistory();
-  const { task } = useParams<{ task: string }>();
+  const query = useQuery();
+  const task = query.get("task") || undefined;
+  const dataset = query.get("dataset") || undefined;
+  const subdataset = query.get("subdataset") || undefined;
 
-  return (
-    <div>
-      <PageHeader
-        onBack={() => history.goBack()}
-        title={task + " Leaderboard"}
-        subTitle={`Leaderboard for ${task}`}
-      />
-      <div style={{ padding: "0 10px" }}>
-        <SystemsTable initialTaskFilter={task} />
+  if (task || dataset || subdataset) {
+    const title = subdataset || dataset || task;
+    let subTitle;
+    if (subdataset) {
+      subTitle = `subdataset: ${subdataset}`;
+    } else if (dataset) {
+      subTitle = `dataset: ${dataset}`;
+    } else {
+      subTitle = `task: ${task}`;
+    }
+    return (
+      <div>
+        <PageHeader
+          onBack={() => history.goBack()}
+          title={title + " Leaderboard"}
+          subTitle={`Leaderboard for ${subTitle}`}
+        />
+        <div style={{ padding: "0 10px" }}>
+          <SystemsTable
+            initialTaskFilter={task}
+            dataset={dataset}
+            subdataset={subdataset}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  } else {
+    return <LeaderboardHome />;
+  }
 }

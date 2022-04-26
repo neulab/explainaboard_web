@@ -14,6 +14,7 @@ export interface Filter {
   task?: string;
   sortField: string;
   sortDir: "asc" | "desc";
+  split: string;
 }
 
 interface Props {
@@ -112,6 +113,16 @@ export function SystemTableTools({
         {analysisButton}
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
+        <Select
+          options={["test", "validation", "train", "all"].map((opt) => ({
+            value: opt,
+            label: opt,
+          }))}
+          value={value.split}
+          onChange={(value) => onChange({ split: value })}
+          placeholder="Dataset split"
+          style={{ minWidth: "120px" }}
+        />
         <TaskSelect
           taskCategories={taskCategories}
           allowClear

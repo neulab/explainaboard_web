@@ -164,6 +164,21 @@ paths:
           schema:
             type: string
         - in: query
+          name: dataset
+          description: dataset name
+          schema:
+            type: string
+        - in: query
+          name: subdataset
+          description: subdataset name
+          schema:
+            type: string
+        - in: query
+          name: split
+          description: dataset split
+          schema:
+            type: string        
+        - in: query
           name: page
           description: page number (0 indexed)
           schema:

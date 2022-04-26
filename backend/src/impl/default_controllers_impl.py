@@ -125,6 +125,9 @@ def systems_system_id_get(system_id: str) -> SystemModel:
 def systems_get(
     system_name: Optional[str],
     task: Optional[str],
+    dataset: Optional[str],
+    subdataset: Optional[str],
+    split: Optional[str],
     page: int,
     page_size: int,
     sort_field: str,
@@ -139,12 +142,21 @@ def systems_get(
     if sort_direction not in ["asc", "desc"]:
         abort_with_error_message(400, "sort_direction needs to be one of asc or desc")
     if sort_field != "created_at":
-        sort_field = f"analysis.results.overall.{sort_field}.value"
+        sort_field = f"system_info.results.overall.{sort_field}.value"
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
     return SystemModel.find(
-        ids, page, page_size, system_name, task, [(sort_field, dir)], creator
+        ids,
+        page,
+        page_size,
+        system_name,
+        task,
+        dataset,
+        subdataset,
+        split,
+        [(sort_field, dir)],
+        creator,
     )
 
 
@@ -217,6 +229,9 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     system_ids: list = system_ids_str.split(",")
     system_name = None
     task = None
+    dataset_name = None
+    subdataset_name = None
+    split = None
     creator = None
     page = 0
     page_size = len(system_ids)
@@ -225,8 +240,11 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_ids,
         page,
         page_size,
-        system_name,
         task,
+        system_name,
+        dataset_name,
+        subdataset_name,
+        split,
         sort,
         creator,
         include_metric_stats=True,
