@@ -118,9 +118,8 @@ export function SystemTableTools({
             value: opt,
             label: opt,
           }))}
-          value={value.split}
-          onChange={(value) => onChange({ split: value })}
           placeholder="Dataset split"
+          onChange={(value) => onChange({ split: value })}
           style={{ minWidth: "120px" }}
         />
         <TaskSelect
