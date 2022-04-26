@@ -49,7 +49,7 @@ export function AnalysisDrawer({
 
   useEffect(() => {
     async function refreshAnalyses(
-      featureKeyToBucketInfo: SystemsAnalysesBody["feature_to_bucket_info"]
+      featureKeyToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"]
     ) {
       setPageState(PageState.loading);
       const systemAnalysesReturn: SystemAnalysesReturn | null =
@@ -62,7 +62,7 @@ export function AnalysisDrawer({
               system_ids: activeSystemIDs.join(","),
               // Hardcoded to false. TODO(chihhao) wait for SDK's update
               pairwise_performance_gap: false,
-              feature_to_bucket_info: featureKeyToBucketInfo,
+              feature_to_bucket_info: featureKeyToBucketInfoToPost,
             })
             .then((systemAnalysesReturn) => {
               clearTimeout(timeoutID);
@@ -122,7 +122,10 @@ export function AnalysisDrawer({
               0,
               bucketRightBounds.length - 1
             ),
-            updated: false,
+            /* A bucket may remain updated (i.e. different from the init value of SDK) 
+            across multiple post calls, so we must reuse this information from the state
+            */
+            updated: featureKeyToBucketInfo[featureKey]?.updated || false,
           };
         }
       }
