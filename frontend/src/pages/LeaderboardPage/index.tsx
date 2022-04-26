@@ -22,7 +22,13 @@ export function LeaderboardPage() {
   const subdataset = query.get("subdataset") || undefined;
 
   if (task || dataset || subdataset) {
-    const title = subdataset || dataset || task;
+    let title = "";
+    if (dataset) {
+      title = dataset;
+      if (subdataset) title += ` (${subdataset})`;
+    } else if (task) {
+      title = task;
+    }
     let subTitle;
     if (subdataset) {
       subTitle = `subdataset: ${subdataset}`;
