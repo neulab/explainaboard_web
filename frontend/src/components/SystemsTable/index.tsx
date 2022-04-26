@@ -34,6 +34,7 @@ export function SystemsTable({
   const [taskFilter, setTaskFilter] = useState(initialTaskFilter);
   const [sortField, setSortField] = useState("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const [split, setSplit] = useState<string>("all");
 
   // submit
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);
@@ -86,12 +87,14 @@ export function SystemsTable({
   useEffect(() => {
     async function refreshSystems() {
       setPageState(PageState.loading);
+      const datasetSplit = split === "all" ? undefined : split;
       const { systems: newSystems, total: newTotal } =
         await backendClient.systemsGet(
           nameFilter || undefined,
           taskFilter,
           dataset || undefined,
           subdataset || undefined,
+          datasetSplit || undefined,
           page,
           pageSize,
           sortField,
@@ -107,6 +110,7 @@ export function SystemsTable({
     taskFilter,
     dataset,
     subdataset,
+    split,
     page,
     pageSize,
     sortField,
@@ -120,11 +124,13 @@ export function SystemsTable({
     task,
     sortField: newSortField,
     sortDir: newSortDir,
+    split: newSplit,
   }: Partial<Filter>) {
     if (name != null) setNameFilter(name);
     if (task != null) setTaskFilter(task || undefined);
     if (newSortField != null) setSortField(newSortField);
     if (newSortDir != null) setSortDir(newSortDir);
+    if (newSplit != null) setSplit(newSplit);
     setPage(0);
     setSelectedSystemIDs([]);
   }
@@ -135,7 +141,13 @@ export function SystemsTable({
         systems={systems}
         toggleSubmitDrawer={() => setSubmitDrawerVisible((visible) => !visible)}
         taskCategories={taskCategories}
-        value={{ task: taskFilter, name: nameFilter, sortField, sortDir }}
+        value={{
+          task: taskFilter,
+          name: nameFilter,
+          sortField,
+          sortDir,
+          split,
+        }}
         onChange={onFilterChange}
         metricOptions={metricNames}
         selectedSystemIDs={selectedSystemIDs}

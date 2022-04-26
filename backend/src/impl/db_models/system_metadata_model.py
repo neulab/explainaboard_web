@@ -274,6 +274,7 @@ class SystemModel(MetadataDBModel, System):
         task: Optional[str],
         dataset_name: Optional[str],
         subdataset_name: Optional[str],
+        split: Optional[str],
         sort: Optional[list],
         creator: Optional[str],
         include_datasets: bool = False,
@@ -292,6 +293,8 @@ class SystemModel(MetadataDBModel, System):
             filter["system_info.dataset_name"] = dataset_name
         if subdataset_name:
             filter["system_info.sub_dataset_name"] = subdataset_name
+        if split:
+            filter["system_info.dataset_split"] = split
         if creator:
             filter["creator"] = creator
         filter["$or"] = [{"is_private": False}, {"creator": get_user().email}]

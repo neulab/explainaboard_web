@@ -127,6 +127,7 @@ def systems_get(
     task: Optional[str],
     dataset: Optional[str],
     subdataset: Optional[str],
+    split: Optional[str],
     page: int,
     page_size: int,
     sort_field: str,
@@ -153,6 +154,7 @@ def systems_get(
         task,
         dataset,
         subdataset,
+        split,
         [(sort_field, dir)],
         creator,
     )
