@@ -82,9 +82,13 @@ export function AnalysisDrawer({
       */
       const firstSystemInfo = activeSystems[0].system_info;
       const task = firstSystemInfo.task_name;
+
+      const metricNames = firstSystemInfo.metric_configs.map(
+        (config) => config.name
+      );
       const metricToSystemAnalysesParsed = getMetricToSystemAnalysesParsed(
         task,
-        firstSystemInfo.metric_names,
+        metricNames,
         activeSystems,
         singleAnalyses
       );

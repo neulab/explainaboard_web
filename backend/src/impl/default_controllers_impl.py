@@ -5,7 +5,13 @@ import dataclasses
 import os
 from typing import Optional
 
-from explainaboard import TaskType, get_processor, get_task_categories
+from explainaboard import (
+    DatalabLoaderOption,
+    TaskType,
+    get_processor,
+    get_task_categories,
+)
+from explainaboard import metric as exb_metric
 from explainaboard.feature import (
     BucketInfo,
     ClassLabel,
@@ -15,8 +21,10 @@ from explainaboard.feature import (
     Span,
     Value,
 )
-from explainaboard.info import Result, SysOutputInfo
+from explainaboard.info import SysOutputInfo
+from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
 from explainaboard.metric import MetricStats
+from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.tokenizer import get_default_tokenizer
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
@@ -24,6 +32,7 @@ from explainaboard_web.impl.db_models.system_metadata_model import (
     SystemModel,
     SystemOutputsModel,
 )
+from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
@@ -33,6 +42,7 @@ from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
+from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
@@ -61,7 +71,22 @@ def user_get():
 
 
 def tasks_get() -> list[TaskCategory]:
-    return get_task_categories()
+    _categories = get_task_categories()
+    categories: list[TaskCategory] = []
+    for _category in _categories:
+        tasks: list[Task] = []
+        for _task in _category.tasks:
+            supported_formats = get_supported_file_types_for_loader(_task.name)
+            supported_metrics = [
+                metric.name for metric in get_metric_list_for_processor(_task.name)
+            ]
+            tasks.append(
+                Task(
+                    _task.name, _task.description, supported_metrics, supported_formats
+                )
+            )
+        categories.append(TaskCategory(_category.name, _category.description, tasks))
+    return categories
 
 
 """ /datasets """
@@ -160,6 +185,19 @@ def systems_system_id_outputs_get(
     """
     TODO: return special error/warning if some ids cannot be found
     """
+    sys = SystemModel.find_one_by_id(system_id)
+    if not sys:
+        abort_with_error_message(400, "system does not exist")
+    if is_private_dataset(
+        DatalabLoaderOption(
+            sys.system_info.dataset_name,
+            sys.system_info.sub_dataset_name,
+            sys.system_info.dataset_split,
+        )
+    ):
+        abort_with_error_message(
+            403, f"{sys.system_info.dataset_name} is a private dataset", 40301
+        )
     return SystemOutputsModel(system_id).find(output_ids, limit=10)
 
 
@@ -252,7 +290,13 @@ def systems_analyses_post(body: SystemsAnalysesBody):
                 feature.bucket_info.setting = setting
             system_output_info.features[feature_name] = feature
 
-        system_output_info.results = Result(**system_output_info.results)
+        metric_configs = [
+            getattr(exb_metric, metric_config_dict["cls"])(**metric_config_dict)
+            for metric_config_dict in system_output_info.metric_configs
+        ]
+
+        system_output_info.metric_configs = metric_configs
+
         # The order of getting the processor first then setting
         # the tokenizer is unnatural, but in the SDK get_default_tokenizer
         # relies on the processor's TaskType inforamtion

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Table, Tooltip, Typography } from "antd";
+import { message, Table, Tooltip, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { SystemOutput } from "../../../clients/openapi";
-import { backendClient } from "../../../clients";
+import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
 import { SystemAnalysisParsed } from "../types";
 
@@ -35,12 +35,24 @@ export function AnalysisTable({
   useEffect(() => {
     async function refreshSystemOutputs() {
       setPageState(PageState.loading);
-      const result = await backendClient.systemsSystemIdOutputsGet(
-        systemID,
-        outputIDString
-      );
-      setSystemOutputs(result.system_outputs);
-      setPageState(PageState.success);
+      try {
+        const result = await backendClient.systemsSystemIdOutputsGet(
+          systemID,
+          outputIDString
+        );
+        setSystemOutputs(result.system_outputs);
+      } catch (e) {
+        if (e instanceof Response) {
+          const error = await parseBackendError(e);
+          if (error.error_code === 40301) {
+            message.warn(error.getErrorMsg());
+          } else {
+            message.error(error.getErrorMsg());
+          }
+        }
+      } finally {
+        setPageState(PageState.success);
+      }
     }
     refreshSystemOutputs();
   }, [systemID, outputIDString, page, pageSize]);

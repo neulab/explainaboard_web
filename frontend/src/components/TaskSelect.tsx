@@ -11,8 +11,8 @@ export function TaskSelect({ taskCategories, ...props }: Props) {
     <Select showSearch {...props}>
       {taskCategories.map(({ name, tasks }, i) => (
         <Select.OptGroup label={name} key={i}>
-          {tasks.map(({ name, supported }) => (
-            <Select.Option value={name} key={name} disabled={!supported}>
+          {tasks.map(({ name }) => (
+            <Select.Option value={name} key={name}>
               {name}
             </Select.Option>
           ))}

@@ -32,6 +32,8 @@ export function parse(
   featureKey: string,
   bucketInfo: SystemInfoFeature["bucket_info"]
 ) {
+  console.log(metricNames);
+
   const decimalPlaces = 3;
   const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
   for (const metricName of metricNames) {

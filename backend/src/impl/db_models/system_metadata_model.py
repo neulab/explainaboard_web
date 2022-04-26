@@ -13,6 +13,7 @@ from explainaboard import (
     get_datalab_loader,
     get_processor,
 )
+from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
@@ -93,9 +94,19 @@ class SystemModel(MetadataDBModel, System):
                     output_source=Source.in_memory,
                 ).load()
 
-        try:
-            system_output_data = load_sys_output()
+        def process():
             processor = get_processor(metadata.task)
+            metrics_lookup = {
+                metric.name: metric
+                for metric in get_metric_list_for_processor(metadata.task)
+            }
+            metric_configs = []
+            for metric_name in metadata.metric_names:
+                if metric_name not in metrics_lookup:
+                    abort_with_error_message(
+                        400, f"{metric_name} is not a supported metric"
+                    )
+                metric_configs.append(metrics_lookup[metric_name])
             processor_metadata = {
                 **metadata.to_dict(),
                 "task_name": metadata.task,
@@ -104,11 +115,16 @@ class SystemModel(MetadataDBModel, System):
                 if system.dataset
                 else None,
                 "dataset_split": metadata.dataset_split,
+                "metric_configs": metric_configs,
             }
 
-            overall_statistics = processor.get_overall_statistics(
+            return processor.get_overall_statistics(
                 metadata=processor_metadata, sys_output=system_output_data
             )
+
+        try:
+            system_output_data = load_sys_output()
+            overall_statistics = process()
             metric_stats = [
                 binarize_bson(metric_stat.get_data())
                 for metric_stat in overall_statistics.metric_stats
@@ -170,7 +186,7 @@ class SystemModel(MetadataDBModel, System):
                 document["dataset"] = {
                     "dataset_id": dataset.dataset_id,
                     "dataset_name": dataset.dataset_name,
-                    "sub_dataset": dataset.sub_dataset or "default",
+                    "sub_dataset": dataset.sub_dataset,
                     "tasks": dataset.tasks,
                 }
             else:
