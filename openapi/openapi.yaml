@@ -4,10 +4,10 @@ info:
   description: "Backend APIs for ExplainaBoard"
   version: "0.1.0"
   contact:
-    email: "example@gmail.com" # TODO
+    email: "explainaboard@gmail.com"
   license:
-    name: "Apache 2.0" # TODO
-    url: "http://www.apache.org/licenses/LICENSE-2.0.html" # TODO
+    name: "MIT License"
+    url: "https://github.com/neulab/explainaboard_web/blob/main/LICENSE"
 
 servers:
   - url: https://explainaboard.inspiredco.ai/api
@@ -177,7 +177,7 @@ paths:
           name: split
           description: dataset split
           schema:
-            type: string        
+            type: string
         - in: query
           name: page
           description: page number (0 indexed)

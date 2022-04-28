@@ -2,8 +2,8 @@ name: "Python API Client Release"
 
 on:
   push:
-    branches:
-      - "main"
+    branches: [main]
+    paths: ["openapi/openapi.yaml"]
 
 jobs:
   build-and-release:
@@ -29,10 +29,14 @@ jobs:
           cd python_client
           python setup.py bdist_wheel
 
+      - name: "generate tag from SHA"
+        id: gen_tag
+        run: echo "::set-output name=tag::$(echo ${GITHUB_SHA} | cut -c1-7)"
+
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "latest"
+          automatic_release_tag: "${{ steps.gen_tag.outputs.tag }}"
           title: "Python API Client"
           prerelease: true
           files: |
