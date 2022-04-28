@@ -44,14 +44,14 @@ const routes: Route[] = [
     title: "Systems",
     icon: <CodeOutlined />,
     children: <SystemsPage />,
-    requireLogin: true,
+    requireLogin: false,
   },
   {
     path: "/leaderboards",
     title: "Leaderboards",
     icon: <TableOutlined />,
     children: <LeaderboardPage />,
-    requireLogin: true,
+    requireLogin: false,
   },
   {
     path: "/terms",

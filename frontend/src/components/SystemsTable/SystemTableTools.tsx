@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, Input, Select, Space, Tooltip } from "antd";
+import { Button, ButtonProps, Input, Select, Space, Tooltip } from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
 import {
@@ -8,6 +8,7 @@ import {
   WarningOutlined,
 } from "@ant-design/icons";
 import { SystemModel } from "../../models";
+import { LoginState, useUser } from "../useUser";
 
 export interface Filter {
   name?: string;
@@ -162,10 +163,23 @@ export function SystemTableTools({
           onChange={(e) => onChange({ name: e.target.value })}
         />
 
-        <Button type="primary" onClick={() => toggleSubmitDrawer()}>
-          New
-        </Button>
+        <NewSystemButton onClick={toggleSubmitDrawer} />
       </Space>
     </div>
+  );
+}
+
+function NewSystemButton(props: ButtonProps) {
+  const { state } = useUser();
+  if (state === LoginState.yes)
+    return (
+      <Button type="primary" {...props}>
+        New
+      </Button>
+    );
+  return (
+    <Tooltip title="Please log in to submit new systems" placement="topLeft">
+      <Button disabled>New</Button>
+    </Tooltip>
   );
 }

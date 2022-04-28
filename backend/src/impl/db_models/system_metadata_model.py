@@ -297,7 +297,9 @@ class SystemModel(MetadataDBModel, System):
             filter["system_info.dataset_split"] = split
         if creator:
             filter["creator"] = creator
-        filter["$or"] = [{"is_private": False}, {"creator": get_user().email}]
+        filter["$or"] = [{"is_private": False}]
+        if get_user().is_authenticated:
+            filter["$or"].append({"creator": get_user().email})
 
         cursor, total = super().find(filter, sort, page * page_size, page_size)
         documents = list(cursor)

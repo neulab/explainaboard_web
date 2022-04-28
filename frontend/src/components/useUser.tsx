@@ -52,6 +52,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         setState(LoginState.yes);
       } catch (e) {
         setState(LoginState.expired);
+        refreshBackendClient(null);
       }
     }
     if (jwt) fetchUserInfo();
@@ -81,7 +82,10 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   /** redirect to login page */
   const login = useCallback(() => {
-    localStorage.setItem(redirectPageKey, window.location.pathname);
+    localStorage.setItem(
+      redirectPageKey,
+      window.location.pathname + window.location.search
+    );
     const { protocol, host } = window.location;
     window.location.href = encodeURI(
       `${authURL}${protocol}//${host}/login-callback`

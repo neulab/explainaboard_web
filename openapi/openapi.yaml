@@ -152,6 +152,12 @@ paths:
   /systems:
     get:
       summary: Returns a list of systems
+      description: only public systems are returned for unauthenticated requests
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
+
       parameters:
         - in: query
           name: system_name
