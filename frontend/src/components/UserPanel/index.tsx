@@ -15,19 +15,19 @@ export function UserPanel() {
   );
   const userMenu = (
     <Menu className="menu" style={{ float: "right" }}>
-      <Menu.Item className="menu-item">
+      <Menu.Item className="menu-item" key="email">
         Email:{" "}
         <Typography.Paragraph copyable className="menu-item-text">
           {userInfo?.email}
         </Typography.Paragraph>
       </Menu.Item>
-      <Menu.Item>
+      <Menu.Item className="menu-item" key="api_key">
         API Key:{" "}
         <Typography.Paragraph copyable className="menu-item-text">
           {userInfo?.api_key}
         </Typography.Paragraph>
       </Menu.Item>
-      <Menu.Item danger className="menu-item" onClick={logout}>
+      <Menu.Item danger className="menu-item" onClick={logout} key="logout">
         <Tooltip
           placement="left"
           title="Currently, logging out from the web interface doesn't immediately invoke your access from our platform. Instead, your access will expire in a day (at which point, you have logged out completely). The support for a true logout will be added in the future."
