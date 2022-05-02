@@ -21,10 +21,10 @@ class DatasetCollection:
     def metadata_from_dict(cls, name: str, content: dict) -> DatasetMetadata:
         sub_datasets = None
         if "sub_datasets" in content:
-            sub_datasets = {
-                k: SubDatasetMetadata(sub_dataset_name=k, splits=v.get("splits", None))
+            sub_datasets = [
+                SubDatasetMetadata(sub_dataset_name=k, splits=v.get("splits", None))
                 for k, v in content["sub_datasets"].items()
-            }
+            ]
         return DatasetMetadata(
             dataset_name=name,
             # dataset_class_name=content.get("dataset_class_name", None),
@@ -87,4 +87,4 @@ class DatasetCollection:
             p, ps = unwrap(page), unwrap(page_size)
             if ps > 0:
                 dataset_list = dataset_list[p * ps : (p + 1) * ps]
-        return DatasetsReturn(datasets=dataset_list)
+        return DatasetsReturn(datasets=dataset_list, total=len(dataset_list))

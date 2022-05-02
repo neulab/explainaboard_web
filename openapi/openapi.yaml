@@ -774,6 +774,7 @@ components:
             $ref: "#/components/schemas/SubDatasetMetadata"
         tasks:
           type: array
+          nullable: true
           items:
             type: string
             description: task name
@@ -783,7 +784,6 @@ components:
             type: string
       required:
         - dataset_name
-        - tasks
 
     DatasetsReturn:
       type: object

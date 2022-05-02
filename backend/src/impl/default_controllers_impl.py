@@ -27,13 +27,14 @@ from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.tokenizer import get_default_tokenizer
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.dataset_info import DatasetCollection, DatasetInfo
+from explainaboard_web.impl.dataset_info import DatasetCollection
 from explainaboard_web.impl.db_models.system_metadata_model import (
     SystemModel,
     SystemOutputsModel,
 )
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
+from explainaboard_web.models import DatasetMetadata, DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_info import SystemInfo
@@ -91,11 +92,11 @@ def tasks_get() -> list[TaskCategory]:
 """ /datasets """
 
 
-def datasets_dataset_name_get(dataset_name: str) -> DatasetInfo:
-    dataset = DatasetCollection.find_dataset_info(dataset_name=dataset_name)
-    if len(dataset) != 1:
+def datasets_dataset_name_get(dataset_name: str) -> DatasetMetadata:
+    dataset_return = DatasetCollection.find_dataset_info(dataset_name=dataset_name)
+    if len(dataset_return.datasets) != 1:
         abort_with_error_message(404, f"dataset name: {dataset_name} not found")
-    return dataset[0]
+    return dataset_return.datasets[0]
 
 
 def datasets_get(
@@ -103,7 +104,7 @@ def datasets_get(
     task: Optional[str],
     page: int,
     page_size: int,
-) -> list[DatasetInfo]:
+) -> DatasetsReturn:
     return DatasetCollection.find_dataset_info(
         dataset_name=dataset_name, task=task, page=page, page_size=page_size
     )
