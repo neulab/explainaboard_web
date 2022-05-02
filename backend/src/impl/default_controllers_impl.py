@@ -27,14 +27,12 @@ from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.tokenizer import get_default_tokenizer
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.impl.db_models.system_metadata_model import (
     SystemModel,
     SystemOutputsModel,
 )
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
-from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_info import SystemInfo
@@ -46,6 +44,8 @@ from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
+
+from backend.src.impl.dataset_info import DatasetCollection, DatasetInfo
 
 """ /info """
 
@@ -92,24 +92,20 @@ def tasks_get() -> list[TaskCategory]:
 """ /datasets """
 
 
-def datasets_dataset_id_get(dataset_id: str) -> DatasetMetaDataModel:
-    dataset = DatasetMetaDataModel.find_one_by_id(dataset_id)
-    if not dataset:
-        abort_with_error_message(404, f"dataset id: {dataset_id} not found")
-    return dataset
+def datasets_dataset_name_get(dataset_name: str) -> DatasetInfo:
+    dataset = DatasetCollection.find_dataset_info(dataset_name=dataset_name)
+    if len(dataset) != 1:
+        abort_with_error_message(404, f"dataset name: {dataset_name} not found")
+    return dataset[0]
 
 
 def datasets_get(
-    dataset_ids: Optional[str],
     dataset_name: Optional[str],
     task: Optional[str],
     page: int,
     page_size: int,
-) -> DatasetsReturn:
-    parsed_dataset_ids = dataset_ids.split(",") if dataset_ids else None
-    return DatasetMetaDataModel.find(
-        page, page_size, parsed_dataset_ids, dataset_name, task
-    )
+) -> list[DatasetInfo]:
+    return DatasetCollection.find_dataset_info(dataset_name=dataset_name)
 
 
 """ /systems """
