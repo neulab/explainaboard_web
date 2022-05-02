@@ -104,7 +104,9 @@ def datasets_get(
     page: int,
     page_size: int,
 ) -> list[DatasetInfo]:
-    return DatasetCollection.find_dataset_info(dataset_name=dataset_name)
+    return DatasetCollection.find_dataset_info(
+        dataset_name=dataset_name, task=task, page=page, page_size=page_size
+    )
 
 
 """ /systems """

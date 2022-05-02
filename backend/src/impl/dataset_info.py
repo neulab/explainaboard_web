@@ -2,43 +2,11 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
-from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from explainaboard.utils.cache_api import cache_online_file
 from explainaboard_web.impl.typing_utils import unwrap
-
-
-@dataclass
-class SubDatasetInfo:
-    name: str
-    splits: list[str] | None = None
-
-
-@dataclass
-class DatasetInfo:
-
-    name: str
-    dataset_class_name: str | None = None
-    languages: list[str] | None = None
-    task_templates: list[str] | None = None
-    sub_datasets: dict[str, SubDatasetInfo] | None = None
-
-    @classmethod
-    def from_dict(cls, name: str, content: dict):
-        sub_datasets = None
-        if "sub_datasets" in content:
-            sub_datasets = {
-                k: SubDatasetInfo(name=k, splits=v.get("splits", None))
-                for k, v in content["sub_datasets"].items()
-            }
-        return DatasetInfo(
-            name=name,
-            dataset_class_name=content.get("dataset_class_name", None),
-            languages=content.get("languages", None),
-            task_templates=content.get("task_templates", None),
-            sub_datasets=sub_datasets,
-        )
+from explainaboard_web.models import DatasetMetadata, DatasetsReturn, SubDatasetMetadata
 
 
 class DatasetCollection:
@@ -48,6 +16,22 @@ class DatasetCollection:
     _cached_time: datetime | None = None
     # How long to cache for
     _cached_lifetime: timedelta = timedelta(hours=6)
+
+    @classmethod
+    def metadata_from_dict(cls, name: str, content: dict) -> DatasetMetadata:
+        sub_datasets = None
+        if "sub_datasets" in content:
+            sub_datasets = {
+                k: SubDatasetMetadata(sub_dataset_name=k, splits=v.get("splits", None))
+                for k, v in content["sub_datasets"].items()
+            }
+        return DatasetMetadata(
+            dataset_name=name,
+            # dataset_class_name=content.get("dataset_class_name", None),
+            languages=content.get("languages", None),
+            tasks=content.get("task_templates", None),
+            sub_datasets=sub_datasets,
+        )
 
     @classmethod
     def get_dataset_collection(cls) -> dict:
@@ -64,7 +48,7 @@ class DatasetCollection:
                     for k, v in data.items():
                         # skip 'ERROR' or 'SKIPPED' entries
                         if isinstance(v, dict):
-                            cls._cached_info[k] = DatasetInfo.from_dict(k, v)
+                            cls._cached_info[k] = cls.metadata_from_dict(k, v)
             cls._cached_time = datetime.now()
         return cls._cached_info
 
@@ -75,10 +59,18 @@ class DatasetCollection:
         task: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
-    ) -> list[DatasetInfo]:
+    ) -> DatasetsReturn:
+        print(
+            f"dataset_name={dataset_name}, task={task}, "
+            f"page={page}, page_size={page_size}"
+        )
         dataset_collection = cls.get_dataset_collection()
         if dataset_name is not None:
-            dataset_list: Iterable[DatasetInfo] = (
+            print(
+                f"{dataset_name} in dataset_collection = "
+                + str(dataset_name in dataset_collection)
+            )
+            dataset_list: Iterable[DatasetMetadata] = (
                 [dataset_collection[dataset_name]]
                 if dataset_name in dataset_collection
                 else []
@@ -87,13 +79,12 @@ class DatasetCollection:
             dataset_list = dataset_collection.values()
         if task is not None:
             dataset_list = [
-                x
-                for x in dataset_list
-                if (x.task_templates is not None and task in x.task_templates)
+                x for x in dataset_list if (x.tasks is not None and task in x.tasks)
             ]
         if not isinstance(dataset_list, list):
             dataset_list = list(dataset_list)
-        if page is not None:
+        if page_size is not None:
             p, ps = unwrap(page), unwrap(page_size)
-            dataset_list = dataset_list[(p - 1) * ps : p * ps]
-        return dataset_list
+            if ps > 0:
+                dataset_list = dataset_list[p * ps : (p + 1) * ps]
+        return DatasetsReturn(datasets=dataset_list)

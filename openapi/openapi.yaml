@@ -69,12 +69,6 @@ paths:
       description: Returns a list of datasets. Returns empty list if current page is empty. Returns `total=0` if no match datasets.
       parameters:
         - in: query
-          name: dataset_ids
-          description: a string of comma separated dataset ids.
-          schema:
-            type: string
-          example: "61611c3a414abfb115397ca5,61775d7f8795791d8d3846d4"
-        - in: query
           name: dataset_name
           description: fuzzy match for dataset name
           schema:
@@ -759,68 +753,35 @@ components:
           type: string
           nullable: true
 
+    SubDatasetMetadata:
+      type: object
+      properties:
+        sub_dataset_name:
+          type: string
+        splits:
+          type: array
+          items:
+            type: string
+
     DatasetMetadata:
       type: object
       properties:
-        dataset_id:
-          type: string
-          example: "61611c3a414abfb115397ca5"
         dataset_name:
           type: string
-        sub_dataset:
-          type: string
-          description: sub dataset id (TODO)
-          nullable: true
-        split:
-          type: object
-          additionalProperties:
-            type: integer
-        summary:
-          type: string
-        homepage:
-          type: string
-          format: uri
-          nullable: true
-        repository:
-          type: string
-          format: uri
-          nullable: true
-        paper:
-          $ref: "#/components/schemas/PaperInfo"
-        leaderboard:
-          type: string
-        person_of_contact:
-          type: string
-          nullable: true
+        sub_datasets:
+          type: array
+          items:
+            $ref: "#/components/schemas/SubDatasetMetadata"
         tasks:
           type: array
           items:
             type: string
             description: task name
-        task_categories:
-          type: array
-          items:
-            type: string
-            description: task category name
         languages:
           type: array
           items:
             type: string
-        features:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/DatasetFeature"
-        speaker_demographic:
-          type: object
-        annotator_demographic:
-          type: object
-        speech_situation:
-          type: object
-        huggingface_link:
-          type: string
-          format: url
       required:
-        - dataset_id
         - dataset_name
         - tasks
 
