@@ -15,14 +15,12 @@ from explainaboard import (
 )
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard_web.impl.utils import (
     abort_with_error_message,
     binarize_bson,
     unbinarize_bson,
 )
-from explainaboard_web.models.dataset_metadata import DatasetMetadata
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system_output import SystemOutput
@@ -174,24 +172,6 @@ class SystemModel(MetadataDBModel, System):
             document["system_id"] = str(dikt["_id"])
         if dikt.get("is_private") is None:
             document["is_private"] = True
-        if dikt.get("dataset_metadata_id") and dikt.get("dataset") is None:
-            dataset = DatasetMetaDataModel.find_one_by_id(dikt["dataset_metadata_id"])
-            if dataset:
-                split = document.get("dataset_split")
-                # this check only valid for create
-                if split and split not in dataset.split:
-                    abort_with_error_message(
-                        400, f"{split} is not a valid split for {dataset.dataset_name}"
-                    )
-                document["dataset"] = {
-                    "dataset_id": dataset.dataset_id,
-                    "dataset_name": dataset.dataset_name,
-                    "sub_dataset": dataset.sub_dataset,
-                    "tasks": dataset.tasks,
-                }
-            else:
-                document["dataset"] = None
-            dikt.pop("dataset_metadata_id")
 
         metric_stats = []
         if "metric_stats" in document:
@@ -277,7 +257,6 @@ class SystemModel(MetadataDBModel, System):
         split: Optional[str],
         sort: Optional[list],
         creator: Optional[str],
-        include_datasets: bool = False,
         include_metric_stats: bool = False,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
@@ -308,37 +287,11 @@ class SystemModel(MetadataDBModel, System):
         if len(documents) == 0:
             return SystemsReturn(systems, 0)
 
-        if not include_datasets:
-            for doc in documents:
-                system = cls.from_dict(doc, include_metric_stats=include_metric_stats)
-                systems.append(system)
-
-            return SystemsReturn(systems, len(documents))
-
-        # query datasets in batch to make it more efficient
-        dataset_ids: list[str] = []
         for doc in documents:
-            if doc.get("dataset_metadata_id"):
-                dataset_ids.append(doc["dataset_metadata_id"])
-        datasets = DatasetMetaDataModel.find(0, 0, dataset_ids, no_limit=True).datasets
-        dataset_dict: dict[str, DatasetMetadata] = {}
-        for dataset in datasets:
-            dataset_dict[dataset.dataset_id] = dataset
-        for doc in documents:
-            if doc.get("dataset_metadata_id"):
-                dataset = dataset_dict.get(doc["dataset_metadata_id"])
-                if dataset:
-                    doc["dataset"] = {
-                        "dataset_id": dataset.dataset_id,
-                        "dataset_name": dataset.dataset_name,
-                        "sub_dataset": dataset.sub_dataset,
-                        "tasks": dataset.tasks,
-                    }
-                else:
-                    doc["dataset"] = None
-                doc.pop("dataset_metadata_id")
             system = cls.from_dict(doc, include_metric_stats=include_metric_stats)
-        return SystemsReturn(systems, total)
+            systems.append(system)
+
+        return SystemsReturn(systems, len(documents))
 
 
 class SystemOutputsModel(DBModel):

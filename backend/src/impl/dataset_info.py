@@ -6,8 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from explainaboard.utils.cache_api import cache_online_file
-
-from backend.src.impl.typing_utils import unwrap
+from explainaboard_web.impl.typing_utils import unwrap
 
 
 @dataclass

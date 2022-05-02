@@ -27,6 +27,7 @@ from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.tokenizer import get_default_tokenizer
 from explainaboard_web.impl.auth import get_user
+from explainaboard_web.impl.dataset_info import DatasetCollection, DatasetInfo
 from explainaboard_web.impl.db_models.system_metadata_model import (
     SystemModel,
     SystemOutputsModel,
@@ -44,8 +45,6 @@ from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
-
-from backend.src.impl.dataset_info import DatasetCollection, DatasetInfo
 
 """ /info """
 

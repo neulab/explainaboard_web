@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from backend.src.impl.dataset_info import DatasetCollection
+from explainaboard_web.impl.dataset_info import DatasetCollection
 
 
 class TestDatasetInfo(TestCase):
