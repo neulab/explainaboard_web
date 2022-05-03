@@ -12,15 +12,7 @@ from explainaboard import (
     get_task_categories,
 )
 from explainaboard import metric as exb_metric
-from explainaboard.feature import (
-    BucketInfo,
-    ClassLabel,
-    Position,
-    Sequence,
-    Set,
-    Span,
-    Value,
-)
+from explainaboard.feature import FeatureType
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
 from explainaboard.metric import MetricStats
@@ -271,31 +263,9 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         # add proper from_dict() methods in SDK
         for feature_name, feature in system_output_info.features.items():
             # TODO Feature is not getting from_dict()ed properly, hardcode for now:
-            _type = feature["_type"]
-            feature.pop("_type")
-            if _type == ClassLabel._type:
-                feature = ClassLabel(**feature)
-            elif _type == Sequence._type:
-                feature = Sequence(**feature)
-            elif _type == Set._type:
-                feature = Set(**feature)
-            elif _type == Position._type:
-                feature = Position(**feature)
-            elif _type == Span._type:
-                feature = Span(**feature)
-            elif _type == Value._type:
-                feature = Value(**feature)
 
-            bucket_info = (
-                None
-                if isinstance(feature, Sequence) or isinstance(feature, Set)
-                else feature.bucket_info
-            )
+            feature = FeatureType.from_dict(feature)  # dict -> Feature
 
-            if bucket_info is not None:
-                bucket_info = BucketInfo(**bucket_info)
-
-            feature.bucket_info = bucket_info
             # user-defined bucket info
             if feature_name in custom_feature_to_bucket_info:
                 custom_bucket_info = custom_feature_to_bucket_info[feature_name]
