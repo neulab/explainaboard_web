@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import itertools
 import json
 from collections.abc import Iterable
 from datetime import datetime, timedelta
 
 from explainaboard.utils.cache_api import cache_online_file
 from explainaboard_web.impl.typing_utils import unwrap
-from explainaboard_web.models import DatasetMetadata, DatasetsReturn, SubDatasetMetadata
+from explainaboard_web.models import DatasetMetadata, DatasetsReturn
 
 
 class DatasetCollection:
@@ -18,36 +19,39 @@ class DatasetCollection:
     _cached_lifetime: timedelta = timedelta(hours=6)
 
     @classmethod
-    def metadata_from_dict(cls, name: str, content: dict) -> DatasetMetadata:
-        sub_datasets = None
-        if "sub_datasets" in content:
-            sub_datasets = [
-                SubDatasetMetadata(sub_dataset_name=k, splits=v.get("splits", None))
-                for k, v in content["sub_datasets"].items()
-            ]
-        return DatasetMetadata(
-            dataset_name=name,
-            # dataset_class_name=content.get("dataset_class_name", None),
-            languages=content.get("languages", None),
-            tasks=content.get("task_templates", None),
-            sub_datasets=sub_datasets,
-        )
+    def metadata_from_dict(cls, name: str, content: dict) -> list[DatasetMetadata]:
+        ret_list = []
+        for k, v in content["sub_datasets"].items():
+            ret_list.append(
+                DatasetMetadata(
+                    dataset_name=name,
+                    # dataset_class_name=content.get("dataset_class_name", None),
+                    languages=content.get("languages", None),
+                    tasks=content.get("task_templates", None),
+                    sub_dataset=None if k == "__NONE__" else k,
+                    splits=v.get("splits", None),
+                )
+            )
+        return ret_list
 
     @classmethod
-    def get_dataset_collection(cls) -> dict:
+    def get_dataset_collection(cls) -> dict[str, list[DatasetMetadata]]:
+        """
+        Get a collection of datasets, indexed by dataset name, containing every
+        sub_dataset
+        """
         if cls._cached_info is None or (
             datetime.now() - unwrap(cls._cached_time) > unwrap(cls._cached_lifetime)
         ):
             # TODO(gneubig): add lifetime to cache when PR is merged
             local_path = cache_online_file(cls.online_path, "info/dataset_info.jsonl")
             cls._cached_info = {}
-            print(f"local_path={local_path}")
             with open(local_path, "r") as fin:
                 for line in fin:
                     data = json.loads(line)
                     for k, v in data.items():
                         # skip 'ERROR' or 'SKIPPED' entries
-                        if isinstance(v, dict):
+                        if isinstance(v, dict) and len(v) > 0:
                             cls._cached_info[k] = cls.metadata_from_dict(k, v)
             cls._cached_time = datetime.now()
         return cls._cached_info
@@ -60,23 +64,15 @@ class DatasetCollection:
         page: int | None = None,
         page_size: int | None = None,
     ) -> DatasetsReturn:
-        print(
-            f"dataset_name={dataset_name}, task={task}, "
-            f"page={page}, page_size={page_size}"
-        )
         dataset_collection = cls.get_dataset_collection()
         if dataset_name is not None:
-            print(
-                f"{dataset_name} in dataset_collection = "
-                + str(dataset_name in dataset_collection)
-            )
             dataset_list: Iterable[DatasetMetadata] = (
-                [dataset_collection[dataset_name]]
+                dataset_collection[dataset_name]
                 if dataset_name in dataset_collection
                 else []
             )
         else:
-            dataset_list = dataset_collection.values()
+            dataset_list = itertools.chain.from_iterable(dataset_collection.values())
         if task is not None:
             dataset_list = [
                 x for x in dataset_list if (x.tasks is not None and task in x.tasks)

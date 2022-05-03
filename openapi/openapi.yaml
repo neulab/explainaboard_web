@@ -753,25 +753,17 @@ components:
           type: string
           nullable: true
 
-    SubDatasetMetadata:
-      type: object
-      properties:
-        sub_dataset_name:
-          type: string
-        splits:
-          type: array
-          items:
-            type: string
-
     DatasetMetadata:
       type: object
       properties:
         dataset_name:
           type: string
-        sub_datasets:
+        sub_dataset:
+          type: string
+        splits:
           type: array
           items:
-            $ref: "#/components/schemas/SubDatasetMetadata"
+            type: string
         tasks:
           type: array
           nullable: true

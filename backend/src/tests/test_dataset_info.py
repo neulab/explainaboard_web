@@ -10,8 +10,8 @@ class TestDatasetInfo(TestCase):
 
     def test_find_by_name(self):
         dataset_info = DatasetCollection.find_dataset_info(dataset_name="cnewsum")
-        self.assertEqual(len(dataset_info), 1)
-        self.assertEqual(dataset_info[0].dataset_class_name, "CNewSumDataset")
+        self.assertEqual(len(dataset_info.datasets), 1)
+        self.assertTrue("summarization" in dataset_info.datasets[0].tasks)
 
     def test_find_by_task(self):
         dataset_info = DatasetCollection.find_dataset_info(
@@ -19,7 +19,7 @@ class TestDatasetInfo(TestCase):
         )
         ner_datasets = {"masakhaner", "ontonotes_ner", "wnut_17"}
         not_ner_datasets = {"cnewsum", "conala"}
-        found_datasets = {x.name: x for x in dataset_info}
+        found_datasets = {x.dataset_name: x for x in dataset_info.datasets}
         for x in ner_datasets:
             self.assertTrue(x in found_datasets, msg=f"{x} not found in NER datasets")
         for x in not_ner_datasets:
@@ -28,17 +28,15 @@ class TestDatasetInfo(TestCase):
     def test_find_by_page(self):
         page_size = 5
         all_dataset_info = DatasetCollection.find_dataset_info(task="summarization")
-        all_len = len(all_dataset_info)
-        remainder_page = int(all_len / page_size) + 1
+        all_len = len(all_dataset_info.datasets)
+        remainder_page = int(all_len / page_size)
         for i in range(1, remainder_page + 2):
             page_dataset_info = DatasetCollection.find_dataset_info(
                 task="summarization", page=i, page_size=page_size
             )
             if i < remainder_page:
-                self.assertEqual(len(page_dataset_info), page_size)
+                self.assertEqual(len(page_dataset_info.datasets), page_size)
             elif i == remainder_page:
-                self.assertEqual(
-                    len(page_dataset_info), len(all_dataset_info) % page_size
-                )
+                self.assertEqual(len(page_dataset_info.datasets), all_len % page_size)
             else:
-                self.assertEqual(len(page_dataset_info), 0)
+                self.assertEqual(len(page_dataset_info.datasets), 0)
