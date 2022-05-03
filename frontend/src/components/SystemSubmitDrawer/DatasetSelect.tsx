@@ -28,7 +28,7 @@ export function DatasetSelect({
   const activeDataset = options.find((d) => d.dataset_id === datasetID);
   let splitOptions: string[] = [];
   if (activeDataset != null) {
-    splitOptions = Object.keys(activeDataset.splits || {});
+    splitOptions = activeDataset.splits || [];
   }
 
   function triggerChange(changedValue: Partial<DatasetValue>) {

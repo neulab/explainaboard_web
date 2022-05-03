@@ -65,6 +65,7 @@ class DatasetCollection:
     def find_dataset_info(
         cls,
         dataset_name: str | None = None,
+        sub_dataset: str | None = None,
         task: str | None = None,
         page: int | None = None,
         page_size: int | None = None,
@@ -78,6 +79,8 @@ class DatasetCollection:
             )
         else:
             dataset_list = itertools.chain.from_iterable(dataset_collection.values())
+        if sub_dataset is not None and sub_dataset != "":
+            dataset_list = [x for x in dataset_list if sub_dataset == x.sub_dataset]
         if task is not None:
             dataset_list = [x for x in dataset_list if task in x.tasks]
         if not isinstance(dataset_list, list):

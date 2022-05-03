@@ -40,11 +40,11 @@ paths:
     get:
       summary: Returns dataset metadata by id
       security: []
-      description: Returns dataset metadata by id. id is the DB id so it is mostly used internally. See datasets MGet endpoints for general use.
+      description: Returns dataset metadata by id, where the ID is either "dataset_name" (in the case of no sub dataset) or "dataset_name---sub_dataset".
       parameters:
         - in: path
           name: dataset_id
-          example: 61611c3a414abfb115397ca5
+          example: 'masakhane---masakhane-bbj'
           schema:
             type: string
           required: true

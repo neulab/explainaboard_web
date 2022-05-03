@@ -92,10 +92,15 @@ def tasks_get() -> list[TaskCategory]:
 """ /datasets """
 
 
-def datasets_dataset_name_get(dataset_name: str) -> DatasetMetadata:
-    dataset_return = DatasetCollection.find_dataset_info(dataset_name=dataset_name)
+def datasets_dataset_id_get(dataset_id: str) -> DatasetMetadata:
+    dataset_split = dataset_id.split("---")
+    dataset_name = dataset_split[0]
+    sub_dataset = dataset_split[1] if len(dataset_split) == 2 else "__NONE__"
+    dataset_return = DatasetCollection.find_dataset_info(
+        dataset_name=dataset_name, sub_dataset=sub_dataset
+    )
     if len(dataset_return.datasets) != 1:
-        abort_with_error_message(404, f"dataset name: {dataset_name} not found")
+        abort_with_error_message(404, f"dataset name: {dataset_id} not found")
     return dataset_return.datasets[0]
 
 
