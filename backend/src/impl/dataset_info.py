@@ -22,12 +22,17 @@ class DatasetCollection:
     def metadata_from_dict(cls, name: str, content: dict) -> list[DatasetMetadata]:
         ret_list = []
         for k, v in content["sub_datasets"].items():
+            sub_str = "" if k == "__NONE__" else f"---{k}"
+            tasks = content.get("task_templates", [])
+            if tasks is None:
+                tasks = []
             ret_list.append(
                 DatasetMetadata(
+                    dataset_id=f"{name}{sub_str}",
                     dataset_name=name,
                     # dataset_class_name=content.get("dataset_class_name", None),
                     languages=content.get("languages", None),
-                    tasks=content.get("task_templates", None),
+                    tasks=tasks,
                     sub_dataset=None if k == "__NONE__" else k,
                     splits=v.get("splits", None),
                 )
@@ -74,9 +79,7 @@ class DatasetCollection:
         else:
             dataset_list = itertools.chain.from_iterable(dataset_collection.values())
         if task is not None:
-            dataset_list = [
-                x for x in dataset_list if (x.tasks is not None and task in x.tasks)
-            ]
+            dataset_list = [x for x in dataset_list if task in x.tasks]
         if not isinstance(dataset_list, list):
             dataset_list = list(dataset_list)
         if page_size is not None:

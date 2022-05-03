@@ -115,16 +115,6 @@ const columns: ColumnsType<DatasetMetadata> = [
     align: "center",
   },
   {
-    dataIndex: "dataset_id",
-    title: "ID",
-    width: 230,
-    render: (value) => (
-      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-        {value}
-      </Typography.Paragraph>
-    ),
-  },
-  {
     dataIndex: "dataset_name",
     title: "Name",
   },
@@ -162,18 +152,10 @@ const columns: ColumnsType<DatasetMetadata> = [
     render: (_, record) => (
       <>
         <Typography.Link
-          href={generateDataLabURL(record.dataset_id)}
+          href={generateDataLabURL(record.dataset_name)}
           target="_blank"
         >
           DataLab
-        </Typography.Link>
-        <Divider type="vertical" />
-        <Typography.Link
-          href={record.huggingface_link}
-          target="_blank"
-          disabled={!record.huggingface_link}
-        >
-          Hugging Face
         </Typography.Link>
       </>
     ),

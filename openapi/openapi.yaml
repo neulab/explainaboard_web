@@ -756,6 +756,8 @@ components:
     DatasetMetadata:
       type: object
       properties:
+        dataset_id:
+          type: string
         dataset_name:
           type: string
         sub_dataset:
@@ -775,7 +777,9 @@ components:
           items:
             type: string
       required:
+        - dataset_id
         - dataset_name
+        - tasks
 
     DatasetsReturn:
       type: object
