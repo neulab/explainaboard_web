@@ -34,12 +34,6 @@ const routes: Route[] = [
     children: <Home />,
   },
   {
-    path: "/datasets",
-    title: "Datasets",
-    icon: <DatabaseOutlined />,
-    children: <DatasetsPage />,
-  },
-  {
     path: "/systems",
     title: "Systems",
     icon: <CodeOutlined />,
@@ -52,6 +46,12 @@ const routes: Route[] = [
     icon: <TableOutlined />,
     children: <LeaderboardPage />,
     requireLogin: false,
+  },
+  {
+    path: "/datasets",
+    title: "Datasets",
+    icon: <DatabaseOutlined />,
+    children: <DatasetsPage />,
   },
   {
     path: "/terms",

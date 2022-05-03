@@ -1,13 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Divider,
-  Input,
-  PageHeader,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from "antd";
+import { Input, PageHeader, Space, Table, Tag, Typography } from "antd";
 import "./index.css";
 import { ColumnsType } from "antd/lib/table";
 import { DatasetMetadata } from "../../clients/openapi";
@@ -42,7 +34,6 @@ export function DatasetsPage() {
     async function refreshDatasets() {
       setPageState(PageState.loading);
       const { datasets: newDatasets, total } = await backendClient.datasetsGet(
-        undefined,
         nameQuery ? nameQuery : undefined,
         undefined,
         page,

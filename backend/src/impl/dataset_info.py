@@ -70,7 +70,7 @@ class DatasetCollection:
         page_size: int | None = None,
     ) -> DatasetsReturn:
         dataset_collection = cls.get_dataset_collection()
-        if dataset_name is not None:
+        if dataset_name is not None and dataset_name != "":
             dataset_list: Iterable[DatasetMetadata] = (
                 dataset_collection[dataset_name]
                 if dataset_name in dataset_collection
@@ -82,8 +82,9 @@ class DatasetCollection:
             dataset_list = [x for x in dataset_list if task in x.tasks]
         if not isinstance(dataset_list, list):
             dataset_list = list(dataset_list)
+        total = len(dataset_list)
         if page_size is not None:
             p, ps = unwrap(page), unwrap(page_size)
             if ps > 0:
                 dataset_list = dataset_list[p * ps : (p + 1) * ps]
-        return DatasetsReturn(datasets=dataset_list, total=len(dataset_list))
+        return DatasetsReturn(datasets=dataset_list, total=total)
