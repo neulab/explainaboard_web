@@ -48,8 +48,11 @@ class DatasetCollection:
         if cls._cached_info is None or (
             datetime.now() - unwrap(cls._cached_time) > unwrap(cls._cached_lifetime)
         ):
-            # TODO(gneubig): add lifetime to cache when PR is merged
-            local_path = cache_online_file(cls.online_path, "info/dataset_info.jsonl")
+            local_path = cache_online_file(
+                cls.online_path,
+                "info/dataset_info.jsonl",
+                lifetime=cls._cached_lifetime,
+            )
             cls._cached_info = {}
             with open(local_path, "r") as fin:
                 for line in fin:

@@ -12,15 +12,7 @@ from explainaboard import (
     get_task_categories,
 )
 from explainaboard import metric as exb_metric
-from explainaboard.feature import (
-    BucketInfo,
-    ClassLabel,
-    Position,
-    Sequence,
-    Set,
-    Span,
-    Value,
-)
+from explainaboard.feature import BucketInfo, Dict, Position, Sequence, Value
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
 from explainaboard.metric import MetricStats
@@ -276,22 +268,18 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             # TODO Feature is not getting from_dict()ed properly, hardcode for now:
             _type = feature["_type"]
             feature.pop("_type")
-            if _type == ClassLabel._type:
-                feature = ClassLabel(**feature)
-            elif _type == Sequence._type:
+            if _type == Sequence._type:
                 feature = Sequence(**feature)
-            elif _type == Set._type:
-                feature = Set(**feature)
+            elif _type == Dict._type:
+                feature = Dict(**feature)
             elif _type == Position._type:
                 feature = Position(**feature)
-            elif _type == Span._type:
-                feature = Span(**feature)
             elif _type == Value._type:
                 feature = Value(**feature)
 
             bucket_info = (
                 None
-                if isinstance(feature, Sequence) or isinstance(feature, Set)
+                if isinstance(feature, Sequence) or isinstance(feature, Dict)
                 else feature.bucket_info
             )
 
