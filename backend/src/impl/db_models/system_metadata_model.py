@@ -15,12 +15,14 @@ from explainaboard import (
 )
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
+from explainaboard_web.impl.dataset_info import DatasetCollection
 from explainaboard_web.impl.db_models.db_model import DBModel, MetadataDBModel
 from explainaboard_web.impl.utils import (
     abort_with_error_message,
     binarize_bson,
     unbinarize_bson,
 )
+from explainaboard_web.models import SystemDataset
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system_output import SystemOutput
@@ -171,6 +173,7 @@ class SystemModel(MetadataDBModel, System):
         cls, dikt: dict[str, Any], include_metric_stats: bool = False
     ) -> SystemModel:
         document: dict[str, Any] = {**dikt}
+        print(f"SystemModel.from_dict document={document}")
         if dikt.get("_id"):
             document["system_id"] = str(dikt["_id"])
         if dikt.get("is_private") is None:
@@ -180,7 +183,28 @@ class SystemModel(MetadataDBModel, System):
         if "metric_stats" in document:
             metric_stats = document["metric_stats"]
             document["metric_stats"] = []
-        system = super().from_dict(document)
+
+        my_dataset = DatasetCollection.find_dataset_info(
+            dataset_name=document["dataset_name"],
+            sub_dataset=document.get("sub_dataset", None),
+        ).datasets
+        system_dataset = SystemDataset(
+            dataset_id=None,
+            dataset_name=document["dataset_name"],
+            sub_dataset=document["sub_dataset"],
+            tasks=my_dataset[0].tasks,
+        )
+        system = SystemModel(
+            created_at=datetime.now(),
+            last_modified=datetime.now(),
+            system_id=document.get("system_id", None),
+            system_info=None,
+            dataset=system_dataset,
+            paper_info=document["paper_info"],
+            code=document["code"],
+            download_link=document["download_link"],
+        )
+        # system = super().from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
             system.metric_stats = [unbinarize_bson(stat) for stat in metric_stats]

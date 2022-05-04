@@ -160,7 +160,6 @@ def systems_post(body: SystemsBody) -> SystemModel:
     aborts with error if fails
     TODO: error handling
     """
-    print(f"body={body.metadata}")
     if body.metadata.dataset_name:
         if not body.metadata.dataset_split:
             abort_with_error_message(
