@@ -638,7 +638,9 @@ components:
         is_private:
           type: boolean
           default: True
-        dataset_metadata_id:
+        dataset_name:
+          type: string
+        sub_dataset:
           type: string
         dataset_split:
           type: string

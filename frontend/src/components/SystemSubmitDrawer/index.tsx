@@ -134,9 +134,16 @@ export function SystemSubmitDrawer(props: Props) {
         });
       } else {
         const { datasetID, split } = dataset;
+        const activeDataset = datasetOptions.find(
+          (d) => d.dataset_id === datasetID
+        );
+        if (activeDataset === undefined) {
+          throw new RangeError("Could not find dataset ID");
+        }
         system = await backendClient.systemsPost({
           metadata: {
-            dataset_metadata_id: datasetID,
+            dataset_name: activeDataset.dataset_name,
+            sub_dataset: activeDataset.sub_dataset,
             dataset_split: split,
             metric_names,
             model_name: name,

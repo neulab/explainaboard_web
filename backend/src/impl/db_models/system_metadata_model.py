@@ -50,16 +50,19 @@ class SystemModel(MetadataDBModel, System):
             (metadata + sufficient statistics + overall analysis)
           6. write to system_outputs
         """
-        system = cls.from_dict(metadata.to_dict())
+        metadata_dict = metadata.to_dict()
+        print(f"metadata_dict={metadata_dict}")
+        system = cls.from_dict(metadata_dict)
+        print(f"system={system}")
 
         user = get_user()
         system.creator = user.email
 
         # validation
-        if metadata.dataset_metadata_id:
+        if metadata.dataset_name:
             if not system.dataset:
                 abort_with_error_message(
-                    400, f"dataset: {metadata.dataset_metadata_id} does not exist"
+                    400, f"dataset: {metadata.dataset_name} does not exist"
                 )
             if metadata.task not in system.dataset.tasks:
                 abort_with_error_message(
