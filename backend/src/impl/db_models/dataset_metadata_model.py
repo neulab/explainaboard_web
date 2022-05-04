@@ -22,9 +22,7 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
             document["dataset_id"] = str(dikt["_id"])
         if not dikt.get("tasks"):
             document["tasks"] = []
-        # dataset_metadata = super().from_dict(document)
-        # return dataset_metadata
-        return util.deserialize_model(dikt, cls)
+        return util.deserialize_model(document, cls)
 
     @classmethod
     def find_dataset_by_id(cls, id: str) -> Optional[DatasetMetaDataModel]:
