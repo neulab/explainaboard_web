@@ -85,7 +85,7 @@ def tasks_get() -> list[TaskCategory]:
 
 
 def datasets_dataset_id_get(dataset_id: str) -> DatasetMetaDataModel:
-    dataset = DatasetMetaDataModel.find_one_by_id(dataset_id)
+    dataset = DatasetMetaDataModel.find_dataset_by_id(dataset_id)
     if not dataset:
         abort_with_error_message(404, f"dataset id: {dataset_id} not found")
     return dataset
@@ -99,7 +99,7 @@ def datasets_get(
     page_size: int,
 ) -> DatasetsReturn:
     parsed_dataset_ids = dataset_ids.split(",") if dataset_ids else None
-    return DatasetMetaDataModel.find(
+    return DatasetMetaDataModel.find_datasets(
         page, page_size, parsed_dataset_ids, dataset_name, task
     )
 

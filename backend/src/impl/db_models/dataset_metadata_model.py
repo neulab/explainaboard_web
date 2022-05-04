@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional, Union
+from typing import Any, Optional
 
 from bson.objectid import ObjectId
 from explainaboard_web.impl.db_models.db_model import MetadataDBModel
 from explainaboard_web.models.dataset_metadata import DatasetMetadata
 from explainaboard_web.models.datasets_return import DatasetsReturn
+from pymongo.results import InsertOneResult
+
+from explainaboard_web import util
 
 
 class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
@@ -19,18 +22,19 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
             document["dataset_id"] = str(dikt["_id"])
         if not dikt.get("tasks"):
             document["tasks"] = []
-        dataset_metadata = super().from_dict(document)
-        return dataset_metadata
+        # dataset_metadata = super().from_dict(document)
+        # return dataset_metadata
+        return util.deserialize_model(dikt, cls)
 
     @classmethod
-    def find_one_by_id(cls, id: str) -> Union[DatasetMetaDataModel, None]:
+    def find_dataset_by_id(cls, id: str) -> Optional[DatasetMetaDataModel]:
         document = super().find_one_by_id(id)
         if not document:
             return None
         return cls.from_dict(document)
 
     @classmethod
-    def find(
+    def find_datasets(
         cls,
         page: int,
         page_size: int,
@@ -59,7 +63,7 @@ class DatasetMetaDataModel(MetadataDBModel, DatasetMetadata):
             cursor, total = super().find(filter, [], page * page_size, page_size)
         return DatasetsReturn([cls.from_dict(doc) for doc in cursor], total)
 
-    def insert(self) -> str:
+    def insert(self) -> InsertOneResult:
         """
         Insert object into database
         Returns:
