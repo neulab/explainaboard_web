@@ -19,12 +19,6 @@ from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.tokenizer import get_default_tokenizer
 from explainaboard_web.impl.auth import get_user
-
-# from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetadata
-# from explainaboard_web.impl.db_models.system_metadata_model import (
-#     SystemModel,
-#     SystemOutputsModel,
-# )
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -114,10 +108,7 @@ def datasets_get(
 
 
 def systems_system_id_get(system_id: str) -> System:
-    system = DBUtils.find_one_by_id(DBUtils.DEV_SYSTEM_METADATA, system_id)
-    if not system:
-        abort_with_error_message(404, f"system id: {system_id} not found")
-    return system
+    return SystemDBUtils.find_system_by_id(system_id)
 
 
 def systems_get(
@@ -195,9 +186,7 @@ def systems_system_id_outputs_get(
     """
     TODO: return special error/warning if some ids cannot be found
     """
-    sys = DBUtils.find_one_by_id(DBUtils.DEV_SYSTEM_METADATA, system_id)
-    if not sys:
-        abort_with_error_message(400, "system does not exist")
+    sys = SystemDBUtils.find_system_by_id(system_id)
     if is_private_dataset(
         DatalabLoaderOption(
             sys.system_info.dataset_name,

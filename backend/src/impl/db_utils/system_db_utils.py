@@ -140,8 +140,6 @@ class SystemDBUtils:
                         "sub_dataset": dataset.sub_dataset,
                         "tasks": dataset.tasks,
                     }
-                else:
-                    doc.pop("dataset_metadata_id", None)
                 doc.pop("dataset_metadata_id")
             doc["system_id"] = doc.pop("_id")
             system = SystemDBUtils.system_from_dict(
@@ -297,6 +295,14 @@ class SystemDBUtils:
             raise e
 
     @staticmethod
+    def find_system_by_id(system_id: str):
+        sys_doc = DBUtils.find_one_by_id(DBUtils.DEV_SYSTEM_METADATA, system_id)
+        if not sys_doc:
+            abort_with_error_message(404, f"system id: {system_id} not found")
+        system = SystemDBUtils.system_from_dict(sys_doc)
+        return system
+
+    @staticmethod
     def find_system_outputs(
         system_id: str, output_ids: str | None, limit=0
     ) -> SystemOutputsReturn:
@@ -325,19 +331,14 @@ class SystemDBUtils:
 
         def db_operations(session: ClientSession) -> bool:
             """TODO: add logging if error"""
-            sys = DBUtils.find_one_by_id(
-                DBUtils.DEV_SYSTEM_METADATA,
-                system_id,
-            )
-            if not sys:
-                return False
-            if sys["creator"] != user.email:
+            sys = SystemDBUtils.find_system_by_id(system_id)
+            if sys.creator != user.email:
                 abort_with_error_message(403, "you can only delete your own systems")
             result = DBUtils.delete_one_by_id(
                 DBUtils.DEV_SYSTEM_METADATA, system_id, session=session
             )
             if not result:
-                return False
+                abort_with_error_message(400, f"failed to delete system {system_id}")
             # drop cannot be added to a multi-document transaction, this seems
             # fine because drop is the last operation. If drop fails, delete
             # gets rolled back which is our only requirement here.

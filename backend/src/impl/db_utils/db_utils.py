@@ -17,8 +17,6 @@ class DBCollection:
 
 
 class DBUtils:
-    _database_name: str
-    _collection_name: str
 
     # Names of DBs or collections
     SYSTEM_OUTPUT_DB = "system_outputs"
@@ -56,8 +54,6 @@ class DBUtils:
         :param check_collection_exist: if True and collection doesn't exist, raise
               exception
         """
-        if not collection.collection_name:
-            raise DBUtilsException("collection_name not defined")
         DBUtils.get_collection(collection, check_collection_exist).drop()
 
     @staticmethod
@@ -67,8 +63,6 @@ class DBUtils:
         check_collection_exist: bool = True,
         session: ClientSession = None,
     ) -> str:
-        if not collection.collection_name:
-            raise DBUtilsException("collection_name not defined")
         result = DBUtils.get_collection(collection, check_collection_exist).insert_one(
             document, session=session
         )
@@ -81,8 +75,6 @@ class DBUtils:
         check_collection_exist=True,
         session: ClientSession = None,
     ) -> InsertManyResult:
-        if not collection.collection_name:
-            raise DBUtilsException("collection_name not defined")
         return DBUtils.get_collection(collection, check_collection_exist).insert_many(
             documents, session=session
         )
@@ -112,8 +104,6 @@ class DBUtils:
         Delete one document with the given ID
         Returns: `True` if a single document has been deleted
         """
-        if not collection.collection_name:
-            raise DBUtilsException("collection_name not defined")
         try:
             result: DeleteResult = DBUtils.get_collection(collection).delete_one(
                 {"_id": ObjectId(docid)}, session=session
@@ -129,8 +119,6 @@ class DBUtils:
     def count(collection: DBCollection, filt: dict = None) -> int:
         if filt is None:
             filt = {}
-        if not collection.collection_name:
-            raise DBUtilsException("collection_name not defined")
         return DBUtils.get_collection(collection).count_documents(filt)
 
     @staticmethod
@@ -158,9 +146,6 @@ class DBUtils:
           - a number that represents the total matching documents without considering
             skip/limit
         """
-        if not collection.collection_name:
-            raise DBUtilsException("collection_name not defined")
-
         if not filt:
             filt = {}
         cursor = DBUtils.get_collection(collection).find(filt, projection)
