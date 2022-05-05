@@ -265,12 +265,6 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
         for feature_name, feature in system_output_info.features.items():
-            # TODO(gneubig) fix for obsolete is_pre_computed data. Better solution is to
-            #  remove it from the database.
-            if "feature" in feature:
-                continue
-            feature.pop("is_pre_computed", None)
-            print(f"feature = {feature}")
             feature = FeatureType.from_dict(feature)  # dict -> Feature
 
             # user-defined bucket info

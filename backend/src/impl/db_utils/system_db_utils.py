@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import traceback
 from datetime import datetime
 from typing import Any, Optional
 
@@ -167,7 +168,7 @@ class SystemDBUtils:
             (metadata + sufficient statistics + overall analysis)
           6. write to system_outputs
         """
-        system = System.from_dict(metadata.to_dict())
+        system = SystemDBUtils.system_from_dict(metadata.to_dict())
 
         user = get_user()
         system.creator = user.email
@@ -260,7 +261,7 @@ class SystemDBUtils:
             system.metric_stats = metric_stats
             system.active_features = overall_statistics.active_features
 
-            def db_operations(session: ClientSession) -> None:
+            def db_operations(session: ClientSession) -> str:
                 # Insert system
                 system.created_at = system.last_modified = datetime.utcnow()
                 document = system.to_dict()
@@ -278,6 +279,7 @@ class SystemDBUtils:
                 DBUtils.insert_many(
                     output_collection, list(system_output_data), False, session
                 )
+                return str(system_db_id)
 
             system_id = DBUtils.execute_transaction(db_operations)
 
@@ -289,6 +291,7 @@ class SystemDBUtils:
             system.system_id = system_id
             return system
         except ValueError as e:
+            traceback.print_exc()
             abort_with_error_message(400, str(e))
             # mypy doesn't seem to understand the NoReturn type in an except block.
             # It's a noop to fix it
@@ -329,7 +332,7 @@ class SystemDBUtils:
             )
             if not sys:
                 return False
-            if sys.creator != user.email:
+            if sys["creator"] != user.email:
                 abort_with_error_message(403, "you can only delete your own systems")
             result = DBUtils.delete_one_by_id(
                 DBUtils.DEV_SYSTEM_METADATA, system_id, session=session
