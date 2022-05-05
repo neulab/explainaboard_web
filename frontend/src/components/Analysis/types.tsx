@@ -12,7 +12,6 @@ export interface FeatureVal {
   description: string | null | undefined;
   id: null;
   is_bucket: boolean;
-  is_pre_computed: boolean;
   dtype?: string;
   names?: string[];
   names_file?: null;
@@ -108,7 +107,6 @@ export interface SystemInfoFeature {
   description: string | null;
   dtype?: string;
   is_bucket: boolean;
-  is_pre_computed: boolean;
   require_training_set: boolean;
   _type: string;
 }
