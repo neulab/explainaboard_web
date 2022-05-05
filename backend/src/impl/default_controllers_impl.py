@@ -3,7 +3,7 @@ from __future__ import annotations
 import binascii
 import dataclasses
 import os
-from typing import Optional
+from typing import Optional, cast
 
 from explainaboard import (
     DatalabLoaderOption,
@@ -264,11 +264,13 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_info_dict = system_info.to_dict()
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
-        # TODO(chihhao) bug in SDK
-        # nested dataclasses must be from_dict()ed properly
-        # move this function to SDK in the future or
-        # add proper from_dict() methods in SDK
         for feature_name, feature in system_output_info.features.items():
+            # TODO(gneubig) fix for obsolete is_pre_computed data. Better solution is to
+            #  remove it from the database.
+            if "feature" in feature:
+                continue
+            feature.pop("is_pre_computed", None)
+            print(f"feature = {feature}")
             feature = FeatureType.from_dict(feature)  # dict -> Feature
 
             # user-defined bucket info
@@ -303,12 +305,13 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
         # Get the entire system outputs
         output_ids = None
-        system_outputs = [
-            x.to_dict()
-            for x in SystemDBUtils.find_system_outputs(
-                system.system_id, output_ids, limit=0
-            ).system_outputs
-        ]
+        system_outputs = SystemDBUtils.find_system_outputs(
+            system.system_id, output_ids, limit=0
+        ).system_outputs
+        print(f"type({type(system_outputs[0])})")
+        # Note we are casting here, as SystemOutput.from_dict() actually just returns a
+        # dict
+        system_outputs = [cast(dict, x) for x in system_outputs]
 
         fine_grained_statistics = processor.get_fine_grained_statistics(
             system_output_info,
