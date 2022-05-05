@@ -46,9 +46,11 @@ class SystemDBUtils:
         if dikt.get("is_private") is None:
             document["is_private"] = True
         if dikt.get("dataset_metadata_id") and dikt.get("dataset") is None:
+            print(f'fetching dataset_metadata_id {dikt["dataset_metadata_id"]}')
             dataset = DBUtils.find_one_by_id(
                 DBUtils.DATASET_METADATA, dikt["dataset_metadata_id"]
             )
+            print(f"result {dataset}")
             if dataset:
                 split = document.get("dataset_split")
                 # this check only valid for create
@@ -56,6 +58,7 @@ class SystemDBUtils:
                     abort_with_error_message(
                         400, f"{split} is not a valid split for {dataset.dataset_name}"
                     )
+                dataset["dataset_id"] = str(dataset.pop("_id"))
                 document["dataset"] = dataset
             dikt.pop("dataset_metadata_id")
 
@@ -168,6 +171,7 @@ class SystemDBUtils:
             (metadata + sufficient statistics + overall analysis)
           6. write to system_outputs
         """
+        print(f"metadata={metadata}")
         system = SystemDBUtils.system_from_dict(metadata.to_dict())
 
         user = get_user()
