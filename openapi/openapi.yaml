@@ -398,8 +398,6 @@ components:
           type: boolean
         require_training_set:
           type: boolean
-        is_pre_computed:
-          type: boolean
         bucket_info:
           # TODO(chihhao) define detailed fields
           type: object
@@ -431,8 +429,6 @@ components:
         is_bucket:
           type: boolean
         require_training_set:
-          type: boolean
-        is_pre_computed:
           type: boolean
         bucket_info:
           type: object
