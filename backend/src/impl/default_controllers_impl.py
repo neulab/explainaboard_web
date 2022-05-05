@@ -302,7 +302,6 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_outputs = SystemDBUtils.find_system_outputs(
             system.system_id, output_ids, limit=0
         ).system_outputs
-        print(f"type({type(system_outputs[0])})")
         # Note we are casting here, as SystemOutput.from_dict() actually just returns a
         # dict
         system_outputs = [cast(dict, x) for x in system_outputs]

@@ -46,11 +46,9 @@ class SystemDBUtils:
         if dikt.get("is_private") is None:
             document["is_private"] = True
         if dikt.get("dataset_metadata_id") and dikt.get("dataset") is None:
-            print(f'fetching dataset_metadata_id {dikt["dataset_metadata_id"]}')
             dataset = DBUtils.find_one_by_id(
                 DBUtils.DATASET_METADATA, dikt["dataset_metadata_id"]
             )
-            print(f"result {dataset}")
             if dataset:
                 split = document.get("dataset_split")
                 # this check only valid for create
@@ -142,9 +140,7 @@ class SystemDBUtils:
                         "sub_dataset": dataset.sub_dataset,
                         "tasks": dataset.tasks,
                     }
-                    print(f"including dataset {dataset.dataset_name}")
                 else:
-                    print(f'WARNING: dataset ID {doc["dataset_metadata_id"]} not found')
                     doc.pop("dataset_metadata_id", None)
                 doc.pop("dataset_metadata_id")
             doc["system_id"] = doc.pop("_id")
@@ -171,7 +167,6 @@ class SystemDBUtils:
             (metadata + sufficient statistics + overall analysis)
           6. write to system_outputs
         """
-        print(f"metadata={metadata}")
         system = SystemDBUtils.system_from_dict(metadata.to_dict())
 
         user = get_user()
@@ -283,7 +278,7 @@ class SystemDBUtils:
                 DBUtils.insert_many(
                     output_collection, list(system_output_data), False, session
                 )
-                return str(system_db_id)
+                return system_db_id
 
             system_id = DBUtils.execute_transaction(db_operations)
 

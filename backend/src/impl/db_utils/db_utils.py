@@ -7,7 +7,7 @@ from explainaboard_web.impl.db import get_db
 from explainaboard_web.impl.utils import abort_with_error_message
 from pymongo.client_session import ClientSession
 from pymongo.cursor import Cursor
-from pymongo.results import DeleteResult, InsertManyResult, InsertOneResult
+from pymongo.results import DeleteResult, InsertManyResult
 
 
 @dataclass
@@ -66,12 +66,13 @@ class DBUtils:
         document: dict,
         check_collection_exist: bool = True,
         session: ClientSession = None,
-    ) -> InsertOneResult:
+    ) -> str:
         if not collection.collection_name:
             raise DBUtilsException("collection_name not defined")
-        return DBUtils.get_collection(collection, check_collection_exist).insert_one(
+        result = DBUtils.get_collection(collection, check_collection_exist).insert_one(
             document, session=session
         )
+        return str(result.inserted_id)
 
     @staticmethod
     def insert_many(
