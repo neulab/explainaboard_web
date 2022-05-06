@@ -39,7 +39,7 @@ export function DataFileUpload({ value, onChange, allowedFileTypes }: Props) {
    * 1. take an event and updates the filelist
    * 2. determines file type according to file extension. user can also override the file type selection
    * */
-  function onFileChange(e: UploadChangeParam<UploadFile<any>>) {
+  function onFileChange(e: UploadChangeParam<UploadFile<unknown>>) {
     const fileList = e && e.fileList;
     if (!fileList || fileList.length === 0) {
       triggerChange({ fileList: undefined });
