@@ -3,7 +3,7 @@ from __future__ import annotations
 import binascii
 import dataclasses
 import os
-from typing import Optional
+from typing import Optional, cast
 
 from explainaboard import (
     DatalabLoaderOption,
@@ -19,13 +19,12 @@ from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.tokenizer import get_default_tokenizer
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.db_models.dataset_metadata_model import DatasetMetaDataModel
-from explainaboard_web.impl.db_models.system_metadata_model import (
-    SystemModel,
-    SystemOutputsModel,
-)
+from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
+from explainaboard_web.impl.db_utils.db_utils import DBUtils
+from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
+from explainaboard_web.models import DatasetMetadata
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
@@ -84,10 +83,11 @@ def tasks_get() -> list[TaskCategory]:
 """ /datasets """
 
 
-def datasets_dataset_id_get(dataset_id: str) -> DatasetMetaDataModel:
-    dataset = DatasetMetaDataModel.find_one_by_id(dataset_id)
-    if not dataset:
+def datasets_dataset_id_get(dataset_id: str) -> DatasetMetadata:
+    document = DBUtils.find_one_by_id(DBUtils.DATASET_METADATA, dataset_id)
+    if not document:
         abort_with_error_message(404, f"dataset id: {dataset_id} not found")
+    dataset = DatasetMetadata.from_dict(document)
     return dataset
 
 
@@ -99,7 +99,7 @@ def datasets_get(
     page_size: int,
 ) -> DatasetsReturn:
     parsed_dataset_ids = dataset_ids.split(",") if dataset_ids else None
-    return DatasetMetaDataModel.find(
+    return DatasetDBUtils.find_datasets(
         page, page_size, parsed_dataset_ids, dataset_name, task
     )
 
@@ -107,11 +107,8 @@ def datasets_get(
 """ /systems """
 
 
-def systems_system_id_get(system_id: str) -> SystemModel:
-    system = SystemModel.find_one_by_id(system_id)
-    if not system:
-        abort_with_error_message(404, f"system id: {system_id} not found")
-    return system
+def systems_system_id_get(system_id: str) -> System:
+    return SystemDBUtils.find_system_by_id(system_id)
 
 
 def systems_get(
@@ -138,7 +135,7 @@ def systems_get(
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
-    return SystemModel.find(
+    return SystemDBUtils.find_systems(
         ids,
         page,
         page_size,
@@ -152,7 +149,7 @@ def systems_get(
     )
 
 
-def systems_post(body: SystemsBody) -> SystemModel:
+def systems_post(body: SystemsBody) -> System:
     """
     aborts with error if fails
     TODO: error handling
@@ -173,7 +170,7 @@ def systems_post(body: SystemsBody) -> SystemModel:
         body.system_output.data = decode_base64(body.system_output.data)
         if body.custom_dataset and body.custom_dataset.data:
             body.custom_dataset.data = decode_base64(body.custom_dataset.data)
-        system = SystemModel.create(
+        system = SystemDBUtils.create_system(
             body.metadata, body.system_output, body.custom_dataset
         )
         return system
@@ -189,9 +186,7 @@ def systems_system_id_outputs_get(
     """
     TODO: return special error/warning if some ids cannot be found
     """
-    sys = SystemModel.find_one_by_id(system_id)
-    if not sys:
-        abort_with_error_message(400, "system does not exist")
+    sys = SystemDBUtils.find_system_by_id(system_id)
     if is_private_dataset(
         DatalabLoaderOption(
             sys.system_info.dataset_name,
@@ -202,11 +197,12 @@ def systems_system_id_outputs_get(
         abort_with_error_message(
             403, f"{sys.system_info.dataset_name} is a private dataset", 40301
         )
-    return SystemOutputsModel(system_id).find(output_ids, limit=10)
+
+    return SystemDBUtils.find_system_outputs(system_id, output_ids, limit=10)
 
 
 def systems_system_id_delete(system_id: str):
-    success = SystemModel.delete_one_by_id(system_id)
+    success = SystemDBUtils.delete_system_by_id(system_id)
     if success:
         return "Success"
     abort_with_error_message(400, f"cannot find system_id: {system_id}")
@@ -228,7 +224,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     page = 0
     page_size = len(system_ids)
     sort = None
-    systems: list[System] = SystemModel.find(
+    systems: list[System] = SystemDBUtils.find_systems(
         system_ids,
         page,
         page_size,
@@ -257,13 +253,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_info_dict = system_info.to_dict()
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
-        # TODO(chihhao) bug in SDK
-        # nested dataclasses must be from_dict()ed properly
-        # move this function to SDK in the future or
-        # add proper from_dict() methods in SDK
         for feature_name, feature in system_output_info.features.items():
-            # TODO Feature is not getting from_dict()ed properly, hardcode for now:
-
             feature = FeatureType.from_dict(feature)  # dict -> Feature
 
             # user-defined bucket info
@@ -298,11 +288,12 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
         # Get the entire system outputs
         output_ids = None
-        system_outputs = (
-            SystemOutputsModel(system.system_id)
-            .find(output_ids, limit=0)
-            .system_outputs
-        )
+        system_outputs = SystemDBUtils.find_system_outputs(
+            system.system_id, output_ids, limit=0
+        ).system_outputs
+        # Note we are casting here, as SystemOutput.from_dict() actually just returns a
+        # dict
+        system_outputs = [cast(dict, x) for x in system_outputs]
 
         fine_grained_statistics = processor.get_fine_grained_statistics(
             system_output_info,
