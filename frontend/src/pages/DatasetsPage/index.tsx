@@ -107,16 +107,6 @@ const columns: ColumnsType<DatasetMetadata> = [
     align: "center",
   },
   {
-    dataIndex: "dataset_id",
-    title: "ID",
-    width: 230,
-    render: (value) => (
-      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-        {value}
-      </Typography.Paragraph>
-    ),
-  },
-  {
     dataIndex: "dataset_name",
     title: "Name",
   },
