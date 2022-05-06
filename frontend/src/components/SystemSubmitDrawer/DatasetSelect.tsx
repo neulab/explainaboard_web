@@ -94,7 +94,7 @@ function DatasetSelectLabel({ dataset }: { dataset: DatasetMetadata }) {
       </span>
 
       <Typography.Link
-        href={generateDataLabURL(dataset_id)}
+        href={generateDataLabURL(dataset_name)}
         target="_blank"
         onClick={(e) => e.stopPropagation()}
       >

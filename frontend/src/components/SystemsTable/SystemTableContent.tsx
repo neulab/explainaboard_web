@@ -109,7 +109,7 @@ export function SystemTableContent({
         record.dataset?.dataset_name ? (
           <Tooltip title="view dataset in DataLab">
             <Typography.Link
-              href={generateDataLabURL(record.dataset.dataset_id)}
+              href={generateDataLabURL(record.dataset.dataset_name)}
               target="_blank"
             >
               {record.dataset.dataset_name}
