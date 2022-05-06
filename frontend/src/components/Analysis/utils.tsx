@@ -160,22 +160,25 @@ export function parse(
 }
 
 export function findFeature(
-    features: { [key: string]: unknown; },
-    name: string,
+  features: { [key: string]: unknown },
+  name: string
 ): SystemInfoFeature | undefined {
-  if(name in features) {
+  if (name in features) {
     return features[name] as SystemInfoFeature;
   } else {
     for (const key in features) {
-      if(typeof features[key] === "object" && features[key] !== null) {
-        const val = findFeature(features[key] as { [key: string]: unknown; }, name)
+      if (typeof features[key] === "object" && features[key] !== null) {
+        const val = findFeature(
+          features[key] as { [key: string]: unknown },
+          name
+        );
         if (val !== undefined) {
-          return val
+          return val;
         }
       }
     }
   }
-  return undefined
+  return undefined;
 }
 
 export function getMetricToSystemAnalysesParsed(
@@ -214,7 +217,7 @@ export function getMetricToSystemAnalysesParsed(
 
     for (const featureKey of systemActiveFeatures) {
       const feature = singleAnalysis[featureKey];
-      const systemInfoFeature = findFeature(systemInfoFeatures, featureKey)
+      const systemInfoFeature = findFeature(systemInfoFeatures, featureKey);
       if (systemInfoFeature !== undefined) {
         const bucketInfo = systemInfoFeature["bucket_info"];
         const description = systemInfoFeature["description"] || featureKey;
