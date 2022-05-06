@@ -28,7 +28,7 @@ class TestDatasetInfo(TestCase):
         all_dataset_info = DatasetDBUtils.find_datasets(task="summarization")
         all_len = len(all_dataset_info.datasets)
         remainder_page = int(all_len / page_size)
-        for i in range(1, remainder_page + 2):
+        for i in range(0, remainder_page + 2):
             page_dataset_info = DatasetDBUtils.find_datasets(
                 task="summarization", page=i, page_size=page_size
             )
