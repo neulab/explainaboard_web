@@ -217,13 +217,13 @@ export function SystemSubmitDrawer(props: Props) {
   function getDataFileValidator(isRequired: boolean, fieldName: string) {
     if (!isRequired) return () => Promise.resolve();
     else
-      return (_: any, value: DataFileValue) => {
+      return (_: unknown, value: DataFileValue) => {
         if (value && value.fileList && value.fileType) return Promise.resolve();
         else return Promise.reject(`'${fieldName}' and file type are required`);
       };
   }
 
-  function validateDataset(_: any, value: DatasetValue) {
+  function validateDataset(_: unknown, value: DatasetValue) {
     if (useCustomDataset) return Promise.resolve();
     else {
       if (value && value.datasetID && value.split) return Promise.resolve();
