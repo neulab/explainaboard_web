@@ -40,14 +40,14 @@ class SystemDBUtils:
     def system_from_dict(
         dikt: dict[str, Any], include_metric_stats: bool = False
     ) -> System:
-        document: dict[str, Any] = {**dikt}
-        if dikt.get("_id"):
-            document["system_id"] = str(dikt["_id"])
-        if dikt.get("is_private") is None:
+        document: dict[str, Any] = dikt.copy()
+        if document.get("_id"):
+            document["system_id"] = str(document.pop("_id"))
+        if document.get("is_private") is None:
             document["is_private"] = True
-        if dikt.get("dataset_metadata_id") and dikt.get("dataset") is None:
+        if document.get("dataset_metadata_id") and document.get("dataset") is None:
             dataset = DBUtils.find_one_by_id(
-                DBUtils.DATASET_METADATA, dikt["dataset_metadata_id"]
+                DBUtils.DATASET_METADATA, document["dataset_metadata_id"]
             )
             if dataset:
                 split = document.get("dataset_split")
@@ -58,7 +58,7 @@ class SystemDBUtils:
                     )
                 dataset["dataset_id"] = str(dataset.pop("_id"))
                 document["dataset"] = dataset
-            dikt.pop("dataset_metadata_id")
+            document.pop("dataset_metadata_id")
 
         metric_stats = []
         if "metric_stats" in document:
@@ -303,6 +303,12 @@ class SystemDBUtils:
         return system
 
     @staticmethod
+    def system_output_from_dict(dikt: dict[str, Any]) -> SystemOutput:
+        document = dikt.copy()
+        document.pop("_id", None)
+        return SystemOutput.from_dict(document)
+
+    @staticmethod
     def find_system_outputs(
         system_id: str, output_ids: str | None, limit=0
     ) -> SystemOutputsReturn:
@@ -320,7 +326,7 @@ class SystemDBUtils:
             collection=output_collection, filt=filt, limit=limit
         )
         return SystemOutputsReturn(
-            [SystemOutput.from_dict(doc) for doc in cursor], total
+            [SystemDBUtils.system_output_from_dict(doc) for doc in cursor], total
         )
 
     @staticmethod
