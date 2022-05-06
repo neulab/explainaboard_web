@@ -32,14 +32,14 @@ class DatasetDB:
                 dataset_id = f"{dataset_name}---{sub_dataset}"
                 self.id_dict[dataset_id] = metadata_id
                 # Tasks
-                tasks = v_dataset.get("task_templates", None)
-                if tasks is None:
-                    tasks = []
-                else:
-                    for task in tasks:
-                        if task not in self.task_dict:
-                            self.task_dict[task] = []
-                        self.task_dict[task].append(metadata_id)
+                tasks = v_dataset.get("tasks")
+                tasks = set([] if tasks is None else tasks)
+                task_cats = v_dataset.get("task_categories")
+                tasks = tasks.union([] if task_cats is None else task_cats)
+                for task in tasks:
+                    if task not in self.task_dict:
+                        self.task_dict[task] = []
+                    self.task_dict[task].append(metadata_id)
                 # Create document
                 doc = {
                     "dataset_id": dataset_id,
