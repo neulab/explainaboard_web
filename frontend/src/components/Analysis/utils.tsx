@@ -159,6 +159,25 @@ export function parse(
   return parsedResult;
 }
 
+export function findFeature(
+    features: { [key: string]: unknown; },
+    name: string,
+): SystemInfoFeature | undefined {
+  if(name in features) {
+    return features[name] as SystemInfoFeature;
+  } else {
+    for (const key in features) {
+      if(typeof features[key] === "object" && features[key] !== null) {
+        const val = findFeature(features[key] as { [key: string]: unknown; }, name)
+        if (val !== undefined) {
+          return val
+        }
+      }
+    }
+  }
+  return undefined
+}
+
 export function getMetricToSystemAnalysesParsed(
   task: string,
   metricNames: string[],
@@ -195,27 +214,27 @@ export function getMetricToSystemAnalysesParsed(
 
     for (const featureKey of systemActiveFeatures) {
       const feature = singleAnalysis[featureKey];
-      const systemInfoFeature = systemInfoFeatures[
-        featureKey
-      ] as SystemInfoFeature;
-      const bucketInfo = systemInfoFeature["bucket_info"];
-      const description = systemInfoFeature["description"] || featureKey;
+      const systemInfoFeature = findFeature(systemInfoFeatures, featureKey)
+      if (systemInfoFeature !== undefined) {
+        const bucketInfo = systemInfoFeature["bucket_info"];
+        const description = systemInfoFeature["description"] || featureKey;
 
-      const metricToResultFineGrainedParsed = parse(
-        systemID,
-        task,
-        metricNames,
-        description,
-        feature,
-        featureKey,
-        bucketInfo
-      );
-      for (const [metric, resultFineGrainedParsed] of Object.entries(
-        metricToResultFineGrainedParsed
-      )) {
-        metricToParsedInfo[metric].resultsFineGrainedParsed.push(
-          resultFineGrainedParsed
+        const metricToResultFineGrainedParsed = parse(
+          systemID,
+          task,
+          metricNames,
+          description,
+          feature,
+          featureKey,
+          bucketInfo
         );
+        for (const [metric, resultFineGrainedParsed] of Object.entries(
+          metricToResultFineGrainedParsed
+        )) {
+          metricToParsedInfo[metric].resultsFineGrainedParsed.push(
+            resultFineGrainedParsed
+          );
+        }
       }
     }
 
