@@ -23,14 +23,14 @@ class DatasetDB:
         self.metadatas: list[DatasetMetadata] = []
         for dataset_name, v_dataset in data.items():
             for sub_dataset, v_sub in v_dataset["sub_datasets"].items():
-                i = len(self.metadatas)
+                metadata_id = len(self.metadatas)
                 # Names
                 if dataset_name not in self.name_dict:
                     self.name_dict[dataset_name] = []
-                self.name_dict[dataset_name].append(i)
+                self.name_dict[dataset_name].append(metadata_id)
                 # Ids
                 dataset_id = f"{dataset_name}---{sub_dataset}"
-                self.id_dict[dataset_id] = i
+                self.id_dict[dataset_id] = metadata_id
                 # Tasks
                 tasks = v_dataset.get("task_templates", None)
                 if tasks is None:
@@ -39,7 +39,7 @@ class DatasetDB:
                     for task in tasks:
                         if task not in self.task_dict:
                             self.task_dict[task] = []
-                        self.task_dict[task].append(i)
+                        self.task_dict[task].append(metadata_id)
                 # Create document
                 doc = {
                     "dataset_id": dataset_id,
@@ -67,7 +67,7 @@ class DatasetDBUtils:
         """
         if DatasetDBUtils._cached_db is None or (
             datetime.now() - unwrap(DatasetDBUtils._cached_time)
-            > unwrap(DatasetDBUtils._cached_lifetime)
+            > DatasetDBUtils._cached_lifetime
         ):
             local_path = cache_online_file(
                 DatasetDBUtils.online_path,
@@ -89,8 +89,8 @@ class DatasetDBUtils:
     @staticmethod
     def find_dataset_by_id(dataset_id: str) -> DatasetMetadata | None:
         my_db = DatasetDBUtils.get_dataset_db()
-        _id = my_db.id_dict.get(dataset_id)
-        return my_db.metadatas[_id] if _id is not None else None
+        metadata_id = my_db.id_dict.get(dataset_id)
+        return my_db.metadatas[metadata_id] if metadata_id is not None else None
 
     @staticmethod
     def find_datasets(
@@ -102,23 +102,31 @@ class DatasetDBUtils:
         no_limit: bool = False,
     ) -> DatasetsReturn:
         my_db = DatasetDBUtils.get_dataset_db()
-        my_ids: set[int] | None = None
+        metadata_ids: set[int] | None = None
         if dataset_ids is not None:
-            my_ids = set()
-            for _id in dataset_ids:
-                if _id in my_db.id_dict:
-                    my_ids.add(my_db.id_dict[_id])
+            metadata_ids = set()
+            for dataset_id in dataset_ids:
+                if dataset_id in my_db.id_dict:
+                    metadata_ids.add(my_db.id_dict[dataset_id])
         if dataset_name is not None:
             found_items = my_db.name_trie.keys(dataset_name)
             found_ids = [my_db.name_dict[x] for x in found_items]
             chained_ids = list(itertools.chain.from_iterable(found_ids))
-            my_ids = my_ids.intersection(chained_ids) if my_ids else set(chained_ids)
+            metadata_ids = (
+                metadata_ids.intersection(chained_ids)
+                if metadata_ids
+                else set(chained_ids)
+            )
         if task is not None:
             task_ids = my_db.task_dict.get(task, [])
-            my_ids = my_ids.intersection(task_ids) if my_ids else set(task_ids)
+            metadata_ids = (
+                metadata_ids.intersection(task_ids) if metadata_ids else set(task_ids)
+            )
         sid, eid = page * page_size, (page + 1) * page_size
         my_values = (
-            my_db.metadatas if my_ids is None else [my_db.metadatas[x] for x in my_ids]
+            my_db.metadatas
+            if metadata_ids is None
+            else [my_db.metadatas[x] for x in metadata_ids]
         )
         total = len(my_values)
         examps = my_values if (no_limit or page_size == 0) else my_values[sid:eid]
