@@ -46,18 +46,15 @@ class SystemDBUtils:
         if document.get("is_private") is None:
             document["is_private"] = True
         if document.get("dataset_metadata_id") and document.get("dataset") is None:
-            dataset = DBUtils.find_one_by_id(
-                DBUtils.DATASET_METADATA, document["dataset_metadata_id"]
-            )
+            dataset = DatasetDBUtils.find_dataset_by_id(document["dataset_metadata_id"])
             if dataset:
                 split = document.get("dataset_split")
                 # this check only valid for create
-                if split and split not in dataset["split"]:
+                if split and split not in dataset.split:
                     abort_with_error_message(
                         400, f"{split} is not a valid split for {dataset.dataset_name}"
                     )
-                dataset["dataset_id"] = str(dataset.pop("_id"))
-                document["dataset"] = dataset
+                document["dataset"] = dataset.to_dict()
             document.pop("dataset_metadata_id")
 
         metric_stats = []

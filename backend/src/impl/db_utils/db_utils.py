@@ -20,9 +20,9 @@ class DBUtils:
 
     # Names of DBs or collections
     SYSTEM_OUTPUT_DB = "system_outputs"
-    DATASET_METADATA = DBCollection(
-        db_name="metadata", collection_name="dataset_metadata"
-    )
+    # DATASET_METADATA = DBCollection(
+    #     db_name="metadata", collection_name="dataset_metadata"
+    # )
     DEV_SYSTEM_METADATA = DBCollection(
         db_name="metadata", collection_name="dev_system_metadata"
     )
