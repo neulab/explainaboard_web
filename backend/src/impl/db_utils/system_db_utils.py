@@ -79,7 +79,7 @@ class SystemDBUtils:
         split: Optional[str],
         sort: Optional[list],
         creator: Optional[str],
-        include_datasets: bool = False,
+        include_datasets: bool = True,
         include_metric_stats: bool = False,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
