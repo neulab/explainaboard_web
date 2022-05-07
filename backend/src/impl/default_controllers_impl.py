@@ -20,7 +20,6 @@ from explainaboard.processors.processor_registry import get_metric_list_for_proc
 from explainaboard.utils.tokenizer import get_default_tokenizer
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
-from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
@@ -84,10 +83,9 @@ def tasks_get() -> list[TaskCategory]:
 
 
 def datasets_dataset_id_get(dataset_id: str) -> DatasetMetadata:
-    document = DBUtils.find_one_by_id(DBUtils.DATASET_METADATA, dataset_id)
-    if not document:
+    dataset = DatasetDBUtils.find_dataset_by_id(dataset_id)
+    if dataset is None:
         abort_with_error_message(404, f"dataset id: {dataset_id} not found")
-    dataset = DatasetMetadata.from_dict(document)
     return dataset
 
 
