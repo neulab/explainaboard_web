@@ -2,8 +2,8 @@ name: "Python API Client Release"
 
 on:
   push:
-    branches: [main]
-    paths: ["openapi/openapi.yaml"]
+    branches: [main, "feat/openapi-py-client"]
+    paths: ["openapi/openapi.yaml", ".github/workflows/py-client-release.yml"]
 
 jobs:
   build-and-release:
@@ -22,8 +22,8 @@ jobs:
           pip install wheel
       - name: Generate Python Client
         run: |
-          wget https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar -O swagger-codegen-cli-3.0.29.jar
-          java -jar swagger-codegen-cli-3.0.29.jar generate -i openapi/openapi.yaml -l python -o python_client -DpackageName=explainaboard_api_client
+          wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.4.0/openapi-generator-cli-5.4.0.jar -O openapi-generator-cli.jar
+          java -jar openapi-generator-cli.jar generate -i openapi/openapi.yaml -g python-experimental -o python_client --additional-properties=packageName=explainaboard_api_client
       - name: "build"
         run: |
           cd python_client
