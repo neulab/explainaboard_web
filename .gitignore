@@ -33,6 +33,7 @@ __pycache__
 # swagger codegen
 backend/src/gen
 swagger-codegen-cli*.jar
+openapi-generator-cli*.jar
 frontend/src/clients/openapi
-
+openapi/python_client
 .env
