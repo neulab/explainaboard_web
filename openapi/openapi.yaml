@@ -486,14 +486,14 @@ components:
               language:
                 type: string
                 nullable: True
-              cls:
+              cls_name:
                 type: string
             additionalProperties: true
-            required: [name, cls]
+            required: [name, cls_name]
         tokenizer:
           type: object
           properties:
-            cls:
+            cls_name:
               type: string
               example: "SingleSpaceTokenizer"
         features:
