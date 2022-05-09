@@ -357,12 +357,13 @@ paths:
 components:
   securitySchemes:
     ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
+      type: http
+      scheme: basic
+      description: use user email and API key to authenticate
     BearerAuth:
       type: http
       scheme: bearer
+      description: use JWT to authenticate (for web app only)
 
   schemas:
     # The schema for primitive types do not get generated well in flask.
@@ -925,17 +926,10 @@ components:
       properties:
         email:
           type: string
-        exp:
-          type: number
-        iat:
-          type: number
         preferred_username:
           type: string
         username:
           type: string
-        auth_time:
-          type: number
         api_key:
           type: string
-      required:
-        [email, exp, iat, preferred_username, username, auth_time, api_key]
+      required: [email, preferred_username, username, api_key]
