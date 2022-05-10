@@ -283,6 +283,10 @@ paths:
     post:
       summary: Returns analysis result(s) of one or multiple systems
       description: Returns analysis result(s) of one or multiple systems
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       requestBody:
         required: true
         content:
