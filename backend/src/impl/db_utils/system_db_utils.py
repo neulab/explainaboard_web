@@ -229,7 +229,7 @@ class SystemDBUtils:
             }
 
             return processor.get_overall_statistics(
-                metadata=processor_metadata, sys_output=system_output_data
+                metadata=processor_metadata, sys_output=system_output_data.samples
             )
 
         try:
@@ -240,10 +240,6 @@ class SystemDBUtils:
                 for metric_stat in overall_statistics.metric_stats
             ]
 
-            # TODO(chihhao) needs proper serializiation & deserializiation in SDK
-            overall_statistics.sys_info.tokenizer = (
-                overall_statistics.sys_info.tokenizer.json_repr()
-            )
             # TODO avoid None as nullable seems undeclarable for array and object
             # in openapi.yaml
             if overall_statistics.sys_info.results.calibration is None:
@@ -271,7 +267,7 @@ class SystemDBUtils:
                 )
                 DBUtils.drop(output_collection)
                 DBUtils.insert_many(
-                    output_collection, list(system_output_data), False, session
+                    output_collection, list(system_output_data.samples), False, session
                 )
                 return system_db_id
 

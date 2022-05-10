@@ -100,7 +100,8 @@ export function SystemSubmitDrawer(props: Props) {
     task,
     dataset,
     metric_names,
-    language,
+    source_language,
+    target_language,
     sys_out_file,
     custom_dataset_file,
     code,
@@ -120,7 +121,8 @@ export function SystemSubmitDrawer(props: Props) {
             model_name: name,
             paper_info: {},
             task: task,
-            language,
+            source_language,
+            target_language,
             code,
             is_private,
           },
@@ -143,7 +145,8 @@ export function SystemSubmitDrawer(props: Props) {
             model_name: name,
             paper_info: {},
             task: task,
-            language,
+            source_language,
+            target_language,
             code,
             is_private,
           },
@@ -163,7 +166,8 @@ export function SystemSubmitDrawer(props: Props) {
         "sys_out_file",
         "custom_dataset_file",
         "metric_names",
-        "language",
+        "source_language",
+        "target_language",
         "code",
       ]);
     } catch (e) {
@@ -361,14 +365,22 @@ export function SystemSubmitDrawer(props: Props) {
           </Form.Item>
 
           <Form.Item
-            name="language"
-            label="Language"
+            name="source_language"
+            label="Input Language"
             initialValue="en"
             rules={[{ required: true }]}
           >
             <Select options={[{ value: "en" }]} />
           </Form.Item>
-          <Form.Item name="code" label="Source code link">
+          <Form.Item
+            name="target_language"
+            label="Output Language"
+            initialValue="en"
+            rules={[{ required: true }]}
+          >
+            <Select options={[{ value: "en" }]} />
+          </Form.Item>
+          <Form.Item name="code" label="Source Code Link">
             <Input type="url" />
           </Form.Item>
         </Form>
@@ -385,7 +397,8 @@ interface FormData {
   custom_dataset_file: DataFileValue;
 
   metric_names: string[];
-  language: string;
+  source_language: string;
+  target_language: string;
   code: string;
   is_private: boolean;
 }

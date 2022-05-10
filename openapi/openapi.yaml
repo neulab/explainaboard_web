@@ -468,7 +468,10 @@ components:
         dataset_split:
           type: string
           nullable: true
-        language:
+        source_language:
+          type: string
+          example: en
+        target_language:
           type: string
           example: en
         reload_stat:
@@ -487,14 +490,23 @@ components:
             properties:
               name:
                 type: string
-              language:
+              source_language:
+                type: string
+                nullable: True
+              target_language:
                 type: string
                 nullable: True
               cls_name:
                 type: string
             additionalProperties: true
             required: [name, cls_name]
-        tokenizer:
+        source_tokenizer:
+          type: object
+          properties:
+            cls_name:
+              type: string
+              example: "SingleSpaceTokenizer"
+        target_tokenizer:
           type: object
           properties:
             cls_name:
@@ -523,11 +535,13 @@ components:
         [
           task_name,
           model_name,
-          language,
+          source_language,
+          target_language,
           reload_stat,
           is_print_case,
           conf_value,
-          tokenizer,
+          source_tokenizer,
+          target_tokenizer,
           features,
           results,
           metric_configs,
@@ -658,7 +672,10 @@ components:
           items:
             type: string
           example: [Accuracy]
-        language:
+        source_language:
+          type: string
+          example: en
+        target_language:
           type: string
           example: en
         code:
