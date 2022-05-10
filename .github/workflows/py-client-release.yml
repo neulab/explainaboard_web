@@ -3,7 +3,12 @@ name: "Python API Client Release"
 on:
   push:
     branches: [main, "feat/openapi-py-client"]
-    paths: ["openapi/openapi.yaml", ".github/workflows/py-client-release.yml"]
+    paths:
+      [
+        "openapi/openapi.yaml",
+        ".github/workflows/py-client-release.yml",
+        "openapi/python_explerimental_client_template/*",
+      ]
 
 jobs:
   build-and-release:
