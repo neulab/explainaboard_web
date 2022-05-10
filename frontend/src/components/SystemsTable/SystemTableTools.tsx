@@ -15,7 +15,7 @@ export interface Filter {
   task?: string;
   sortField: string;
   sortDir: "asc" | "desc";
-  split: string;
+  split: string | undefined;
 }
 
 interface Props {
@@ -119,6 +119,7 @@ export function SystemTableTools({
             value: opt,
             label: opt,
           }))}
+          value={value.split}
           placeholder="Dataset split"
           onChange={(value) => onChange({ split: value })}
           style={{ minWidth: "120px" }}

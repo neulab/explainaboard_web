@@ -35,7 +35,7 @@ export function SystemsTable({
   const [taskFilter, setTaskFilter] = useState(initialTaskFilter);
   const [sortField, setSortField] = useState("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [split, setSplit] = useState<string>("all");
+  const [split, setSplit] = useState<string | undefined>(undefined);
 
   // submit
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);
