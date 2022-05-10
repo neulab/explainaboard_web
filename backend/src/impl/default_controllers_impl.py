@@ -17,7 +17,7 @@ from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
 from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
-from explainaboard.utils.tokenizer import get_default_tokenizer
+from explainaboard.utils import tokenizer as exb_tokenzier
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -267,21 +267,17 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             system_output_info.features[feature_name] = feature
 
         metric_configs = [
-            getattr(exb_metric, metric_config_dict["cls"])(**metric_config_dict)
+            getattr(exb_metric, metric_config_dict["cls_name"])(**metric_config_dict)
             for metric_config_dict in system_output_info.metric_configs
         ]
 
         system_output_info.metric_configs = metric_configs
-
-        # The order of getting the processor first then setting
-        # the tokenizer is unnatural, but in the SDK get_default_tokenizer
-        # relies on the processor's TaskType inforamtion
-
-        processor = get_processor(TaskType(system_output_info.task_name))
-        system_output_info.tokenizer = get_default_tokenizer(
-            task_type=TaskType(system_output_info.task_name), lang=system_info.language
+        cls_name = system_output_info.tokenizer.pop("cls_name")
+        system_output_info.tokenizer = getattr(exb_tokenzier, cls_name)(
+            **system_output_info.tokenizer
         )
 
+        processor = get_processor(TaskType(system_output_info.task_name))
         metric_stats = [MetricStats(stat) for stat in system.metric_stats]
 
         # Get the entire system outputs
