@@ -80,7 +80,7 @@ export function DatasetSelect({
 }
 
 function DatasetSelectLabel({ dataset }: { dataset: DatasetMetadata }) {
-  const { dataset_id, dataset_name, sub_dataset } = dataset;
+  const { dataset_name, sub_dataset } = dataset;
   return (
     <div style={{ display: "flex", justifyContent: "space-between" }}>
       <span>
