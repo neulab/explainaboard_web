@@ -231,15 +231,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                metadata:
-                  $ref: "#/components/schemas/SystemCreateProps"
-                system_output:
-                  $ref: "#/components/schemas/SystemOutputProps"
-                custom_dataset:
-                  $ref: "#/components/schemas/SystemOutputProps"
-              required: [metadata, system_output]
+              $ref: "#/components/schemas/SystemCreateProps"
       responses:
         "200":
           description: OK
@@ -651,6 +643,17 @@ components:
       required: [task_metadata_id, task_name]
 
     SystemCreateProps:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/SystemMetadata"
+        system_output:
+          $ref: "#/components/schemas/SystemOutputProps"
+        custom_dataset:
+          $ref: "#/components/schemas/SystemOutputProps"
+      required: [metadata, system_output]
+
+    SystemMetadata:
       type: object
       properties:
         task:
