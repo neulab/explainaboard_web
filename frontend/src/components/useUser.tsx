@@ -34,7 +34,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
   const redirectPageKey = `explainaboard_${env}_redirect`;
 
   const [jwt, setJwt] = useState(initJWT());
-  const [state, setState] = useState(LoginState.no);
+  const [state, setState] = useState(LoginState.loading);
   const [userInfo, setUserInfo] = useState<User>();
 
   function initJWT() {

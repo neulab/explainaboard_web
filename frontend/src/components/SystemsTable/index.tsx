@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import "./index.css";
-import { Space } from "antd";
+import { message, Space } from "antd";
 import { SystemSubmitDrawer, AnalysisDrawer } from "../../components";
-import { backendClient } from "../../clients";
+import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel, newSystemModel } from "../../models/SystemModel";
 import { Filter, SystemTableTools } from "./SystemTableTools";
 import { SystemTableContent } from "./SystemTableContent";
 import { findTask, PageState } from "../../utils";
 import { TaskCategory } from "../../clients/openapi";
+import { LoginState, useUser } from "../useUser";
 
 interface Props {
   /**initial value for task filter */
@@ -49,6 +50,8 @@ export function SystemsTable({
   // systems to be analyzed
   const [activeSystemIDs, setActiveSystemIDs] = useState<string[]>([]);
 
+  const { state: loginState } = useUser();
+
   /** generate metrics options list */
   function getMetricsNames() {
     const metricNames = new Set<string>();
@@ -88,23 +91,32 @@ export function SystemsTable({
     async function refreshSystems() {
       setPageState(PageState.loading);
       const datasetSplit = split === "all" ? undefined : split;
-      const { systems: newSystems, total: newTotal } =
-        await backendClient.systemsGet(
-          nameFilter || undefined,
-          taskFilter,
-          dataset || undefined,
-          subdataset || undefined,
-          datasetSplit || undefined,
-          page,
-          pageSize,
-          sortField,
-          sortDir
-        );
-      setSystems(newSystems.map((sys) => newSystemModel(sys)));
-      setTotal(newTotal);
-      setPageState(PageState.success);
+      try {
+        const { systems: newSystems, total: newTotal } =
+          await backendClient.systemsGet(
+            nameFilter || undefined,
+            taskFilter,
+            dataset || undefined,
+            subdataset || undefined,
+            datasetSplit || undefined,
+            page,
+            pageSize,
+            sortField,
+            sortDir
+          );
+        setSystems(newSystems.map((sys) => newSystemModel(sys)));
+        setTotal(newTotal);
+        setPageState(PageState.success);
+      } catch (e) {
+        console.error(e);
+        if (e instanceof Response) {
+          const error = await parseBackendError(e);
+          message.error(error.getErrorMsg());
+        }
+        setPageState(PageState.error);
+      }
     }
-    refreshSystems();
+    if (loginState !== LoginState.loading) refreshSystems();
   }, [
     nameFilter,
     taskFilter,
@@ -116,6 +128,7 @@ export function SystemsTable({
     sortField,
     sortDir,
     refreshTrigger,
+    loginState, // refresh when login state changes
   ]);
 
   /** TODO: add debounce */
