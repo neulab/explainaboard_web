@@ -121,18 +121,28 @@ export function SystemTableContent({
         ),
     },
     {
-      dataIndex: ["system_info", "language"],
+      dataIndex: ["system_info", "split"],
       width: 110,
-      title: "Dataset split",
+      title: "Dataset Split",
       fixed: "left",
       align: "center",
       render: (_, record) => record.system_info.dataset_split || "unspecified",
     },
     {
-      dataIndex: ["system_info", "language"],
+      dataIndex: ["system_info", "source_language"],
       width: 100,
-      title: "Language",
+      title: "Input Lang",
       align: "center",
+      render: (_, record) =>
+        record.system_info.source_language || "unspecified",
+    },
+    {
+      dataIndex: ["system_info", "target_language"],
+      width: 100,
+      title: "Output Lang",
+      align: "center",
+      render: (_, record) =>
+        record.system_info.target_language || "unspecified",
     },
     ...metricColumns,
     {

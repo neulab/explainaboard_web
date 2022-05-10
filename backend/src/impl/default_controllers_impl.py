@@ -17,7 +17,6 @@ from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
 from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
-from explainaboard.utils import tokenizer as exb_tokenzier
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -272,10 +271,6 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         ]
 
         system_output_info.metric_configs = metric_configs
-        cls_name = system_output_info.tokenizer.pop("cls_name")
-        system_output_info.tokenizer = getattr(exb_tokenzier, cls_name)(
-            **system_output_info.tokenizer
-        )
 
         processor = get_processor(TaskType(system_output_info.task_name))
         metric_stats = [MetricStats(stat) for stat in system.metric_stats]
