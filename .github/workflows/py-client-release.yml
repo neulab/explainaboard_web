@@ -2,12 +2,12 @@ name: "Python API Client Release"
 
 on:
   push:
-    branches: [main, "feat/openapi-py-client"]
+    branches: [main]
     paths:
       [
         "openapi/openapi.yaml",
         ".github/workflows/py-client-release.yml",
-        "openapi/python_explerimental_client_template/*",
+        "openapi/python_client_urllib3_templates/*",
       ]
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
       - name: Generate Python Client
         run: |
           wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.4.0/openapi-generator-cli-5.4.0.jar -O openapi-generator-cli.jar
-          java -jar openapi-generator-cli.jar generate -i openapi/openapi.yaml -g python-experimental -o python_client -t openapi/python_explerimental_client_template "--additional-properties=packageName=explainaboard_api_client,packageVersion=${{ steps.gen_tag.outputs.tag }}"
+          java -jar openapi-generator-cli.jar generate -i openapi/openapi.yaml -g python -o python_client -t "openapi/python_client_urllib3_templates" "--additional-properties=packageName=explainaboard_api_client,packageVersion=${{ steps.gen_tag.outputs.tag }}"
       - name: "build"
         run: |
           cd python_client
