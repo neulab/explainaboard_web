@@ -97,6 +97,20 @@ class DBUtils:
             abort_with_error_message(400, f"id: {docid} is not a valid ID")
 
     @staticmethod
+    def replace_one_by_id(collection: DBCollection, doc: dict):
+        """
+        Replace a document with the _id field
+        Parameters:
+          - doc: the document to replace
+        """
+        try:
+            return DBUtils.get_collection(collection).replace_one(
+                {"_id": ObjectId(doc["_id"])}, doc
+            )
+        except InvalidId:
+            abort_with_error_message(400, f"id: {doc['_id']} is not a valid ID")
+
+    @staticmethod
     def delete_one_by_id(
         collection: DBCollection, docid: str, session: ClientSession = None
     ):
