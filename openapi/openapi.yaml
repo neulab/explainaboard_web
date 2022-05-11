@@ -689,7 +689,16 @@ components:
           format: url
         paper_info:
           $ref: "#/components/schemas/PaperInfo"
-      required: [task, is_private, model_name, metric_names, paper_info]
+      required:
+        [
+          task,
+          is_private,
+          model_name,
+          metric_names,
+          paper_info,
+          source_language,
+          target_language,
+        ]
 
     SystemOutputProps:
       type: object
