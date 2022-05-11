@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { message, Table, Tooltip, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { SystemOutput } from "../../../clients/openapi";
@@ -31,6 +31,7 @@ export function AnalysisTable({
   const offset = page * pageSize;
   const end = Math.min(offset + pageSize, outputIDs.length);
   const outputIDString = outputIDs.slice(offset, end).join(",");
+  const tableRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
     async function refreshSystemOutputs() {
@@ -52,9 +53,22 @@ export function AnalysisTable({
         }
       } finally {
         setPageState(PageState.success);
+        /* 
+        The table after the 1st scroll may be incomplete as the async API call
+        is not finished. If we stop there, the bottom portion of the examples will
+        be concealed. Therefore, we need a 2nd scroll to bring the entire table
+        into view after the API call completes.
+        */
+        tableRef.current?.scrollIntoView();
       }
     }
     refreshSystemOutputs();
+    /* 
+    1st scroll scrolls to the table, which is likely still loading and 
+    incomplete. This is needed so the scroll is immediate and 
+    users will not experience a delay due to the async API call.
+    */
+    tableRef.current?.scrollIntoView();
   }, [systemID, outputIDString, page, pageSize]);
 
   const columns: ColumnsType<SystemOutput> = [];
@@ -137,6 +151,7 @@ export function AnalysisTable({
   // TODO scroll to the bottom after rendered?
   return (
     <Table
+      ref={tableRef}
       columns={columns}
       dataSource={dataSource}
       loading={pageState === PageState.loading}
