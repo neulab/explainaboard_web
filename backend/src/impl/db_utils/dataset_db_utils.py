@@ -6,12 +6,28 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 import marisa_trie
+from datalabs.tasks import (
+    KGLinkPrediction,
+    QuestionAnsweringMultipleChoices,
+    TextMatching,
+)
+from explainaboard import TaskType
 from explainaboard.utils.cache_api import cache_online_file
 from explainaboard.utils.typing_utils import unwrap
 from explainaboard_web.models import DatasetMetadata, DatasetsReturn
 
 
 class DatasetDB:
+
+    # A mapping from DataLab task names to ExplainaBoard task names, only in cases
+    # where they diverge and need to be accounted for
+    TASK_MAPPING: dict[str, str] = {
+        QuestionAnsweringMultipleChoices.task_category: TaskType.qa_multiple_choice.value,  # noqa
+        TextMatching.task_category: TaskType.text_pair_classification.value,
+        KGLinkPrediction.task_category: TaskType.kg_link_tail_prediction.value,
+        "chinese-word-segmentation": TaskType.word_segmentation.value,
+    }
+
     def __init__(self, data: dict):
         """
         Create a dataset DB from a list of dictionaries as specified by the jsonl
@@ -36,6 +52,7 @@ class DatasetDB:
                 tasks = set([] if tasks is None else tasks)
                 task_cats = v_dataset.get("task_categories")
                 tasks = tasks.union([] if task_cats is None else task_cats)
+                tasks = [self.TASK_MAPPING.get(task, task) for task in tasks]
                 for task in tasks:
                     if task not in self.task_dict:
                         self.task_dict[task] = []
