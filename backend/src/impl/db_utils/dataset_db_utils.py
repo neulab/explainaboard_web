@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import logging
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -26,6 +27,7 @@ class DatasetDB:
         TextMatching.task_category: TaskType.text_pair_classification.value,
         KGLinkPrediction.task_category: TaskType.kg_link_tail_prediction.value,
         "chinese-word-segmentation": TaskType.word_segmentation.value,
+        "topic-classification": TaskType.text_classification.value,
     }
 
     def __init__(self, data: dict):
@@ -33,6 +35,7 @@ class DatasetDB:
         Create a dataset DB from a list of dictionaries as specified by the jsonl
         format in DataLab
         """
+        explainaboard_tasks = {x.value for x in TaskType}
         self.name_dict: dict[str, list[int]] = {}
         self.task_dict: dict[str, list[int]] = {}
         self.id_dict: dict[str, int] = {}
@@ -53,6 +56,12 @@ class DatasetDB:
                 task_cats = v_dataset.get("task_categories")
                 tasks = tasks.union([] if task_cats is None else task_cats)
                 tasks = [self.TASK_MAPPING.get(task, task) for task in tasks]
+                if len(tasks) and not any(
+                    [task in explainaboard_tasks for task in tasks]
+                ):
+                    logging.getLogger("explainaboard_web").warning(
+                        f"Unsupported dataset {dataset_id}: tasks={tasks}"
+                    )
                 for task in tasks:
                     if task not in self.task_dict:
                         self.task_dict[task] = []
