@@ -37,13 +37,17 @@ export function generateDataLabURL(datasetName: string): string {
 
 export function generateLeaderboardURL(
   dataset: string,
-  subdataset: string | undefined
+  subdataset: string | undefined,
+  split: string | undefined
 ): string {
-  const url = `/leaderboards?dataset=${dataset}`;
-  if (subdataset === undefined) {
-    return url;
+  let url = `/leaderboards?dataset=${dataset}`;
+  if (subdataset !== undefined) {
+    url = `${url}&subdataset=${subdataset}`;
   }
-  return `${url}&subdataset=${subdataset}`;
+  if (split !== undefined) {
+    url = `${url}&split=${split}`;
+  }
+  return url;
 }
 
 export * from "./typing_utils";

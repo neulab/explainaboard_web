@@ -15,6 +15,7 @@ interface Props {
   initialTaskFilter?: string;
   dataset?: string;
   subdataset?: string;
+  datasetSplit?: string;
 }
 
 /** A table that lists all systems */
@@ -22,6 +23,7 @@ export function SystemsTable({
   initialTaskFilter,
   dataset,
   subdataset,
+  datasetSplit,
 }: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [page, setPage] = useState(0);
@@ -35,7 +37,7 @@ export function SystemsTable({
   const [taskFilter, setTaskFilter] = useState(initialTaskFilter);
   const [sortField, setSortField] = useState("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [split, setSplit] = useState<string>("all");
+  const [split, setSplit] = useState<string | undefined>(datasetSplit);
 
   // submit
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);

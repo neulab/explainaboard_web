@@ -128,15 +128,29 @@ const columns: ColumnsType<DatasetMetadata> = [
   {
     dataIndex: "",
     title: "Leaderboard",
-    render: (_, record) => (
-      <Typography.Link href={""} target="_blank">
-        <Link
-          to={generateLeaderboardURL(record.dataset_name, record.sub_dataset)}
-        >
-          Leaderboard
-        </Link>
-      </Typography.Link>
-    ),
+    render: (_, record) => {
+      // every dataset leaderboard has an "all" split, which means allowing all possible splits
+      let splits: Array<string | undefined> = ["all"];
+      if (record.split !== undefined) {
+        splits = splits.concat(Object.keys(record.split));
+      }
+      return splits.map((split) => {
+        return (
+          <div key={split}>
+            <Link
+              to={generateLeaderboardURL(
+                record.dataset_name,
+                record.sub_dataset,
+                split
+              )}
+              component={Typography.Link}
+            >
+              {split}
+            </Link>
+          </div>
+        );
+      });
+    },
   },
   {
     dataIndex: "links",
