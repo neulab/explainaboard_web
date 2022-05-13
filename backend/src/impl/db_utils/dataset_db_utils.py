@@ -21,41 +21,41 @@ class DatasetDB:
         self.task_dict: dict[str, list[int]] = {}
         self.id_dict: dict[str, int] = {}
         self.metadatas: list[DatasetMetadata] = []
-        for dataset_name, v_dataset in data.items():
-            for sub_dataset, v_sub in v_dataset["sub_datasets"].items():
-                metadata_id = len(self.metadatas)
-                # Names
-                if dataset_name not in self.name_dict:
-                    self.name_dict[dataset_name] = []
-                self.name_dict[dataset_name].append(metadata_id)
-                # Ids
-                dataset_id = f"{dataset_name}---{sub_dataset}"
-                self.id_dict[dataset_id] = metadata_id
-                # Tasks
-                tasks = v_dataset.get("tasks")
-                tasks = set([] if tasks is None else tasks)
-                task_cats = v_dataset.get("task_categories")
-                tasks = tasks.union([] if task_cats is None else task_cats)
-                for task in tasks:
-                    if task not in self.task_dict:
-                        self.task_dict[task] = []
-                    self.task_dict[task].append(metadata_id)
-                # Create document
-                doc = {
-                    "dataset_id": dataset_id,
-                    "dataset_name": dataset_name,
-                    "sub_dataset": None if sub_dataset == "__NONE__" else sub_dataset,
-                    "split": v_sub["splits"],
-                    "tasks": tasks,
-                    "languages": v_dataset.get("languages"),
-                }
-                self.metadatas.append(DatasetMetadata.from_dict(doc))
+        for metadata_id, (dataset_id, v_dataset) in enumerate(data.items()):
+            # Names
+            dataset_name = v_dataset["dataset_name"]
+            sub_dataset = v_dataset.get("sub_dataset")
+            if dataset_name not in self.name_dict:
+                self.name_dict[dataset_name] = []
+            self.name_dict[dataset_name].append(metadata_id)
+            # Ids
+            self.id_dict[dataset_id] = metadata_id
+            # Tasks
+            tasks = v_dataset.get("tasks")
+            tasks = set([] if tasks is None else tasks)
+            task_cats = v_dataset.get("task_categories")
+            tasks = tasks.union([] if task_cats is None else task_cats)
+            for task in tasks:
+                if task not in self.task_dict:
+                    self.task_dict[task] = []
+                self.task_dict[task].append(metadata_id)
+            # Create document
+            doc = {
+                "dataset_id": dataset_id,
+                "dataset_name": dataset_name,
+                "sub_dataset": None if sub_dataset == "__NONE__" else sub_dataset,
+                "split": v_dataset["splits"],
+                "tasks": tasks,
+                "languages": v_dataset.get("languages"),
+            }
+            self.metadatas.append(DatasetMetadata.from_dict(doc))
         self.name_trie = marisa_trie.Trie(self.name_dict.keys())
 
 
 class DatasetDBUtils:
 
     online_path = "https://raw.githubusercontent.com/ExpressAI/DataLab/main/utils/dataset_info.jsonl"  # noqa
+    # online_path = "https://raw.githubusercontent.com/ExpressAI/DataLab/b8b73a3e3f5fad38d1620e1a42b6814f93eff546/utils/dataset_info.jsonl"  # noqa
     _cached_db: DatasetDB | None = None
     _cached_time: datetime | None = None
     _cached_lifetime: timedelta = timedelta(hours=6)

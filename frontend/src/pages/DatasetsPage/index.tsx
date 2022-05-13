@@ -126,6 +126,17 @@ const columns: ColumnsType<DatasetMetadata> = [
     ),
   },
   {
+    dataIndex: "languages",
+    title: "Languages",
+    render: (value) => (
+      <span>
+        {value.map((language: string, i: number) => (
+          <Tag key={i}>{language}</Tag>
+        ))}
+      </span>
+    ),
+  },
+  {
     dataIndex: "",
     title: "Leaderboard",
     render: (_, record) => {
