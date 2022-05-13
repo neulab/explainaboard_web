@@ -47,6 +47,7 @@ class DatasetDB:
                     "sub_dataset": None if sub_dataset == "__NONE__" else sub_dataset,
                     "split": v_sub["splits"],
                     "tasks": tasks,
+                    "languages": v_dataset.get("languages"),
                 }
                 self.metadatas.append(DatasetMetadata.from_dict(doc))
         self.name_trie = marisa_trie.Trie(self.name_dict.keys())
