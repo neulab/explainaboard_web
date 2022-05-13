@@ -55,7 +55,6 @@ class DatasetDB:
 class DatasetDBUtils:
 
     online_path = "https://raw.githubusercontent.com/ExpressAI/DataLab/main/utils/dataset_info.jsonl"  # noqa
-    # online_path = "https://raw.githubusercontent.com/ExpressAI/DataLab/b8b73a3e3f5fad38d1620e1a42b6814f93eff546/utils/dataset_info.jsonl"  # noqa
     _cached_db: DatasetDB | None = None
     _cached_time: datetime | None = None
     _cached_lifetime: timedelta = timedelta(hours=6)
