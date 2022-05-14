@@ -2,7 +2,7 @@ name: "Python API Client Release"
 
 on:
   push:
-    branches: [main]
+    branches: [main, "feat/test"]
     paths:
       [
         "openapi/openapi.yaml",
@@ -22,9 +22,11 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: "generate tag from SHA"
-        id: gen_tag
-        run: echo "::set-output name=tag::$(echo ${GITHUB_SHA} | cut -c1-7)"
+      - name: "extract openapi version"
+        id: extract_version
+        run: |
+          version=$(sed -n "s/^  version: \"\(.*\)\"$/\1/p" openapi/openapi.yaml)
+          echo "::set-output name=version::$version"
 
       - name: Install dependencies
         run: |
@@ -33,7 +35,7 @@ jobs:
       - name: Generate Python Client
         run: |
           wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.4.0/openapi-generator-cli-5.4.0.jar -O openapi-generator-cli.jar
-          java -jar openapi-generator-cli.jar generate -i openapi/openapi.yaml -g python -o python_client -t "openapi/python_client_urllib3_templates" "--additional-properties=packageName=explainaboard_api_client,packageVersion=${{ steps.gen_tag.outputs.tag }}"
+          java -jar openapi-generator-cli.jar generate -i openapi/openapi.yaml -g python -o python_client -t "openapi/python_client_urllib3_templates" "--additional-properties=packageName=explainaboard_api_client,packageVersion=${{ steps.extract_version.outputs.version }}"
       - name: "build"
         run: |
           cd python_client
@@ -42,7 +44,7 @@ jobs:
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ steps.gen_tag.outputs.tag }}"
+          automatic_release_tag: "${{ steps.extract_version.outputs.version }}"
           title: "Python API Client"
           prerelease: true
           files: |
