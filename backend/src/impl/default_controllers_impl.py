@@ -3,6 +3,7 @@ from __future__ import annotations
 import binascii
 import dataclasses
 import os
+from functools import lru_cache
 from typing import Optional, cast
 
 from explainaboard import (
@@ -39,10 +40,20 @@ from pymongo import ASCENDING, DESCENDING
 """ /info """
 
 
+@lru_cache(maxsize=None)
 def info_get():
+    api_version = None
+    with open("explainaboard_web/swagger/swagger.yaml") as f:
+        for line in f:
+            if line.startswith("  version: "):
+                api_version = line[len("version: ") + 1 : -1].strip()
+                break
+    if not api_version:
+        raise RuntimeError("failed to extract API version")
     return {
         "env": os.getenv("FLASK_ENV"),
         "auth_url": current_app.config.get("AUTH_URL"),
+        "api_version": api_version,
     }
 
 

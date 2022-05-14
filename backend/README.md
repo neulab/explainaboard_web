@@ -55,6 +55,22 @@ to import `src/impl/default_controllers_impl.py`, which contains our own logic f
 
 such that it calls our own function and passes in the request parameters.
 
-### Design choices
-1. swagger code generator
-TBD
+
+## Python Client
+A python client is generated based on openapi.yaml and it is released as `explainaboard_api_client` on PyPI. We also maintain a thin wrapper for the client `explainaboard_cli` ([source code](https://github.com/neulab/explainaboard_cli)). Users generally use the wrapper package because it handles low level configurations for them.
+- version: determined by `info.version` in openapi.yaml. Please remember to update the version whenever you change the openapi definition. If openapi.yaml is modified but the version number has been used in an old version, "Python API Client Release" will fail to flag that error.
+- codegen tool: [openapi generator](https://github.com/OpenAPITools/openapi-generator) 5.4.0. We use a different codegen tool for the python client from the backend (flask) and the TS client because openapi generator provides better support for generating python clients. We plan to migrate to openapi generator for all languages/frameworks in the future because it provides much better documentation and more features.
+- template: stored in `openapi/python_client_urllib3_templates`. We only applied minor modifications (better type hint) to the template provided by openapi generator. The original template can be fetched with `java -jar openapi-generator-cli.jar author template -g python`. When openapi generator release a new version of the template, we can merge our version with theirs.
+  - two options are available for python clients: `python` and `python-experimental`. `python-experimental` provides better typing but it is buggy and difficult to work with. So, currently, we use the `python` template. There's limited type hint but it's relatively easy to figure out the input and outputs from the docstrings.
+  - generated code follows the following structure:
+  ```
+  - /docs: documentation for each data structure and API
+  - /explainaboard_api_client:
+    - /api
+      - default_api.py  # implements all the endpoints specified in openapi.yaml
+    - /model            # implements all the data structures
+    - /models           # exports all models defined in /model
+    - api_client.py     # implements the base API client (async&sync requests, error handling, etc.); used by default_api.py
+    - configuration.py  # configurations for api_client (auth, hostname, etc.)
+    - exceptions.py     # client exceptions
+  ```

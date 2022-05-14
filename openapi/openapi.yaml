@@ -338,7 +338,9 @@ paths:
                   auth_url:
                     type: string
                     format: url
-                required: [env, auth_url]
+                  api_version:
+                    type: string
+                required: [env, auth_url, api_version]
   /user:
     get:
       summary: get user info

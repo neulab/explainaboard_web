@@ -2,7 +2,7 @@ name: "Python API Client Release"
 
 on:
   push:
-    branches: [main, "feat/test"]
+    branches: [main]
     paths:
       [
         "openapi/openapi.yaml",
