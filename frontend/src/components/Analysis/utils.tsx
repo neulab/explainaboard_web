@@ -41,23 +41,19 @@ export function parse(
       bounds: [],
       updated: false,
     };
-    const values: ResultFineGrainedParsed["values"] = [];
+    const performances: ResultFineGrainedParsed["performances"] = [];
+    const cases: ResultFineGrainedParsed["cases"] = [];
     const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
-    const confidenceScores: ResultFineGrainedParsed["confidenceScores"] = [];
-    const bucketsOfSamples: ResultFineGrainedParsed["bucketCases"] = [];
     parsedResult[metricName] = {
-      systemID,
-      task,
-      description,
+      featureDescription: description,
       featureName,
       metricName,
       bucketInfo,
       bucketIntervals,
       bucketNames,
-      values,
       numbersOfSamples,
-      confidenceScores,
-      bucketCases: bucketsOfSamples,
+      performances,
+      cases,
     };
   }
   const bucketPerformances: BucketPerformance[] = [];
@@ -106,19 +102,10 @@ export function parse(
       const metricName = performance.metric_name;
       const result = parsedResult[metricName];
       result.metricName = performance.metric_name;
-      result.bucketCases.push(bucketPerformance.bucket_samples);
+      result.performances.push(performance);
+      result.cases.push(bucketPerformance.bucket_samples);
       result.bucketNames.push(bucketName);
-      result.values.push(performance.value);
       result.numbersOfSamples.push(nSamples);
-      if (
-        performance.confidence_score_low !== undefined &&
-        performance.confidence_score_high !== undefined
-      ) {
-        result.confidenceScores.push([
-          performance.confidence_score_low,
-          performance.confidence_score_high,
-        ]);
-      }
       result.bucketIntervals.min = Math.min(
         result.bucketIntervals.min,
         ...bucketInterval

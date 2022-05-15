@@ -1,23 +1,29 @@
 // interface modified from https://app.quicktype.io/
 
-import { BucketCase } from "../../clients/openapi";
+import { BucketCase, Performance } from "../../clients/openapi";
 
 export interface ResultFineGrainedParsed {
-  systemID: string;
-  task: string;
+  /**
+   * Bucketed performance for a single metric/feature/system combination
+   */
+  // The name of the feature
   featureName: string;
-  description: string;
+  // The description of the feature
+  featureDescription: string;
+  // The name of the metric
   metricName: string;
   // bucketNames[i] is name of bucket i
   bucketNames: string[];
+  // The intervals of each bucket
   bucketIntervals: BucketIntervals;
+  // Information about how bucketing should be done
   bucketInfo: SystemInfoFeatureBucketInfo | null;
-  // bucket[i][j] is the jth example in the ith bucket
-  bucketCases: BucketCase[][];
-  // Values of the evaluation score and confidence metrics
-  values: number[];
-  confidenceScores: [number, number][];
+  // The number of samples in each bucket
   numbersOfSamples: number[];
+  // performances[i]: performance (value/confidence) for bucket i
+  performances: Performance[];
+  // cases[i][j]: is the ith bucket's jth example
+  cases: BucketCase[][];
 }
 
 // Examples to be shown in the analysis table when a bar is clicked

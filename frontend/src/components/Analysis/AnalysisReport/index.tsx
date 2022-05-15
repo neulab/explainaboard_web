@@ -8,7 +8,11 @@ import { compareBucketOfSamples } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
 import { Row, Col, Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
-import { BucketCase, SystemAnalysesReturn } from "../../../clients/openapi";
+import {
+  BucketCase,
+  SystemAnalysesReturn,
+  Performance,
+} from "../../../clients/openapi";
 import { BucketSlider } from "../BucketSlider";
 
 const { Title } = Typography;
@@ -58,6 +62,17 @@ export function arrSum(arr: number[]) {
   }, 0);
 }
 
+export function unwrapConfidence(perf: Performance) {
+  let conf: [number, number] = [-1, -1];
+  if (
+    perf.confidence_score_low !== undefined &&
+    perf.confidence_score_high !== undefined
+  ) {
+    conf = [perf.confidence_score_low, perf.confidence_score_high];
+  }
+  return conf;
+}
+
 export function createOverallBarChart(
   props: Props,
   colSpan: number,
@@ -90,17 +105,7 @@ export function createOverallBarChart(
     for (let i = 0; i < metricNames.length; i++) {
       const metricResults = overallResults[metricNames[i]];
       metricPerformance.push(metricResults.value);
-      let metricSystemConfidence: [number, number] = [-1, -1];
-      if (
-        metricResults.confidence_score_low !== undefined &&
-        metricResults.confidence_score_high !== undefined
-      ) {
-        metricSystemConfidence = [
-          metricResults.confidence_score_low,
-          metricResults.confidence_score_high,
-        ];
-      }
-      metricConfidence.push(metricSystemConfidence);
+      metricConfidence.push(unwrapConfidence(metricResults));
       // metricNumberOfSamples.push(datasetSize);
       // TODO(gneubig): How can we get the dataset size?
       metricNumberOfSamples.push(-1);
@@ -245,7 +250,7 @@ export function createMetricPane(
           // into columns. One column contains a single BarChart.
           systemAnalysesParsed[0].map((resultFirst, resultIdx) => {
             // For invariant variables across all systems, we can simply take from the first result
-            const title = `${resultFirst.metricName} by ${resultFirst.description}`;
+            const title = `${resultFirst.metricName} by ${resultFirst.featureDescription}`;
             const bucketNames = resultFirst.bucketNames;
             const featureName = resultFirst.featureName;
             const isBucketAdjustable = featureName in featureNameToBucketInfo;
@@ -287,14 +292,16 @@ export function createMetricPane(
             const resultsBucketsOfSamples: BucketCase[][][] = [];
             for (let i = 0; i < systemAnalysesParsed.length; i++) {
               const result = systemAnalysesParsed[i][resultIdx];
-              resultsValues.push(result.values);
               resultsNumbersOfSamples.push(result.numbersOfSamples);
-              resultsConfidenceScores.push(result.confidenceScores);
-              resultsBucketsOfSamples.push(result.bucketCases);
+              resultsBucketsOfSamples.push(result.cases);
+              resultsValues.push(result.performances.map((perf) => perf.value));
+              resultsConfidenceScores.push(
+                result.performances.map((perf) => unwrapConfidence(perf))
+              );
             }
 
             return (
-              <Col span={colSpan} key={resultFirst.description}>
+              <Col span={colSpan} key={resultFirst.featureDescription}>
                 <BarChart
                   title={title}
                   seriesNames={systemNames}
