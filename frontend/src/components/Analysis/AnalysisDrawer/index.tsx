@@ -9,7 +9,7 @@ import {
   SystemAnalysesReturn,
   SystemsAnalysesBody,
 } from "../../../clients/openapi";
-import { getMetricToSystemAnalysesParsed, valuesToIntervals } from "../utils";
+import { parseFineGrainedResults, valuesToIntervals } from "../utils";
 import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 const { Text, Link } = Typography;
 
@@ -36,8 +36,9 @@ export function AnalysisDrawer({
   const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
     [key: string]: BucketIntervals;
   }>({});
-  const [metricToSystemAnalysesParsed, setMetricToSystemAnalysesParsed] =
-    useState<{ [key: string]: ResultFineGrainedParsed[][] }>({});
+  const [metricToAnalyses, setMetricToAnalyses] = useState<{
+    [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
+  }>({});
   const [bucketInfoUpdated, setBucketInfoUpdated] = useState<boolean>(false);
 
   const activeSystems = systems.filter((sys) =>
@@ -80,48 +81,46 @@ export function AnalysisDrawer({
       const firstSystemInfo = activeSystems[0].system_info;
       const task = firstSystemInfo.task_name;
 
-      const metricNames = firstSystemInfo.metric_configs.map(
-        (config) => config.name
-      );
-      const metricToSystemAnalysesParsed = getMetricToSystemAnalysesParsed(
+      const metricToAnalyses = parseFineGrainedResults(
         task,
-        metricNames,
         activeSystems,
         singleAnalyses
       );
 
-      const parsedFeatureNameToBucketInfo: { [key: string]: BucketIntervals } =
-        {};
-      // Take from the first element as the bucket interval is invariant across metrics
-      const systemAnalysesParsed = Object.values(
-        metricToSystemAnalysesParsed
-      )[0];
-      // Take from the first element as the bucket interval is invariant across systems
-      for (const resultFineGrainedParsed of systemAnalysesParsed[0]) {
-        const { bucketInfo, featureName, bucketIntervals } =
-          resultFineGrainedParsed;
-        /* Hardcode for now as SDK doesn't export the string.
-        bucket_attribute_discrete_value seems to be used for categorical features,
-        which do not support custom bucket range.
-        */
-        if (bucketInfo?.method !== "bucket_attribute_discrete_value") {
-          parsedFeatureNameToBucketInfo[featureName] = {
-            min: bucketIntervals.min,
-            max: bucketIntervals.max,
-            bounds: bucketIntervals.bounds.slice(
-              0,
-              bucketIntervals.bounds.length - 1
-            ),
-            updated: featureNameToBucketInfo[featureName]?.updated || false,
-          };
+      const featureNameToBucketInfo: { [key: string]: BucketIntervals } = {};
+      for (const systemAnalysesParsed of Object.values(metricToAnalyses)) {
+        for (const feature of Object.keys(systemAnalysesParsed)) {
+          // No need to repeat the process for multiple metrics if it's already found
+          if (feature in featureNameToBucketInfo) {
+            continue;
+          }
+          // Take from the first element as the bucket interval is system-invariant
+          const resultFineGrainedParsed = systemAnalysesParsed[feature][0];
+          const { bucketInfo, featureName, bucketIntervals } =
+            resultFineGrainedParsed;
+          /* Hardcode for now as SDK doesn't export the string.
+          bucket_attribute_discrete_value seems to be used for categorical features,
+          which do not support custom bucket range.
+          */
+          if (bucketInfo?.method !== "bucket_attribute_discrete_value") {
+            featureNameToBucketInfo[featureName] = {
+              min: bucketIntervals.min,
+              max: bucketIntervals.max,
+              bounds: bucketIntervals.bounds.slice(
+                0,
+                bucketIntervals.bounds.length - 1
+              ),
+              updated: featureNameToBucketInfo[featureName]?.updated || false,
+            };
+          }
         }
+        setTask(task);
+        setSingleAnalyses(singleAnalyses);
+        setMetricToAnalyses(metricToAnalyses);
+        setFeatureNameToBucketInfo(featureNameToBucketInfo);
+        setPageState(PageState.success);
+        setBucketInfoUpdated(false);
       }
-      setTask(task);
-      setSingleAnalyses(singleAnalyses);
-      setMetricToSystemAnalysesParsed(metricToSystemAnalysesParsed);
-      setFeatureNameToBucketInfo(parsedFeatureNameToBucketInfo);
-      setPageState(PageState.success);
-      setBucketInfoUpdated(false);
     }
 
     if (visible && shouldUpdateAnalysis) {
@@ -258,7 +257,7 @@ export function AnalysisDrawer({
               task={task}
               systems={activeSystems}
               singleAnalyses={singleAnalyses}
-              metricToSystemAnalysesParsed={metricToSystemAnalysesParsed}
+              metricToSystemAnalysesParsed={metricToAnalyses}
               featureNameToBucketInfo={featureNameToBucketInfo}
               updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
             />

@@ -22,42 +22,48 @@ function formatName(name: string): number {
   }
 }
 
+export function initParsedResult(
+  metricName: string,
+  featureName: string,
+  featureDescription: string,
+  bucketInfo: SystemInfoFeature["bucket_info"]
+): ResultFineGrainedParsed {
+  const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
+  const bucketIntervals: BucketIntervals = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+    bounds: [],
+    updated: false,
+  };
+  const performances: ResultFineGrainedParsed["performances"] = [];
+  const cases: ResultFineGrainedParsed["cases"] = [];
+  const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
+  return {
+    metricName,
+    featureName,
+    featureDescription,
+    bucketInfo,
+    bucketIntervals,
+    bucketNames,
+    numbersOfSamples,
+    performances,
+    cases,
+  };
+}
+
 // Parses features according to task type.
 export function parse(
   systemID: string,
   task: string,
-  metricNames: string[],
-  description: string,
-  feature: { [bucketInterval: string]: BucketPerformance },
+  featureBuckets: { [bucketInterval: string]: BucketPerformance },
   featureName: string,
+  featureDescription: string,
   bucketInfo: SystemInfoFeature["bucket_info"]
 ) {
   const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
-  for (const metricName of metricNames) {
-    const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
-    const bucketIntervals: BucketIntervals = {
-      min: Number.POSITIVE_INFINITY,
-      max: Number.NEGATIVE_INFINITY,
-      bounds: [],
-      updated: false,
-    };
-    const performances: ResultFineGrainedParsed["performances"] = [];
-    const cases: ResultFineGrainedParsed["cases"] = [];
-    const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
-    parsedResult[metricName] = {
-      featureDescription: description,
-      featureName,
-      metricName,
-      bucketInfo,
-      bucketIntervals,
-      bucketNames,
-      numbersOfSamples,
-      performances,
-      cases,
-    };
-  }
+
   const bucketPerformances: BucketPerformance[] = [];
-  for (const bucketPerformance of Object.values(feature)) {
+  for (const bucketPerformance of Object.values(featureBuckets)) {
     bucketPerformances.push(bucketPerformance);
   }
   // Sort by the correct bucket interval order
@@ -100,6 +106,14 @@ export function parse(
     for (const performance of bucketPerformance["performances"]) {
       const nSamples = bucketPerformance.n_samples;
       const metricName = performance.metric_name;
+      if (!(metricName in parsedResult)) {
+        parsedResult[metricName] = initParsedResult(
+          metricName,
+          featureName,
+          featureDescription,
+          bucketInfo
+        );
+      }
       const result = parsedResult[metricName];
       result.metricName = performance.metric_name;
       result.performances.push(performance);
@@ -147,77 +161,74 @@ export function findFeature(
   return undefined;
 }
 
-export function getMetricToSystemAnalysesParsed(
+export function parseFineGrainedResults(
   task: string,
-  metricNames: string[],
   systems: SystemModel[],
   singleAnalyses: SystemAnalysesReturn["single_analyses"]
-): { [key: string]: ResultFineGrainedParsed[][] } {
+): { [metric: string]: { [feature: string]: ResultFineGrainedParsed[] } } {
   /**
    * Takes in a task, metric names, and systems, and returns fine-grained evaluation
    * results that can be accessed in the format:
-   * > value[metric_name : string][system_id : int][feature_id : int]
+   * > value[metric_name : string][feature_name : string][system_id : int]
    */
 
-  const metricToSystemAnalysesParsed: {
-    [key: string]: ResultFineGrainedParsed[][];
+  const parsedResults: {
+    [metric: string]: {
+      [feature: string]: ResultFineGrainedParsed[];
+    };
   } = {};
 
-  for (const metricName of metricNames) {
-    // Array to store every parsed system analysis
-    metricToSystemAnalysesParsed[metricName] = [];
-  }
-
   // Loop through each system analysis and parse
-  for (const system of systems) {
-    const systemID = system.system_id;
+  for (let sys_i = 0; sys_i < systems.length; sys_i++) {
+    const system = systems[sys_i];
     const systemInfoFeatures = system.system_info.features;
     const systemActiveFeatures = system.active_features.sort();
-    const singleAnalysis: SingleAnalysisReturn = singleAnalyses[systemID];
-    const metricToParsedInfo: {
-      [key: string]: {
-        // the parsed fine-grained results, used for visualization
-        resultsFineGrainedParsed: ResultFineGrainedParsed[];
-      };
-    } = {};
-    for (const metricName of metricNames) {
-      metricToParsedInfo[metricName] = {
-        resultsFineGrainedParsed: [],
-      };
-    }
+    const singleAnalysis: SingleAnalysisReturn =
+      singleAnalyses[system.system_id];
 
     for (const featureName of systemActiveFeatures) {
-      const feature = singleAnalysis[featureName];
+      const featureBuckets: { [key: string]: BucketPerformance } =
+        singleAnalysis[featureName];
       const systemInfoFeature = findFeature(systemInfoFeatures, featureName);
       if (systemInfoFeature !== undefined) {
         const bucketInfo = systemInfoFeature["bucket_info"];
-        const description = systemInfoFeature["description"] || featureName;
+        const featureDescription =
+          systemInfoFeature["description"] || featureName;
 
-        const metricToResultFineGrainedParsed = parse(
-          systemID,
-          task,
-          metricNames,
-          description,
-          feature,
-          featureName,
-          bucketInfo
-        );
-        for (const [metric, resultFineGrainedParsed] of Object.entries(
-          metricToResultFineGrainedParsed
-        )) {
-          metricToParsedInfo[metric].resultsFineGrainedParsed.push(
-            resultFineGrainedParsed
+        const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
+          parse(
+            system.system_id,
+            task,
+            featureBuckets,
+            featureName,
+            featureDescription,
+            bucketInfo
           );
+        for (const [metric, singleResult] of Object.entries(metricToParsed)) {
+          if (!(metric in parsedResults)) {
+            parsedResults[metric] = {};
+          }
+          if (!(featureName in parsedResults[metric])) {
+            parsedResults[metric][featureName] = [];
+          }
+          parsedResults[metric][featureName].push(singleResult);
         }
       }
     }
-
-    for (const [metric, parsedInfo] of Object.entries(metricToParsedInfo)) {
-      const { resultsFineGrainedParsed } = parsedInfo;
-      metricToSystemAnalysesParsed[metric].push(resultsFineGrainedParsed);
+  }
+  // Sanity check to make sure that whatever features were found were found for all systems
+  for (const [metric, metricResults] of Object.entries(parsedResults)) {
+    for (const [feature, metricFeatureResults] of Object.entries(
+      metricResults
+    )) {
+      if (metricFeatureResults.length !== systems.length) {
+        throw new Error(
+          `found metric=${metric}, feature=${feature} for some but not all systems`
+        );
+      }
     }
   }
-  return metricToSystemAnalysesParsed;
+  return parsedResults;
 }
 
 export function compareBucketOfSamples(caseA: BucketCase, caseB: BucketCase) {
