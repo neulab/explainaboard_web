@@ -38,9 +38,9 @@ interface Props {
   xAxisData: string[];
   seriesDataList: number[][];
   seriesLabelsList: number[][];
-  numbersOfSamplesList: number[][];
   confidenceScoresList: [number, number][][];
   onBarClick: (barIndex: number, systemIndex: number) => void;
+  numbersOfSamplesList: number[][];
 }
 
 export function BarChart(props: Props) {

@@ -53,8 +53,63 @@ export function getColSpan(props: Props) {
   }
 }
 
-export function createOverallBarChart(props: Props) {
-  return <Typography.Title level={5}>Overall Performance</Typography.Title>;
+export function createOverallBarChart(
+  props: Props,
+  setActiveMetric: React.Dispatch<React.SetStateAction<string>>,
+  setActiveSystemExamples: React.Dispatch<
+    React.SetStateAction<ActiveSystemExamples | undefined>
+  >,
+  setPage: React.Dispatch<React.SetStateAction<number>>
+) {
+  const {
+    systems,
+    metricToSystemAnalysesParsed,
+    // featureKeyToBucketInfo,
+    // updateFeatureKeyToBucketInfo,
+  } = props;
+  const systemNames = systems.map((system) => system.system_info.model_name);
+  const metricNames = Object.keys(metricToSystemAnalysesParsed);
+
+  const resultsValues: number[][] = [];
+  const resultsNumbersOfSamples: number[][] = [];
+  const resultsConfidenceScores: Array<[number, number]>[] = [];
+  for (let i = 0; i < metricNames.length; i++) {
+    // const metric = metricNames[i]
+    // const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
+    const metricPerformance = [];
+    const metricConfidence = [];
+    const metricNumberOfSamples = [];
+    for (let j = 0; j < systemNames.length; i++) {
+      // TODO(gneubig): Replace these with actual values
+      // const result =
+      //     systemAnalysesParsed[i].resultsFineGrainedParsed[resultIdx];
+      metricPerformance.push(0.5);
+      const metricSystemConfidence: [number, number] = [0.4, 0.6];
+      metricConfidence.push(metricSystemConfidence);
+      metricNumberOfSamples.push(1000);
+    }
+    resultsValues.push(metricPerformance);
+    resultsConfidenceScores.push(metricConfidence);
+    resultsNumbersOfSamples.push(metricNumberOfSamples);
+  }
+
+  return (
+    <BarChart
+      title="Overall Performance"
+      seriesNames={systemNames}
+      xAxisData={metricNames}
+      seriesDataList={resultsValues}
+      seriesLabelsList={resultsValues}
+      confidenceScoresList={resultsConfidenceScores}
+      numbersOfSamplesList={resultsNumbersOfSamples}
+      onBarClick={(barIndex: number, systemIndex: number) => {
+        // Get examples of a certain bucket from all systems
+        setActiveMetric(metricNames[barIndex]);
+        // reset page number
+        setPage(0);
+      }}
+    />
+  );
 }
 
 export function createExampleTable(
@@ -285,16 +340,25 @@ export function AnalysisReport(props: Props) {
     setPage
   );
 
-  const overallBarChart = createOverallBarChart(props);
+  const overallBarChart = createOverallBarChart(
+    props,
+    setActiveMetric,
+    setActiveSystemExamples,
+    setPage
+  );
 
   return (
     <div>
+      <Typography.Title level={3}>Overall Performance</Typography.Title>
+
       {overallBarChart}
 
-      <Typography.Title level={5}>
+      <Typography.Title level={3}>Fine-grained Performance</Typography.Title>
+
+      <Typography.Paragraph>
         Click a bar to see detailed cases of the system output at the bottom of
         the page.
-      </Typography.Title>
+      </Typography.Paragraph>
 
       <Tabs
         activeKey={activeMetric}
