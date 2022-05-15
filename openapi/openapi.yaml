@@ -944,7 +944,7 @@ components:
 
     BucketCase:
       type: object
-      propertise:
+      properties:
         sample_id:
           type: string
       additionalProperties:
