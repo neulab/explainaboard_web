@@ -119,12 +119,6 @@ export function createOverallBarChart(
     resultsNumbersOfSamples.push(metricNumberOfSamples);
   }
 
-  console.log(`systemNames=${systemNames}`);
-  console.log(`activeMetricNames=${activeMetricNames}`);
-  console.log(`resultsValues=${resultsValues}`);
-  console.log(`resultsNumbersOfSamples=${resultsNumbersOfSamples}`);
-  console.log(`resultsConfidenceScores=${resultsConfidenceScores}`);
-
   return (
     <Col span={colSpan}>
       <BarChart
