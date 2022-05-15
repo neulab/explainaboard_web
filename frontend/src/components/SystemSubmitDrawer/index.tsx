@@ -204,16 +204,13 @@ export function SystemSubmitDrawer(props: Props) {
       if (datasetID != null) {
         const datasetMetadata = getDatasetFromId(datasetID);
         const langs = datasetMetadata?.languages;
-        console.log(datasetMetadata);
         if (langs != null && langs.length > 0) {
           const target_idx = langs.length === 2 ? 1 : 0;
-          console.log(`setting language target_idx=${target_idx}`);
           form.setFieldsValue({
             source_language: langs[0],
             target_language: langs[target_idx],
           });
         } else {
-          console.log("unsetting language");
           form.setFieldsValue({
             source_language: undefined,
             target_language: undefined,
