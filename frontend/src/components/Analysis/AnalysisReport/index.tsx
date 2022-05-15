@@ -53,6 +53,12 @@ export function getColSpan(props: Props) {
   }
 }
 
+export function arrSum(arr: number[]) {
+  return arr.reduce(function (a, b) {
+    return a + b;
+  }, 0);
+}
+
 export function createOverallBarChart(
   props: Props,
   colSpan: number,
@@ -68,6 +74,7 @@ export function createOverallBarChart(
     // featureKeyToBucketInfo,
     // updateFeatureKeyToBucketInfo,
   } = props;
+  // TODO(gneubig): make this setting global somewhere
   const systemNames = systems.map((system) => system.system_info.model_name);
   const metricNames = Object.keys(metricToSystemAnalysesParsed);
 
@@ -77,17 +84,27 @@ export function createOverallBarChart(
   for (let j = 0; j < systems.length; j++) {
     // const metric = metricNames[i]
     // const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
+    const overallResults = systems[j].system_info.results.overall;
     const metricPerformance = [];
     const metricConfidence = [];
     const metricNumberOfSamples = [];
     for (let i = 0; i < metricNames.length; i++) {
-      // TODO(gneubig): Replace these with actual values
-      // const result =
-      //     systemAnalysesParsed[i].resultsFineGrainedParsed[resultIdx];
-      metricPerformance.push(0.5);
-      const metricSystemConfidence: [number, number] = [0.4, 0.6];
+      const metricResults = overallResults[metricNames[i]];
+      metricPerformance.push(metricResults.value);
+      let metricSystemConfidence: [number, number] = [-1, -1];
+      if (
+        metricResults.confidence_score_low !== undefined &&
+        metricResults.confidence_score_high !== undefined
+      ) {
+        metricSystemConfidence = [
+          metricResults.confidence_score_low,
+          metricResults.confidence_score_high,
+        ];
+      }
       metricConfidence.push(metricSystemConfidence);
-      metricNumberOfSamples.push(1000);
+      // metricNumberOfSamples.push(datasetSize);
+      // TODO(gneubig): How can we get the dataset size?
+      metricNumberOfSamples.push(-1);
     }
     resultsValues.push(metricPerformance);
     resultsConfidenceScores.push(metricConfidence);
@@ -107,7 +124,7 @@ export function createOverallBarChart(
         seriesLabelsList={resultsValues}
         confidenceScoresList={resultsConfidenceScores}
         numbersOfSamplesList={resultsNumbersOfSamples}
-        onBarClick={(barIndex: number, systemIndex: number) => {
+        onBarClick={(barIndex: number, _: number) => {
           // Get examples of a certain bucket from all systems
           setActiveMetric(metricNames[barIndex]);
           // reset page number
@@ -357,11 +374,9 @@ export function AnalysisReport(props: Props) {
 
   return (
     <div>
-      <Typography.Title level={3}>Overall Performance</Typography.Title>
-
       {overallBarChart}
 
-      <Typography.Title level={3}>Fine-grained Performance</Typography.Title>
+      <Typography.Title level={4}>Fine-grained Performance</Typography.Title>
 
       <Typography.Paragraph>
         Click a bar to see detailed cases of the system output at the bottom of
