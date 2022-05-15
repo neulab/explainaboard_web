@@ -240,9 +240,8 @@ export function createFineGrainedBarChart(
   const title = `${metric} by ${resultFirst.featureDescription}`;
   const bucketNames = resultFirst.bucketNames;
   const featureName = resultFirst.featureName;
-  const isBucketAdjustable = featureName in featureNameToBucketInfo;
   let bucketSlider = null;
-  if (isBucketAdjustable) {
+  if (featureName in featureNameToBucketInfo) {
     const bucketInfo = featureNameToBucketInfo[featureName];
     const bucketRightBounds = bucketInfo.bounds;
     if (bucketRightBounds !== undefined) {

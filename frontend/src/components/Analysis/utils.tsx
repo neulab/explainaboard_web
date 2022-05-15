@@ -11,17 +11,6 @@ import {
 } from "../../clients/openapi";
 import { SystemModel } from "../../models";
 
-function formatName(name: string): number {
-  if (Number.isNaN(Number(name))) {
-    // TODO error handling
-    return 0;
-  } else if (Number.isInteger(Number(name))) {
-    return Number.parseInt(name);
-  } else {
-    return Number.parseFloat(Number.parseFloat(name).toFixed(2));
-  }
-}
-
 export function initParsedResult(
   metricName: string,
   featureName: string,
@@ -49,6 +38,27 @@ export function initParsedResult(
     performances,
     cases,
   };
+}
+
+function formatName(name: string): string {
+  if (Number.isNaN(Number(name))) {
+    return name;
+  } else if (Number.isInteger(Number(name))) {
+    return Number.parseInt(name).toString();
+  } else {
+    return Number.parseFloat(name).toFixed(2);
+  }
+}
+
+export function formatBucketName(unformattedName: Array<string>): string {
+  const bucketInterval = unformattedName.map((name) => formatName(name));
+  if (bucketInterval.length === 1) {
+    return `${bucketInterval[0]}\n\n`;
+  } else if (bucketInterval.length === 2) {
+    return `${bucketInterval[0]}\n|\n${bucketInterval[1]}`;
+  } else {
+    throw new Error("cannot handle bucket intervals greater than 2 elements");
+  }
 }
 
 // Parses features according to task type.
@@ -79,29 +89,7 @@ export function parse(
     */
 
     // Convert the string representation of the bucket interval to numbers
-    const bucketInterval = bucketPerformance.bucket_name.map((name) =>
-      formatName(name)
-    );
-    let bucketName = "";
-    switch (bucketInterval.length) {
-      case 1: {
-        /*Add two new lines so its text height is consistent with case 2.
-        This allows the charts to have equal heights
-        */
-        bucketName = `${bucketInterval[0].toString()}\n\n`;
-        break;
-      }
-      case 2: {
-        bucketName = bucketInterval
-          .map((bound) => bound.toString())
-          .join("\n|\n");
-        break;
-      }
-      default: {
-        // TODO: handle cases hwere length > 2
-        break;
-      }
-    }
+    const bucketName = formatBucketName(bucketPerformance.bucket_name);
 
     for (const performance of bucketPerformance["performances"]) {
       const nSamples = bucketPerformance.n_samples;
@@ -120,17 +108,22 @@ export function parse(
       result.cases.push(bucketPerformance.bucket_samples);
       result.bucketNames.push(bucketName);
       result.numbersOfSamples.push(nSamples);
-      result.bucketIntervals.min = Math.min(
-        result.bucketIntervals.min,
-        ...bucketInterval
-      );
-      result.bucketIntervals.max = Math.max(
-        result.bucketIntervals.max,
-        ...bucketInterval
-      );
-      result.bucketIntervals.bounds.push(
-        bucketInterval[bucketInterval.length - 1]
-      );
+      if (!Number.isNaN(bucketPerformance.bucket_name[0])) {
+        const bucketInterval = bucketPerformance.bucket_name.map((val) =>
+          Number.isInteger(val) ? Number.parseInt(val) : Number.parseFloat(val)
+        );
+        result.bucketIntervals.min = Math.min(
+          result.bucketIntervals.min,
+          ...bucketInterval
+        );
+        result.bucketIntervals.max = Math.max(
+          result.bucketIntervals.max,
+          ...bucketInterval
+        );
+        result.bucketIntervals.bounds.push(
+          bucketInterval[bucketInterval.length - 1]
+        );
+      }
       // bucketInfo are feature invariant across different metrics
       result.bucketInfo = bucketInfo;
       result.featureName = featureName;
