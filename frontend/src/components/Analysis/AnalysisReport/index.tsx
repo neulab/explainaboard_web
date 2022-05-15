@@ -79,7 +79,7 @@ export function createOverallBarChart(
     const metricPerformance = [];
     const metricConfidence = [];
     const metricNumberOfSamples = [];
-    for (let j = 0; j < systemNames.length; i++) {
+    for (let j = 0; j < systems.length; j++) {
       // TODO(gneubig): Replace these with actual values
       // const result =
       //     systemAnalysesParsed[i].resultsFineGrainedParsed[resultIdx];
@@ -92,6 +92,9 @@ export function createOverallBarChart(
     resultsConfidenceScores.push(metricConfidence);
     resultsNumbersOfSamples.push(metricNumberOfSamples);
   }
+
+  console.log(`systemNames=${systemNames}`);
+  console.log(`metricNames=${metricNames}`);
 
   return (
     <BarChart
