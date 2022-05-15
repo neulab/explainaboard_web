@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import {
-  MetricToSystemAnalysesParsed,
   ActiveSystemExamples,
-  FeatureKeyToUIBucketInfo,
+  SystemAnalysisParsed,
   UIBucketInfo,
 } from "../types";
 import { compareBucketOfSamples } from "../utils";
@@ -19,10 +18,10 @@ interface Props {
   task: string;
   systems: SystemModel[];
   singleAnalyses: SystemAnalysesReturn["single_analyses"];
-  metricToSystemAnalysesParsed: MetricToSystemAnalysesParsed;
-  featureKeyToBucketInfo: FeatureKeyToUIBucketInfo;
-  updateFeatureKeyToBucketInfo: (
-    featureKey: string,
+  metricToSystemAnalysesParsed: { [key: string]: SystemAnalysisParsed[] };
+  featureNameToBucketInfo: { [key: string]: UIBucketInfo };
+  updateFeatureNameToBucketInfo: (
+    featureName: string,
     bucketInfo: UIBucketInfo
   ) => void;
 }
@@ -33,11 +32,11 @@ export function getColSpan(props: Props) {
   Ant design takes care of overflow and auto starts a new line.
   */
   // Get the size of the column span
-  const { systems, featureKeyToBucketInfo } = props;
+  const { systems, featureNameToBucketInfo } = props;
 
   // Get the maximum right bound length
   const maxRightBoundsLength = Math.max(
-    ...Object.values(featureKeyToBucketInfo).map(
+    ...Object.values(featureNameToBucketInfo).map(
       (bucketInfo) => bucketInfo.rightBounds.length
     )
   );
@@ -71,8 +70,8 @@ export function createOverallBarChart(
   const {
     systems,
     metricToSystemAnalysesParsed,
-    // featureKeyToBucketInfo,
-    // updateFeatureKeyToBucketInfo,
+    // featureNameToBucketInfo,
+    // updateFeatureNameToBucketInfo,
   } = props;
   // TODO(gneubig): make this setting global somewhere
   const systemNames = systems.map((system) => system.system_info.model_name);
@@ -154,7 +153,7 @@ export function createExampleTable(
   const {
     title,
     barIndex,
-    featureKeyToDescription,
+    featureNameToDescription,
     systemIndex,
     bucketOfSamplesList,
   } = activeSystemExamples;
@@ -173,7 +172,7 @@ export function createExampleTable(
         systemID={systems[0].system_id}
         task={task}
         outputIDs={sortedBucketOfSamplesList[0]}
-        featureKeyToDescription={featureKeyToDescription}
+        featureNameToDescription={featureNameToDescription}
         page={page}
         setPage={setPage}
       />
@@ -198,7 +197,7 @@ export function createExampleTable(
                   systemID={system.system_id}
                   task={task}
                   outputIDs={sortedBucketOfSamplesList[sysIndex]}
-                  featureKeyToDescription={featureKeyToDescription}
+                  featureNameToDescription={featureNameToDescription}
                   page={page}
                   setPage={setPage}
                 />
@@ -236,16 +235,16 @@ export function createMetricPane(
   const {
     systems,
     metricToSystemAnalysesParsed,
-    featureKeyToBucketInfo,
-    updateFeatureKeyToBucketInfo,
+    featureNameToBucketInfo,
+    updateFeatureNameToBucketInfo,
   } = props;
   const systemNames = systems.map((system) => system.system_info.model_name);
 
   const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
   /*Get the parsed result from the first system for mapping.
-  FeatureKeys and descriptions are invariant information
+  FeatureNames and descriptions are invariant information
   */
-  const { resultsFineGrainedParsed, featureKeyToDescription } =
+  const { resultsFineGrainedParsed, featureNameToDescription } =
     systemAnalysesParsed[0];
   return (
     <TabPane tab={metric} key={metric}>
@@ -257,11 +256,11 @@ export function createMetricPane(
             // For invariant variables across all systems, we can simply take from the first result
             const title = `${resultFirst.metricName} by ${resultFirst.description}`;
             const bucketNames = resultFirst.bucketNames;
-            const featureKey = resultFirst.featureKey;
-            const isBucketAdjustable = featureKey in featureKeyToBucketInfo;
+            const featureName = resultFirst.featureName;
+            const isBucketAdjustable = featureName in featureNameToBucketInfo;
             let bucketSlider = null;
             if (isBucketAdjustable) {
-              const bucketInfo = featureKeyToBucketInfo[featureKey];
+              const bucketInfo = featureNameToBucketInfo[featureName];
               const bucketRightBounds = bucketInfo.rightBounds;
               if (bucketRightBounds !== undefined) {
                 const bucketMin = bucketInfo.min;
@@ -278,7 +277,7 @@ export function createMetricPane(
                     step={bucketStep}
                     inputValues={bucketRightBounds}
                     onChange={(rightBounds) => {
-                      updateFeatureKeyToBucketInfo(featureKey, {
+                      updateFeatureNameToBucketInfo(featureName, {
                         min: bucketMin,
                         max: bucketMax,
                         rightBounds: rightBounds,
@@ -325,7 +324,7 @@ export function createMetricPane(
                       title,
                       barIndex,
                       systemIndex,
-                      featureKeyToDescription,
+                      featureNameToDescription,
                       bucketOfSamplesList,
                     });
                     // reset page number

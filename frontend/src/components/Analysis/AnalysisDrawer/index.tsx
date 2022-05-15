@@ -10,11 +10,7 @@ import {
   SystemsAnalysesBody,
 } from "../../../clients/openapi";
 import { getMetricToSystemAnalysesParsed, valuesToIntervals } from "../utils";
-import {
-  MetricToSystemAnalysesParsed,
-  FeatureKeyToUIBucketInfo,
-  UIBucketInfo,
-} from "../types";
+import { SystemAnalysisParsed, UIBucketInfo } from "../types";
 const { Text, Link } = Typography;
 
 interface Props {
@@ -37,10 +33,11 @@ export function AnalysisDrawer({
   const [singleAnalyses, setSingleAnalyses] = useState<
     SystemAnalysesReturn["single_analyses"]
   >({});
-  const [featureKeyToBucketInfo, setFeatureKeyToBucketInfo] =
-    useState<FeatureKeyToUIBucketInfo>({});
+  const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
+    [key: string]: UIBucketInfo;
+  }>({});
   const [metricToSystemAnalysesParsed, setMetricToSystemAnalysesParsed] =
-    useState<MetricToSystemAnalysesParsed>({});
+    useState<{ [key: string]: SystemAnalysisParsed[] }>({});
   const [bucketInfoUpdated, setBucketInfoUpdated] = useState<boolean>(false);
 
   const activeSystems = systems.filter((sys) =>
@@ -49,7 +46,7 @@ export function AnalysisDrawer({
 
   useEffect(() => {
     async function refreshAnalyses(
-      featureKeyToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"]
+      featureNameToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"]
     ) {
       setPageState(PageState.loading);
       const systemAnalysesReturn: SystemAnalysesReturn | null =
@@ -62,7 +59,7 @@ export function AnalysisDrawer({
               system_ids: activeSystemIDs.join(","),
               // Hardcoded to false. TODO(chihhao) wait for SDK's update
               pairwise_performance_gap: false,
-              feature_to_bucket_info: featureKeyToBucketInfoToPost,
+              feature_to_bucket_info: featureNameToBucketInfoToPost,
             })
             .then((systemAnalysesReturn) => {
               clearTimeout(timeoutID);
@@ -93,7 +90,7 @@ export function AnalysisDrawer({
         singleAnalyses
       );
 
-      const parsedFeatureKeyToBucketInfo: FeatureKeyToUIBucketInfo = {};
+      const parsedFeatureNameToBucketInfo: { [key: string]: UIBucketInfo } = {};
       // Take from the first element as the bucket interval is invariant across metrics
       const systemAnalysesParsed = Object.values(
         metricToSystemAnalysesParsed
@@ -104,7 +101,7 @@ export function AnalysisDrawer({
       for (const resultFineGrainedParsed of resultsFineGrainedParsed) {
         const {
           bucketInfo,
-          featureKey,
+          featureName,
           bucketMin,
           bucketMax,
           bucketRightBounds,
@@ -114,7 +111,7 @@ export function AnalysisDrawer({
         which do not support custom bucket range.
         */
         if (bucketInfo?.method !== "bucket_attribute_discrete_value") {
-          parsedFeatureKeyToBucketInfo[featureKey] = {
+          parsedFeatureNameToBucketInfo[featureName] = {
             min: bucketMin,
             max: bucketMax,
             // discard the last right bound because it is max
@@ -125,24 +122,24 @@ export function AnalysisDrawer({
             /* A bucket may remain updated (i.e. different from the init value of SDK) 
             across multiple post calls, so we must reuse this information from the state
             */
-            updated: featureKeyToBucketInfo[featureKey]?.updated || false,
+            updated: featureNameToBucketInfo[featureName]?.updated || false,
           };
         }
       }
       setTask(task);
       setSingleAnalyses(singleAnalyses);
       setMetricToSystemAnalysesParsed(metricToSystemAnalysesParsed);
-      setFeatureKeyToBucketInfo(parsedFeatureKeyToBucketInfo);
+      setFeatureNameToBucketInfo(parsedFeatureNameToBucketInfo);
       setPageState(PageState.success);
       setBucketInfoUpdated(false);
     }
 
     if (visible && shouldUpdateAnalysis) {
       setShouldUpdateAnalysis(false);
-      const featureKeyToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"] =
+      const featureNameToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"] =
         {};
-      for (const [featureKey, bucketInfo] of Object.entries(
-        featureKeyToBucketInfo
+      for (const [featureName, bucketInfo] of Object.entries(
+        featureNameToBucketInfo
       )) {
         const { min, max, rightBounds, updated } = bucketInfo;
         if (updated) {
@@ -152,32 +149,35 @@ export function AnalysisDrawer({
             return a - b;
           });
           const intervals = valuesToIntervals(values);
-          featureKeyToBucketInfoToPost[featureKey] = {
+          featureNameToBucketInfoToPost[featureName] = {
             number: intervals.length,
             setting: intervals,
           };
         }
       }
-      refreshAnalyses(featureKeyToBucketInfoToPost);
+      refreshAnalyses(featureNameToBucketInfoToPost);
     }
   }, [
     visible,
     shouldUpdateAnalysis,
     activeSystemIDs,
     activeSystems,
-    featureKeyToBucketInfo,
+    featureNameToBucketInfo,
   ]);
 
-  function updateFeatureKeyToBucketInfo(
-    featureKey: string,
+  function updateFeatureNameToBucketInfo(
+    featureName: string,
     bucketInfo: UIBucketInfo
   ) {
     const updatedBucketInfo = {
       ...bucketInfo,
       updated: true,
     };
-    setFeatureKeyToBucketInfo((prevFeatureKeyToBucketInfo) => {
-      return { ...prevFeatureKeyToBucketInfo, [featureKey]: updatedBucketInfo };
+    setFeatureNameToBucketInfo((prevFeatureNameToBucketInfo) => {
+      return {
+        ...prevFeatureNameToBucketInfo,
+        [featureName]: updatedBucketInfo,
+      };
     });
     setBucketInfoUpdated(true);
   }
@@ -190,7 +190,7 @@ export function AnalysisDrawer({
     setActiveSystemIDs([]);
     setPageState(PageState.loading);
     setSingleAnalyses({});
-    setFeatureKeyToBucketInfo({});
+    setFeatureNameToBucketInfo({});
     setBucketInfoUpdated(false);
   }
 
@@ -269,8 +269,8 @@ export function AnalysisDrawer({
               systems={activeSystems}
               singleAnalyses={singleAnalyses}
               metricToSystemAnalysesParsed={metricToSystemAnalysesParsed}
-              featureKeyToBucketInfo={featureKeyToBucketInfo}
-              updateFeatureKeyToBucketInfo={updateFeatureKeyToBucketInfo}
+              featureNameToBucketInfo={featureNameToBucketInfo}
+              updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
             />
           )}
           {pageState === PageState.error && fallbackUI("timeout")}

@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { BucketCase, Performance } from "../../clients/openapi";
+import { BucketCase } from "../../clients/openapi";
 
 export interface Features {
   [key: string]: FeatureVal;
@@ -24,20 +24,8 @@ export interface BucketInfo {
   _setting: number[] | number;
 }
 
-export interface Results {
-  fine_grained: FineGrained;
-  is_print_case?: boolean;
-  is_print_confidence_interval?: boolean;
-  overall: { [key: string]: Performance };
-}
-
-export interface FineGrained {
-  [key: string]: Array<FineGrainedElement[]>;
-}
-
 export interface FineGrainedElement {
   bucket_name: string[] | number[];
-  // TODO the latter type is for NER
   bucket_samples: { [key: string]: string }[];
   confidence_score_low: string;
   confidence_score_up: string;
@@ -49,7 +37,7 @@ export interface FineGrainedElement {
 export interface ResultFineGrainedParsed {
   systemID: string;
   task: string;
-  featureKey: string;
+  featureName: string;
   description: string;
   metricName: string;
   // bucketName[i] is name of bucket i
@@ -73,11 +61,7 @@ export interface SystemAnalysisParsed {
   for retrieving the value from resultsFineGrainedParsed
   value: description is a description/name of a feature to be displayed in the UI
   */
-  featureKeyToDescription: { [key: string]: string };
-}
-
-export interface MetricToSystemAnalysesParsed {
-  [key: string]: SystemAnalysisParsed[];
+  featureNameToDescription: { [key: string]: string };
 }
 
 // Examples to be shown in the analysis table when a bar is clicked
@@ -89,7 +73,7 @@ export interface ActiveSystemExamples {
 
   // These are technically not invariant across sytems,
   // but they may be in the future, and it's easier to keep them here for now.
-  featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"];
+  featureNameToDescription: SystemAnalysisParsed["featureNameToDescription"];
 
   // system-dependent information across systems
   systemIndex: number;
@@ -120,8 +104,4 @@ export interface UIBucketInfo {
   if true, we add the bucket info in the POST request body
   */
   updated: boolean;
-}
-
-export interface FeatureKeyToUIBucketInfo {
-  [featureKey: string]: UIBucketInfo;
 }

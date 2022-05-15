@@ -1,5 +1,4 @@
 import {
-  MetricToSystemAnalysesParsed,
   ResultFineGrainedParsed,
   SystemAnalysisParsed,
   SystemInfoFeature,
@@ -30,7 +29,7 @@ export function parse(
   metricNames: string[],
   description: string,
   feature: { [bucketInterval: string]: BucketPerformance },
-  featureKey: string,
+  featureName: string,
   bucketInfo: SystemInfoFeature["bucket_info"]
 ) {
   const decimalPlaces = 3;
@@ -52,7 +51,7 @@ export function parse(
       systemID,
       task,
       description,
-      featureKey,
+      featureName,
       metricName,
       bucketIntervals,
       bucketInfo,
@@ -154,7 +153,7 @@ export function parse(
       );
       // bucketInfo are feature invariant across different metrics
       resultFineGrainedParsed.bucketInfo = bucketInfo;
-      resultFineGrainedParsed.featureKey = featureKey;
+      resultFineGrainedParsed.featureName = featureName;
     }
   }
   return parsedResult;
@@ -187,8 +186,10 @@ export function getMetricToSystemAnalysesParsed(
   metricNames: string[],
   systems: SystemModel[],
   singleAnalyses: SystemAnalysesReturn["single_analyses"]
-): MetricToSystemAnalysesParsed {
-  const metricToSystemAnalysesParsed: MetricToSystemAnalysesParsed = {};
+): { [key: string]: SystemAnalysisParsed[] } {
+  const metricToSystemAnalysesParsed: {
+    [key: string]: SystemAnalysisParsed[];
+  } = {};
 
   for (const metricName of metricNames) {
     // Array to store every parsed system analysis
@@ -213,15 +214,15 @@ export function getMetricToSystemAnalysesParsed(
       };
     }
 
-    const featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"] =
+    const featureNameToDescription: SystemAnalysisParsed["featureNameToDescription"] =
       {};
 
-    for (const featureKey of systemActiveFeatures) {
-      const feature = singleAnalysis[featureKey];
-      const systemInfoFeature = findFeature(systemInfoFeatures, featureKey);
+    for (const featureName of systemActiveFeatures) {
+      const feature = singleAnalysis[featureName];
+      const systemInfoFeature = findFeature(systemInfoFeatures, featureName);
       if (systemInfoFeature !== undefined) {
         const bucketInfo = systemInfoFeature["bucket_info"];
-        const description = systemInfoFeature["description"] || featureKey;
+        const description = systemInfoFeature["description"] || featureName;
 
         const metricToResultFineGrainedParsed = parse(
           systemID,
@@ -229,7 +230,7 @@ export function getMetricToSystemAnalysesParsed(
           metricNames,
           description,
           feature,
-          featureKey,
+          featureName,
           bucketInfo
         );
         for (const [metric, resultFineGrainedParsed] of Object.entries(
@@ -245,7 +246,7 @@ export function getMetricToSystemAnalysesParsed(
     for (const [metric, parsedInfo] of Object.entries(metricToParsedInfo)) {
       const { resultsFineGrainedParsed } = parsedInfo;
       metricToSystemAnalysesParsed[metric].push({
-        featureKeyToDescription,
+        featureNameToDescription,
         resultsFineGrainedParsed,
       });
     }
@@ -276,7 +277,3 @@ export function valuesToIntervals(values: number[]): number[][] {
     .slice(0, values.length - 1)
     .map((value, index) => [value, values[index + 1]]);
 }
-
-// export function timeout(ms: number) {
-//   return new Promise(resolve => setTimeout(resolve, ms));
-// }

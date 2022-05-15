@@ -11,7 +11,7 @@ interface Props {
   task: string;
   // The latter type is for NER
   outputIDs: BucketCase[];
-  featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"];
+  featureNameToDescription: SystemAnalysisParsed["featureNameToDescription"];
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -20,7 +20,7 @@ export function AnalysisTable({
   systemID,
   task,
   outputIDs,
-  featureKeyToDescription,
+  featureNameToDescription,
   page,
   setPage,
 }: Props) {
@@ -81,10 +81,10 @@ export function AnalysisTable({
 
   // task NER
   if (task === "named-entity-recognition") {
-    for (const subFeatureKey of Object.keys(outputIDs[0])) {
+    for (const subFeatureName of Object.keys(outputIDs[0])) {
       columns.push({
-        dataIndex: subFeatureKey,
-        title: subFeatureKey,
+        dataIndex: subFeatureName,
+        title: subFeatureName,
         ellipsis: true,
       });
     }
@@ -116,7 +116,7 @@ export function AnalysisTable({
       }
       columns.push({
         dataIndex: systemOutputKey,
-        title: featureKeyToDescription[systemOutputKey] || systemOutputKey,
+        title: featureNameToDescription[systemOutputKey] || systemOutputKey,
         render: (value) =>
           typeof value === "number" ? (
             <div style={{ minWidth: "65px" }}>
