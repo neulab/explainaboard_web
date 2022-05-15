@@ -34,7 +34,9 @@ class DatasetDB:
             tasks = v_dataset.get("tasks")
             tasks = set([] if tasks is None else tasks)
             task_cats = v_dataset.get("task_categories")
-            tasks = tasks.union([] if task_cats is None else task_cats)
+            tasks = tasks.union(
+                [] if task_cats is None else itertools.chain.from_iterable(task_cats)
+            )
             for task in tasks:
                 if task not in self.task_dict:
                     self.task_dict[task] = []
