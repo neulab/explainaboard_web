@@ -9,7 +9,7 @@ import { compareBucketOfSamples } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
 import { Row, Col, Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
-import { SystemAnalysesReturn } from "../../../clients/openapi";
+import { BucketCase, SystemAnalysesReturn } from "../../../clients/openapi";
 import { BucketSlider } from "../BucketSlider";
 
 const { Title } = Typography;
@@ -217,7 +217,7 @@ export function AnalysisReport(props: Props) {
                     const resultsNumbersOfSamples: number[][] = [];
                     const resultsConfidenceScores: Array<[number, number]>[] =
                       [];
-                    const resultsBucketsOfSamples: string[][][] = [];
+                    const resultsBucketsOfSamples: BucketCase[][][] = [];
                     for (let i = 0; i < systemAnalysesParsed.length; i++) {
                       const result =
                         systemAnalysesParsed[i].resultsFineGrainedParsed[

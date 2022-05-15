@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { message, Table, Tooltip, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
-import { SystemOutput } from "../../../clients/openapi";
+import { BucketCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
 import { SystemAnalysisParsed } from "../types";
@@ -10,7 +10,7 @@ interface Props {
   systemID: string;
   task: string;
   // The latter type is for NER
-  outputIDs: Array<string | { [key: string]: string }>;
+  outputIDs: BucketCase[];
   featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"];
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
@@ -30,7 +30,12 @@ export function AnalysisTable({
   const total = outputIDs.length;
   const offset = page * pageSize;
   const end = Math.min(offset + pageSize, outputIDs.length);
-  const outputIDString = outputIDs.slice(offset, end).join(",");
+  const outputIDString = outputIDs
+    .slice(offset, end)
+    .map(function (x) {
+      return x["sample_id"];
+    })
+    .join(",");
   const tableRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {

@@ -34,7 +34,9 @@ class DatasetDB:
             tasks = v_dataset.get("tasks")
             tasks = set([] if tasks is None else tasks)
             task_cats = v_dataset.get("task_categories")
-            tasks = tasks.union([] if task_cats is None else task_cats)
+            tasks = tasks.union(
+                [] if task_cats is None else itertools.chain.from_iterable(task_cats)
+            )
             for task in tasks:
                 if task not in self.task_dict:
                     self.task_dict[task] = []
@@ -55,7 +57,6 @@ class DatasetDB:
 class DatasetDBUtils:
 
     online_path = "https://raw.githubusercontent.com/ExpressAI/DataLab/main/utils/dataset_info.jsonl"  # noqa
-    # online_path = "https://raw.githubusercontent.com/ExpressAI/DataLab/b8b73a3e3f5fad38d1620e1a42b6814f93eff546/utils/dataset_info.jsonl"  # noqa
     _cached_db: DatasetDB | None = None
     _cached_time: datetime | None = None
     _cached_lifetime: timedelta = timedelta(hours=6)
