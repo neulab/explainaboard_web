@@ -55,6 +55,7 @@ export function getColSpan(props: Props) {
 
 export function createOverallBarChart(
   props: Props,
+  colSpan: number,
   setActiveMetric: React.Dispatch<React.SetStateAction<string>>,
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
@@ -73,13 +74,13 @@ export function createOverallBarChart(
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
-  for (let i = 0; i < metricNames.length; i++) {
+  for (let j = 0; j < systems.length; j++) {
     // const metric = metricNames[i]
     // const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
     const metricPerformance = [];
     const metricConfidence = [];
     const metricNumberOfSamples = [];
-    for (let j = 0; j < systems.length; j++) {
+    for (let i = 0; i < metricNames.length; i++) {
       // TODO(gneubig): Replace these with actual values
       // const result =
       //     systemAnalysesParsed[i].resultsFineGrainedParsed[resultIdx];
@@ -97,21 +98,23 @@ export function createOverallBarChart(
   console.log(`metricNames=${metricNames}`);
 
   return (
-    <BarChart
-      title="Overall Performance"
-      seriesNames={systemNames}
-      xAxisData={metricNames}
-      seriesDataList={resultsValues}
-      seriesLabelsList={resultsValues}
-      confidenceScoresList={resultsConfidenceScores}
-      numbersOfSamplesList={resultsNumbersOfSamples}
-      onBarClick={(barIndex: number, systemIndex: number) => {
-        // Get examples of a certain bucket from all systems
-        setActiveMetric(metricNames[barIndex]);
-        // reset page number
-        setPage(0);
-      }}
-    />
+    <Col span={colSpan}>
+      <BarChart
+        title="Overall Performance"
+        seriesNames={systemNames}
+        xAxisData={metricNames}
+        seriesDataList={resultsValues}
+        seriesLabelsList={resultsValues}
+        confidenceScoresList={resultsConfidenceScores}
+        numbersOfSamplesList={resultsNumbersOfSamples}
+        onBarClick={(barIndex: number, systemIndex: number) => {
+          // Get examples of a certain bucket from all systems
+          setActiveMetric(metricNames[barIndex]);
+          // reset page number
+          setPage(0);
+        }}
+      />
+    </Col>
   );
 }
 
@@ -206,6 +209,7 @@ export function createExampleTable(
 export function createMetricPane(
   props: Props,
   metric: string,
+  colSpan: number,
   exampleTable: JSX.Element,
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
@@ -219,9 +223,6 @@ export function createMetricPane(
     updateFeatureKeyToBucketInfo,
   } = props;
   const systemNames = systems.map((system) => system.system_info.model_name);
-
-  // Get column span, must be a factor of 24 since Ant divides a design area into 24 sections
-  const colSpan = getColSpan(props);
 
   const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
   /*Get the parsed result from the first system for mapping.
@@ -343,8 +344,12 @@ export function AnalysisReport(props: Props) {
     setPage
   );
 
+  // Get column span, must be a factor of 24 since Ant divides a design area into 24 sections
+  const colSpan = getColSpan(props);
+
   const overallBarChart = createOverallBarChart(
     props,
+    colSpan,
     setActiveMetric,
     setActiveSystemExamples,
     setPage
@@ -374,6 +379,7 @@ export function AnalysisReport(props: Props) {
           return createMetricPane(
             props,
             metric,
+            colSpan,
             exampleTable,
             setActiveSystemExamples,
             setPage
