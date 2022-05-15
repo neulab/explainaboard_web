@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.1.0"
+  version: "0.1.1"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -257,6 +257,11 @@ paths:
   /systems/{system_id}/outputs:
     get:
       summary: Returns a list of outputs of a particular system.
+      description: This will fail if the user doesn't have permissions for that system.
+      security:
+        - ApiKeyAuth: [ ]
+        - BearerAuth: [ ]
+        - { }
       parameters:
         - in: path
           name: system_id
