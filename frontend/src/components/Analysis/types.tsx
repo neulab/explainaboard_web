@@ -8,29 +8,17 @@ export interface ResultFineGrainedParsed {
   featureName: string;
   description: string;
   metricName: string;
-  // bucketName[i] is name of bucket i
+  // bucketNames[i] is name of bucket i
   bucketNames: string[];
-  bucketMin: number;
-  bucketMax: number;
-  bucketStep: number;
-  bucketRightBounds: number[];
-  bucketIntervals: number[][];
-  bucketInfo: SystemInfoFeature["bucket_info"];
+  bucketIntervals: BucketIntervals;
+  bucketInfo: SystemInfoFeatureBucketInfo | null;
   // bucket[i][j] is the jth example in the ith bucket
-  bucketsOfSamples: BucketCase[][];
+  bucketCases: BucketCase[][];
+  // Values of the evaluation score and confidence metrics
   values: number[];
-  numbersOfSamples: number[];
   confidenceScores: [number, number][];
+  numbersOfSamples: number[];
 }
-
-// export interface SystemAnalysisParsed {
-//   resultsFineGrainedParsed: ResultFineGrainedParsed[];
-//   /* key: feature key a object key of a feature
-//   for retrieving the value from resultsFineGrainedParsed
-//   value: description is a description/name of a feature to be displayed in the UI
-//   */
-//   featureNameToDescription: { [key: string]: string };
-// }
 
 // Examples to be shown in the analysis table when a bar is clicked
 export interface ActiveSystemExamples {
@@ -51,6 +39,9 @@ export interface SystemInfoFeatureBucketInfo {
 }
 
 export interface SystemInfoFeature {
+  /**
+   * A single feature in the system info class.
+   */
   bucket_info: SystemInfoFeatureBucketInfo | null;
   description: string | null;
   dtype?: string;
@@ -59,13 +50,17 @@ export interface SystemInfoFeature {
   _type: string;
 }
 
-export interface UIBucketInfo {
+export interface BucketIntervals {
+  /**
+   * Intervals over which to perform bucketing
+   */
+  // Minimum value overall
   min: number;
+  // Maximum value overall
   max: number;
-  // right bound of each interval, except the last one
-  rightBounds: number[];
-  /* tracks if a bucket info is updated by the user,
-  if true, we add the bucket info in the POST request body
-  */
+  // Bounds of each interval, such that the intervals are
+  // (min, bounds[0]), (bounds[0], bounds[1]), ..., (bounds[i-1], max)
+  bounds: number[];
+  // Used when bucket intervals are updated in the UI
   updated: boolean;
 }

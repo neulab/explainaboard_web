@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import {
   ActiveSystemExamples,
   ResultFineGrainedParsed,
-  UIBucketInfo,
+  BucketIntervals,
 } from "../types";
 import { compareBucketOfSamples } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
@@ -19,10 +19,10 @@ interface Props {
   systems: SystemModel[];
   singleAnalyses: SystemAnalysesReturn["single_analyses"];
   metricToSystemAnalysesParsed: { [key: string]: ResultFineGrainedParsed[][] };
-  featureNameToBucketInfo: { [key: string]: UIBucketInfo };
+  featureNameToBucketInfo: { [key: string]: BucketIntervals };
   updateFeatureNameToBucketInfo: (
     featureName: string,
-    bucketInfo: UIBucketInfo
+    bucketInfo: BucketIntervals
   ) => void;
 }
 
@@ -37,7 +37,7 @@ export function getColSpan(props: Props) {
   // Get the maximum right bound length
   const maxRightBoundsLength = Math.max(
     ...Object.values(featureNameToBucketInfo).map(
-      (bucketInfo) => bucketInfo.rightBounds.length
+      (bucketInfo) => bucketInfo.bounds.length
     )
   );
   if (
@@ -252,11 +252,11 @@ export function createMetricPane(
             let bucketSlider = null;
             if (isBucketAdjustable) {
               const bucketInfo = featureNameToBucketInfo[featureName];
-              const bucketRightBounds = bucketInfo.rightBounds;
+              const bucketRightBounds = bucketInfo.bounds;
               if (bucketRightBounds !== undefined) {
                 const bucketMin = bucketInfo.min;
                 const bucketMax = bucketInfo.max;
-                const bucketStep = resultFirst.bucketStep;
+                const bucketStep = bucketMax - bucketMin <= 1.0 ? 0.01 : 1;
                 bucketSlider = (
                   <BucketSlider
                     min={bucketMin}
@@ -267,11 +267,11 @@ export function createMetricPane(
                     }}
                     step={bucketStep}
                     inputValues={bucketRightBounds}
-                    onChange={(rightBounds) => {
+                    onChange={(bounds) => {
                       updateFeatureNameToBucketInfo(featureName, {
                         min: bucketMin,
                         max: bucketMax,
-                        rightBounds: rightBounds,
+                        bounds: bounds,
                         updated: true,
                       });
                     }}
@@ -290,7 +290,7 @@ export function createMetricPane(
               resultsValues.push(result.values);
               resultsNumbersOfSamples.push(result.numbersOfSamples);
               resultsConfidenceScores.push(result.confidenceScores);
-              resultsBucketsOfSamples.push(result.bucketsOfSamples);
+              resultsBucketsOfSamples.push(result.bucketCases);
             }
 
             return (

@@ -1,4 +1,8 @@
-import { ResultFineGrainedParsed, SystemInfoFeature } from "./types";
+import {
+  BucketIntervals,
+  ResultFineGrainedParsed,
+  SystemInfoFeature,
+} from "./types";
 import {
   BucketCase,
   BucketPerformance,
@@ -28,38 +32,32 @@ export function parse(
   featureName: string,
   bucketInfo: SystemInfoFeature["bucket_info"]
 ) {
-  const decimalPlaces = 3;
   const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
   for (const metricName of metricNames) {
     const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
-    const bucketMin: ResultFineGrainedParsed["bucketMin"] =
-      Number.POSITIVE_INFINITY;
-    const bucketMax: ResultFineGrainedParsed["bucketMax"] =
-      Number.NEGATIVE_INFINITY;
-    const bucketStep: ResultFineGrainedParsed["bucketStep"] = 1;
-    const bucketRightBounds: ResultFineGrainedParsed["bucketRightBounds"] = [];
-    const bucketIntervals: ResultFineGrainedParsed["bucketIntervals"] = [];
+    const bucketIntervals: BucketIntervals = {
+      min: Number.POSITIVE_INFINITY,
+      max: Number.NEGATIVE_INFINITY,
+      bounds: [],
+      updated: false,
+    };
     const values: ResultFineGrainedParsed["values"] = [];
     const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
     const confidenceScores: ResultFineGrainedParsed["confidenceScores"] = [];
-    const bucketsOfSamples: ResultFineGrainedParsed["bucketsOfSamples"] = [];
+    const bucketsOfSamples: ResultFineGrainedParsed["bucketCases"] = [];
     parsedResult[metricName] = {
       systemID,
       task,
       description,
       featureName,
       metricName,
-      bucketIntervals,
       bucketInfo,
-      bucketMin,
-      bucketMax,
-      bucketStep,
-      bucketRightBounds,
+      bucketIntervals,
       bucketNames,
       values,
       numbersOfSamples,
       confidenceScores,
-      bucketsOfSamples,
+      bucketCases: bucketsOfSamples,
     };
   }
   const bucketPerformances: BucketPerformance[] = [];
@@ -78,78 +76,63 @@ export function parse(
     E.g., Accuracy, F1Score
     */
 
-    for (const performance of bucketPerformance["performances"]) {
-      // The bucket interval
-      const bucketNameArray = bucketPerformance["bucket_name"];
-      const bucketInterval = bucketNameArray.map((name) => formatName(name));
-      let bucketName = "";
-      switch (bucketInterval.length) {
-        case 1: {
-          /*Add two new lines so its text height is consistent with case 2.
-          This allows the charts to have equal heights
-          */
-          bucketName = `${bucketInterval[0].toString()}\n\n`;
-          break;
-        }
-        case 2: {
-          bucketName = bucketInterval
-            .map((bound) => bound.toString())
-            .join("\n|\n");
-          break;
-        }
-        default: {
-          // TODO: handle cases hwere length > 2
-          break;
-        }
+    // Convert the string representation of the bucket interval to numbers
+    const bucketInterval = bucketPerformance.bucket_name.map((name) =>
+      formatName(name)
+    );
+    let bucketName = "";
+    switch (bucketInterval.length) {
+      case 1: {
+        /*Add two new lines so its text height is consistent with case 2.
+        This allows the charts to have equal heights
+        */
+        bucketName = `${bucketInterval[0].toString()}\n\n`;
+        break;
       }
+      case 2: {
+        bucketName = bucketInterval
+          .map((bound) => bound.toString())
+          .join("\n|\n");
+        break;
+      }
+      default: {
+        // TODO: handle cases hwere length > 2
+        break;
+      }
+    }
 
-      const value = performance.value;
+    for (const performance of bucketPerformance["performances"]) {
       const nSamples = bucketPerformance.n_samples;
-      const confidenceScoreLow = performance.confidence_score_low;
-      const confidenceScoreHigh = performance.confidence_score_high;
       const metricName = performance.metric_name;
-      const resultFineGrainedParsed = parsedResult[metricName];
-      resultFineGrainedParsed.metricName = metricName;
-      resultFineGrainedParsed.bucketsOfSamples.push(
-        bucketPerformance.bucket_samples
-      );
-      resultFineGrainedParsed.bucketNames.push(bucketName);
-      resultFineGrainedParsed.bucketIntervals.push(bucketInterval);
-      resultFineGrainedParsed.values.push(
-        Number.parseFloat(value.toFixed(decimalPlaces))
-      );
-      resultFineGrainedParsed.numbersOfSamples.push(nSamples);
+      const result = parsedResult[metricName];
+      result.metricName = performance.metric_name;
+      result.bucketCases.push(bucketPerformance.bucket_samples);
+      result.bucketNames.push(bucketName);
+      result.values.push(performance.value);
+      result.numbersOfSamples.push(nSamples);
       if (
-        confidenceScoreLow !== undefined &&
-        confidenceScoreHigh !== undefined
+        performance.confidence_score_low !== undefined &&
+        performance.confidence_score_high !== undefined
       ) {
-        resultFineGrainedParsed.confidenceScores.push([
-          Number.parseFloat(confidenceScoreLow.toFixed(decimalPlaces)),
-          Number.parseFloat(confidenceScoreHigh.toFixed(decimalPlaces)),
+        result.confidenceScores.push([
+          performance.confidence_score_low,
+          performance.confidence_score_high,
         ]);
       }
-      resultFineGrainedParsed.bucketMin = Math.min(
-        resultFineGrainedParsed.bucketMin,
+      result.bucketIntervals.min = Math.min(
+        result.bucketIntervals.min,
         ...bucketInterval
       );
-      resultFineGrainedParsed.bucketMax = Math.max(
-        resultFineGrainedParsed.bucketMax,
+      result.bucketIntervals.max = Math.max(
+        result.bucketIntervals.max,
         ...bucketInterval
       );
-      if (
-        resultFineGrainedParsed.bucketMax - resultFineGrainedParsed.bucketMin <=
-        1
-      ) {
-        resultFineGrainedParsed.bucketStep = 0.01;
-      } else {
-        resultFineGrainedParsed.bucketStep = 1;
-      }
-      resultFineGrainedParsed.bucketRightBounds.push(
+      result.bucketIntervals.bounds.push(
         bucketInterval[bucketInterval.length - 1]
       );
       // bucketInfo are feature invariant across different metrics
-      resultFineGrainedParsed.bucketInfo = bucketInfo;
-      resultFineGrainedParsed.featureName = featureName;
+      result.bucketInfo = bucketInfo;
+      result.featureName = featureName;
     }
   }
   return parsedResult;

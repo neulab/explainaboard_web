@@ -10,7 +10,7 @@ import {
   SystemsAnalysesBody,
 } from "../../../clients/openapi";
 import { getMetricToSystemAnalysesParsed, valuesToIntervals } from "../utils";
-import { ResultFineGrainedParsed, UIBucketInfo } from "../types";
+import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 const { Text, Link } = Typography;
 
 interface Props {
@@ -34,7 +34,7 @@ export function AnalysisDrawer({
     SystemAnalysesReturn["single_analyses"]
   >({});
   const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
-    [key: string]: UIBucketInfo;
+    [key: string]: BucketIntervals;
   }>({});
   const [metricToSystemAnalysesParsed, setMetricToSystemAnalysesParsed] =
     useState<{ [key: string]: ResultFineGrainedParsed[][] }>({});
@@ -90,36 +90,28 @@ export function AnalysisDrawer({
         singleAnalyses
       );
 
-      const parsedFeatureNameToBucketInfo: { [key: string]: UIBucketInfo } = {};
+      const parsedFeatureNameToBucketInfo: { [key: string]: BucketIntervals } =
+        {};
       // Take from the first element as the bucket interval is invariant across metrics
       const systemAnalysesParsed = Object.values(
         metricToSystemAnalysesParsed
       )[0];
       // Take from the first element as the bucket interval is invariant across systems
       for (const resultFineGrainedParsed of systemAnalysesParsed[0]) {
-        const {
-          bucketInfo,
-          featureName,
-          bucketMin,
-          bucketMax,
-          bucketRightBounds,
-        } = resultFineGrainedParsed;
+        const { bucketInfo, featureName, bucketIntervals } =
+          resultFineGrainedParsed;
         /* Hardcode for now as SDK doesn't export the string.
         bucket_attribute_discrete_value seems to be used for categorical features,
         which do not support custom bucket range.
         */
         if (bucketInfo?.method !== "bucket_attribute_discrete_value") {
           parsedFeatureNameToBucketInfo[featureName] = {
-            min: bucketMin,
-            max: bucketMax,
-            // discard the last right bound because it is max
-            rightBounds: bucketRightBounds.slice(
+            min: bucketIntervals.min,
+            max: bucketIntervals.max,
+            bounds: bucketIntervals.bounds.slice(
               0,
-              bucketRightBounds.length - 1
+              bucketIntervals.bounds.length - 1
             ),
-            /* A bucket may remain updated (i.e. different from the init value of SDK) 
-            across multiple post calls, so we must reuse this information from the state
-            */
             updated: featureNameToBucketInfo[featureName]?.updated || false,
           };
         }
@@ -139,9 +131,9 @@ export function AnalysisDrawer({
       for (const [featureName, bucketInfo] of Object.entries(
         featureNameToBucketInfo
       )) {
-        const { min, max, rightBounds, updated } = bucketInfo;
+        const { min, max, bounds, updated } = bucketInfo;
         if (updated) {
-          const values = [min, ...rightBounds, max];
+          const values = [min, ...bounds, max];
           // Default uses alphabetic sorting. Must supply a custom sort function
           values.sort(function (a, b) {
             return a - b;
@@ -165,7 +157,7 @@ export function AnalysisDrawer({
 
   function updateFeatureNameToBucketInfo(
     featureName: string,
-    bucketInfo: UIBucketInfo
+    bucketInfo: BucketIntervals
   ) {
     const updatedBucketInfo = {
       ...bucketInfo,
