@@ -10,7 +10,7 @@ import {
   SystemsAnalysesBody,
 } from "../../../clients/openapi";
 import { getMetricToSystemAnalysesParsed, valuesToIntervals } from "../utils";
-import { SystemAnalysisParsed, UIBucketInfo } from "../types";
+import { ResultFineGrainedParsed, UIBucketInfo } from "../types";
 const { Text, Link } = Typography;
 
 interface Props {
@@ -37,7 +37,7 @@ export function AnalysisDrawer({
     [key: string]: UIBucketInfo;
   }>({});
   const [metricToSystemAnalysesParsed, setMetricToSystemAnalysesParsed] =
-    useState<{ [key: string]: SystemAnalysisParsed[] }>({});
+    useState<{ [key: string]: ResultFineGrainedParsed[][] }>({});
   const [bucketInfoUpdated, setBucketInfoUpdated] = useState<boolean>(false);
 
   const activeSystems = systems.filter((sys) =>
@@ -96,9 +96,7 @@ export function AnalysisDrawer({
         metricToSystemAnalysesParsed
       )[0];
       // Take from the first element as the bucket interval is invariant across systems
-      const resultsFineGrainedParsed =
-        systemAnalysesParsed[0].resultsFineGrainedParsed;
-      for (const resultFineGrainedParsed of resultsFineGrainedParsed) {
+      for (const resultFineGrainedParsed of systemAnalysesParsed[0]) {
         const {
           bucketInfo,
           featureName,

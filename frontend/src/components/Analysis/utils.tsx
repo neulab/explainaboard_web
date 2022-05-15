@@ -1,8 +1,4 @@
-import {
-  ResultFineGrainedParsed,
-  SystemAnalysisParsed,
-  SystemInfoFeature,
-} from "./types";
+import { ResultFineGrainedParsed, SystemInfoFeature } from "./types";
 import {
   BucketCase,
   BucketPerformance,
@@ -186,9 +182,15 @@ export function getMetricToSystemAnalysesParsed(
   metricNames: string[],
   systems: SystemModel[],
   singleAnalyses: SystemAnalysesReturn["single_analyses"]
-): { [key: string]: SystemAnalysisParsed[] } {
+): { [key: string]: ResultFineGrainedParsed[][] } {
+  /**
+   * Takes in a task, metric names, and systems, and returns fine-grained evaluation
+   * results that can be accessed in the format:
+   * > value[metric_name : string][system_id : int][feature_id : int]
+   */
+
   const metricToSystemAnalysesParsed: {
-    [key: string]: SystemAnalysisParsed[];
+    [key: string]: ResultFineGrainedParsed[][];
   } = {};
 
   for (const metricName of metricNames) {
@@ -213,9 +215,6 @@ export function getMetricToSystemAnalysesParsed(
         resultsFineGrainedParsed: [],
       };
     }
-
-    const featureNameToDescription: SystemAnalysisParsed["featureNameToDescription"] =
-      {};
 
     for (const featureName of systemActiveFeatures) {
       const feature = singleAnalysis[featureName];
@@ -245,10 +244,7 @@ export function getMetricToSystemAnalysesParsed(
 
     for (const [metric, parsedInfo] of Object.entries(metricToParsedInfo)) {
       const { resultsFineGrainedParsed } = parsedInfo;
-      metricToSystemAnalysesParsed[metric].push({
-        featureNameToDescription,
-        resultsFineGrainedParsed,
-      });
+      metricToSystemAnalysesParsed[metric].push(resultsFineGrainedParsed);
     }
   }
   return metricToSystemAnalysesParsed;

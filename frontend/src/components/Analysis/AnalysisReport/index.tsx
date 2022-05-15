@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
   ActiveSystemExamples,
-  SystemAnalysisParsed,
+  ResultFineGrainedParsed,
   UIBucketInfo,
 } from "../types";
 import { compareBucketOfSamples } from "../utils";
@@ -18,7 +18,7 @@ interface Props {
   task: string;
   systems: SystemModel[];
   singleAnalyses: SystemAnalysesReturn["single_analyses"];
-  metricToSystemAnalysesParsed: { [key: string]: SystemAnalysisParsed[] };
+  metricToSystemAnalysesParsed: { [key: string]: ResultFineGrainedParsed[][] };
   featureNameToBucketInfo: { [key: string]: UIBucketInfo };
   updateFeatureNameToBucketInfo: (
     featureName: string,
@@ -150,13 +150,8 @@ export function createExampleTable(
   }
 
   const { task, systems } = props;
-  const {
-    title,
-    barIndex,
-    featureNameToDescription,
-    systemIndex,
-    bucketOfSamplesList,
-  } = activeSystemExamples;
+  const { title, barIndex, systemIndex, bucketOfSamplesList } =
+    activeSystemExamples;
 
   // Sort bucket of samples for every system
   const sortedBucketOfSamplesList = bucketOfSamplesList.map(
@@ -172,7 +167,6 @@ export function createExampleTable(
         systemID={systems[0].system_id}
         task={task}
         outputIDs={sortedBucketOfSamplesList[0]}
-        featureNameToDescription={featureNameToDescription}
         page={page}
         setPage={setPage}
       />
@@ -197,7 +191,6 @@ export function createExampleTable(
                   systemID={system.system_id}
                   task={task}
                   outputIDs={sortedBucketOfSamplesList[sysIndex]}
-                  featureNameToDescription={featureNameToDescription}
                   page={page}
                   setPage={setPage}
                 />
@@ -244,15 +237,13 @@ export function createMetricPane(
   /*Get the parsed result from the first system for mapping.
   FeatureNames and descriptions are invariant information
   */
-  const { resultsFineGrainedParsed, featureNameToDescription } =
-    systemAnalysesParsed[0];
   return (
     <TabPane tab={metric} key={metric}>
       <Row>
         {
           // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
           // into columns. One column contains a single BarChart.
-          resultsFineGrainedParsed.map((resultFirst, resultIdx) => {
+          systemAnalysesParsed[0].map((resultFirst, resultIdx) => {
             // For invariant variables across all systems, we can simply take from the first result
             const title = `${resultFirst.metricName} by ${resultFirst.description}`;
             const bucketNames = resultFirst.bucketNames;
@@ -295,8 +286,7 @@ export function createMetricPane(
             const resultsConfidenceScores: Array<[number, number]>[] = [];
             const resultsBucketsOfSamples: BucketCase[][][] = [];
             for (let i = 0; i < systemAnalysesParsed.length; i++) {
-              const result =
-                systemAnalysesParsed[i].resultsFineGrainedParsed[resultIdx];
+              const result = systemAnalysesParsed[i][resultIdx];
               resultsValues.push(result.values);
               resultsNumbersOfSamples.push(result.numbersOfSamples);
               resultsConfidenceScores.push(result.confidenceScores);
@@ -324,7 +314,6 @@ export function createMetricPane(
                       title,
                       barIndex,
                       systemIndex,
-                      featureNameToDescription,
                       bucketOfSamplesList,
                     });
                     // reset page number
