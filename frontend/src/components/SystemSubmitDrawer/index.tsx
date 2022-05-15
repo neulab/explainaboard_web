@@ -11,6 +11,8 @@ import {
   Spin,
   Tooltip,
   Checkbox,
+  Row,
+  Col,
 } from "antd";
 import { DatasetMetadata, System, TaskCategory } from "../../clients/openapi";
 import { backendClient, parseBackendError } from "../../clients";
@@ -183,6 +185,10 @@ export function SystemSubmitDrawer(props: Props) {
     }
   }
 
+  function getDatasetFromId(datasetID: string) {
+    return datasetOptions.find((d) => d.dataset_id === datasetID);
+  }
+
   function onValuesChange(changedFields: Partial<FormData>) {
     if (changedFields.task != null) {
       searchDatasets("", changedFields.task);
@@ -192,6 +198,25 @@ export function SystemSubmitDrawer(props: Props) {
         dataset: { datasetID: undefined, split: undefined },
         metric_names: [],
       });
+    }
+    if (changedFields.dataset != null) {
+      const datasetID = changedFields.dataset.datasetID;
+      if (datasetID != null) {
+        const datasetMetadata = getDatasetFromId(datasetID);
+        const langs = datasetMetadata?.languages;
+        if (langs != null && langs.length > 0) {
+          const target_idx = langs.length === 2 ? 1 : 0;
+          form.setFieldsValue({
+            source_language: langs[0],
+            target_language: langs[target_idx],
+          });
+        } else {
+          form.setFieldsValue({
+            source_language: undefined,
+            target_language: undefined,
+          });
+        }
+      }
     }
   }
 
@@ -364,22 +389,29 @@ export function SystemSubmitDrawer(props: Props) {
             <Checkbox />
           </Form.Item>
 
-          <Form.Item
-            name="source_language"
-            label="Input Language"
-            initialValue="en"
-            rules={[{ required: true }]}
-          >
-            <Select options={[{ value: "en" }]} />
-          </Form.Item>
-          <Form.Item
-            name="target_language"
-            label="Output Language"
-            initialValue="en"
-            rules={[{ required: true }]}
-          >
-            <Select options={[{ value: "en" }]} />
-          </Form.Item>
+          <Row>
+            <Col span={5}>&nbsp;</Col>
+            <Col span={9}>
+              <Form.Item
+                name="source_language"
+                label="Input Lang"
+                rules={[{ required: true }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+            <Col span={1}>&nbsp;</Col>
+            <Col span={9}>
+              <Form.Item
+                name="target_language"
+                label="Output Lang"
+                rules={[{ required: true }]}
+              >
+                <Input />
+              </Form.Item>
+            </Col>
+          </Row>
+
           <Form.Item name="code" label="Source Code Link">
             <Input type="url" />
           </Form.Item>
