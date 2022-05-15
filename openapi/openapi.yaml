@@ -899,7 +899,7 @@ components:
         bucket_samples:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/BucketCase'
         performances:
           type: array
           items:
@@ -941,6 +941,19 @@ components:
           type: number
           nullable: true
       required: [metric_name, value]
+
+    BucketCase:
+      type: object
+      properties:
+        sample_id:
+          type: string
+      additionalProperties:
+        type: string
+        properties:
+          code:
+            type: integer
+          text:
+            type: string
 
     User:
       type: object

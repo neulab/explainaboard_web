@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { Performance } from "../../clients/openapi";
+import { BucketCase, Performance } from "../../clients/openapi";
 
 export interface Features {
   [key: string]: FeatureVal;
@@ -38,7 +38,7 @@ export interface FineGrained {
 export interface FineGrainedElement {
   bucket_name: string[] | number[];
   // TODO the latter type is for NER
-  bucket_samples: string[]; // | {[key: string]: string}[];
+  bucket_samples: { [key: string]: string }[];
   confidence_score_low: string;
   confidence_score_up: string;
   metric_name: string;
@@ -52,18 +52,19 @@ export interface ResultFineGrainedParsed {
   featureKey: string;
   description: string;
   metricName: string;
+  // bucketName[i] is name of bucket i
   bucketNames: string[];
   bucketMin: number;
   bucketMax: number;
   bucketStep: number;
   bucketRightBounds: number[];
-  bucketIntervals: Array<number[]>;
+  bucketIntervals: number[][];
   bucketInfo: SystemInfoFeature["bucket_info"];
-  // TODO the latter type is for NER
-  bucketsOfSamples: Array<string[]>; // | Array<{[key: string]: string}[]>;
+  // bucket[i][j] is the jth example in the ith bucket
+  bucketsOfSamples: BucketCase[][];
   values: number[];
   numbersOfSamples: number[];
-  confidenceScores: Array<[number, number]>;
+  confidenceScores: [number, number][];
 }
 
 export interface SystemAnalysisParsed {
@@ -92,8 +93,7 @@ export interface ActiveSystemExamples {
 
   // system-dependent information across systems
   systemIndex: number;
-  // TODO the latter type is for NER | {[key: string]: string}[]
-  bucketOfSamplesList: string[][];
+  bucketOfSamplesList: BucketCase[][];
 }
 
 export interface SystemInfoFeatureBucketInfo {
