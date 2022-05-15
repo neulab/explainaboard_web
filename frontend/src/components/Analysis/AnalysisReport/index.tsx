@@ -92,22 +92,27 @@ export function createOverallBarChart(
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
-  const activeMetricNames: string[] = [];
+  // The metric names that exist in overall results
+  const activeMetricNames: string[] = Object.keys(
+    systems[0].system_info.results.overall
+  );
   for (const system of systems) {
     const overallResults = system.system_info.results.overall;
     const metricPerformance = [];
     const metricConfidence = [];
     const metricNumberOfSamples = [];
-    for (const metricName of metricNames) {
+    for (const metricName of activeMetricNames) {
       if (metricName in overallResults) {
-        activeMetricNames.push(metricName);
         const metricResults = overallResults[metricName];
         metricPerformance.push(metricResults.value);
         metricConfidence.push(unwrapConfidence(metricResults));
-        // metricNumberOfSamples.push(datasetSize);
-        // TODO(gneubig): How can we get the dataset size?
-        metricNumberOfSamples.push(-1);
+      } else {
+        metricPerformance.push(0);
+        const noConfidence: [number, number] = [-1, -1];
+        metricConfidence.push(noConfidence);
       }
+      // TODO(gneubig): How can we get the dataset size?
+      metricNumberOfSamples.push(-1);
     }
     resultsValues.push(metricPerformance);
     resultsConfidenceScores.push(metricConfidence);
@@ -116,6 +121,9 @@ export function createOverallBarChart(
 
   console.log(`systemNames=${systemNames}`);
   console.log(`activeMetricNames=${activeMetricNames}`);
+  console.log(`resultsValues=${resultsValues}`);
+  console.log(`resultsNumbersOfSamples=${resultsNumbersOfSamples}`);
+  console.log(`resultsConfidenceScores=${resultsConfidenceScores}`);
 
   return (
     <Col span={colSpan}>
