@@ -14,7 +14,7 @@ import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
 import { PrivateIcon } from "..";
-import { generateDataLabURL } from "../../utils";
+import { generateLeaderboardURL } from "../../utils";
 const { Text } = Typography;
 
 interface Props {
@@ -107,9 +107,13 @@ export function SystemTableContent({
       align: "center",
       render: (_, record) =>
         record.dataset?.dataset_name ? (
-          <Tooltip title="view dataset in DataLab">
+          <Tooltip title="view dataset leaderboard">
             <Typography.Link
-              href={generateDataLabURL(record.dataset.dataset_name)}
+              href={generateLeaderboardURL(
+                record.dataset.dataset_name,
+                record.dataset.sub_dataset,
+                undefined
+              )}
               target="_blank"
             >
               {record.dataset.dataset_name}

@@ -32,7 +32,7 @@ interface Props {
   ) => void;
 }
 
-export function getColSpan(props: Props) {
+function getColSpan(props: Props) {
   /* The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
   Specifically, all charts are enclosed by <Col></Col>, which are then enclosed by a single <Row></Row>.
   Ant design takes care of overflow and auto starts a new line.
@@ -58,13 +58,7 @@ export function getColSpan(props: Props) {
   }
 }
 
-export function arrSum(arr: number[]) {
-  return arr.reduce(function (a, b) {
-    return a + b;
-  }, 0);
-}
-
-export function unwrapConfidence(perf: Performance) {
+function unwrapConfidence(perf: Performance) {
   let conf: [number, number] = [-1, -1];
   if (
     perf.confidence_score_low !== undefined &&
@@ -75,7 +69,7 @@ export function unwrapConfidence(perf: Performance) {
   return conf;
 }
 
-export function createOverallBarChart(
+function createOverallBarChart(
   props: Props,
   colSpan: number,
   setActiveMetric: React.Dispatch<React.SetStateAction<string>>,
@@ -140,7 +134,7 @@ export function createOverallBarChart(
   );
 }
 
-export function createExampleTable(
+function createExampleTable(
   props: Props,
   activeSystemExamples: ActiveSystemExamples | undefined,
   setActiveSystemExamples: React.Dispatch<
@@ -221,7 +215,7 @@ export function createExampleTable(
   return exampleTable;
 }
 
-export function createFineGrainedBarChart(
+function createFineGrainedBarChart(
   props: Props,
   metric: string,
   feature: string,
@@ -240,9 +234,8 @@ export function createFineGrainedBarChart(
   const title = `${metric} by ${resultFirst.featureDescription}`;
   const bucketNames = resultFirst.bucketNames;
   const featureName = resultFirst.featureName;
-  const isBucketAdjustable = featureName in featureNameToBucketInfo;
   let bucketSlider = null;
-  if (isBucketAdjustable) {
+  if (featureName in featureNameToBucketInfo) {
     const bucketInfo = featureNameToBucketInfo[featureName];
     const bucketRightBounds = bucketInfo.bounds;
     if (bucketRightBounds !== undefined) {
@@ -318,7 +311,7 @@ export function createFineGrainedBarChart(
   );
 }
 
-export function createMetricPane(
+function createMetricPane(
   props: Props,
   metric: string,
   colSpan: number,

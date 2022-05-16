@@ -195,6 +195,10 @@ def systems_system_id_outputs_get(
     TODO: return special error/warning if some ids cannot be found
     """
     sys = SystemDBUtils.find_system_by_id(system_id)
+    user = get_user()
+    has_access = user.is_authenticated and sys.creator == user.email
+    if sys.is_private and not has_access:
+        abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(
             sys.system_info.dataset_name,
