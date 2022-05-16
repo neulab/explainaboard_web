@@ -129,7 +129,7 @@ export function SystemSubmitDrawer(props: Props) {
             target_language,
             is_private,
             shared_users,
-            system_details,
+            system_details: { __TO_PARSE__: system_details },
           },
           system_output: {
             data: systemOutBase64,
@@ -153,7 +153,7 @@ export function SystemSubmitDrawer(props: Props) {
             target_language,
             is_private,
             shared_users,
-            system_details,
+            system_details: { __TO_PARSE__: system_details },
           },
           system_output: {
             data: systemOutBase64,
@@ -174,6 +174,7 @@ export function SystemSubmitDrawer(props: Props) {
         "source_language",
         "target_language",
         "shared_users",
+        "system_details",
       ]);
     } catch (e) {
       if (e instanceof Response) {

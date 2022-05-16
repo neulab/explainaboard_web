@@ -54,22 +54,19 @@ class SystemDBUtils:
             return m.group(1), m.group(2)
 
     @staticmethod
-    def _parse_system_details(system_details) -> dict | None:
-        if isinstance(system_details, str):
-            if len(system_details.strip()) == 0:
-                system_details = None
-            else:
-                try:
-                    system_details = json.loads(system_details)
-                except Exception:
-                    system_details = [
-                        SystemDBUtils._parse_colon_line(line)
-                        for line in system_details.split("\n")
-                    ]
-                    system_details = {k: v for k, v in system_details}
-        if not (system_details is None or isinstance(system_details, dict)):
-            abort_with_error_message(400, "poorly formatted system_details")
-        return system_details
+    def _parse_system_details(system_details: str) -> dict | None:
+        if len(system_details.strip()) == 0:
+            ret = None
+        else:
+            try:
+                ret = json.loads(system_details)
+            except Exception:
+                ret_list = [
+                    SystemDBUtils._parse_colon_line(line)
+                    for line in system_details.split("\n")
+                ]
+                ret = {k: v for k, v in ret_list}
+        return ret
 
     @staticmethod
     def system_from_dict(
@@ -104,11 +101,6 @@ class SystemDBUtils:
                         400, f"invalid email address for shared user {user}"
                     )
             document["shared_users"] = " " + " ".join(shared_list) + " "
-
-        # Parse the system details
-        document["system_details"] = SystemDBUtils._parse_system_details(
-            document.get("system_details")
-        )
 
         metric_stats = []
         if "metric_stats" in document:
@@ -222,7 +214,20 @@ class SystemDBUtils:
             (metadata + sufficient statistics + overall analysis)
           6. write to system_outputs
         """
-        system = SystemDBUtils.system_from_dict(metadata.to_dict())
+
+        # Parse the system details if getting a string from the frontend
+        document = metadata.to_dict()
+        if (
+            document.get("system_details")
+            and "__TO_PARSE__" in document["system_details"]
+        ):
+            parsed = SystemDBUtils._parse_system_details(
+                document["system_details"]["__TO_PARSE__"]
+            )
+            metadata.system_details = parsed
+            document["system_details"] = parsed
+
+        system = SystemDBUtils.system_from_dict(document)
 
         user = get_user()
         system.creator = user.email
