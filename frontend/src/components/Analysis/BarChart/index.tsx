@@ -13,6 +13,9 @@ import {
 import { CanvasRenderer } from "echarts/renderers";
 import { ECElementEvent } from "echarts/types/src/util/types";
 
+// TODO(gneubig): should this be provided more globally?
+const decimalPlaces = 3;
+
 interface ConfidencePoint {
   xAxis: string;
   yAxis: number;
@@ -38,9 +41,9 @@ interface Props {
   xAxisData: string[];
   seriesDataList: number[][];
   seriesLabelsList: number[][];
-  numbersOfSamplesList: number[][];
   confidenceScoresList: [number, number][][];
   onBarClick: (barIndex: number, systemIndex: number) => void;
+  numbersOfSamplesList: number[][];
 }
 
 export function BarChart(props: Props) {
@@ -110,7 +113,7 @@ export function BarChart(props: Props) {
         position: "inside",
         fontSize: 14,
         formatter: function (data: formatterParam) {
-          return info.labels[data.dataIndex];
+          return info.labels[data.dataIndex].toFixed(decimalPlaces);
         },
       },
       data: info.data,
@@ -170,14 +173,20 @@ export function BarChart(props: Props) {
         // For single analysis, params have length 1
         const texts = params.map((param, paramIdx) => {
           const dataIndex = param.dataIndex;
-          const data = param.data.toString();
+          const data = param.data.toFixed(decimalPlaces);
           const confidenceScores = confidenceScoresList[paramIdx];
           const numbersOfSamples = numbersOfSamplesList[paramIdx];
           const confidenceScoreRange =
             dataIndex < confidenceScores.length
-              ? `[${confidenceScores[dataIndex][0]}, ${confidenceScores[dataIndex][1]}]`
+              ? `[${confidenceScores[dataIndex][0].toFixed(
+                  decimalPlaces
+                )}, ${confidenceScores[dataIndex][1].toFixed(decimalPlaces)}]`
               : "";
-          return `${data} ${confidenceScoreRange} <br /> sample size: ${numbersOfSamples[dataIndex]}`;
+          let ret = `${data} ${confidenceScoreRange}`;
+          if (numbersOfSamples[dataIndex] > 0) {
+            ret = `${ret} <br /> sample size: ${numbersOfSamples[dataIndex]}`;
+          }
+          return ret;
         });
 
         return texts.join("<br />");
