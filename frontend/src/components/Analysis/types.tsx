@@ -2,82 +2,28 @@
 
 import { BucketCase, Performance } from "../../clients/openapi";
 
-export interface Features {
-  [key: string]: FeatureVal;
-}
-
-export interface FeatureVal {
-  _type: string;
-  bucket_info: BucketInfo | null;
-  description: string | null | undefined;
-  id: null;
-  is_bucket: boolean;
-  dtype?: string;
-  names?: string[];
-  names_file?: null;
-  num_classes?: number;
-}
-
-export interface BucketInfo {
-  _method: string;
-  _number: number;
-  _setting: number[] | number;
-}
-
-export interface Results {
-  fine_grained: FineGrained;
-  is_print_case?: boolean;
-  is_print_confidence_interval?: boolean;
-  overall: { [key: string]: Performance };
-}
-
-export interface FineGrained {
-  [key: string]: Array<FineGrainedElement[]>;
-}
-
-export interface FineGrainedElement {
-  bucket_name: string[] | number[];
-  // TODO the latter type is for NER
-  bucket_samples: { [key: string]: string }[];
-  confidence_score_low: string;
-  confidence_score_up: string;
-  metric_name: string;
-  n_samples: number;
-  value: string;
-}
-
 export interface ResultFineGrainedParsed {
-  systemID: string;
-  task: string;
-  featureKey: string;
-  description: string;
+  /**
+   * Bucketed performance for a single metric/feature/system combination
+   */
+  // The name of the feature
+  featureName: string;
+  // The description of the feature
+  featureDescription: string;
+  // The name of the metric
   metricName: string;
-  // bucketName[i] is name of bucket i
+  // bucketNames[i] is name of bucket i
   bucketNames: string[];
-  bucketMin: number;
-  bucketMax: number;
-  bucketStep: number;
-  bucketRightBounds: number[];
-  bucketIntervals: number[][];
-  bucketInfo: SystemInfoFeature["bucket_info"];
-  // bucket[i][j] is the jth example in the ith bucket
-  bucketsOfSamples: BucketCase[][];
-  values: number[];
+  // The intervals of each bucket
+  bucketIntervals: BucketIntervals;
+  // Information about how bucketing should be done
+  bucketInfo: SystemInfoFeatureBucketInfo | null;
+  // The number of samples in each bucket
   numbersOfSamples: number[];
-  confidenceScores: [number, number][];
-}
-
-export interface SystemAnalysisParsed {
-  resultsFineGrainedParsed: ResultFineGrainedParsed[];
-  /* key: feature key a object key of a feature
-  for retrieving the value from resultsFineGrainedParsed
-  value: description is a description/name of a feature to be displayed in the UI
-  */
-  featureKeyToDescription: { [key: string]: string };
-}
-
-export interface MetricToSystemAnalysesParsed {
-  [key: string]: SystemAnalysisParsed[];
+  // performances[i]: performance (value/confidence) for bucket i
+  performances: Performance[];
+  // cases[i][j]: is the ith bucket's jth example
+  cases: BucketCase[][];
 }
 
 // Examples to be shown in the analysis table when a bar is clicked
@@ -86,10 +32,6 @@ export interface ActiveSystemExamples {
   // but depends on which bar or graph is clicked.
   title: string;
   barIndex: number;
-
-  // These are technically not invariant across sytems,
-  // but they may be in the future, and it's easier to keep them here for now.
-  featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"];
 
   // system-dependent information across systems
   systemIndex: number;
@@ -103,6 +45,9 @@ export interface SystemInfoFeatureBucketInfo {
 }
 
 export interface SystemInfoFeature {
+  /**
+   * A single feature in the system info class.
+   */
   bucket_info: SystemInfoFeatureBucketInfo | null;
   description: string | null;
   dtype?: string;
@@ -111,17 +56,17 @@ export interface SystemInfoFeature {
   _type: string;
 }
 
-export interface UIBucketInfo {
+export interface BucketIntervals {
+  /**
+   * Intervals over which to perform bucketing
+   */
+  // Minimum value overall
   min: number;
+  // Maximum value overall
   max: number;
-  // right bound of each interval, except the last one
-  rightBounds: number[];
-  /* tracks if a bucket info is updated by the user,
-  if true, we add the bucket info in the POST request body
-  */
+  // Bounds of each interval, such that the intervals are
+  // (min, bounds[0]), (bounds[0], bounds[1]), ..., (bounds[i-1], max)
+  bounds: number[];
+  // Used when bucket intervals are updated in the UI
   updated: boolean;
-}
-
-export interface FeatureKeyToUIBucketInfo {
-  [featureKey: string]: UIBucketInfo;
 }

@@ -9,12 +9,8 @@ import {
   SystemAnalysesReturn,
   SystemsAnalysesBody,
 } from "../../../clients/openapi";
-import { getMetricToSystemAnalysesParsed, valuesToIntervals } from "../utils";
-import {
-  MetricToSystemAnalysesParsed,
-  FeatureKeyToUIBucketInfo,
-  UIBucketInfo,
-} from "../types";
+import { parseFineGrainedResults, valuesToIntervals } from "../utils";
+import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 const { Text, Link } = Typography;
 
 interface Props {
@@ -37,10 +33,12 @@ export function AnalysisDrawer({
   const [singleAnalyses, setSingleAnalyses] = useState<
     SystemAnalysesReturn["single_analyses"]
   >({});
-  const [featureKeyToBucketInfo, setFeatureKeyToBucketInfo] =
-    useState<FeatureKeyToUIBucketInfo>({});
-  const [metricToSystemAnalysesParsed, setMetricToSystemAnalysesParsed] =
-    useState<MetricToSystemAnalysesParsed>({});
+  const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
+    [key: string]: BucketIntervals;
+  }>({});
+  const [metricToAnalyses, setMetricToAnalyses] = useState<{
+    [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
+  }>({});
   const [bucketInfoUpdated, setBucketInfoUpdated] = useState<boolean>(false);
 
   const activeSystems = systems.filter((sys) =>
@@ -49,7 +47,7 @@ export function AnalysisDrawer({
 
   useEffect(() => {
     async function refreshAnalyses(
-      featureKeyToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"]
+      featureNameToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"]
     ) {
       setPageState(PageState.loading);
       const systemAnalysesReturn: SystemAnalysesReturn | null =
@@ -62,7 +60,7 @@ export function AnalysisDrawer({
               system_ids: activeSystemIDs.join(","),
               // Hardcoded to false. TODO(chihhao) wait for SDK's update
               pairwise_performance_gap: false,
-              feature_to_bucket_info: featureKeyToBucketInfoToPost,
+              feature_to_bucket_info: featureNameToBucketInfoToPost,
             })
             .then((systemAnalysesReturn) => {
               clearTimeout(timeoutID);
@@ -83,101 +81,92 @@ export function AnalysisDrawer({
       const firstSystemInfo = activeSystems[0].system_info;
       const task = firstSystemInfo.task_name;
 
-      const metricNames = firstSystemInfo.metric_configs.map(
-        (config) => config.name
-      );
-      const metricToSystemAnalysesParsed = getMetricToSystemAnalysesParsed(
+      const metricToAnalyses = parseFineGrainedResults(
         task,
-        metricNames,
         activeSystems,
         singleAnalyses
       );
 
-      const parsedFeatureKeyToBucketInfo: FeatureKeyToUIBucketInfo = {};
-      // Take from the first element as the bucket interval is invariant across metrics
-      const systemAnalysesParsed = Object.values(
-        metricToSystemAnalysesParsed
-      )[0];
-      // Take from the first element as the bucket interval is invariant across systems
-      const resultsFineGrainedParsed =
-        systemAnalysesParsed[0].resultsFineGrainedParsed;
-      for (const resultFineGrainedParsed of resultsFineGrainedParsed) {
-        const {
-          bucketInfo,
-          featureKey,
-          bucketMin,
-          bucketMax,
-          bucketRightBounds,
-        } = resultFineGrainedParsed;
-        /* Hardcode for now as SDK doesn't export the string.
-        bucket_attribute_discrete_value seems to be used for categorical features,
-        which do not support custom bucket range.
-        */
-        if (bucketInfo?.method !== "bucket_attribute_discrete_value") {
-          parsedFeatureKeyToBucketInfo[featureKey] = {
-            min: bucketMin,
-            max: bucketMax,
-            // discard the last right bound because it is max
-            rightBounds: bucketRightBounds.slice(
-              0,
-              bucketRightBounds.length - 1
-            ),
-            /* A bucket may remain updated (i.e. different from the init value of SDK) 
-            across multiple post calls, so we must reuse this information from the state
-            */
-            updated: featureKeyToBucketInfo[featureKey]?.updated || false,
-          };
+      const featureNameToBucketInfo: { [key: string]: BucketIntervals } = {};
+      for (const systemAnalysesParsed of Object.values(metricToAnalyses)) {
+        for (const feature of Object.keys(systemAnalysesParsed)) {
+          // No need to repeat the process for multiple metrics if it's already found
+          if (feature in featureNameToBucketInfo) {
+            continue;
+          }
+          // Take from the first element as the bucket interval is system-invariant
+          const resultFineGrainedParsed = systemAnalysesParsed[feature][0];
+          const { bucketInfo, featureName, bucketIntervals } =
+            resultFineGrainedParsed;
+          /* Hardcode for now as SDK doesn't export the string.
+          bucket_attribute_discrete_value seems to be used for categorical features,
+          which do not support custom bucket range.
+          */
+          if (bucketInfo?.method !== "bucket_attribute_discrete_value") {
+            featureNameToBucketInfo[featureName] = {
+              min: bucketIntervals.min,
+              max: bucketIntervals.max,
+              bounds: bucketIntervals.bounds.slice(
+                0,
+                bucketIntervals.bounds.length - 1
+              ),
+              updated: featureNameToBucketInfo[featureName]?.updated || false,
+            };
+          }
         }
+        setTask(task);
+        setSingleAnalyses(singleAnalyses);
+        setMetricToAnalyses(metricToAnalyses);
+        setFeatureNameToBucketInfo(featureNameToBucketInfo);
+        setPageState(PageState.success);
+        setBucketInfoUpdated(false);
       }
-      setTask(task);
-      setSingleAnalyses(singleAnalyses);
-      setMetricToSystemAnalysesParsed(metricToSystemAnalysesParsed);
-      setFeatureKeyToBucketInfo(parsedFeatureKeyToBucketInfo);
-      setPageState(PageState.success);
-      setBucketInfoUpdated(false);
     }
 
     if (visible && shouldUpdateAnalysis) {
       setShouldUpdateAnalysis(false);
-      const featureKeyToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"] =
+      const featureNameToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"] =
         {};
-      for (const [featureKey, bucketInfo] of Object.entries(
-        featureKeyToBucketInfo
+      for (const [featureName, bucketInfo] of Object.entries(
+        featureNameToBucketInfo
       )) {
-        const { min, max, rightBounds, updated } = bucketInfo;
+        const { min, max, bounds, updated } = bucketInfo;
         if (updated) {
-          const values = [min, ...rightBounds, max];
+          const values = [min, ...bounds, max];
           // Default uses alphabetic sorting. Must supply a custom sort function
           values.sort(function (a, b) {
             return a - b;
           });
           const intervals = valuesToIntervals(values);
-          featureKeyToBucketInfoToPost[featureKey] = {
+          featureNameToBucketInfoToPost[featureName] = {
             number: intervals.length,
             setting: intervals,
           };
         }
       }
-      refreshAnalyses(featureKeyToBucketInfoToPost);
+      refreshAnalyses(featureNameToBucketInfoToPost);
     }
   }, [
     visible,
     shouldUpdateAnalysis,
     activeSystemIDs,
     activeSystems,
-    featureKeyToBucketInfo,
+    featureNameToBucketInfo,
   ]);
 
-  function updateFeatureKeyToBucketInfo(
-    featureKey: string,
-    bucketInfo: UIBucketInfo
+  function updateFeatureNameToBucketInfo(
+    featureName: string,
+    bucketInfo: BucketIntervals
   ) {
     const updatedBucketInfo = {
       ...bucketInfo,
       updated: true,
     };
-    setFeatureKeyToBucketInfo((prevFeatureKeyToBucketInfo) => {
-      return { ...prevFeatureKeyToBucketInfo, [featureKey]: updatedBucketInfo };
+    setFeatureNameToBucketInfo((prevFeatureNameToBucketInfo) => {
+      return {
+        ...prevFeatureNameToBucketInfo,
+        [featureName]: updatedBucketInfo,
+      };
     });
     setBucketInfoUpdated(true);
   }
@@ -190,7 +179,7 @@ export function AnalysisDrawer({
     setActiveSystemIDs([]);
     setPageState(PageState.loading);
     setSingleAnalyses({});
-    setFeatureKeyToBucketInfo({});
+    setFeatureNameToBucketInfo({});
     setBucketInfoUpdated(false);
   }
 
@@ -268,9 +257,9 @@ export function AnalysisDrawer({
               task={task}
               systems={activeSystems}
               singleAnalyses={singleAnalyses}
-              metricToSystemAnalysesParsed={metricToSystemAnalysesParsed}
-              featureKeyToBucketInfo={featureKeyToBucketInfo}
-              updateFeatureKeyToBucketInfo={updateFeatureKeyToBucketInfo}
+              metricToSystemAnalysesParsed={metricToAnalyses}
+              featureNameToBucketInfo={featureNameToBucketInfo}
+              updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
             />
           )}
           {pageState === PageState.error && fallbackUI("timeout")}

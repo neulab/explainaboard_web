@@ -1,7 +1,6 @@
 import {
-  MetricToSystemAnalysesParsed,
+  BucketIntervals,
   ResultFineGrainedParsed,
-  SystemAnalysisParsed,
   SystemInfoFeature,
 } from "./types";
 import {
@@ -23,52 +22,48 @@ function formatName(name: string): number {
   }
 }
 
+export function initParsedResult(
+  metricName: string,
+  featureName: string,
+  featureDescription: string,
+  bucketInfo: SystemInfoFeature["bucket_info"]
+): ResultFineGrainedParsed {
+  const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
+  const bucketIntervals: BucketIntervals = {
+    min: Number.POSITIVE_INFINITY,
+    max: Number.NEGATIVE_INFINITY,
+    bounds: [],
+    updated: false,
+  };
+  const performances: ResultFineGrainedParsed["performances"] = [];
+  const cases: ResultFineGrainedParsed["cases"] = [];
+  const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
+  return {
+    metricName,
+    featureName,
+    featureDescription,
+    bucketInfo,
+    bucketIntervals,
+    bucketNames,
+    numbersOfSamples,
+    performances,
+    cases,
+  };
+}
+
 // Parses features according to task type.
 export function parse(
   systemID: string,
   task: string,
-  metricNames: string[],
-  description: string,
-  feature: { [bucketInterval: string]: BucketPerformance },
-  featureKey: string,
+  featureBuckets: { [bucketInterval: string]: BucketPerformance },
+  featureName: string,
+  featureDescription: string,
   bucketInfo: SystemInfoFeature["bucket_info"]
 ) {
-  const decimalPlaces = 3;
   const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
-  for (const metricName of metricNames) {
-    const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
-    const bucketMin: ResultFineGrainedParsed["bucketMin"] =
-      Number.POSITIVE_INFINITY;
-    const bucketMax: ResultFineGrainedParsed["bucketMax"] =
-      Number.NEGATIVE_INFINITY;
-    const bucketStep: ResultFineGrainedParsed["bucketStep"] = 1;
-    const bucketRightBounds: ResultFineGrainedParsed["bucketRightBounds"] = [];
-    const bucketIntervals: ResultFineGrainedParsed["bucketIntervals"] = [];
-    const values: ResultFineGrainedParsed["values"] = [];
-    const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
-    const confidenceScores: ResultFineGrainedParsed["confidenceScores"] = [];
-    const bucketsOfSamples: ResultFineGrainedParsed["bucketsOfSamples"] = [];
-    parsedResult[metricName] = {
-      systemID,
-      task,
-      description,
-      featureKey,
-      metricName,
-      bucketIntervals,
-      bucketInfo,
-      bucketMin,
-      bucketMax,
-      bucketStep,
-      bucketRightBounds,
-      bucketNames,
-      values,
-      numbersOfSamples,
-      confidenceScores,
-      bucketsOfSamples,
-    };
-  }
+
   const bucketPerformances: BucketPerformance[] = [];
-  for (const bucketPerformance of Object.values(feature)) {
+  for (const bucketPerformance of Object.values(featureBuckets)) {
     bucketPerformances.push(bucketPerformance);
   }
   // Sort by the correct bucket interval order
@@ -83,78 +78,62 @@ export function parse(
     E.g., Accuracy, F1Score
     */
 
-    for (const performance of bucketPerformance["performances"]) {
-      // The bucket interval
-      const bucketNameArray = bucketPerformance["bucket_name"];
-      const bucketInterval = bucketNameArray.map((name) => formatName(name));
-      let bucketName = "";
-      switch (bucketInterval.length) {
-        case 1: {
-          /*Add two new lines so its text height is consistent with case 2.
-          This allows the charts to have equal heights
-          */
-          bucketName = `${bucketInterval[0].toString()}\n\n`;
-          break;
-        }
-        case 2: {
-          bucketName = bucketInterval
-            .map((bound) => bound.toString())
-            .join("\n|\n");
-          break;
-        }
-        default: {
-          // TODO: handle cases hwere length > 2
-          break;
-        }
+    // Convert the string representation of the bucket interval to numbers
+    const bucketInterval = bucketPerformance.bucket_name.map((name) =>
+      formatName(name)
+    );
+    let bucketName = "";
+    switch (bucketInterval.length) {
+      case 1: {
+        /*Add two new lines so its text height is consistent with case 2.
+        This allows the charts to have equal heights
+        */
+        bucketName = `${bucketInterval[0].toString()}\n\n`;
+        break;
       }
+      case 2: {
+        bucketName = bucketInterval
+          .map((bound) => bound.toString())
+          .join("\n|\n");
+        break;
+      }
+      default: {
+        // TODO: handle cases hwere length > 2
+        break;
+      }
+    }
 
-      const value = performance.value;
+    for (const performance of bucketPerformance["performances"]) {
       const nSamples = bucketPerformance.n_samples;
-      const confidenceScoreLow = performance.confidence_score_low;
-      const confidenceScoreHigh = performance.confidence_score_high;
       const metricName = performance.metric_name;
-      const resultFineGrainedParsed = parsedResult[metricName];
-      resultFineGrainedParsed.metricName = metricName;
-      resultFineGrainedParsed.bucketsOfSamples.push(
-        bucketPerformance.bucket_samples
-      );
-      resultFineGrainedParsed.bucketNames.push(bucketName);
-      resultFineGrainedParsed.bucketIntervals.push(bucketInterval);
-      resultFineGrainedParsed.values.push(
-        Number.parseFloat(value.toFixed(decimalPlaces))
-      );
-      resultFineGrainedParsed.numbersOfSamples.push(nSamples);
-      if (
-        confidenceScoreLow !== undefined &&
-        confidenceScoreHigh !== undefined
-      ) {
-        resultFineGrainedParsed.confidenceScores.push([
-          Number.parseFloat(confidenceScoreLow.toFixed(decimalPlaces)),
-          Number.parseFloat(confidenceScoreHigh.toFixed(decimalPlaces)),
-        ]);
+      if (!(metricName in parsedResult)) {
+        parsedResult[metricName] = initParsedResult(
+          metricName,
+          featureName,
+          featureDescription,
+          bucketInfo
+        );
       }
-      resultFineGrainedParsed.bucketMin = Math.min(
-        resultFineGrainedParsed.bucketMin,
+      const result = parsedResult[metricName];
+      result.metricName = performance.metric_name;
+      result.performances.push(performance);
+      result.cases.push(bucketPerformance.bucket_samples);
+      result.bucketNames.push(bucketName);
+      result.numbersOfSamples.push(nSamples);
+      result.bucketIntervals.min = Math.min(
+        result.bucketIntervals.min,
         ...bucketInterval
       );
-      resultFineGrainedParsed.bucketMax = Math.max(
-        resultFineGrainedParsed.bucketMax,
+      result.bucketIntervals.max = Math.max(
+        result.bucketIntervals.max,
         ...bucketInterval
       );
-      if (
-        resultFineGrainedParsed.bucketMax - resultFineGrainedParsed.bucketMin <=
-        1
-      ) {
-        resultFineGrainedParsed.bucketStep = 0.01;
-      } else {
-        resultFineGrainedParsed.bucketStep = 1;
-      }
-      resultFineGrainedParsed.bucketRightBounds.push(
+      result.bucketIntervals.bounds.push(
         bucketInterval[bucketInterval.length - 1]
       );
       // bucketInfo are feature invariant across different metrics
-      resultFineGrainedParsed.bucketInfo = bucketInfo;
-      resultFineGrainedParsed.featureKey = featureKey;
+      result.bucketInfo = bucketInfo;
+      result.featureName = featureName;
     }
   }
   return parsedResult;
@@ -182,75 +161,74 @@ export function findFeature(
   return undefined;
 }
 
-export function getMetricToSystemAnalysesParsed(
+export function parseFineGrainedResults(
   task: string,
-  metricNames: string[],
   systems: SystemModel[],
   singleAnalyses: SystemAnalysesReturn["single_analyses"]
-): MetricToSystemAnalysesParsed {
-  const metricToSystemAnalysesParsed: MetricToSystemAnalysesParsed = {};
+): { [metric: string]: { [feature: string]: ResultFineGrainedParsed[] } } {
+  /**
+   * Takes in a task, metric names, and systems, and returns fine-grained evaluation
+   * results that can be accessed in the format:
+   * > value[metric_name : string][feature_name : string][system_id : int]
+   */
 
-  for (const metricName of metricNames) {
-    // Array to store every parsed system analysis
-    metricToSystemAnalysesParsed[metricName] = [];
-  }
+  const parsedResults: {
+    [metric: string]: {
+      [feature: string]: ResultFineGrainedParsed[];
+    };
+  } = {};
 
   // Loop through each system analysis and parse
-  for (const system of systems) {
-    const systemID = system.system_id;
+  for (let sys_i = 0; sys_i < systems.length; sys_i++) {
+    const system = systems[sys_i];
     const systemInfoFeatures = system.system_info.features;
     const systemActiveFeatures = system.active_features.sort();
-    const singleAnalysis: SingleAnalysisReturn = singleAnalyses[systemID];
-    const metricToParsedInfo: {
-      [key: string]: {
-        // the parsed fine-grained results, used for visualization
-        resultsFineGrainedParsed: ResultFineGrainedParsed[];
-      };
-    } = {};
-    for (const metricName of metricNames) {
-      metricToParsedInfo[metricName] = {
-        resultsFineGrainedParsed: [],
-      };
-    }
+    const singleAnalysis: SingleAnalysisReturn =
+      singleAnalyses[system.system_id];
 
-    const featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"] =
-      {};
-
-    for (const featureKey of systemActiveFeatures) {
-      const feature = singleAnalysis[featureKey];
-      const systemInfoFeature = findFeature(systemInfoFeatures, featureKey);
+    for (const featureName of systemActiveFeatures) {
+      const featureBuckets: { [key: string]: BucketPerformance } =
+        singleAnalysis[featureName];
+      const systemInfoFeature = findFeature(systemInfoFeatures, featureName);
       if (systemInfoFeature !== undefined) {
         const bucketInfo = systemInfoFeature["bucket_info"];
-        const description = systemInfoFeature["description"] || featureKey;
+        const featureDescription =
+          systemInfoFeature["description"] || featureName;
 
-        const metricToResultFineGrainedParsed = parse(
-          systemID,
-          task,
-          metricNames,
-          description,
-          feature,
-          featureKey,
-          bucketInfo
-        );
-        for (const [metric, resultFineGrainedParsed] of Object.entries(
-          metricToResultFineGrainedParsed
-        )) {
-          metricToParsedInfo[metric].resultsFineGrainedParsed.push(
-            resultFineGrainedParsed
+        const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
+          parse(
+            system.system_id,
+            task,
+            featureBuckets,
+            featureName,
+            featureDescription,
+            bucketInfo
           );
+        for (const [metric, singleResult] of Object.entries(metricToParsed)) {
+          if (!(metric in parsedResults)) {
+            parsedResults[metric] = {};
+          }
+          if (!(featureName in parsedResults[metric])) {
+            parsedResults[metric][featureName] = [];
+          }
+          parsedResults[metric][featureName].push(singleResult);
         }
       }
     }
-
-    for (const [metric, parsedInfo] of Object.entries(metricToParsedInfo)) {
-      const { resultsFineGrainedParsed } = parsedInfo;
-      metricToSystemAnalysesParsed[metric].push({
-        featureKeyToDescription,
-        resultsFineGrainedParsed,
-      });
+  }
+  // Sanity check to make sure that whatever features were found were found for all systems
+  for (const [metric, metricResults] of Object.entries(parsedResults)) {
+    for (const [feature, metricFeatureResults] of Object.entries(
+      metricResults
+    )) {
+      if (metricFeatureResults.length !== systems.length) {
+        throw new Error(
+          `found metric=${metric}, feature=${feature} for some but not all systems`
+        );
+      }
     }
   }
-  return metricToSystemAnalysesParsed;
+  return parsedResults;
 }
 
 export function compareBucketOfSamples(caseA: BucketCase, caseB: BucketCase) {
@@ -276,7 +254,3 @@ export function valuesToIntervals(values: number[]): number[][] {
     .slice(0, values.length - 1)
     .map((value, index) => [value, values[index + 1]]);
 }
-
-// export function timeout(ms: number) {
-//   return new Promise(resolve => setTimeout(resolve, ms));
-// }

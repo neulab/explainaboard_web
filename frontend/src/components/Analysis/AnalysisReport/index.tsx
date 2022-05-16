@@ -1,15 +1,18 @@
 import React, { useState } from "react";
 import {
-  MetricToSystemAnalysesParsed,
   ActiveSystemExamples,
-  FeatureKeyToUIBucketInfo,
-  UIBucketInfo,
+  ResultFineGrainedParsed,
+  BucketIntervals,
 } from "../types";
 import { compareBucketOfSamples } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
 import { Row, Col, Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
-import { BucketCase, SystemAnalysesReturn } from "../../../clients/openapi";
+import {
+  BucketCase,
+  SystemAnalysesReturn,
+  Performance,
+} from "../../../clients/openapi";
 import { BucketSlider } from "../BucketSlider";
 
 const { Title } = Typography;
@@ -19,11 +22,13 @@ interface Props {
   task: string;
   systems: SystemModel[];
   singleAnalyses: SystemAnalysesReturn["single_analyses"];
-  metricToSystemAnalysesParsed: MetricToSystemAnalysesParsed;
-  featureKeyToBucketInfo: FeatureKeyToUIBucketInfo;
-  updateFeatureKeyToBucketInfo: (
-    featureKey: string,
-    bucketInfo: UIBucketInfo
+  metricToSystemAnalysesParsed: {
+    [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
+  };
+  featureNameToBucketInfo: { [feature: string]: BucketIntervals };
+  updateFeatureNameToBucketInfo: (
+    featureName: string,
+    bucketInfo: BucketIntervals
   ) => void;
 }
 
@@ -33,12 +38,12 @@ export function getColSpan(props: Props) {
   Ant design takes care of overflow and auto starts a new line.
   */
   // Get the size of the column span
-  const { systems, featureKeyToBucketInfo } = props;
+  const { systems, featureNameToBucketInfo } = props;
 
   // Get the maximum right bound length
   const maxRightBoundsLength = Math.max(
-    ...Object.values(featureKeyToBucketInfo).map(
-      (bucketInfo) => bucketInfo.rightBounds.length
+    ...Object.values(featureNameToBucketInfo).map(
+      (bucketInfo) => bucketInfo.bounds.length
     )
   );
   if (
@@ -59,6 +64,17 @@ export function arrSum(arr: number[]) {
   }, 0);
 }
 
+export function unwrapConfidence(perf: Performance) {
+  let conf: [number, number] = [-1, -1];
+  if (
+    perf.confidence_score_low !== undefined &&
+    perf.confidence_score_high !== undefined
+  ) {
+    conf = [perf.confidence_score_low, perf.confidence_score_high];
+  }
+  return conf;
+}
+
 export function createOverallBarChart(
   props: Props,
   colSpan: number,
@@ -68,12 +84,7 @@ export function createOverallBarChart(
   >,
   setPage: React.Dispatch<React.SetStateAction<number>>
 ) {
-  const {
-    systems,
-    metricToSystemAnalysesParsed,
-    // featureKeyToBucketInfo,
-    // updateFeatureKeyToBucketInfo,
-  } = props;
+  const { systems, metricToSystemAnalysesParsed } = props;
   // TODO(gneubig): make this setting global somewhere
   const systemNames = systems.map((system) => system.system_info.model_name);
   const metricNames = Object.keys(metricToSystemAnalysesParsed);
@@ -81,28 +92,25 @@ export function createOverallBarChart(
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
-  for (let j = 0; j < systems.length; j++) {
-    // const metric = metricNames[i]
-    // const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
-    const overallResults = systems[j].system_info.results.overall;
+  // The metric names that exist in overall results
+  const activeMetricNames: string[] = Object.keys(
+    systems[0].system_info.results.overall
+  );
+  for (const system of systems) {
+    const overallResults = system.system_info.results.overall;
     const metricPerformance = [];
     const metricConfidence = [];
     const metricNumberOfSamples = [];
-    for (let i = 0; i < metricNames.length; i++) {
-      const metricResults = overallResults[metricNames[i]];
-      metricPerformance.push(metricResults.value);
-      let metricSystemConfidence: [number, number] = [-1, -1];
-      if (
-        metricResults.confidence_score_low !== undefined &&
-        metricResults.confidence_score_high !== undefined
-      ) {
-        metricSystemConfidence = [
-          metricResults.confidence_score_low,
-          metricResults.confidence_score_high,
-        ];
+    for (const metricName of activeMetricNames) {
+      if (metricName in overallResults) {
+        const metricResults = overallResults[metricName];
+        metricPerformance.push(metricResults.value);
+        metricConfidence.push(unwrapConfidence(metricResults));
+      } else {
+        metricPerformance.push(0);
+        const noConfidence: [number, number] = [-1, -1];
+        metricConfidence.push(noConfidence);
       }
-      metricConfidence.push(metricSystemConfidence);
-      // metricNumberOfSamples.push(datasetSize);
       // TODO(gneubig): How can we get the dataset size?
       metricNumberOfSamples.push(-1);
     }
@@ -111,15 +119,12 @@ export function createOverallBarChart(
     resultsNumbersOfSamples.push(metricNumberOfSamples);
   }
 
-  console.log(`systemNames=${systemNames}`);
-  console.log(`metricNames=${metricNames}`);
-
   return (
     <Col span={colSpan}>
       <BarChart
         title="Overall Performance"
         seriesNames={systemNames}
-        xAxisData={metricNames}
+        xAxisData={activeMetricNames}
         seriesDataList={resultsValues}
         seriesLabelsList={resultsValues}
         confidenceScoresList={resultsConfidenceScores}
@@ -151,13 +156,8 @@ export function createExampleTable(
   }
 
   const { task, systems } = props;
-  const {
-    title,
-    barIndex,
-    featureKeyToDescription,
-    systemIndex,
-    bucketOfSamplesList,
-  } = activeSystemExamples;
+  const { title, barIndex, systemIndex, bucketOfSamplesList } =
+    activeSystemExamples;
 
   // Sort bucket of samples for every system
   const sortedBucketOfSamplesList = bucketOfSamplesList.map(
@@ -173,7 +173,6 @@ export function createExampleTable(
         systemID={systems[0].system_id}
         task={task}
         outputIDs={sortedBucketOfSamplesList[0]}
-        featureKeyToDescription={featureKeyToDescription}
         page={page}
         setPage={setPage}
       />
@@ -198,7 +197,6 @@ export function createExampleTable(
                   systemID={system.system_id}
                   task={task}
                   outputIDs={sortedBucketOfSamplesList[sysIndex]}
-                  featureKeyToDescription={featureKeyToDescription}
                   page={page}
                   setPage={setPage}
                 />
@@ -223,6 +221,103 @@ export function createExampleTable(
   return exampleTable;
 }
 
+export function createFineGrainedBarChart(
+  props: Props,
+  metric: string,
+  feature: string,
+  results: ResultFineGrainedParsed[],
+  colSpan: number,
+  setActiveSystemExamples: React.Dispatch<
+    React.SetStateAction<ActiveSystemExamples | undefined>
+  >,
+  setPage: React.Dispatch<React.SetStateAction<number>>
+) {
+  const { systems, featureNameToBucketInfo, updateFeatureNameToBucketInfo } =
+    props;
+  // For invariant variables across all systems, we can simply take from the first result
+  const systemNames = systems.map((system) => system.system_info.model_name);
+  const resultFirst = results[0];
+  const title = `${metric} by ${resultFirst.featureDescription}`;
+  const bucketNames = resultFirst.bucketNames;
+  const featureName = resultFirst.featureName;
+  const isBucketAdjustable = featureName in featureNameToBucketInfo;
+  let bucketSlider = null;
+  if (isBucketAdjustable) {
+    const bucketInfo = featureNameToBucketInfo[featureName];
+    const bucketRightBounds = bucketInfo.bounds;
+    if (bucketRightBounds !== undefined) {
+      const bucketMin = bucketInfo.min;
+      const bucketMax = bucketInfo.max;
+      const bucketStep = bucketMax - bucketMin <= 1.0 ? 0.01 : 1;
+      bucketSlider = (
+        <BucketSlider
+          min={bucketMin}
+          max={bucketMax}
+          marks={{
+            [bucketMin]: bucketMin.toFixed(2),
+            [bucketMax]: bucketMax.toFixed(2),
+          }}
+          step={bucketStep}
+          inputValues={bucketRightBounds}
+          onChange={(bounds) => {
+            updateFeatureNameToBucketInfo(featureName, {
+              min: bucketMin,
+              max: bucketMax,
+              bounds: bounds,
+              updated: true,
+            });
+          }}
+        />
+      );
+    }
+  }
+
+  // System-dependent variables must be taken from all systems
+  const resultsValues: number[][] = [];
+  const resultsNumbersOfSamples: number[][] = [];
+  const resultsConfidenceScores: Array<[number, number]>[] = [];
+  const resultsBucketsOfSamples: BucketCase[][][] = [];
+  for (const result of results) {
+    resultsNumbersOfSamples.push(result.numbersOfSamples);
+    resultsBucketsOfSamples.push(result.cases);
+    resultsValues.push(result.performances.map((perf) => perf.value));
+    resultsConfidenceScores.push(
+      result.performances.map((perf) => unwrapConfidence(perf))
+    );
+  }
+
+  return (
+    <Col span={colSpan} key={resultFirst.featureDescription}>
+      <BarChart
+        title={title}
+        seriesNames={systemNames}
+        xAxisData={bucketNames}
+        seriesDataList={resultsValues}
+        seriesLabelsList={resultsValues}
+        numbersOfSamplesList={resultsNumbersOfSamples}
+        confidenceScoresList={resultsConfidenceScores}
+        onBarClick={(barIndex: number, systemIndex: number) => {
+          // Get examples of a certain bucket from all systems
+          const bucketOfSamplesList = resultsBucketsOfSamples.map(
+            (bucketsOfSamples) => {
+              return bucketsOfSamples[barIndex];
+            }
+          );
+          setActiveSystemExamples({
+            title,
+            barIndex,
+            systemIndex,
+            bucketOfSamplesList,
+          });
+          // reset page number
+          setPage(0);
+        }}
+      />
+      {bucketSlider}
+    </Col>
+  );
+}
+
 export function createMetricPane(
   props: Props,
   metric: string,
@@ -233,109 +328,28 @@ export function createMetricPane(
   >,
   setPage: React.Dispatch<React.SetStateAction<number>>
 ) {
-  const {
-    systems,
-    metricToSystemAnalysesParsed,
-    featureKeyToBucketInfo,
-    updateFeatureKeyToBucketInfo,
-  } = props;
-  const systemNames = systems.map((system) => system.system_info.model_name);
+  const systemAnalysesParsed = props.metricToSystemAnalysesParsed[metric];
 
-  const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
   /*Get the parsed result from the first system for mapping.
-  FeatureKeys and descriptions are invariant information
+  FeatureNames and descriptions are invariant information
   */
-  const { resultsFineGrainedParsed, featureKeyToDescription } =
-    systemAnalysesParsed[0];
   return (
     <TabPane tab={metric} key={metric}>
       <Row>
         {
           // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
           // into columns. One column contains a single BarChart.
-          resultsFineGrainedParsed.map((resultFirst, resultIdx) => {
-            // For invariant variables across all systems, we can simply take from the first result
-            const title = `${resultFirst.metricName} by ${resultFirst.description}`;
-            const bucketNames = resultFirst.bucketNames;
-            const featureKey = resultFirst.featureKey;
-            const isBucketAdjustable = featureKey in featureKeyToBucketInfo;
-            let bucketSlider = null;
-            if (isBucketAdjustable) {
-              const bucketInfo = featureKeyToBucketInfo[featureKey];
-              const bucketRightBounds = bucketInfo.rightBounds;
-              if (bucketRightBounds !== undefined) {
-                const bucketMin = bucketInfo.min;
-                const bucketMax = bucketInfo.max;
-                const bucketStep = resultFirst.bucketStep;
-                bucketSlider = (
-                  <BucketSlider
-                    min={bucketMin}
-                    max={bucketMax}
-                    marks={{
-                      [bucketMin]: bucketMin.toFixed(2),
-                      [bucketMax]: bucketMax.toFixed(2),
-                    }}
-                    step={bucketStep}
-                    inputValues={bucketRightBounds}
-                    onChange={(rightBounds) => {
-                      updateFeatureKeyToBucketInfo(featureKey, {
-                        min: bucketMin,
-                        max: bucketMax,
-                        rightBounds: rightBounds,
-                        updated: true,
-                      });
-                    }}
-                  />
-                );
-              }
-            }
-
-            // System-dependent variables must be taken from all systems
-            const resultsValues: number[][] = [];
-            const resultsNumbersOfSamples: number[][] = [];
-            const resultsConfidenceScores: Array<[number, number]>[] = [];
-            const resultsBucketsOfSamples: BucketCase[][][] = [];
-            for (let i = 0; i < systemAnalysesParsed.length; i++) {
-              const result =
-                systemAnalysesParsed[i].resultsFineGrainedParsed[resultIdx];
-              resultsValues.push(result.values);
-              resultsNumbersOfSamples.push(result.numbersOfSamples);
-              resultsConfidenceScores.push(result.confidenceScores);
-              resultsBucketsOfSamples.push(result.bucketsOfSamples);
-            }
-
-            return (
-              <Col span={colSpan} key={resultFirst.description}>
-                <BarChart
-                  title={title}
-                  seriesNames={systemNames}
-                  xAxisData={bucketNames}
-                  seriesDataList={resultsValues}
-                  seriesLabelsList={resultsValues}
-                  numbersOfSamplesList={resultsNumbersOfSamples}
-                  confidenceScoresList={resultsConfidenceScores}
-                  onBarClick={(barIndex: number, systemIndex: number) => {
-                    // Get examples of a certain bucket from all systems
-                    const bucketOfSamplesList = resultsBucketsOfSamples.map(
-                      (bucketsOfSamples) => {
-                        return bucketsOfSamples[barIndex];
-                      }
-                    );
-                    setActiveSystemExamples({
-                      title,
-                      barIndex,
-                      systemIndex,
-                      featureKeyToDescription,
-                      bucketOfSamplesList,
-                    });
-                    // reset page number
-                    setPage(0);
-                  }}
-                />
-                {bucketSlider}
-              </Col>
-            );
-          })
+          Object.keys(systemAnalysesParsed).map((feature) =>
+            createFineGrainedBarChart(
+              props,
+              metric,
+              feature,
+              systemAnalysesParsed[feature],
+              colSpan,
+              setActiveSystemExamples,
+              setPage
+            )
+          )
         }
       </Row>
       {exampleTable}

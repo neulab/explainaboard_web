@@ -12,7 +12,7 @@ interface Props {
   marks: { [key: number]: string };
   step: number;
   inputValues: number[];
-  onChange: (rightBounds: number[]) => void;
+  onChange: (bounds: number[]) => void;
 }
 
 export function BucketSlider(props: Props) {

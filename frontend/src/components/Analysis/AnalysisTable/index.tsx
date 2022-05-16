@@ -4,14 +4,12 @@ import { ColumnsType } from "antd/lib/table";
 import { BucketCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
-import { SystemAnalysisParsed } from "../types";
 
 interface Props {
   systemID: string;
   task: string;
   // The latter type is for NER
   outputIDs: BucketCase[];
-  featureKeyToDescription: SystemAnalysisParsed["featureKeyToDescription"];
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -20,7 +18,6 @@ export function AnalysisTable({
   systemID,
   task,
   outputIDs,
-  featureKeyToDescription,
   page,
   setPage,
 }: Props) {
@@ -69,7 +66,7 @@ export function AnalysisTable({
     }
     refreshSystemOutputs();
     /* 
-    1st scroll scrolls to the table, which is likely still loading and 
+    1st scroll to the table, which is likely still loading and
     incomplete. This is needed so the scroll is immediate and 
     users will not experience a delay due to the async API call.
     */
@@ -81,10 +78,10 @@ export function AnalysisTable({
 
   // task NER
   if (task === "named-entity-recognition") {
-    for (const subFeatureKey of Object.keys(outputIDs[0])) {
+    for (const subFeatureName of Object.keys(outputIDs[0])) {
       columns.push({
-        dataIndex: subFeatureKey,
-        title: subFeatureKey,
+        dataIndex: subFeatureName,
+        title: subFeatureName,
         ellipsis: true,
       });
     }
@@ -116,7 +113,7 @@ export function AnalysisTable({
       }
       columns.push({
         dataIndex: systemOutputKey,
-        title: featureKeyToDescription[systemOutputKey] || systemOutputKey,
+        title: systemOutputKey,
         render: (value) =>
           typeof value === "number" ? (
             <div style={{ minWidth: "65px" }}>
