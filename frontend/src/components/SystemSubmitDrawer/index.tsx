@@ -120,7 +120,7 @@ export function SystemSubmitDrawer(props: Props) {
         system = await backendClient.systemsPost({
           metadata: {
             metric_names,
-            model_name: name,
+            system_name: name,
             paper_info: {},
             task: task,
             source_language,
@@ -144,7 +144,7 @@ export function SystemSubmitDrawer(props: Props) {
             dataset_metadata_id: datasetID,
             dataset_split: split,
             metric_names,
-            model_name: name,
+            system_name: name,
             paper_info: {},
             task: task,
             source_language,

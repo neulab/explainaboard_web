@@ -88,7 +88,7 @@ class SystemDBUtils:
         if ids:
             filt["_id"] = {"$in": [ObjectId(_id) for _id in ids]}
         if system_name:
-            filt["model_name"] = {"$regex": rf"^{system_name}.*"}
+            filt["system_name"] = {"$regex": rf"^{system_name}.*"}
         if task:
             filt["system_info.task_name"] = task
         if dataset_name:
