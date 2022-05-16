@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.1.1"
+  version: "0.1.2"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -455,7 +455,7 @@ components:
         task_name:
           type: string
           example: "text-classification"
-        model_name:
+        system_name:
           type: string
           example: "sst2-cnn"
         dataset_name:
@@ -533,7 +533,7 @@ components:
       required:
         [
           task_name,
-          model_name,
+          system_name,
           source_language,
           target_language,
           reload_stat,
@@ -675,7 +675,7 @@ components:
           type: string
           description: required if dataset_metadata_id specified
           example: test
-        model_name:
+        system_name:
           type: string
         metric_names:
           type: array
@@ -700,7 +700,7 @@ components:
         [
           task,
           is_private,
-          model_name,
+          system_name,
           metric_names,
           paper_info,
           source_language,

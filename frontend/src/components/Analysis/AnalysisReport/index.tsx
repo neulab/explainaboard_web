@@ -80,7 +80,7 @@ function createOverallBarChart(
 ) {
   const { systems, metricToSystemAnalysesParsed } = props;
   // TODO(gneubig): make this setting global somewhere
-  const systemNames = systems.map((system) => system.system_info.model_name);
+  const systemNames = systems.map((system) => system.system_info.system_name);
   const metricNames = Object.keys(metricToSystemAnalysesParsed);
 
   const resultsValues: number[][] = [];
@@ -186,7 +186,7 @@ function createExampleTable(
         >
           {systems.map((system, sysIndex) => {
             return (
-              <TabPane tab={system.system_info.model_name} key={`${sysIndex}`}>
+              <TabPane tab={system.system_info.system_name} key={`${sysIndex}`}>
                 <AnalysisTable
                   systemID={system.system_id}
                   task={task}
@@ -229,7 +229,7 @@ function createFineGrainedBarChart(
   const { systems, featureNameToBucketInfo, updateFeatureNameToBucketInfo } =
     props;
   // For invariant variables across all systems, we can simply take from the first result
-  const systemNames = systems.map((system) => system.system_info.model_name);
+  const systemNames = systems.map((system) => system.system_info.system_name);
   const resultFirst = results[0];
   const title = `${metric} by ${resultFirst.featureDescription}`;
   const bucketNames = resultFirst.bucketNames;
