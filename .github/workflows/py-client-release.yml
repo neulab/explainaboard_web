@@ -3,7 +3,12 @@ name: "Python API Client Release"
 on:
   push:
     branches: [main]
-    paths: ["openapi/openapi.yaml"]
+    paths:
+      [
+        "openapi/openapi.yaml",
+        ".github/workflows/py-client-release.yml",
+        "openapi/python_client_urllib3_templates/*",
+      ]
 
 jobs:
   build-and-release:
@@ -16,28 +21,33 @@ jobs:
         uses: actions/setup-python@v1
         with:
           python-version: 3.9
-      - name: Install dependencies
+
+      - name: "extract openapi version"
+        id: extract_version
+        run: |
+          version=$(sed -n "s/^  version: \"\(.*\)\"$/\1/p" openapi/openapi.yaml)
+          echo "::set-output name=version::$version"
+
+      - name: install dependencies
         run: |
           apt-get update && apt-get install -y default-jre
           pip install wheel
-      - name: Generate Python Client
+
+      - name: generate python client
         run: |
-          wget https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar -O swagger-codegen-cli-3.0.29.jar
-          java -jar swagger-codegen-cli-3.0.29.jar generate -i openapi/openapi.yaml -l python -o python_client -DpackageName=explainaboard_api_client
-      - name: "build"
+          wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/5.4.0/openapi-generator-cli-5.4.0.jar -O openapi-generator-cli.jar
+          java -jar openapi-generator-cli.jar generate -i openapi/openapi.yaml -g python -o python_client -t "openapi/python_client_urllib3_templates" "--additional-properties=packageName=explainaboard_api_client,packageVersion=${{ steps.extract_version.outputs.version }}"
+
+      - name: build
         run: |
           cd python_client
-          python setup.py bdist_wheel
+          pip install build
+          pip install .
+          python setup.py sdist bdist_wheel --universal
 
-      - name: "generate tag from SHA"
-        id: gen_tag
-        run: echo "::set-output name=tag::$(echo ${GITHUB_SHA} | cut -c1-7)"
-
-      - uses: "marvinpinto/action-automatic-releases@latest"
+      - name: Publish distribution 📦 to PyPI
+        uses: pypa/gh-action-pypi-publish@master
         with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ steps.gen_tag.outputs.tag }}"
-          title: "Python API Client"
-          prerelease: true
-          files: |
-            python_client/dist/*.whl
+          password: ${{ secrets.API_TOKEN_ALL }}
+          skip_existing: false
+          packages_dir: python_client/dist

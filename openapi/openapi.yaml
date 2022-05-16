@@ -231,15 +231,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                metadata:
-                  $ref: "#/components/schemas/SystemCreateProps"
-                system_output:
-                  $ref: "#/components/schemas/SystemOutputProps"
-                custom_dataset:
-                  $ref: "#/components/schemas/SystemOutputProps"
-              required: [metadata, system_output]
+              $ref: "#/components/schemas/SystemCreateProps"
       responses:
         "200":
           description: OK
@@ -351,7 +343,9 @@ paths:
                   auth_url:
                     type: string
                     format: url
-                required: [env, auth_url]
+                  api_version:
+                    type: string
+                required: [env, auth_url, api_version]
   /user:
     get:
       summary: get user info
@@ -658,6 +652,17 @@ components:
     SystemCreateProps:
       type: object
       properties:
+        metadata:
+          $ref: "#/components/schemas/SystemMetadata"
+        system_output:
+          $ref: "#/components/schemas/SystemOutputProps"
+        custom_dataset:
+          $ref: "#/components/schemas/SystemOutputProps"
+      required: [metadata, system_output]
+
+    SystemMetadata:
+      type: object
+      properties:
         task:
           type: string
           example: "text_classification"
@@ -691,7 +696,16 @@ components:
           format: url
         paper_info:
           $ref: "#/components/schemas/PaperInfo"
-      required: [task, is_private, system_name, metric_names, paper_info]
+      required:
+        [
+          task,
+          is_private,
+          system_name,
+          metric_names,
+          paper_info,
+          source_language,
+          target_language,
+        ]
 
     SystemOutputProps:
       type: object
