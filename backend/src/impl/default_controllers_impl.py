@@ -130,6 +130,7 @@ def systems_get(
     sort_field: str,
     sort_direction: str,
     creator: Optional[str],
+    shared_users: Optional[str],
 ) -> SystemsReturn:
     ids = None
     if not sort_field:
@@ -154,6 +155,7 @@ def systems_get(
         split,
         [(sort_field, dir)],
         creator,
+        shared_users,
     )
 
 
@@ -196,7 +198,10 @@ def systems_system_id_outputs_get(
     """
     sys = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
-    if not user.is_authenticated or (sys.is_private and sys.creator != user.email):
+    has_access = user.is_authenticated and (
+        sys.creator == user.email or f" {user.email} " in sys.shared_users
+    )
+    if sys.is_private and not has_access:
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(
@@ -232,6 +237,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     subdataset_name = None
     split = None
     creator = None
+    shared_users = None
     page = 0
     page_size = len(system_ids)
     sort = None
@@ -246,6 +252,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         split,
         sort,
         creator,
+        shared_users,
         include_metric_stats=True,
     ).systems
     systems_len = len(systems)

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import traceback
 from datetime import datetime
 from typing import Any, Optional
@@ -79,6 +80,7 @@ class SystemDBUtils:
         split: Optional[str],
         sort: Optional[list],
         creator: Optional[str],
+        shared_users: Optional[str],
         include_datasets: bool = True,
         include_metric_stats: bool = False,
     ) -> SystemsReturn:
@@ -99,9 +101,15 @@ class SystemDBUtils:
             filt["system_info.dataset_split"] = split
         if creator:
             filt["creator"] = creator
+        if shared_users:
+            escaped_shared = re.escape(shared_users)
+            filt["shared_users"] = {"shared_users": {"$regex": f" {escaped_shared} "}}
         filt["$or"] = [{"is_private": False}]
         if get_user().is_authenticated:
-            filt["$or"].append({"creator": get_user().email})
+            email = get_user().email
+            filt["$or"].append({"creator": email})
+            escaped_email = re.escape(email)
+            filt["$or"].append({"shared_users": {"$regex": f" {escaped_email} "}})
 
         cursor, total = DBUtils.find(
             DBUtils.DEV_SYSTEM_METADATA, filt, sort, page * page_size, page_size

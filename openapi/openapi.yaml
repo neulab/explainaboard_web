@@ -214,6 +214,11 @@ paths:
           schema:
             type: string
             description: email of the creator
+        - in: query
+          name: shared_users
+          schema:
+            type: string
+            description: space-separated list of emails with which the system is shared
 
       responses:
         "200":
@@ -727,6 +732,9 @@ components:
             creator:
               type: string
               description: user email
+            shared_users:
+              type: string
+              description: space-separated list of emails with which system is shared
             is_private:
               type: boolean
             system_info:
