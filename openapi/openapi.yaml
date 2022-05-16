@@ -612,23 +612,6 @@ components:
           required: [custom_dataset, system_output]
       required: [name, description, supported_metrics, supported_formats]
 
-    PaperInfo:
-      type: object
-      properties:
-        year:
-          type: integer
-        venue:
-          type: string
-        title:
-          type: string
-        author:
-          type: string
-        url:
-          type: string
-          format: uri
-        bib:
-          type: string
-
     SystemOutput:
       type: object
       properties:
@@ -674,6 +657,10 @@ components:
         is_private:
           type: boolean
           default: True
+        shared_users:
+          type: string
+          description: space-separated list of emails with which system is shared
+          example: "hello@gmail.com world@gmail.com"
         dataset_metadata_id:
           type: string
         dataset_split:
@@ -693,21 +680,15 @@ components:
         target_language:
           type: string
           example: en
-        code:
-          type: string
-          format: url
-        download_link:
-          type: string
-          format: url
-        paper_info:
-          $ref: "#/components/schemas/PaperInfo"
+        system_details:
+          type: object
+          description: a place to store arbitrary system details you want to remember
       required:
         [
           task,
           is_private,
           system_name,
           metric_names,
-          paper_info,
           source_language,
           target_language,
         ]
@@ -756,14 +737,9 @@ components:
                   items:
                     type: string
               required: [dataset_id, dataset_name, tasks]
-            paper_info:
-              $ref: "#/components/schemas/PaperInfo"
-            code:
-              type: string
-              format: url
-            download_link:
-              type: string
-              format: url
+            system_details:
+              type: object
+              description: a place to store arbitrary system details you want to remember
             active_features:
               description: Active features of a system, used in SDK's fine-grained analysis
               type: array
@@ -779,7 +755,6 @@ components:
               system_id,
               is_private,
               system_info,
-              paper_info,
               active_features,
               metric_stats,
             ]
@@ -830,8 +805,6 @@ components:
           type: string
           format: uri
           nullable: true
-        paper:
-          $ref: "#/components/schemas/PaperInfo"
         leaderboard:
           type: string
         person_of_contact:

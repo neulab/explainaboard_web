@@ -37,6 +37,9 @@ from pymongo.client_session import ClientSession
 
 
 class SystemDBUtils:
+
+    EMAIL_RE = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+
     @staticmethod
     def system_from_dict(
         dikt: dict[str, Any], include_metric_stats: bool = False
@@ -57,6 +60,19 @@ class SystemDBUtils:
                     )
                 document["dataset"] = dataset.to_dict()
             document.pop("dataset_metadata_id")
+
+        # Parse the shared users
+        shared_users = document.get("shared_users", "").strip()
+        if len(shared_users) == 0:
+            document.pop("shared_users", None)
+        else:
+            shared_list = shared_users.split()
+            for user in shared_list:
+                if not re.fullmatch(SystemDBUtils.EMAIL_RE, user):
+                    abort_with_error_message(
+                        400, f"invalid email address for shared user {user}"
+                    )
+            document["shared_users"] = " " + " ".join(shared_list) + " "
 
         metric_stats = []
         if "metric_stats" in document:

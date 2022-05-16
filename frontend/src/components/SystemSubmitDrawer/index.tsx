@@ -106,7 +106,7 @@ export function SystemSubmitDrawer(props: Props) {
     target_language,
     sys_out_file,
     custom_dataset_file,
-    code,
+    shared_users,
     is_private,
   }: FormData) {
     try {
@@ -121,11 +121,10 @@ export function SystemSubmitDrawer(props: Props) {
           metadata: {
             metric_names,
             system_name: name,
-            paper_info: {},
             task: task,
             source_language,
             target_language,
-            code,
+            shared_users,
             is_private,
           },
           system_output: {
@@ -145,12 +144,11 @@ export function SystemSubmitDrawer(props: Props) {
             dataset_split: split,
             metric_names,
             system_name: name,
-            paper_info: {},
             task: task,
             source_language,
             target_language,
-            code,
             is_private,
+            shared_users,
           },
           system_output: {
             data: systemOutBase64,
@@ -170,7 +168,7 @@ export function SystemSubmitDrawer(props: Props) {
         "metric_names",
         "source_language",
         "target_language",
-        "code",
+        "shared_users",
       ]);
     } catch (e) {
       if (e instanceof Response) {
@@ -258,6 +256,22 @@ export function SystemSubmitDrawer(props: Props) {
       if (value && value.datasetID && value.split) return Promise.resolve();
       else return Promise.reject("Dataset name and split are required");
     }
+  }
+
+  function validateSharedUsers(_: unknown, value: string) {
+    const trimmed = value.trim();
+    if (trimmed.length === 0) {
+      return Promise.resolve();
+    }
+    const users = trimmed.split(/\s+/);
+    const validRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    for (const user of users) {
+      if (!user.match(validRegex)) {
+        return Promise.reject(`${user} not a valid email`);
+      }
+    }
+    return Promise.resolve();
   }
 
   return (
@@ -389,6 +403,15 @@ export function SystemSubmitDrawer(props: Props) {
             <Checkbox />
           </Form.Item>
 
+          <Form.Item
+            name="shared_users"
+            label="Shared Users"
+            tooltip="Enter the email addresses of the users you'd like to share with, separated by spaces."
+            rules={[{ validator: validateSharedUsers }]}
+          >
+            <Input />
+          </Form.Item>
+
           <Row>
             <Col span={5}>&nbsp;</Col>
             <Col span={9}>
@@ -411,10 +434,6 @@ export function SystemSubmitDrawer(props: Props) {
               </Form.Item>
             </Col>
           </Row>
-
-          <Form.Item name="code" label="Source Code Link">
-            <Input type="url" />
-          </Form.Item>
         </Form>
       </Spin>
     </Drawer>
@@ -431,6 +450,6 @@ interface FormData {
   metric_names: string[];
   source_language: string;
   target_language: string;
-  code: string;
   is_private: boolean;
+  shared_users: string;
 }
