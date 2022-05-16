@@ -22,6 +22,8 @@ import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
 
+const { TextArea } = Input;
+
 interface Props extends DrawerProps {
   onClose: () => void;
   visible: boolean;
@@ -274,6 +276,10 @@ export function SystemSubmitDrawer(props: Props) {
     return Promise.resolve();
   }
 
+  const monospaceStyle = {
+    fontFamily: "monospace",
+  };
+
   return (
     <Drawer
       width="60%"
@@ -434,6 +440,42 @@ export function SystemSubmitDrawer(props: Props) {
               </Form.Item>
             </Col>
           </Row>
+          <Form.Item
+            name="system_details"
+            label="System Details"
+            tooltip={
+              <>
+                <p>
+                  Enter any details you want to record about the system. This
+                  can be done in one of two formats.
+                </p>
+                <p>
+                  <b>- Colon Separated -</b>
+                  <br />
+                  <div style={monospaceStyle}>
+                    url: https://...
+                    <br />
+                    arch: transformer
+                  </div>
+                </p>
+                <p>
+                  <b>- JSON -</b>
+                  <br />
+                  <div style={monospaceStyle}>
+                    &#123;
+                    <br />
+                    &nbsp;&quot;url&quot;: &quot;https://...&quot;,
+                    <br />
+                    &nbsp;&quot;arch&quot;: &quot;transformer&quot;
+                    <br />
+                    &#125;
+                  </div>
+                </p>
+              </>
+            }
+          >
+            <TextArea rows={3} />
+          </Form.Item>
         </Form>
       </Spin>
     </Drawer>
