@@ -93,11 +93,11 @@ class SystemDBUtils:
             document.pop("dataset_metadata_id")
 
         # Parse the shared users
-        shared_users = document.get("shared_users", "").strip()
-        if len(shared_users) == 0:
+        shared_users = document.get("shared_users", None)
+        if shared_users is None or len(shared_users) == 0:
             document.pop("shared_users", None)
         else:
-            shared_list = shared_users.split()
+            shared_list = shared_users.strip().split()
             for user in shared_list:
                 if not re.fullmatch(SystemDBUtils._EMAIL_RE, user):
                     abort_with_error_message(

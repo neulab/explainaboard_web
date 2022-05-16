@@ -110,6 +110,7 @@ export function SystemSubmitDrawer(props: Props) {
     custom_dataset_file,
     shared_users,
     is_private,
+    system_details,
   }: FormData) {
     try {
       setState(State.loading);
@@ -126,8 +127,9 @@ export function SystemSubmitDrawer(props: Props) {
             task: task,
             source_language,
             target_language,
-            shared_users,
             is_private,
+            shared_users,
+            system_details,
           },
           system_output: {
             data: systemOutBase64,
@@ -151,6 +153,7 @@ export function SystemSubmitDrawer(props: Props) {
             target_language,
             is_private,
             shared_users,
+            system_details,
           },
           system_output: {
             data: systemOutBase64,
@@ -261,6 +264,9 @@ export function SystemSubmitDrawer(props: Props) {
   }
 
   function validateSharedUsers(_: unknown, value: string) {
+    if (value === undefined) {
+      return Promise.resolve();
+    }
     const trimmed = value.trim();
     if (trimmed.length === 0) {
       return Promise.resolve();
@@ -493,5 +499,6 @@ interface FormData {
   source_language: string;
   target_language: string;
   is_private: boolean;
+  system_details: string;
   shared_users: string;
 }
