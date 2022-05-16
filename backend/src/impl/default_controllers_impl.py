@@ -3,6 +3,7 @@ from __future__ import annotations
 import binascii
 import dataclasses
 import os
+from functools import lru_cache
 from typing import Optional, cast
 
 from explainaboard import (
@@ -26,10 +27,10 @@ from explainaboard_web.models import DatasetMetadata
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
+from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system_info import SystemInfo
 from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
-from explainaboard_web.models.systems_body import SystemsBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
@@ -39,10 +40,20 @@ from pymongo import ASCENDING, DESCENDING
 """ /info """
 
 
+@lru_cache(maxsize=None)
 def info_get():
+    api_version = None
+    with open("explainaboard_web/swagger/swagger.yaml") as f:
+        for line in f:
+            if line.startswith("  version: "):
+                api_version = line[len("version: ") + 1 : -1].strip()
+                break
+    if not api_version:
+        raise RuntimeError("failed to extract API version")
     return {
         "env": os.getenv("FLASK_ENV"),
         "auth_url": current_app.config.get("AUTH_URL"),
+        "api_version": api_version,
     }
 
 
@@ -146,7 +157,7 @@ def systems_get(
     )
 
 
-def systems_post(body: SystemsBody) -> System:
+def systems_post(body: SystemCreateProps) -> System:
     """
     aborts with error if fails
     TODO: error handling
