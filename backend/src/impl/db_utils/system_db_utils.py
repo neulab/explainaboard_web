@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import traceback
 from datetime import datetime
@@ -38,7 +39,37 @@ from pymongo.client_session import ClientSession
 
 class SystemDBUtils:
 
-    EMAIL_RE = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+    _EMAIL_RE = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+    _COLON_RE = r"^([A-Za-z0-9_-]+): (.+)$"
+
+    @staticmethod
+    def _parse_colon_line(line) -> tuple[str, str]:
+        m = re.fullmatch(SystemDBUtils._COLON_RE, line)
+        if m is None:
+            abort_with_error_message(
+                400, f"poorly formatted system_details line {line}"
+            )
+            return "", ""  # to placate mypy, which doesn't recognize "abort"
+        else:
+            return m.group(1), m.group(2)
+
+    @staticmethod
+    def _parse_system_details(system_details) -> dict | None:
+        if isinstance(system_details, str):
+            if len(system_details.strip()) == 0:
+                system_details = None
+            else:
+                try:
+                    system_details = json.loads(system_details)
+                except Exception:
+                    system_details = [
+                        SystemDBUtils._parse_colon_line(line)
+                        for line in system_details.split("\n")
+                    ]
+                    system_details = {k: v for k, v in system_details}
+        if not (system_details is None or isinstance(system_details, dict)):
+            abort_with_error_message(400, "poorly formatted system_details")
+        return system_details
 
     @staticmethod
     def system_from_dict(
@@ -68,11 +99,16 @@ class SystemDBUtils:
         else:
             shared_list = shared_users.split()
             for user in shared_list:
-                if not re.fullmatch(SystemDBUtils.EMAIL_RE, user):
+                if not re.fullmatch(SystemDBUtils._EMAIL_RE, user):
                     abort_with_error_message(
                         400, f"invalid email address for shared user {user}"
                     )
             document["shared_users"] = " " + " ".join(shared_list) + " "
+
+        # Parse the system details
+        document["system_details"] = SystemDBUtils._parse_system_details(
+            document.get("system_details")
+        )
 
         metric_stats = []
         if "metric_stats" in document:
