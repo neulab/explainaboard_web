@@ -13,6 +13,8 @@ the example of an identity transformation over the system info DB.
 
 def modify_entry(entry_in):
     entry_out = copy.deepcopy(entry_in)
+    entry_out["metric_stats"] = []
+    print(entry_out)
     # Make any modifications here
     return entry_out
 

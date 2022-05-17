@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import re
 import traceback
 from datetime import datetime
 from typing import Any, Optional
@@ -36,6 +38,36 @@ from pymongo.client_session import ClientSession
 
 
 class SystemDBUtils:
+
+    _EMAIL_RE = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+    _COLON_RE = r"^([A-Za-z0-9_-]+): (.+)$"
+
+    @staticmethod
+    def _parse_colon_line(line) -> tuple[str, str]:
+        m = re.fullmatch(SystemDBUtils._COLON_RE, line)
+        if m is None:
+            abort_with_error_message(
+                400, f"poorly formatted system_details line {line}"
+            )
+            return "", ""  # to placate mypy, which doesn't recognize "abort"
+        else:
+            return m.group(1), m.group(2)
+
+    @staticmethod
+    def _parse_system_details(system_details: str) -> dict | None:
+        if len(system_details.strip()) == 0:
+            ret = None
+        else:
+            try:
+                ret = json.loads(system_details)
+            except Exception:
+                ret_list = [
+                    SystemDBUtils._parse_colon_line(line)
+                    for line in system_details.split("\n")
+                ]
+                ret = {k: v for k, v in ret_list}
+        return ret
+
     @staticmethod
     def system_from_dict(
         dikt: dict[str, Any], include_metric_stats: bool = False
@@ -56,6 +88,17 @@ class SystemDBUtils:
                     )
                 document["dataset"] = dataset.to_dict()
             document.pop("dataset_metadata_id")
+
+        # Parse the shared users
+        shared_users = document.get("shared_users", None)
+        if shared_users is None or len(shared_users) == 0:
+            document.pop("shared_users", None)
+        else:
+            for user in shared_users:
+                if not re.fullmatch(SystemDBUtils._EMAIL_RE, user):
+                    abort_with_error_message(
+                        400, f"invalid email address for shared user {user}"
+                    )
 
         metric_stats = []
         if "metric_stats" in document:
@@ -79,6 +122,7 @@ class SystemDBUtils:
         split: Optional[str],
         sort: Optional[list],
         creator: Optional[str],
+        shared_users: Optional[list[str]],
         include_datasets: bool = True,
         include_metric_stats: bool = False,
     ) -> SystemsReturn:
@@ -99,9 +143,13 @@ class SystemDBUtils:
             filt["system_info.dataset_split"] = split
         if creator:
             filt["creator"] = creator
+        if shared_users:
+            filt["shared_users"] = {"shared_users": shared_users}
         filt["$or"] = [{"is_private": False}]
         if get_user().is_authenticated:
-            filt["$or"].append({"creator": get_user().email})
+            email = get_user().email
+            filt["$or"].append({"creator": email})
+            filt["$or"].append({"shared_users": email})
 
         cursor, total = DBUtils.find(
             DBUtils.DEV_SYSTEM_METADATA, filt, sort, page * page_size, page_size
@@ -162,7 +210,20 @@ class SystemDBUtils:
             (metadata + sufficient statistics + overall analysis)
           6. write to system_outputs
         """
-        system = SystemDBUtils.system_from_dict(metadata.to_dict())
+
+        # Parse the system details if getting a string from the frontend
+        document = metadata.to_dict()
+        if (
+            document.get("system_details")
+            and "__TO_PARSE__" in document["system_details"]
+        ):
+            parsed = SystemDBUtils._parse_system_details(
+                document["system_details"]["__TO_PARSE__"]
+            )
+            metadata.system_details = parsed
+            document["system_details"] = parsed
+
+        system = SystemDBUtils.system_from_dict(document)
 
         user = get_user()
         system.creator = user.email

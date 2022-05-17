@@ -22,6 +22,8 @@ import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
 
+const { TextArea } = Input;
+
 interface Props extends DrawerProps {
   onClose: () => void;
   visible: boolean;
@@ -106,8 +108,9 @@ export function SystemSubmitDrawer(props: Props) {
     target_language,
     sys_out_file,
     custom_dataset_file,
-    code,
+    shared_users,
     is_private,
+    system_details,
   }: FormData) {
     try {
       setState(State.loading);
@@ -121,12 +124,12 @@ export function SystemSubmitDrawer(props: Props) {
           metadata: {
             metric_names,
             system_name: name,
-            paper_info: {},
             task: task,
             source_language,
             target_language,
-            code,
             is_private,
+            shared_users,
+            system_details: { __TO_PARSE__: system_details },
           },
           system_output: {
             data: systemOutBase64,
@@ -145,12 +148,12 @@ export function SystemSubmitDrawer(props: Props) {
             dataset_split: split,
             metric_names,
             system_name: name,
-            paper_info: {},
             task: task,
             source_language,
             target_language,
-            code,
             is_private,
+            shared_users,
+            system_details: { __TO_PARSE__: system_details },
           },
           system_output: {
             data: systemOutBase64,
@@ -170,7 +173,8 @@ export function SystemSubmitDrawer(props: Props) {
         "metric_names",
         "source_language",
         "target_language",
-        "code",
+        "shared_users",
+        "system_details",
       ]);
     } catch (e) {
       if (e instanceof Response) {
@@ -259,6 +263,21 @@ export function SystemSubmitDrawer(props: Props) {
       else return Promise.reject("Dataset name and split are required");
     }
   }
+
+  function validateSharedUsers(_: unknown, users: string[]) {
+    const validRegex =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
+    for (const user of users) {
+      if (!user.match(validRegex)) {
+        return Promise.reject(`${user} not a valid email`);
+      }
+    }
+    return Promise.resolve();
+  }
+
+  const monospaceStyle = {
+    fontFamily: "monospace",
+  };
 
   return (
     <Drawer
@@ -389,6 +408,15 @@ export function SystemSubmitDrawer(props: Props) {
             <Checkbox />
           </Form.Item>
 
+          <Form.Item
+            name="shared_users"
+            label="Shared Users"
+            tooltip="Enter the email addresses of the users you'd like to share with, pressing enter after each one."
+            rules={[{ validator: validateSharedUsers }]}
+          >
+            <Select mode="tags" />
+          </Form.Item>
+
           <Row>
             <Col span={5}>&nbsp;</Col>
             <Col span={9}>
@@ -411,9 +439,41 @@ export function SystemSubmitDrawer(props: Props) {
               </Form.Item>
             </Col>
           </Row>
-
-          <Form.Item name="code" label="Source Code Link">
-            <Input type="url" />
+          <Form.Item
+            name="system_details"
+            label="System Details"
+            tooltip={
+              <>
+                <p>
+                  Enter any details you want to record about the system. This
+                  can be done in one of two formats.
+                </p>
+                <p>
+                  <b>- Colon Separated -</b>
+                  <br />
+                  <div style={monospaceStyle}>
+                    url: https://...
+                    <br />
+                    arch: transformer
+                  </div>
+                </p>
+                <p>
+                  <b>- JSON -</b>
+                  <br />
+                  <div style={monospaceStyle}>
+                    &#123;
+                    <br />
+                    &nbsp;&quot;url&quot;: &quot;https://...&quot;,
+                    <br />
+                    &nbsp;&quot;arch&quot;: &quot;transformer&quot;
+                    <br />
+                    &#125;
+                  </div>
+                </p>
+              </>
+            }
+          >
+            <TextArea rows={3} />
           </Form.Item>
         </Form>
       </Spin>
@@ -431,6 +491,7 @@ interface FormData {
   metric_names: string[];
   source_language: string;
   target_language: string;
-  code: string;
   is_private: boolean;
+  system_details: string;
+  shared_users: string[];
 }
