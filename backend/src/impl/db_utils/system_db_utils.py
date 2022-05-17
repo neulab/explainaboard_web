@@ -94,13 +94,11 @@ class SystemDBUtils:
         if shared_users is None or len(shared_users) == 0:
             document.pop("shared_users", None)
         else:
-            shared_list = shared_users.strip().split()
-            for user in shared_list:
+            for user in shared_users:
                 if not re.fullmatch(SystemDBUtils._EMAIL_RE, user):
                     abort_with_error_message(
                         400, f"invalid email address for shared user {user}"
                     )
-            document["shared_users"] = " " + " ".join(shared_list) + " "
 
         metric_stats = []
         if "metric_stats" in document:
@@ -124,7 +122,7 @@ class SystemDBUtils:
         split: Optional[str],
         sort: Optional[list],
         creator: Optional[str],
-        shared_users: Optional[str],
+        shared_users: Optional[list[str]],
         include_datasets: bool = True,
         include_metric_stats: bool = False,
     ) -> SystemsReturn:
@@ -146,14 +144,12 @@ class SystemDBUtils:
         if creator:
             filt["creator"] = creator
         if shared_users:
-            escaped_shared = re.escape(shared_users)
-            filt["shared_users"] = {"shared_users": {"$regex": f" {escaped_shared} "}}
+            filt["shared_users"] = {"shared_users": shared_users}
         filt["$or"] = [{"is_private": False}]
         if get_user().is_authenticated:
             email = get_user().email
             filt["$or"].append({"creator": email})
-            escaped_email = re.escape(email)
-            filt["$or"].append({"shared_users": {"$regex": f" {escaped_email} "}})
+            filt["$or"].append({"shared_users": email})
 
         cursor, total = DBUtils.find(
             DBUtils.DEV_SYSTEM_METADATA, filt, sort, page * page_size, page_size

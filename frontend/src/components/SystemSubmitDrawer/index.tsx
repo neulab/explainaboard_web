@@ -264,15 +264,7 @@ export function SystemSubmitDrawer(props: Props) {
     }
   }
 
-  function validateSharedUsers(_: unknown, value: string) {
-    if (value === undefined) {
-      return Promise.resolve();
-    }
-    const trimmed = value.trim();
-    if (trimmed.length === 0) {
-      return Promise.resolve();
-    }
-    const users = trimmed.split(/\s+/);
+  function validateSharedUsers(_: unknown, users: string[]) {
     const validRegex =
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
     for (const user of users) {
@@ -419,10 +411,10 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="shared_users"
             label="Shared Users"
-            tooltip="Enter the email addresses of the users you'd like to share with, separated by spaces."
+            tooltip="Enter the email addresses of the users you'd like to share with, pressing enter after each one."
             rules={[{ validator: validateSharedUsers }]}
           >
-            <Input />
+            <Select mode="tags" />
           </Form.Item>
 
           <Row>
@@ -501,5 +493,5 @@ interface FormData {
   target_language: string;
   is_private: boolean;
   system_details: string;
-  shared_users: string;
+  shared_users: string[];
 }

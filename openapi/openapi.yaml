@@ -217,8 +217,10 @@ paths:
         - in: query
           name: shared_users
           schema:
-            type: string
-            description: space-separated list of emails with which the system is shared
+            type: array
+            items:
+              type: string
+            description: list of emails with whom the system is shared
 
       responses:
         "200":
@@ -658,9 +660,11 @@ components:
           type: boolean
           default: True
         shared_users:
-          type: string
+          type: array
+          items:
+            type: string
           description: space-separated list of emails with which system is shared
-          example: "hello@gmail.com world@gmail.com"
+          example: ["hello@gmail.com", "world@gmail.com"]
         dataset_metadata_id:
           type: string
         dataset_split:
@@ -714,8 +718,10 @@ components:
               type: string
               description: user email
             shared_users:
-              type: string
-              description: space-separated list of emails with which system is shared
+              type: array
+              items:
+                type: string
+              description: list of emails with which system is shared
             is_private:
               type: boolean
             system_info:

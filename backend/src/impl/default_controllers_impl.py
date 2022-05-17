@@ -130,7 +130,7 @@ def systems_get(
     sort_field: str,
     sort_direction: str,
     creator: Optional[str],
-    shared_users: Optional[str],
+    shared_users: Optional[list[str]],
 ) -> SystemsReturn:
     ids = None
     if not sort_field:
@@ -199,7 +199,7 @@ def systems_system_id_outputs_get(
     sys = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
     has_access = user.is_authenticated and (
-        sys.creator == user.email or f" {user.email} " in sys.shared_users
+        sys.creator == user.email or user.email in sys.shared_users
     )
     if sys.is_private and not has_access:
         abort_with_error_message(403, "system access denied", 40302)
