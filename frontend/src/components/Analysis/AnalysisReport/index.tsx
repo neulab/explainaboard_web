@@ -172,7 +172,8 @@ function createExampleTable(
       />
     );
     // pairwise analysis
-  } else if (systems.length === 2) {
+  // } else if (systems.length === 2) {
+  } else  {
     exampleTable = (
       <Space style={{ width: "fit-content" }}>
         <Tabs

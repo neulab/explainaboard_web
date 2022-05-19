@@ -106,6 +106,34 @@ export function SystemTableTools({
         <Tooltip title={tooltipMessage}>{analysisButton}</Tooltip>
       );
     }
+    // three or more systems
+  }else  {
+    let disabled = false;
+    let warning = false;
+    let tooltipMessage = "";
+    if (selectedSystemDatasetNames.has("unspecified")) {
+      warning = true;
+      tooltipMessage =
+        "Unspecified dataset name detected. Proceed if you are certain the systems use the same dataset.";
+    } else if (selectedSystemDatasetNames.size > 1) {
+      disabled = true;
+      tooltipMessage =
+        "Cannot perform pairwise analysis on systems with different dataset names.";
+    }
+    analysisButton = (
+      <Button
+        disabled={disabled}
+        onClick={() => setActiveSystemIDs(selectedSystemIDs)}
+      >
+        Multiple System Analysis
+        {warning && <WarningOutlined />}
+      </Button>
+    );
+    if (tooltipMessage !== "") {
+      analysisButton = (
+        <Tooltip title={tooltipMessage}>{analysisButton}</Tooltip>
+      );
+    }
   }
 
   return (
