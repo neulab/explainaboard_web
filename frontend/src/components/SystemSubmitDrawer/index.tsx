@@ -265,6 +265,9 @@ export function SystemSubmitDrawer(props: Props) {
   }
 
   function validateSharedUsers(_: unknown, users: string[]) {
+    if (users === undefined) {
+      return Promise.resolve();
+    }
     const validRegex =
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
     for (const user of users) {
