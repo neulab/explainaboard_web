@@ -29,7 +29,7 @@ from explainaboard_web.impl.utils import (
 from explainaboard_web.models import (
     DatasetMetadata,
     System,
-    SystemCreateProps,
+    SystemMetadata,
     SystemOutput,
     SystemOutputProps,
     SystemOutputsReturn,
@@ -197,7 +197,7 @@ class SystemDBUtils:
 
     @staticmethod
     def create_system(
-        metadata: SystemCreateProps,
+        metadata: SystemMetadata,
         system_output: SystemOutputProps,
         custom_dataset: SystemOutputProps | None = None,
     ) -> System:
