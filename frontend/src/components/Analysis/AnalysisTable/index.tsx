@@ -15,7 +15,7 @@ interface Props {
 
 function renderColInfo(
   columns: ColumnsType<SystemOutput>,
-  col_info: { [key: string]: string | undefined }[]
+  colInfo: { [key: string]: string | undefined }[]
 ) {
   // example ID
   columns.push({
@@ -29,50 +29,14 @@ function renderColInfo(
     ),
   });
 
-  for (const col of col_info) {
+  for (const col of colInfo) {
+    if (col["name"] == "id") {
+      continue;
+    }
     const maxWidth = col["maxWidth"] !== undefined ? col["maxWidth"] : "170px";
     columns.push({
       dataIndex: col["id"],
       title: col["name"],
-      render: (value) => (
-        <Typography.Paragraph
-          ellipsis={{ rows: 3, tooltip: true, expandable: true }}
-          style={{ marginBottom: 0, minWidth: "80px", maxWidth: maxWidth }}
-        >
-          {value}
-        </Typography.Paragraph>
-      ),
-    });
-  }
-}
-
-function specifyDataGeneric(
-  systemOutputs: SystemOutput[],
-  columns: ColumnsType<SystemOutput>,
-  column_names: string[] | undefined = undefined
-): { [key: string]: string }[] {
-  // example ID
-  columns.push({
-    dataIndex: "id",
-    title: "ID",
-    fixed: "left",
-    render: (value) => (
-      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-        {value}
-      </Typography.Paragraph>
-    ),
-  });
-
-  const systemOutputFirst = systemOutputs[0];
-  column_names =
-    column_names !== undefined ? column_names : Object.keys(systemOutputFirst);
-  for (const systemOutputKey of column_names) {
-    if (systemOutputKey === "id") {
-      continue;
-    }
-    columns.push({
-      dataIndex: systemOutputKey,
-      title: systemOutputKey,
       render: (value) =>
         typeof value === "number" ? (
           <div style={{ minWidth: "65px" }}>
@@ -81,13 +45,30 @@ function specifyDataGeneric(
         ) : (
           <Typography.Paragraph
             ellipsis={{ rows: 3, tooltip: true, expandable: true }}
-            style={{ marginBottom: 0, minWidth: "80px", maxWidth: "170px" }}
+            style={{ marginBottom: 0, minWidth: "80px", maxWidth: maxWidth }}
           >
             {value}
           </Typography.Paragraph>
         ),
     });
   }
+}
+
+function specifyDataGeneric(
+  systemOutputs: SystemOutput[],
+  columns: ColumnsType<SystemOutput>,
+  colInfo: { [key: string]: string }[] | undefined = undefined
+): { [key: string]: string }[] {
+  const systemOutputFirst = systemOutputs[0];
+
+  colInfo =
+    colInfo !== undefined
+      ? colInfo
+      : Object.keys(systemOutputFirst).map((x) => {
+          return { id: x, name: x };
+        });
+  renderColInfo(columns, colInfo);
+
   // clone the system output for modification
   return systemOutputs.map(function (systemOutput) {
     const processedSystemOutput = { ...systemOutput };
@@ -256,10 +237,31 @@ export function AnalysisTable({
   ];
 
   let dataSource: { [p: string]: any }[];
+  let colInfo;
   if (seqLabTasks.includes(task)) {
     dataSource = specifyDataSeqLab(systemOutputs, outputIDs, columns);
   } else if (condgenTasks.includes(task)) {
-    dataSource = specifyDataGeneric(systemOutputs, columns);
+    colInfo = [
+      { id: "source", name: "Source", maxWidth: "500px" },
+      { id: "reference", name: "Reference", maxWidth: "500px" },
+      { id: "hypothesis", name: "Hypothesis", maxWidth: "500px" },
+    ];
+    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
+  } else if (task == "text-classification") {
+    colInfo = [
+      { id: "true_label", name: "True Label" },
+      { id: "predicted_label", name: "Predicted Label" },
+      { id: "text", name: "Text", maxWidth: "800px" },
+    ];
+    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
+  } else if (task == "text-pair-classification") {
+    colInfo = [
+      { id: "true_label", name: "True Label" },
+      { id: "predicted_label", name: "Predicted Label" },
+      { id: "text1", name: "Text 1", maxWidth: "500px" },
+      { id: "text2", name: "Text 2", maxWidth: "500px" },
+    ];
+    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
   } else {
     dataSource = specifyDataGeneric(systemOutputs, columns);
   }
