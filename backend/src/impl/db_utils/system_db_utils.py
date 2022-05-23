@@ -17,6 +17,7 @@ from explainaboard import (
     get_processor,
 )
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
+from explainaboard.utils.serialization import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBCollection, DBUtils
@@ -327,9 +328,9 @@ class SystemDBUtils:
                     db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str(system_db_id)
                 )
                 DBUtils.drop(output_collection)
-                DBUtils.insert_many(
-                    output_collection, list(system_output_data.samples), False, session
-                )
+                sample_list = [general_to_dict(v) for v in system_output_data.samples]
+                print(f"sample_list[0]={sample_list[0]}")
+                DBUtils.insert_many(output_collection, sample_list, False, session)
                 return system_db_id
 
             system_id = DBUtils.execute_transaction(db_operations)
