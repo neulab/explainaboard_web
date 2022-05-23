@@ -14,6 +14,65 @@ interface Props {
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
 
+function specifyDataGeneric(
+  systemOutputs: SystemOutput[],
+  columns: ColumnsType<SystemOutput>
+) {
+  // example ID
+  columns.push({
+    dataIndex: "id",
+    title: "ID",
+    fixed: "left",
+    render: (value) => (
+      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
+        {value}
+      </Typography.Paragraph>
+    ),
+  });
+
+  const systemOutputFirst = systemOutputs[0];
+  for (const systemOutputKey of Object.keys(systemOutputFirst)) {
+    if (systemOutputKey === "id") {
+      continue;
+    }
+    columns.push({
+      dataIndex: systemOutputKey,
+      title: systemOutputKey,
+      render: (value) =>
+        typeof value === "number" ? (
+          <div style={{ minWidth: "65px" }}>
+            <Tooltip title={value}>{Math.round(value * 1e6) / 1e6}</Tooltip>
+          </div>
+        ) : (
+          <Typography.Paragraph
+            ellipsis={{ rows: 3, tooltip: true, expandable: true }}
+            style={{ marginBottom: 0, minWidth: "80px", maxWidth: "170px" }}
+          >
+            {value}
+          </Typography.Paragraph>
+        ),
+    });
+  }
+  // clone the system output for modification
+  return systemOutputs.map(function (systemOutput) {
+    const processedSystemOutput = { ...systemOutput };
+    for (const [key, output] of Object.entries(systemOutput)) {
+      /*Task like QA have object output besides string and number.
+        For now we serialize the object to a displayable string.
+        TODO: unnest or use a nested table
+      */
+      if (typeof output === "object") {
+        processedSystemOutput[key] = Object.entries(output)
+          .map(([subKey, subOutput]) => {
+            return `${subKey}: ${subOutput}`;
+          })
+          .join("\n");
+      }
+    }
+    return processedSystemOutput;
+  });
+}
+
 export function AnalysisTable({
   systemID,
   task,
@@ -73,68 +132,20 @@ export function AnalysisTable({
     tableRef.current?.scrollIntoView();
   }, [systemID, outputIDString, page, pageSize]);
 
-  const columns: ColumnsType<SystemOutput> = [];
-
-  // example ID
-  columns.push({
-    dataIndex: "id",
-    title: "ID",
-    fixed: "left",
-    render: (value) => (
-      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-        {value}
-      </Typography.Paragraph>
-    ),
-  });
-
   // other fields
-  if (systemOutputs.length == 0) {
+  if (systemOutputs.length === 0) {
     return <div>No system outputs found.</div>;
   }
-  const systemOutputFirst = systemOutputs[0];
-  for (const systemOutputKey of Object.keys(systemOutputFirst)) {
-    if (systemOutputKey === "id") {
-      continue;
-    }
-    columns.push({
-      dataIndex: systemOutputKey,
-      title: systemOutputKey,
-      render: (value) =>
-        typeof value === "number" ? (
-          <div style={{ minWidth: "65px" }}>
-            <Tooltip title={value}>{Math.round(value * 1e6) / 1e6}</Tooltip>
-          </div>
-        ) : (
-          <Typography.Paragraph
-            ellipsis={{ rows: 3, tooltip: true, expandable: true }}
-            style={{ marginBottom: 0, minWidth: "80px", maxWidth: "170px" }}
-          >
-            {value}
-          </Typography.Paragraph>
-        ),
-    });
-  }
-  // clone the system output for modification
-  const dataSource = systemOutputs.map(function (systemOutput) {
-    const processedSystemOutput = { ...systemOutput };
-    for (const [key, output] of Object.entries(systemOutput)) {
-      /*Task like QA have object output besides string and number.
-        For now we serialize the object to a displayable string.
-        TODO: unnest or use a nested table
-      */
-      if (typeof output === "object") {
-        const processedOutput = Object.entries(output)
-          .map(([subKey, subOutput]) => {
-            return `${subKey}: ${subOutput}`;
-          })
-          .join("\n");
-        processedSystemOutput[key] = processedOutput;
-      }
-    }
-    return processedSystemOutput;
-  });
 
-  // TODO scroll to the bottom after rendered?
+  const columns: ColumnsType<SystemOutput> = [];
+
+  let dataSource: { [p: string]: any }[];
+  if (task === "named-entity-recognition") {
+    dataSource = specifyDataGeneric(systemOutputs, columns);
+  } else {
+    dataSource = specifyDataGeneric(systemOutputs, columns);
+  }
+
   return (
     <Table
       ref={tableRef}
