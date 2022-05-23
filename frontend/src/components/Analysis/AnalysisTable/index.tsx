@@ -8,15 +8,14 @@ import { PageState } from "../../../utils";
 interface Props {
   systemID: string;
   task: string;
-  // The latter type is for NER
   outputIDs: BucketCase[];
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
 
-function specifyDataGeneric(
-  systemOutputs: SystemOutput[],
-  columns: ColumnsType<SystemOutput>
+function renderColInfo(
+  columns: ColumnsType<SystemOutput>,
+  col_info: { [key: string]: string | undefined }[]
 ) {
   // example ID
   columns.push({
@@ -30,8 +29,44 @@ function specifyDataGeneric(
     ),
   });
 
+  for (const col of col_info) {
+    const maxWidth = col["maxWidth"] !== undefined ? col["maxWidth"] : "170px";
+    columns.push({
+      dataIndex: col["id"],
+      title: col["name"],
+      render: (value) => (
+        <Typography.Paragraph
+          ellipsis={{ rows: 3, tooltip: true, expandable: true }}
+          style={{ marginBottom: 0, minWidth: "80px", maxWidth: maxWidth }}
+        >
+          {value}
+        </Typography.Paragraph>
+      ),
+    });
+  }
+}
+
+function specifyDataGeneric(
+  systemOutputs: SystemOutput[],
+  columns: ColumnsType<SystemOutput>,
+  column_names: string[] | undefined = undefined
+): { [key: string]: string }[] {
+  // example ID
+  columns.push({
+    dataIndex: "id",
+    title: "ID",
+    fixed: "left",
+    render: (value) => (
+      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
+        {value}
+      </Typography.Paragraph>
+    ),
+  });
+
   const systemOutputFirst = systemOutputs[0];
-  for (const systemOutputKey of Object.keys(systemOutputFirst)) {
+  column_names =
+    column_names !== undefined ? column_names : Object.keys(systemOutputFirst);
+  for (const systemOutputKey of column_names) {
     if (systemOutputKey === "id") {
       continue;
     }
@@ -71,6 +106,76 @@ function specifyDataGeneric(
     }
     return processedSystemOutput;
   });
+}
+
+function specifyDataSeqLab(
+  systemOutputs: SystemOutput[],
+  outputIDs: BucketCase[],
+  columns: ColumnsType<SystemOutput>
+): { [key: string]: string }[] {
+  const dataSource: { [key: string]: string }[] = [];
+
+  // This is a feature defined over individual entities
+  if ("token_span" in outputIDs[0]) {
+    const col_info = [
+      { id: "span", name: "Span Text" },
+      { id: "true_label", name: "True Label" },
+      { id: "pred_label", name: "Predicted Label" },
+      { id: "sentence", name: "Sentence", maxWidth: "800px" },
+    ];
+
+    renderColInfo(columns, col_info);
+
+    for (let i = 0; i < systemOutputs.length; i++) {
+      // Get the outputs from the bucket case
+      const origToks = systemOutputs[i][outputIDs[i]["orig_str"]];
+      let sentence = origToks;
+      const pos = outputIDs[i]["token_span"];
+      if (Array.isArray(origToks)) {
+        const copiedToks = origToks.map((x: string) => `${x} `);
+        const prefix = copiedToks.slice(0, pos[0]).join(" ");
+        const infix = copiedToks.slice(pos[0], pos[1]).join(" ");
+        const suffix = copiedToks.slice(pos[1]).join(" ");
+        sentence = (
+          <div>
+            {prefix} <b>{infix}</b> {suffix}
+          </div>
+        );
+      }
+      const spanPos =
+        pos[0] === pos[1] - 1 ? `${pos[0]}` : `${pos[0]}:${pos[1]}`;
+      const dataRow = {
+        span: outputIDs[i]["text"],
+        true_label: outputIDs[i]["true_label"],
+        pred_label: outputIDs[i]["predicted_label"],
+        sentence: sentence,
+        id: `${outputIDs[i]["sample_id"]}[${spanPos}]`,
+      };
+      console.log(systemOutputs[i]);
+      console.log(outputIDs[i]);
+      console.log(dataRow);
+      dataSource.push(dataRow);
+    }
+  }
+  // This is feature defined over whole sentences
+  else {
+    const col_info = [{ id: "sentence", name: "Sentence", maxWidth: "800px" }];
+
+    renderColInfo(columns, col_info);
+
+    for (let i = 0; i < systemOutputs.length; i++) {
+      // Get the outputs from the bucket case
+      const origToks = systemOutputs[i]["tokens"];
+      const sentence = Array.isArray(origToks) ? origToks.join(" ") : origToks;
+      const dataRow = {
+        sentence: sentence,
+        id: outputIDs[i]["sample_id"],
+      };
+      dataSource.push(dataRow);
+    }
+  }
+
+  return dataSource;
 }
 
 export function AnalysisTable({
@@ -134,13 +239,26 @@ export function AnalysisTable({
 
   // other fields
   if (systemOutputs.length === 0) {
-    return <div>No system outputs found.</div>;
+    return <div>System outputs will display here.</div>;
   }
 
   const columns: ColumnsType<SystemOutput> = [];
 
+  const condgenTasks = [
+    "machine-translation",
+    "summarization",
+    "conditional_generation",
+  ];
+  const seqLabTasks = [
+    "named-entity-recognition",
+    "chunking",
+    "word-segmentation",
+  ];
+
   let dataSource: { [p: string]: any }[];
-  if (task === "named-entity-recognition") {
+  if (seqLabTasks.includes(task)) {
+    dataSource = specifyDataSeqLab(systemOutputs, outputIDs, columns);
+  } else if (condgenTasks.includes(task)) {
     dataSource = specifyDataGeneric(systemOutputs, columns);
   } else {
     dataSource = specifyDataGeneric(systemOutputs, columns);

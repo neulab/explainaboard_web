@@ -329,7 +329,6 @@ class SystemDBUtils:
                 )
                 DBUtils.drop(output_collection)
                 sample_list = [general_to_dict(v) for v in system_output_data.samples]
-                print(f"sample_list[0]={sample_list[0]}")
                 DBUtils.insert_many(output_collection, sample_list, False, session)
                 return system_db_id
 
