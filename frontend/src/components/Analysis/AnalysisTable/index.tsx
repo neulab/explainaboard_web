@@ -74,81 +74,65 @@ export function AnalysisTable({
   }, [systemID, outputIDString, page, pageSize]);
 
   const columns: ColumnsType<SystemOutput> = [];
-  let dataSource;
 
-  // task NER
-  if (task === "named-entity-recognition") {
-    for (const subFeatureName of Object.keys(outputIDs[0])) {
-      columns.push({
-        dataIndex: subFeatureName,
-        title: subFeatureName,
-        ellipsis: true,
-      });
+  // example ID
+  columns.push({
+    dataIndex: "id",
+    title: "ID",
+    fixed: "left",
+    render: (value) => (
+      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
+        {value}
+      </Typography.Paragraph>
+    ),
+  });
+
+  // other fields
+  if (systemOutputs.length == 0) {
+    return <div>No system outputs found.</div>;
+  }
+  const systemOutputFirst = systemOutputs[0];
+  for (const systemOutputKey of Object.keys(systemOutputFirst)) {
+    if (systemOutputKey === "id") {
+      continue;
     }
-    // TODO API request to retrieve text, should be done on every page change
-    dataSource = outputIDs.map(function (o) {
-      const output = o as { [key: string]: string };
-      return { ...output };
-    });
-
-    // other tasks
-  } else if (systemOutputs.length !== 0) {
-    // example ID
     columns.push({
-      dataIndex: "id",
-      title: "ID",
-      fixed: "left",
-      render: (value) => (
-        <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
-          {value}
-        </Typography.Paragraph>
-      ),
-    });
-
-    // other fields
-    const systemOutputFirst = systemOutputs[0];
-    for (const systemOutputKey of Object.keys(systemOutputFirst)) {
-      if (systemOutputKey === "id") {
-        continue;
-      }
-      columns.push({
-        dataIndex: systemOutputKey,
-        title: systemOutputKey,
-        render: (value) =>
-          typeof value === "number" ? (
-            <div style={{ minWidth: "65px" }}>
-              <Tooltip title={value}>{Math.round(value * 1e6) / 1e6}</Tooltip>
-            </div>
-          ) : (
-            <Typography.Paragraph
-              ellipsis={{ rows: 3, tooltip: true, expandable: true }}
-              style={{ marginBottom: 0, minWidth: "80px", maxWidth: "170px" }}
-            >
-              {value}
-            </Typography.Paragraph>
-          ),
-      });
-    }
-    // clone the system output for modification
-    dataSource = systemOutputs.map(function (systemOutput) {
-      const processedSystemOutput = { ...systemOutput };
-      for (const [key, output] of Object.entries(systemOutput)) {
-        /*Task like QA have object output besides string and number.
-          For now we serialize the object to a displayable string.
-          TODO: unnest or use a nested table
-        */
-        if (typeof output === "object") {
-          const processedOutput = Object.entries(output)
-            .map(([subKey, subOutput]) => {
-              return `${subKey}: ${subOutput}`;
-            })
-            .join("\n");
-          processedSystemOutput[key] = processedOutput;
-        }
-      }
-      return processedSystemOutput;
+      dataIndex: systemOutputKey,
+      title: systemOutputKey,
+      render: (value) =>
+        typeof value === "number" ? (
+          <div style={{ minWidth: "65px" }}>
+            <Tooltip title={value}>{Math.round(value * 1e6) / 1e6}</Tooltip>
+          </div>
+        ) : (
+          <Typography.Paragraph
+            ellipsis={{ rows: 3, tooltip: true, expandable: true }}
+            style={{ marginBottom: 0, minWidth: "80px", maxWidth: "170px" }}
+          >
+            {value}
+          </Typography.Paragraph>
+        ),
     });
   }
+  // clone the system output for modification
+  const dataSource = systemOutputs.map(function (systemOutput) {
+    const processedSystemOutput = { ...systemOutput };
+    for (const [key, output] of Object.entries(systemOutput)) {
+      /*Task like QA have object output besides string and number.
+        For now we serialize the object to a displayable string.
+        TODO: unnest or use a nested table
+      */
+      if (typeof output === "object") {
+        const processedOutput = Object.entries(output)
+          .map(([subKey, subOutput]) => {
+            return `${subKey}: ${subOutput}`;
+          })
+          .join("\n");
+        processedSystemOutput[key] = processedOutput;
+      }
+    }
+    return processedSystemOutput;
+  });
 
   // TODO scroll to the bottom after rendered?
   return (

@@ -302,7 +302,9 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         ).system_outputs
         # Note we are casting here, as SystemOutput.from_dict() actually just returns a
         # dict
-        system_outputs = [cast(dict, x) for x in system_outputs]
+        system_outputs = [
+            processor.deserialize_system_output(cast(dict, x)) for x in system_outputs
+        ]
 
         performance_over_bucket = processor.bucketing_samples(
             system_output_info,

@@ -954,13 +954,7 @@ components:
       properties:
         sample_id:
           type: integer
-      additionalProperties:
-        type: string
-        properties:
-          code:
-            type: integer
-          text:
-            type: string
+      additionalProperties: true
 
     User:
       type: object
