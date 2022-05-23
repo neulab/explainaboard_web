@@ -1,5 +1,14 @@
 import React from "react";
-import { Button, ButtonProps, Input, Select, Space, Tooltip } from "antd";
+import {
+  Button,
+  ButtonProps,
+  Input,
+  Select,
+  Space,
+  Tooltip,
+  message,
+  Popconfirm,
+} from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
 import {
@@ -9,7 +18,7 @@ import {
 } from "@ant-design/icons";
 import { SystemModel } from "../../models";
 import { LoginState, useUser } from "../useUser";
-
+import { backendClient, parseBackendError } from "../../clients";
 export interface Filter {
   name?: string;
   task?: string;
@@ -48,6 +57,45 @@ export function SystemTableTools({
     );
   }
   const selectedSystemDatasetNames = findSelectedSystemDatasetNames();
+
+  // Deleted Selected Systems
+  async function deleteSystems(systemIDs: string[]) {
+    for (const systemID of systemIDs) {
+      try {
+        await backendClient.systemsSystemIdDelete(systemID);
+        message.success("Success");
+        document.location.reload();
+      } catch (e) {
+        if (e instanceof Response) {
+          message.error((await parseBackendError(e)).getErrorMsg());
+        }
+      }
+    }
+  }
+
+  let deleteButton = (
+    <Tooltip
+      title={
+        <div>
+          <p>Delete selected system outputs</p>
+        </div>
+      }
+      placement="bottom"
+      color="white"
+      overlayInnerStyle={{ color: "black" }}
+    ></Tooltip>
+  );
+
+  if (selectedSystemIDs.length >= 1) {
+    deleteButton = (
+      <Popconfirm
+        title="Are you sure?"
+        onConfirm={() => deleteSystems(selectedSystemIDs)}
+      >
+        <Button>Delete</Button>
+      </Popconfirm>
+    );
+  }
 
   let analysisButton = (
     <Tooltip
@@ -107,7 +155,7 @@ export function SystemTableTools({
       );
     }
     // three or more systems
-  }else  {
+  } else if (selectedSystemIDs.length >= 3) {
     let disabled = false;
     let warning = false;
     let tooltipMessage = "";
@@ -138,6 +186,9 @@ export function SystemTableTools({
 
   return (
     <div style={{ width: "100%" }}>
+      <Space style={{ width: "fit-content", float: "left" }}>
+        {deleteButton}
+      </Space>
       <Space style={{ width: "fit-content", float: "left" }}>
         {analysisButton}
       </Space>
