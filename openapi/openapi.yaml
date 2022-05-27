@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.1.3"
+  version: "0.1.4"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -896,10 +896,12 @@ components:
     BucketPerformance:
       type: object
       properties:
-        bucket_name:
+        bucket_interval:
           type: array
           items:
-            type: string
+            oneOf:
+              - type: string
+              - type: number
         n_samples:
           type: number
         bucket_samples:
@@ -910,15 +912,14 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Performance"
-      required: [bucket_name, n_samples, bucket_samples, performances]
+      required: [bucket_interval, n_samples, bucket_samples, performances]
 
     SingleAnalysisReturn:
       type: object
       description: feature -> bucket interval
       additionalProperties:
-        type: object
-        description: bucket interval -> BucketPerformance
-        additionalProperties:
+        type: array
+        items:
           $ref: "#/components/schemas/BucketPerformance"
 
     SystemAnalysesReturn:
@@ -952,14 +953,8 @@ components:
       type: object
       properties:
         sample_id:
-          type: string
-      additionalProperties:
-        type: string
-        properties:
-          code:
-            type: integer
-          text:
-            type: string
+          type: integer
+      additionalProperties: true
 
     User:
       type: object
