@@ -1,5 +1,14 @@
 import React from "react";
-import { Button, ButtonProps, Input, Select, Space, Tooltip } from "antd";
+import {
+  Button,
+  ButtonProps,
+  Input,
+  Select,
+  Space,
+  Tooltip,
+  message,
+  Popconfirm,
+} from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
 import {
@@ -9,7 +18,7 @@ import {
 } from "@ant-design/icons";
 import { SystemModel } from "../../models";
 import { LoginState, useUser } from "../useUser";
-
+import { backendClient, parseBackendError } from "../../clients";
 export interface Filter {
   name?: string;
   task?: string;
@@ -48,6 +57,45 @@ export function SystemTableTools({
     );
   }
   const selectedSystemDatasetNames = findSelectedSystemDatasetNames();
+
+  // Deleted Selected Systems
+  async function deleteSystems(systemIDs: string[]) {
+    for (const systemID of systemIDs) {
+      try {
+        await backendClient.systemsSystemIdDelete(systemID);
+        message.success("Success");
+        document.location.reload();
+      } catch (e) {
+        if (e instanceof Response) {
+          message.error((await parseBackendError(e)).getErrorMsg());
+        }
+      }
+    }
+  }
+
+  let deleteButton = (
+    <Tooltip
+      title={
+        <div>
+          <p>Delete selected system outputs</p>
+        </div>
+      }
+      placement="bottom"
+      color="white"
+      overlayInnerStyle={{ color: "black" }}
+    ></Tooltip>
+  );
+
+  if (selectedSystemIDs.length >= 1) {
+    deleteButton = (
+      <Popconfirm
+        title="Are you sure?"
+        onConfirm={() => deleteSystems(selectedSystemIDs)}
+      >
+        <Button>Delete</Button>
+      </Popconfirm>
+    );
+  }
 
   let analysisButton = (
     <Tooltip
@@ -106,10 +154,41 @@ export function SystemTableTools({
         <Tooltip title={tooltipMessage}>{analysisButton}</Tooltip>
       );
     }
+    // three or more systems
+  } else if (selectedSystemIDs.length >= 3) {
+    let disabled = false;
+    let warning = false;
+    let tooltipMessage = "";
+    if (selectedSystemDatasetNames.has("unspecified")) {
+      warning = true;
+      tooltipMessage =
+        "Unspecified dataset name detected. Proceed if you are certain the systems use the same dataset.";
+    } else if (selectedSystemDatasetNames.size > 1) {
+      disabled = true;
+      tooltipMessage =
+        "Cannot perform pairwise analysis on systems with different dataset names.";
+    }
+    analysisButton = (
+      <Button
+        disabled={disabled}
+        onClick={() => setActiveSystemIDs(selectedSystemIDs)}
+      >
+        Multiple System Analysis
+        {warning && <WarningOutlined />}
+      </Button>
+    );
+    if (tooltipMessage !== "") {
+      analysisButton = (
+        <Tooltip title={tooltipMessage}>{analysisButton}</Tooltip>
+      );
+    }
   }
 
   return (
     <div style={{ width: "100%" }}>
+      <Space style={{ width: "fit-content", float: "left" }}>
+        {deleteButton}
+      </Space>
       <Space style={{ width: "fit-content", float: "left" }}>
         {analysisButton}
       </Space>
