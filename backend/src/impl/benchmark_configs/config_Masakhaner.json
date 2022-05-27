@@ -1,0 +1,273 @@
+{
+  "name": "Masakhaner",
+  "description":"Masakhaner",
+  "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",  
+  "record_configs": [
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-bam",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-bbj",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-ewe",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-fon",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-hau",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-ibo",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-kin",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-lug",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-mos",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-nya",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-pcm",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-sna",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-swa",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-tsn",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-twi",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-wol",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-xho",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-yor",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "masakhaner",
+      "sub_dataset_name": "masakhaner-zul",
+      "dataset_split": "test",
+      "metrics": [
+        "F1"
+      ],
+      "metric_weights": {
+        "F1": 1.0
+      },
+      "op_metric": "mean"
+    }                                                                
+  ],
+  "views":{
+    "overall": {
+      "grouped_attributes": ["system_name"],
+      "weight_name": ["dataset_weight"],
+      "op": "mean"
+    },
+    "source_language": {
+      "grouped_attributes": ["system_name","source_language"],
+      "weight_name": ["dataset_weight"],
+      "op": "mean"
+    }          
+  },
+  "aggregation_configs": {
+    "dataset": {
+      "operation": "mean",
+      "weights": {
+        "masakhaner":1.0
+      }
+    },
+    "task": {
+      "operation": "mean",
+      "weights": {
+        "named-entity-recognition":0.5
+      }
+    },
+    "source_language":{
+      "operation": "mean",
+      "weights": {
+        "en": 1
+      }
+    },
+    "target_language":{
+      "operation": "mean",
+      "weights": {
+        "en": 1
+      }
+    }
+  }
+}

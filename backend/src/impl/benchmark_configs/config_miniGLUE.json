@@ -1,0 +1,73 @@
+{
+  "name": "miniGLUE",
+  "description":"miniGLUE",
+  "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",  
+  "record_configs": [
+    {
+      "dataset_name": "sst2",
+      "sub_dataset_name": null,
+      "dataset_split": "test",
+      "metrics": [
+        "F1",
+        "Accuracy"
+      ],
+      "metric_weights": {
+        "F1": 0.2,
+        "Accuracy": 0.8
+      },
+      "op_metric": "mean"
+    },
+    {
+      "dataset_name": "snli",
+      "sub_dataset_name": null,
+      "dataset_split": "test",
+      "metrics": [
+        "Accuracy"
+      ],
+      "metric_weights": {
+        "Accuracy": 1.0
+      },
+      "op_metric": "mean"
+    }
+  ],
+  "views":{
+    "overall": {
+      "grouped_attributes": ["system_name"],
+      "weight_name": ["dataset_weight"],
+      "op": "mean"
+    },
+    "task": {
+      "grouped_attributes": ["system_name","task_name"],
+      "weight_name": ["dataset_weight"],
+      "op": "mean"
+    }
+  },
+  "aggregation_configs": {
+    "dataset": {
+      "operation": "mean",
+      "weights": {
+        "sst2":0.5,
+        "snli": 0.5
+      }
+    },
+    "task": {
+      "operation": "mean",
+      "weights": {
+        "text-classification":0.5,
+        "natural-language-inference": 0.5
+      }
+    },
+    "source_language":{
+      "operation": "mean",
+      "weights": {
+        "en": 1
+      }
+    },
+    "target_language":{
+      "operation": "mean",
+      "weights": {
+        "en": 1
+      }
+    }
+  }
+}

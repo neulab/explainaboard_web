@@ -19,6 +19,12 @@ from explainaboard.loaders.loader_registry import get_supported_file_types_for_l
 from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
+from explainaboard_web.impl.benchmark import (
+    Benchmark,
+    BenchmarkConfig,
+    Leaderboard,
+    LeaderboardRecord,
+)
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
@@ -110,6 +116,124 @@ def datasets_get(
     return DatasetDBUtils.find_datasets(
         page, page_size, parsed_dataset_ids, dataset_name, task
     )
+
+
+""" /benchmarks """
+
+
+def benchmarkconfigs_get() -> list[BenchmarkConfig]:
+    scriptpath = os.path.dirname(__file__)
+    config_folder = os.path.join(scriptpath, "./benchmark_configs/")
+    # Get all benchmark configs
+    benchmark_configs = []
+    for file_name in sorted(os.listdir(config_folder)):
+        if file_name.endswith(".json"):
+            benchmark_configs.append(
+                BenchmarkConfig.from_json_file(config_folder + file_name)
+            )
+
+    return benchmark_configs
+
+
+def benchmark_benchmark_id_get(benchmark_id) -> Benchmark:
+
+    scriptpath = os.path.dirname(__file__)
+
+    # Get config
+    bm_config = BenchmarkConfig.from_json_file(
+        os.path.join(scriptpath, "./benchmark_configs/config_" + benchmark_id + ".json")
+    )
+
+    leaderboard = []
+    for record in bm_config.record_configs:
+        dataset_name = record.dataset_name
+        sub_dataset_name = record.sub_dataset_name
+        dataset_split = record.dataset_split
+
+        # TODO(Pengfei): it's strange that we must pass these none-value arguments
+        systems_return = systems_get(
+            system_name=None,
+            task=None,
+            creator=None,
+            shared_users=None,
+            page=0,
+            page_size=0,
+            sort_field="created_at",
+            sort_direction="desc",
+            dataset=dataset_name,
+            subdataset=sub_dataset_name,
+            split=dataset_split,
+        )
+        systems = systems_return.systems
+        for system in systems:
+            sys_info = system.system_info.to_dict()
+            # get metadata from system output info
+            sys_metrics = [
+                metric_config["name"] for metric_config in sys_info["metric_configs"]
+            ]
+            task_name = sys_info["task_name"]
+            target_language = sys_info["target_language"]
+            source_language = sys_info["source_language"]
+
+            common_metrics = list(set(sys_metrics) & set(record.metrics))
+            if len(common_metrics) == 0:
+                continue
+            else:
+                leaderboard_metrics = {
+                    metric: sys_info["results"]["overall"][metric]["value"]
+                    for metric in common_metrics
+                }
+
+                # Populate information of leaderboard_record based on:
+                # (1) sys_info and (2) benchmark config: self.record_configs
+                leaderboard_record = LeaderboardRecord.from_dict(sys_info)
+                leaderboard_record.metrics = leaderboard_metrics
+
+                leaderboard_record.metric_weights = record.metric_weights
+                leaderboard_record.op_metric = record.op_metric
+                # Populate information based on benchmark config:aggregation_configs
+                leaderboard_record.dataset_weight = (
+                    1.0
+                    if dataset_name
+                    not in bm_config.aggregation_configs["dataset"]["weights"].keys()
+                    else bm_config.aggregation_configs["dataset"]["weights"][
+                        dataset_name
+                    ]
+                )
+
+                leaderboard_record.task_weight = (
+                    1.0
+                    if task_name
+                    not in bm_config.aggregation_configs["task"]["weights"].keys()
+                    else bm_config.aggregation_configs["task"]["weights"][task_name]
+                )
+
+                leaderboard_record.target_language_weight = (
+                    1.0
+                    if target_language
+                    not in bm_config.aggregation_configs["target_language"][
+                        "weights"
+                    ].keys()
+                    else bm_config.aggregation_configs["target_language"]["weights"][
+                        target_language
+                    ]
+                )
+
+                leaderboard_record.source_language_weight = (
+                    1.0
+                    if source_language
+                    not in bm_config.aggregation_configs["source_language"][
+                        "weights"
+                    ].keys()
+                    else bm_config.aggregation_configs["source_language"]["weights"][
+                        source_language
+                    ]
+                )
+
+                leaderboard.append(leaderboard_record)
+
+    benchmark = bm_config.compose(Leaderboard(leaderboard))
+    return benchmark.to_dict()
 
 
 """ /systems """
