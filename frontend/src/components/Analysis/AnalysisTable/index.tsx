@@ -30,7 +30,7 @@ function renderColInfo(
   });
 
   for (const col of colInfo) {
-    if (col["name"] == "id") {
+    if (col["name"] === "id") {
       continue;
     }
     const maxWidth = col["maxWidth"] !== undefined ? col["maxWidth"] : "170px";
@@ -247,14 +247,14 @@ export function AnalysisTable({
       { id: "hypothesis", name: "Hypothesis", maxWidth: "500px" },
     ];
     dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
-  } else if (task == "text-classification") {
+  } else if (task === "text-classification") {
     colInfo = [
       { id: "true_label", name: "True Label" },
       { id: "predicted_label", name: "Predicted Label" },
       { id: "text", name: "Text", maxWidth: "800px" },
     ];
     dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
-  } else if (task == "text-pair-classification") {
+  } else if (task === "text-pair-classification") {
     colInfo = [
       { id: "true_label", name: "True Label" },
       { id: "predicted_label", name: "Predicted Label" },
