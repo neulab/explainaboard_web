@@ -3,7 +3,8 @@ import { RouteProps } from "react-router";
 import {
   HomeOutlined,
   DatabaseOutlined,
-  TableOutlined,
+  LineChartOutlined,
+  OrderedListOutlined,
   CodeOutlined,
   FileOutlined,
 } from "@ant-design/icons";
@@ -11,6 +12,7 @@ import {
   DatasetsPage,
   Home,
   LeaderboardPage,
+  BenchmarkPage,
   LoginCallback,
   SystemsPage,
   TermsPage,
@@ -49,8 +51,15 @@ const routes: Route[] = [
   {
     path: "/leaderboards",
     title: "Leaderboards",
-    icon: <TableOutlined />,
+    icon: <OrderedListOutlined />,
     children: <LeaderboardPage />,
+    requireLogin: false,
+  },
+  {
+    path: "/benchmark",
+    title: "Benchmark",
+    icon: <LineChartOutlined />,
+    children: <BenchmarkPage />,
     requireLogin: false,
   },
   {

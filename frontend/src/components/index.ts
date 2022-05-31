@@ -11,3 +11,4 @@ export * from "./useEnv";
 export * from "./useUser";
 export * from "./PrivateIcon";
 export * from "./UserPanel";
+export * from "./BenchmarkTable";

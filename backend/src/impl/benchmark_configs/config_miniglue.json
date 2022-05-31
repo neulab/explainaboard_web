@@ -1,0 +1,27 @@
+{
+  "name": "miniGLUE",
+  "description":"miniGLUE",
+  "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
+  "datasets": [
+    {"dataset_name": "sst2", "metrics": [{"name": "F1", "weight": 0.2, "default": 0.0},
+                                         {"name": "Accuracy", "weight": 0.8, "default":  0.0}]},
+    {"dataset_name": "snli", "metrics": [{"name": "Accuracy"}]}
+  ],
+  "views": [
+    {
+      "name": "Overall",
+      "operations": [
+        {"op": "weighted_mean", "group_by": "dataset_name", "other": "metric_weight"},
+        {"op": "mean"}
+      ]
+    },
+    {
+      "name": "Task-wise Average",
+      "operations": [
+        {"op": "weighted_mean", "group_by": "dataset_name", "other": "metric_weight"},
+        {"op": "mean", "group_by": "task"}
+      ]
+    }
+  ],
+  "default_views": ["Overall"]
+}
