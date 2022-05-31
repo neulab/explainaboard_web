@@ -11,7 +11,7 @@ from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.models import (
     BenchmarkConfig,
     BenchmarkMetric,
-    BenchmarkTable,
+    BenchmarkTableData,
     BenchmarkViewConfig,
 )
 
@@ -47,7 +47,7 @@ class BenchmarkUtils:
         sys_infos: list[dict] = []
         for record in config.datasets:
             dataset_name = record["dataset_name"]
-            subdataset_name = record.get("sub_dataset_name", None)
+            subdataset_name = record.get("sub_dataset", None)
             dataset_split = record.get("dataset_split", "test")
 
             # TODO(gneubig): it'd be better to use a single MongoDB query or session
@@ -77,6 +77,10 @@ class BenchmarkUtils:
         :param systems: A list of system info dictionaries
         :return: leaderboard:Leaderboard
         """
+
+        # TODO(gneubig): this function is a bit hacky/fragile, using objects and dicts
+        #                interchangeably due to OpenAPI deserialization being
+        #                incomplete. Should be fixed.
 
         # --- Rearrange so we have each system's result over each dataset
         dataset_to_id = {
@@ -125,6 +129,8 @@ class BenchmarkUtils:
                         f'{dataset["dataset_split"]} specified neither'
                     )
                 for dataset_metric in dataset_metrics:
+                    if type(dataset_metric) != dict:
+                        dataset_metric = dataset_metric.to_dict()
                     column_dict["metric"] = dataset_metric["name"]
                     column_dict["metric_weight"] = dataset_metric.get(
                         "weight", 1.0 / len(dataset_metrics)
@@ -136,10 +142,10 @@ class BenchmarkUtils:
                         column_dict["score"] = (
                             performance["value"]
                             if performance
-                            else dataset_metric.get("default", 0.0)
+                            else (dataset_metric.get("default") or 0.0)
                         )
                     else:
-                        column_dict["score"] = dataset_metric.get("default", 0.0)
+                        column_dict["score"] = dataset_metric.get("default") or 0.0
                     for df_key, df_arr in df_input.items():
                         df_arr.append(column_dict.get(df_key))
 
@@ -151,36 +157,53 @@ class BenchmarkUtils:
     ) -> pd.DataFrame:
         output_df = input_df.copy()
         for operation in view_spec.operations:
+            group_by = ["system_name"] + operation.get("group_by", [])
             if operation["op"] == "mean":
-                output_df = output_df.groupby(["system_name"]).mean()
-            if operation["op"] == "multiply":
+                output_df = output_df.groupby(group_by).mean()
+            elif operation["op"] == "multiply":
                 output_df["score"] = output_df["score"] * output_df[operation["other"]]
-            if operation["op"] == "sum":
-                output_df = output_df.groupby(["system_name"]).sum()
+            elif operation["op"] == "sum":
+                output_df = output_df.groupby(group_by).sum()
+            elif operation["op"] == "weighted_sum":
+                output_df["score"] = output_df["score"] * output_df[operation["weight"]]
+                output_df = output_df.groupby(group_by).sum()
+            else:
+                raise ValueError(f"Unsupported operation {operation['op']} in spec.")
+            if output_df.isnull().values.any():
+                raise ValueError(f"op {operation} resulted in NaN:\n{output_df}")
         output_df.reset_index(inplace=True)
         return output_df
 
     @staticmethod
     def generate_view_dataframes(
         config: BenchmarkConfig, systems: list[dict]
-    ) -> dict[str, pd.DataFrame]:
+    ) -> list[tuple[str, pd.DataFrame]]:
 
         orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, systems)
-        view_dfs = {}
+        view_dfs = []
         for view_spec in config.views:
-            view_dfs[view_spec.name] = BenchmarkUtils.aggregate_view(orig_df, view_spec)
-        view_dfs["orig"] = orig_df
+            view_dfs.append(
+                (view_spec.name, BenchmarkUtils.aggregate_view(orig_df, view_spec))
+            )
+        view_dfs.append(("Original", orig_df))
         return view_dfs
 
     @staticmethod
     def _col_name(elem_names: list[str], df_entry):
         # TODO(gneubig): This string-based representation may not be ideal
         return "\n".join(
-            [f"{elem}={df_entry[elem]}" for elem in elem_names if df_entry[elem]]
+            ["score"]
+            + [
+                f"{elem}={df_entry[elem]}"
+                for elem in elem_names
+                if df_entry[elem] and type(df_entry[elem]) == str
+            ]
         )
 
     @staticmethod
-    def dataframe_to_table(input_df: pd.DataFrame) -> BenchmarkTable:
+    def dataframe_to_table(
+        view_name: str, input_df: pd.DataFrame
+    ) -> BenchmarkTableData:
         elem_names = [x for x in input_df.columns if x not in {"score", "system_name"}]
         system_map = {v: i for i, v in enumerate(set(input_df["system_name"]))}
         row_col_names = [
@@ -194,7 +217,8 @@ class BenchmarkUtils:
             val = df_data["score"]
             scores[row_id][col_id] = val
         score_lists = cast(list[list[float]], scores.tolist())
-        return BenchmarkTable(
+        return BenchmarkTableData(
+            name=view_name,
             system_names=list(system_map.keys()),
             column_names=list(column_map.keys()),
             scores=score_lists,

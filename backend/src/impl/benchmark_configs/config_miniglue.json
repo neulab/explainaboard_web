@@ -5,7 +5,7 @@
   "datasets": [
     {"dataset_name": "sst2", "metrics": [{"name": "F1", "weight": 0.2, "default": 0.0},
                                          {"name": "Accuracy", "weight": 0.8, "default":  0.0}]},
-    {"dataset_name": "snli", "metrics": ["Accuracy"]}
+    {"dataset_name": "snli", "metrics": [{"name": "Accuracy"}]}
   ],
   "views": [
     {

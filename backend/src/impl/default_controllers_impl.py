@@ -135,7 +135,7 @@ def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
     config: BenchmarkConfig = BenchmarkUtils.config_from_benchmark_id(benchmark_id)
     sys_infos = BenchmarkUtils.load_sys_infos(config)
     view_dfs = BenchmarkUtils.generate_view_dataframes(config, sys_infos)
-    views = {k: BenchmarkUtils.dataframe_to_table(v) for k, v in view_dfs.items()}
+    views = [BenchmarkUtils.dataframe_to_table(k, v) for k, v in view_dfs]
     return Benchmark(config, views)
 
 

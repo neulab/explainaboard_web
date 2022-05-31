@@ -1073,9 +1073,11 @@ components:
             type: string
       required: [name, datasets, views]
 
-    BenchmarkTable:
+    BenchmarkTableData:
       type: object
       properties:
+        name:
+          type: string
         system_names:
           type: array
           description: the name of each system participating
@@ -1093,7 +1095,7 @@ components:
             type: array
             items:
               type: number
-      required: [system_names, column_names, scores]
+      required: [name, system_names, column_names, scores]
 
     Benchmark:
       type: object
@@ -1101,9 +1103,9 @@ components:
         config:
           $ref: "#/components/schemas/BenchmarkConfig"
         views:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/BenchmarkTable"
+          type: array
+          items:
+            $ref: "#/components/schemas/BenchmarkTableData"
       required: [config, views]
 
     User:

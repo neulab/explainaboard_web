@@ -33,9 +33,9 @@
         {
             "name": "Population-weighted Mean",
             "operations": [
-                {"op": "weighted_mean", "other": "pop_weight"}
+                {"op": "weighted_sum", "weight": "pop_weight"}
             ]
         }
     ],
-    "default_views": ["Mean", "Population-weighted Mean", "orig"]
+    "default_views": ["Mean", "Population-weighted Mean", "Original"]
 }
