@@ -1,291 +1,186 @@
 from __future__ import annotations
 
-import dataclasses
 import json
-from dataclasses import asdict, dataclass, field
-from typing import Optional
+import os
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+from explainaboard.utils.typing_utils import unwrap
+from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
+from explainaboard_web.models import BenchmarkConfig, BenchmarkMetric, BenchmarkTable
 
 
 @dataclass
-class LeaderboardRecord:
-    system_name: Optional[str] = None
-    task_name: Optional[str] = None  # list or str?
-    dataset_name: Optional[str] = None
-    sub_dataset_name: Optional[str] = None
-    dataset_split: Optional[str] = None
-    source_language: Optional[str] = None
-    target_language: Optional[str] = None
-    # Note that metrics is a dict, e.g., {"F1":0.95, "Accuracy":0.5}
-    metrics: Optional[dict] = None
-    op_metric: Optional[str] = None
-    # weight
-    metric_weights: Optional[dict] = None
-    dataset_weight: Optional[float] = None
-    task_weight: Optional[float] = None
-    target_language_weight: Optional[float] = None
-    source_language_weight: Optional[float] = None
-    # user info
-    creator: Optional[str] = None
-    created_time: Optional[str] = None
-
-    @classmethod
-    def from_dict(cls, data_dict: dict) -> LeaderboardRecord:
-        field_names = set(f.name for f in dataclasses.fields(cls))
-        return cls(**{k: v for k, v in data_dict.items() if k in field_names})
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-
-@dataclass
-class Leaderboard:
-    data: list[LeaderboardRecord] = field(default_factory=list)
-
-    @classmethod
-    def from_list(cls, data: list[dict]) -> Leaderboard:
-        return cls(data=[LeaderboardRecord.from_dict(v1) for v1 in data])
-
-    @classmethod
-    def from_json(cls, json_str: str) -> Leaderboard:
-        leaderboard_records = json.loads(json_str)
-        return cls.from_list(leaderboard_records)
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-
-# Note: this is not dataclass
-class Benchmark:
-    def __init__(self, dictionary):
-        for k, v in dictionary.items():
-            setattr(self, k, v)
-
-    def to_dict(self):
-        return self.__dict__
-
-
-@dataclass
-class BenchmarkRecordConfig:
-    dataset_name: Optional[str] = None
-    sub_dataset_name: Optional[str] = None
-    dataset_split: Optional[str] = None
-    metrics: list[str] = field(default_factory=list)
-    # metric_weights should be defined in BenchmarkRecord
-    metric_weights: Optional[dict] = None
-    op_metric: Optional[str] = None
-
-    @classmethod
-    def from_dict(cls, data_dict: dict) -> BenchmarkRecordConfig:
-        field_names = set(f.name for f in dataclasses.fields(cls))
-        return cls(**{k: v for k, v in data_dict.items() if k in field_names})
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-
-@dataclass
-class BenchmarkConfig:
-    name: Optional[str] = None
-    description: Optional[str] = None
-    logo: Optional[str] = None
-    record_configs: list[BenchmarkRecordConfig] = field(default_factory=list)
-    aggregation_configs: Optional[dict] = None
-    views: Optional[dict] = None
-
-    def to_dict(self) -> dict:
-        return asdict(self)
-
-    @classmethod
-    def dict_conv(cls, k: str, v: dict):
-        if k == "record_configs":
-            return (
-                None if v is None else [BenchmarkRecordConfig.from_dict(v1) for v1 in v]
-            )
-        else:
-            return v
-
-    @classmethod
-    def from_dict(cls, data_dict: dict) -> BenchmarkConfig:
-        field_names = set(f.name for f in dataclasses.fields(cls))
-        return cls(
-            **{k: cls.dict_conv(k, v) for k, v in data_dict.items() if k in field_names}
-        )
-
-    @classmethod
-    def from_json_file(cls, path_json: str) -> BenchmarkConfig:
+class BenchmarkUtils:
+    @staticmethod
+    def config_from_json_file(path_json: str) -> BenchmarkConfig:
         with open(path_json, "r") as fin:
             benchmark_config = json.load(fin)
         return BenchmarkConfig.from_dict(benchmark_config)
 
-    @classmethod
-    def from_json_str(cls, json_str: str) -> BenchmarkConfig:
+    @staticmethod
+    def config_from_json_str(json_str: str) -> BenchmarkConfig:
         benchmark_config = json.loads(json_str)
         return BenchmarkConfig.from_dict(benchmark_config)
 
-    def generate_leaderboard_from_sys_ids(self, system_ids: list[str]):
+    @staticmethod
+    def config_from_benchmark_id(benchmark_id: str):
+        # TODO(gneubig): get this from the database eventually
+        scriptpath = os.path.dirname(__file__)
+
+        # Get config
+        return BenchmarkUtils.config_from_json_file(
+            os.path.join(
+                scriptpath, "./benchmark_configs/config_" + benchmark_id + ".json"
+            )
+        )
+
+    @staticmethod
+    def load_sys_infos(config: BenchmarkConfig) -> list[dict]:
+
+        sys_infos: list[dict] = []
+        for record in config.datasets:
+            dataset_name = record["dataset_name"]
+            subdataset_name = record.get("sub_dataset_name", None)
+            dataset_split = record.get("dataset_split", "test")
+
+            # TODO(gneubig): it'd be better to use a single MongoDB query or session
+            #                to get all the systems, as this will probably be slow
+            systems_return = SystemDBUtils.find_systems(
+                ids=None,
+                page=0,
+                page_size=0,
+                dataset_name=dataset_name,
+                subdataset_name=subdataset_name,
+                split=dataset_split,
+            )
+            systems = systems_return.systems
+            for system in systems:
+                sys_infos.append(system.system_info.to_dict())
+        return sys_infos
+
+    @staticmethod
+    def generate_dataframe_from_sys_ids(config: BenchmarkConfig, system_ids: list[str]):
         return NotImplementedError
 
-    def generate_leaderboard_from_sys_infos(self, systems: list[dict]):
+    @staticmethod
+    def generate_dataframe_from_sys_infos(config: BenchmarkConfig, systems: list[dict]):
         """
         Generate a leaderboard from a list of system_output_info:SysOutputInfo
         :param systems:
         :return: leaderboard:Leaderboard
         """
 
-        leaderboard = []
+        # --- Rearrange so we have each system's result over each dataset
+        dataset_to_id = {
+            (x["dataset_name"], x.get("sub_dataset", None), x.get("split", "test")): i
+            for i, x in enumerate(config.datasets)
+        }
+        system_dataset_results: dict[str, list[dict | None]] = {}
+        for sys in systems:
+            sys_name = sys["system_name"]
+            if sys_name not in system_dataset_results:
+                system_dataset_results[sys_name] = [None for _ in config.datasets]
+            dataset_id = dataset_to_id[
+                (sys["dataset_name"], sys["sub_dataset_name"], sys["split"])
+            ]
+            system_dataset_results[sys_name][dataset_id] = sys
 
-        for record in self.record_configs:
-            for sys_info in systems:
-                # get matched system outputs
-                if (
-                    sys_info["dataset_name"] == record.dataset_name
-                    and sys_info["sub_dataset_name"] == record.sub_dataset_name
-                    and sys_info["dataset_split"] == record.dataset_split
-                ):
-                    # get metadata from system output info
-                    sys_metrics = [
-                        metric_config["name"]
-                        for metric_config in sys_info["metric_configs"]
-                    ]
-                    dataset_name = sys_info["dataset_name"]
-                    task_name = sys_info["task_name"]
-                    target_language = sys_info["target_language"]
-                    source_language = sys_info["source_language"]
+        # --- Get df entries
+        df_input: dict[str, list] = {
+            "system_name": [],
+            "dataset_name": [],
+            "sub_dataset_name": [],
+            "dataset_split": [],
+        }
+        for dataset in config.datasets:
+            for dataset_key in dataset.keys():
+                if dataset_key not in df_input:
+                    df_input[dataset_key] = []
+        df_input["metric"] = []
+        df_input["metric_weight"] = []
+        df_input["score"] = []
 
-                    if len(list(set(sys_metrics) & set(record.metrics))) == 0:
-                        continue
-                    else:
-                        leaderboard_metrics = {
-                            metric: sys_info["results"]["overall"][metric]["value"]
-                            for metric in record.metrics
-                        }
-
-                        # Populate information of leaderboard_record based on:
-                        # (1) sys_info and (2) benchmark config: self.record_configs
-                        leaderboard_record = LeaderboardRecord.from_dict(sys_info)
-                        leaderboard_record.metrics = leaderboard_metrics
-
-                        leaderboard_record.metric_weights = record.metric_weights
-                        leaderboard_record.op_metric = record.op_metric
-                        # Populate information based on benchmark config:
-                        # self.aggregation_configs
-                        if self.aggregation_configs is not None:
-                            leaderboard_record.dataset_weight = (
-                                self.aggregation_configs["dataset"]["weights"][  # noqa
-                                    dataset_name
-                                ]
-                            )
-                            leaderboard_record.task_weight = self.aggregation_configs[
-                                "task"  # noqa
-                            ]["weights"][task_name]
-                            leaderboard_record.target_language_weight = (
-                                self.aggregation_configs["target_language"]["weights"][
-                                    target_language
-                                ]
-                            )
-                            leaderboard_record.source_language_weight = (
-                                self.aggregation_configs["source_language"]["weights"][
-                                    source_language
-                                ]  # noqa
-                            )
-
-                        leaderboard.append(leaderboard_record)
-        return Leaderboard(leaderboard)
-
-    def compose(self, leaderboard: Leaderboard) -> Benchmark:
-        """
-        Compose a benchmark:Benchmark based on (1) leaderboard and (2) self.config
-        :param leaderboard: Leaderboard
-        :return: benchmark:Benchmark
-        """
-
-        json_dict = leaderboard.to_dict()["data"]
-        df = pd.json_normalize(json_dict)
-
-        def aggregation_over_metrics(df: pd.DataFrame, op: str = "weighted_average"):
-
-            metrics = []
-            df = df.fillna(0)
-            for col_name in df.columns.tolist():
-                if col_name.split(".")[0] == "metrics":
-                    metrics.append(col_name.split(".")[1])
-            metrics = set(metrics)  # type:ignore
-            v_list = ["metrics." + metric for metric in metrics]  # metric values
-            w_list = ["metric_weights." + metric for metric in metrics]  # weights
-
-            def f(x):
-                if x["op_metric"] == "weighted_average":
-                    return (
-                        0
-                        if np.count_nonzero([x[w] for w in w_list]) == 0
-                        else np.sum([x[v] * x[w] for v, w in zip(v_list, w_list)])
-                        / np.count_nonzero([x[w] for w in w_list])
-                    )
-                elif x["op_metric"] == "mean":
-                    # print("----------------")
-                    # print([x[v] for v in v_list])
-                    # print(np.count_nonzero([x[v] for v in v_list]))
-                    return (
-                        0
-                        if np.count_nonzero([x[v] for v in v_list]) == 0
-                        else np.sum([x[v] for v in v_list])
-                        / np.count_nonzero([x[v] for v in v_list])
-                    )
-                elif x["op_metric"] == "sum":
-                    return np.sum([x[v] for v in v_list])
-                else:
-                    raise NotImplementedError
-
-            # aggregate over metrics
-            df["overall_result"] = df.apply(f, axis=1)
-
-            return df
-
-        def aggregate_over_attributes(
-            df: pd.DataFrame,
-            grouped_attributes: list,
-            weight_name: str,
-            op: str = "mean",
-        ):
-
-            if "overall_result" not in df.columns.tolist():
-                df = aggregation_over_metrics(df)
-
-            wm = None
-            if op == "weighted_average":
-                wm = lambda x: np.average(  # noqa: E731
-                    x, weights=df.loc[x.index, weight_name]
+        # Create the actual data
+        for sys_name, sys_infos in system_dataset_results.items():
+            for dataset, sys_info in zip(config.datasets, sys_infos):
+                column_dict = dict(dataset)
+                column_dict["system_name"] = sys_name
+                dataset_metrics: list[BenchmarkMetric] = dataset.get(
+                    "metrics", config.metrics
                 )
-            else:
-                wm = op  # type:ignore
+                if dataset_metrics is None:
+                    raise ValueError(
+                        f"metrics must be specified either on a global or "
+                        f'local level, but {dataset["dataset_name"]} -- '
+                        f'{dataset["sub_dataset_name"]} -- '
+                        f'{dataset["dataset_split"]} specified neither'
+                    )
+                for dataset_metric in dataset_metrics:
+                    column_dict["metric"] = dataset_metric.name
+                    column_dict["metric_weight"] = dataset_metric.weight or 1.0 / len(
+                        dataset_metrics
+                    )
+                    if sys_info is not None:
+                        performance = sys_info["results"]["overall"].get(
+                            dataset_metric.name
+                        )
+                        column_dict["score"] = (
+                            performance.value if performance else dataset_metric.default
+                        )
+                    else:
+                        column_dict["score"] = dataset_metric.default
+                    for df_key, df_arr in df_input.items():
+                        df_arr.append(column_dict.get(df_key))
 
-            df_new = (
-                df.groupby(grouped_attributes)
-                .agg(overall_result=("overall_result", wm))
-                .reset_index()
-            )
+        print(df_input)
 
-            return df_new
+        return pd.DataFrame(df_input)
 
-        benchmark = {}
-        if self.views is None:
-            raise ValueError("views shouldn't be none")
-        for view, setting in self.views.items():  # noqa
-            df_view = aggregate_over_attributes(
-                df,
-                grouped_attributes=setting["grouped_attributes"],
-                weight_name=setting["weight_name"],
-                op=setting["op"],
-            )
-            benchmark[view] = df_view.to_dict(orient="records")
+    @staticmethod
+    def aggregate_view(input_df: pd.DataFrame, view_spec: dict) -> pd.DataFrame:
+        output_df = input_df.copy()
+        for operation in view_spec["operations"]:
+            if operation["op"] == "mean":
+                output_df = output_df.groupby(["system_name"]).mean()
+            if operation["op"] == "multiply":
+                output_df["score"] = output_df["score"] * output_df[operation["other"]]
+            if operation["op"] == "sum":
+                output_df = output_df.groupby(["system_name"]).sum()
+        return output_df
 
-        return Benchmark(benchmark)
+    @staticmethod
+    def generate_view_dataframes(
+        config: BenchmarkConfig, systems: list[dict]
+    ) -> dict[str, pd.DataFrame]:
 
-    def generate_benchmarks(self, systems: list[dict]) -> Benchmark:
+        orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, systems)
+        view_dfs = {"orig": orig_df}
+        for view_name, view_spec in unwrap(config.views).items():
+            view_dfs[view_name] = BenchmarkUtils.aggregate_view(orig_df, view_spec)
 
-        leaderboard = self.generate_leaderboard_from_sys_infos(systems)
-        benchmark = self.compose(leaderboard)
-        return benchmark
+        return view_dfs
+
+    @staticmethod
+    def _col_name(elem_names: list[str], df_entry):
+        # TODO(gneubig): This string-based representation may not be ideal
+        return ", ".join([f"{elem}={df_entry[elem]}" for elem in elem_names])
+
+    @staticmethod
+    def dataframe_to_table(input_df: pd.DataFrame) -> BenchmarkTable:
+        elem_names = [x for x in input_df.columns if x not in {"score", "system_name"}]
+        system_map = {v: i for i, v in enumerate(set(input_df["system_name"]))}
+        row_col_names = [BenchmarkUtils._col_name(elem_names, x) for x in input_df]
+        column_map = {v: i for i, v in enumerate(set(row_col_names))}
+        scores = np.zeros((len(system_map), len(column_map)))
+        for df_data, df_col_name in zip(input_df, row_col_names):
+            row_id = system_map[df_data["system_name"]]
+            col_id = system_map[df_col_name]
+            val = df_data["score"]
+            scores[row_id][col_id] = val
+        return BenchmarkTable(
+            system_names=list(system_map.keys()),
+            column_names=list(column_map.keys()),
+            scores=scores.tolist(),
+        )

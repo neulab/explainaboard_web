@@ -58,7 +58,7 @@ paths:
       parameters:
         - in: path
           name: benchmark_id
-          example: 61611c3a414abfb115397ca5
+          example: masakhaner
           schema:
             type: string
           required: true
@@ -1005,12 +1005,13 @@ components:
     Benchmark:
       type: object
       properties:
-        overall:
-          type: array
-          items:
-            type: object
-      additionalProperties: true
-      required: [overall]
+        config:
+          type:
+            $ref: "#/components/schemas/BenchmarkConfig"
+        views:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/BenchmarkTable"
 
     BenchmarkConfig:
       type: object
@@ -1021,8 +1022,56 @@ components:
           type: string
         logo:
           type: string
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/BenchmarkMetric"
+        datasets:
+          type: array
+          items:
+            type: object
+        views:
+          type: array
+          items:
+            type: object
+        default_views:
+          type: array
+          items:
+            type: string
       additionalProperties: true
-      required: [name]
+      required: [name, datasets, views]
+
+    BenchmarkMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        weight:
+          type: number
+        default:
+          type: number
+
+    BenchmarkTable:
+      type: object
+      properties:
+        system_names:
+          type: array
+          description: the name of each system participating
+          items:
+            type: string
+        column_names:
+          type: array
+          description: the name of each column
+          items:
+            type: string
+        scores:
+          type: array
+          description: the values of scores in each row/column
+          items:
+            type: float
+      additionalProperties: true
+      required: [overall]
+
 
     User:
       type: object

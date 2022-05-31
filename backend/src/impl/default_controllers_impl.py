@@ -19,17 +19,12 @@ from explainaboard.loaders.loader_registry import get_supported_file_types_for_l
 from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.benchmark import (
-    Benchmark,
-    BenchmarkConfig,
-    Leaderboard,
-    LeaderboardRecord,
-)
+from explainaboard_web.impl.benchmark import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
-from explainaboard_web.models import DatasetMetadata
+from explainaboard_web.models import Benchmark, BenchmarkConfig, DatasetMetadata
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
@@ -129,111 +124,20 @@ def benchmarkconfigs_get() -> list[BenchmarkConfig]:
     for file_name in sorted(os.listdir(config_folder)):
         if file_name.endswith(".json"):
             benchmark_configs.append(
-                BenchmarkConfig.from_json_file(config_folder + file_name)
+                BenchmarkUtils.config_from_json_file(config_folder + file_name)
             )
 
     return benchmark_configs
 
 
-def benchmark_benchmark_id_get(benchmark_id) -> Benchmark:
+def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
 
-    scriptpath = os.path.dirname(__file__)
+    config: BenchmarkConfig = BenchmarkUtils.config_from_benchmark_id(benchmark_id)
+    sys_infos = BenchmarkUtils.load_sys_infos(config)
+    view_dfs = BenchmarkUtils.generate_view_dataframes(config, sys_infos)
+    views = {k: BenchmarkUtils.dataframe_to_table(v) for k, v in view_dfs.items()}
 
-    # Get config
-    bm_config = BenchmarkConfig.from_json_file(
-        os.path.join(scriptpath, "./benchmark_configs/config_" + benchmark_id + ".json")
-    )
-
-    leaderboard = []
-    for record in bm_config.record_configs:
-        dataset_name = record.dataset_name
-        sub_dataset_name = record.sub_dataset_name
-        dataset_split = record.dataset_split
-
-        # TODO(Pengfei): it's strange that we must pass these none-value arguments
-        systems_return = systems_get(
-            system_name=None,
-            task=None,
-            creator=None,
-            shared_users=None,
-            page=0,
-            page_size=0,
-            sort_field="created_at",
-            sort_direction="desc",
-            dataset=dataset_name,
-            subdataset=sub_dataset_name,
-            split=dataset_split,
-        )
-        systems = systems_return.systems
-        for system in systems:
-            sys_info = system.system_info.to_dict()
-            # get metadata from system output info
-            sys_metrics = [
-                metric_config["name"] for metric_config in sys_info["metric_configs"]
-            ]
-            task_name = sys_info["task_name"]
-            target_language = sys_info["target_language"]
-            source_language = sys_info["source_language"]
-
-            common_metrics = list(set(sys_metrics) & set(record.metrics))
-            if len(common_metrics) == 0:
-                continue
-            else:
-                leaderboard_metrics = {
-                    metric: sys_info["results"]["overall"][metric]["value"]
-                    for metric in common_metrics
-                }
-
-                # Populate information of leaderboard_record based on:
-                # (1) sys_info and (2) benchmark config: self.record_configs
-                leaderboard_record = LeaderboardRecord.from_dict(sys_info)
-                leaderboard_record.metrics = leaderboard_metrics
-
-                leaderboard_record.metric_weights = record.metric_weights
-                leaderboard_record.op_metric = record.op_metric
-                # Populate information based on benchmark config:aggregation_configs
-                leaderboard_record.dataset_weight = (
-                    1.0
-                    if dataset_name
-                    not in bm_config.aggregation_configs["dataset"]["weights"].keys()
-                    else bm_config.aggregation_configs["dataset"]["weights"][
-                        dataset_name
-                    ]
-                )
-
-                leaderboard_record.task_weight = (
-                    1.0
-                    if task_name
-                    not in bm_config.aggregation_configs["task"]["weights"].keys()
-                    else bm_config.aggregation_configs["task"]["weights"][task_name]
-                )
-
-                leaderboard_record.target_language_weight = (
-                    1.0
-                    if target_language
-                    not in bm_config.aggregation_configs["target_language"][
-                        "weights"
-                    ].keys()
-                    else bm_config.aggregation_configs["target_language"]["weights"][
-                        target_language
-                    ]
-                )
-
-                leaderboard_record.source_language_weight = (
-                    1.0
-                    if source_language
-                    not in bm_config.aggregation_configs["source_language"][
-                        "weights"
-                    ].keys()
-                    else bm_config.aggregation_configs["source_language"]["weights"][
-                        source_language
-                    ]
-                )
-
-                leaderboard.append(leaderboard_record)
-
-    benchmark = bm_config.compose(Leaderboard(leaderboard))
-    return benchmark.to_dict()
+    return Benchmark(config, views)
 
 
 """ /systems """

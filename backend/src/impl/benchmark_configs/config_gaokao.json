@@ -1,0 +1,24 @@
+{
+    "name": "Gaokao",
+    "description":"Gaokao Benchmark",
+    "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
+    "datasets": [
+        {"dataset_name": "sst2", "metrics": ["F1", "Accuracy"]},
+        {"dataset_name": "snli", "metrics": ["Accuracy"]}
+    ],
+    "views": {
+        "Overall": {
+            "operations": [
+                {"op": "weighted_mean", "group_by": "dataset_name", "other": "metric_weight"},
+                {"op": "mean"}
+            ]
+        },
+        "Task-wise Average": {
+            "operations": [
+                {"op": "weighted_mean", "group_by": "dataset_name", "other": "metric_weight"},
+                {"op": "mean", "group_by": "task"}
+            ]
+        }
+    },
+    "default_views": ["Overall"]
+}
