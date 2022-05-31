@@ -19,7 +19,7 @@ from explainaboard.loaders.loader_registry import get_supported_file_types_for_l
 from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.benchmark import BenchmarkUtils
+from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
@@ -136,7 +136,6 @@ def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
     sys_infos = BenchmarkUtils.load_sys_infos(config)
     view_dfs = BenchmarkUtils.generate_view_dataframes(config, sys_infos)
     views = {k: BenchmarkUtils.dataframe_to_table(v) for k, v in view_dfs.items()}
-
     return Benchmark(config, views)
 
 

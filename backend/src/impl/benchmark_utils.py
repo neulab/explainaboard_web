@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
+from typing import cast
 
 import numpy as np
 import pandas as pd
-from explainaboard.utils.typing_utils import unwrap
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.models import BenchmarkConfig, BenchmarkMetric, BenchmarkTable
 
@@ -68,7 +68,8 @@ class BenchmarkUtils:
     def generate_dataframe_from_sys_infos(config: BenchmarkConfig, systems: list[dict]):
         """
         Generate a leaderboard from a list of system_output_info:SysOutputInfo
-        :param systems:
+        :param config: A benchmark config
+        :param systems: A list of system info dictionaries
         :return: leaderboard:Leaderboard
         """
 
@@ -157,8 +158,8 @@ class BenchmarkUtils:
 
         orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, systems)
         view_dfs = {"orig": orig_df}
-        for view_name, view_spec in unwrap(config.views).items():
-            view_dfs[view_name] = BenchmarkUtils.aggregate_view(orig_df, view_spec)
+        for view_spec in config.views:
+            view_dfs[view_spec.name] = BenchmarkUtils.aggregate_view(orig_df, view_spec)
 
         return view_dfs
 
@@ -179,8 +180,9 @@ class BenchmarkUtils:
             col_id = system_map[df_col_name]
             val = df_data["score"]
             scores[row_id][col_id] = val
+        score_lists = cast(list[list[float]], scores.tolist())
         return BenchmarkTable(
             system_names=list(system_map.keys()),
             column_names=list(column_map.keys()),
-            scores=scores.tolist(),
+            scores=score_lists,
         )

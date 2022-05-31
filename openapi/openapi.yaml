@@ -1002,16 +1002,33 @@ components:
           text:
             type: string
 
-    Benchmark:
+    BenchmarkMetric:
       type: object
       properties:
-        config:
-          type:
-            $ref: "#/components/schemas/BenchmarkConfig"
-        views:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/BenchmarkTable"
+        name:
+          type: string
+        weight:
+          type: number
+        default:
+          type: number
+      required: [name]
+
+    BenchmarkOperationConfig:
+      type: object
+      properties:
+        op:
+          type: string
+      additionalProperties: true
+
+    BenchmarkViewConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkOperationConfig'
 
     BenchmarkConfig:
       type: object
@@ -1025,31 +1042,22 @@ components:
         metrics:
           type: array
           items:
-            $ref: "#/components/schemas/BenchmarkMetric"
+            $ref: '#/components/schemas/BenchmarkMetric'
         datasets:
           type: array
           items:
             type: object
+            additionalProperties: true
         views:
           type: array
           items:
-            type: object
+            type:
+              $ref: '#/components/schemas/BenchmarkViewConfig'
         default_views:
           type: array
           items:
             type: string
-      additionalProperties: true
       required: [name, datasets, views]
-
-    BenchmarkMetric:
-      type: object
-      properties:
-        name:
-          type: string
-        weight:
-          type: number
-        default:
-          type: number
 
     BenchmarkTable:
       type: object
@@ -1068,10 +1076,21 @@ components:
           type: array
           description: the values of scores in each row/column
           items:
-            type: float
-      additionalProperties: true
-      required: [overall]
+            type: array
+            items:
+              type: number
+      required: [system_names, column_names, scores]
 
+    Benchmark:
+      type: object
+      properties:
+        config:
+          $ref: "#/components/schemas/BenchmarkConfig"
+        views:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/BenchmarkTable"
+      required: [config, views]
 
     User:
       type: object

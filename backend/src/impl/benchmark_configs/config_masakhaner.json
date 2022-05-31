@@ -22,17 +22,19 @@
         {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-yor", "pop_weight": 0.08586794061274623},
         {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-zul", "pop_weight": 0.11216242960420919}
     ],
-    "views": {
-        "Mean": {
+    "views": [
+        {
+            "name": "Mean",
             "operations": [
                 {"op": "mean"}
             ]
         },
-        "Population-weighted Mean": {
+        {
+            "name": "Population-weighted Mean",
             "operations": [
                 {"op": "weighted_mean", "other": "pop_weight"}
             ]
         }
-    },
+    ],
     "default_views": ["Mean", "Population-weighted Mean", "orig"]
 }
