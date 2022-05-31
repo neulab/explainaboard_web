@@ -1051,8 +1051,7 @@ components:
         views:
           type: array
           items:
-            type:
-              $ref: '#/components/schemas/BenchmarkViewConfig'
+            $ref: '#/components/schemas/BenchmarkViewConfig'
         default_views:
           type: array
           items:
