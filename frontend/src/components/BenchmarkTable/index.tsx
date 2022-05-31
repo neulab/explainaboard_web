@@ -17,7 +17,10 @@ export function BenchmarkTable({ benchmarkID }: Props) {
 
   useEffect(() => {
     async function fetchBenchmark() {
-      setBenchmark(await backendClient.benchmarkBenchmarkIdGet(benchmarkID));
+      const myBenchmark = await backendClient.benchmarkBenchmarkIdGet(
+        benchmarkID
+      );
+      setBenchmark(myBenchmark);
     }
     fetchBenchmark();
   }, [benchmarkID]);
@@ -34,6 +37,8 @@ export function BenchmarkTable({ benchmarkID }: Props) {
               my_view.scores[i].map((score) => score.toFixed(4))
             )
           );
+          console.log(`col_name=${col_names}`);
+          console.log(`sys_data=${sys_data}`);
           return (
             <TabPane tab={view_name + " view"} key={view_name}>
               <TableView
@@ -47,6 +52,6 @@ export function BenchmarkTable({ benchmarkID }: Props) {
       </Tabs>
     );
   } else {
-    return <div></div>;
+    return <div>&nbsp;</div>;
   }
 }

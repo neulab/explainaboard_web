@@ -1041,6 +1041,8 @@ components:
           type: string
         metrics:
           type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
       additionalProperties: true
       required: [dataset_name]
 

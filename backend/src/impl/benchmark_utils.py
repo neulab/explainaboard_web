@@ -166,16 +166,16 @@ class BenchmarkUtils:
     ) -> dict[str, pd.DataFrame]:
 
         orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, systems)
-        view_dfs = {"orig": orig_df}
+        view_dfs = {}
         for view_spec in config.views:
             view_dfs[view_spec.name] = BenchmarkUtils.aggregate_view(orig_df, view_spec)
-
+        view_dfs["orig"] = orig_df
         return view_dfs
 
     @staticmethod
     def _col_name(elem_names: list[str], df_entry):
         # TODO(gneubig): This string-based representation may not be ideal
-        return ", ".join(
+        return "\n".join(
             [f"{elem}={df_entry[elem]}" for elem in elem_names if df_entry[elem]]
         )
 
