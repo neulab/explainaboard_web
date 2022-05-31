@@ -1,6 +1,7 @@
 {
     "name": "MasakhaNER",
-    "metrics": ["F1"],
+    "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
+    "metrics": [{"name": "F1"}],
     "datasets": [
         {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-bam", "pop_weight": 0.05751919466882523},
         {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-bbj", "pop_weight": 0.0014379798667206306},

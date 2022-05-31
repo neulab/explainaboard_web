@@ -3,8 +3,8 @@
     "description":"Gaokao Benchmark",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
     "datasets": [
-        {"dataset_name": "sst2", "metrics": ["F1", "Accuracy"]},
-        {"dataset_name": "snli", "metrics": ["Accuracy"]}
+        {"dataset_name": "sst2", "metrics": [{"name": "F1"}, {"name": "Accuracy"}]},
+        {"dataset_name": "snli", "metrics": [{"name": "Accuracy"}]}
     ],
     "views": [
         {

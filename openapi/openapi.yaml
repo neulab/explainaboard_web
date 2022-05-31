@@ -1030,6 +1030,20 @@ components:
           items:
             $ref: '#/components/schemas/BenchmarkOperationConfig'
 
+    BenchmarkDatasetConfig:
+      type: object
+      properties:
+        dataset_name:
+          type: string
+        sub_dataset:
+          type: string
+        split:
+          type: string
+        metrics:
+          type: array
+      additionalProperties: true
+      required: [dataset_name]
+
     BenchmarkConfig:
       type: object
       properties:
@@ -1046,8 +1060,7 @@ components:
         datasets:
           type: array
           items:
-            type: object
-            additionalProperties: true
+            $ref: '#/components/schemas/BenchmarkDatasetConfig'
         views:
           type: array
           items:

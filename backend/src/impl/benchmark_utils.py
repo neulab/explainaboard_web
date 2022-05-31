@@ -8,7 +8,12 @@ from typing import cast
 import numpy as np
 import pandas as pd
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
-from explainaboard_web.models import BenchmarkConfig, BenchmarkMetric, BenchmarkTable
+from explainaboard_web.models import (
+    BenchmarkConfig,
+    BenchmarkMetric,
+    BenchmarkTable,
+    BenchmarkViewConfig,
+)
 
 
 @dataclass
@@ -84,7 +89,7 @@ class BenchmarkUtils:
             if sys_name not in system_dataset_results:
                 system_dataset_results[sys_name] = [None for _ in config.datasets]
             dataset_id = dataset_to_id[
-                (sys["dataset_name"], sys["sub_dataset_name"], sys["split"])
+                (sys["dataset_name"], sys["sub_dataset_name"], sys["dataset_split"])
             ]
             system_dataset_results[sys_name][dataset_id] = sys
 
@@ -95,9 +100,10 @@ class BenchmarkUtils:
             "sub_dataset_name": [],
             "dataset_split": [],
         }
+        exclude_keys = {"metrics"}
         for dataset in config.datasets:
             for dataset_key in dataset.keys():
-                if dataset_key not in df_input:
+                if not (dataset_key in df_input or dataset_key in exclude_keys):
                     df_input[dataset_key] = []
         df_input["metric"] = []
         df_input["metric_weight"] = []
@@ -119,36 +125,39 @@ class BenchmarkUtils:
                         f'{dataset["dataset_split"]} specified neither'
                     )
                 for dataset_metric in dataset_metrics:
-                    column_dict["metric"] = dataset_metric.name
-                    column_dict["metric_weight"] = dataset_metric.weight or 1.0 / len(
-                        dataset_metrics
+                    column_dict["metric"] = dataset_metric["name"]
+                    column_dict["metric_weight"] = dataset_metric.get(
+                        "weight", 1.0 / len(dataset_metrics)
                     )
                     if sys_info is not None:
                         performance = sys_info["results"]["overall"].get(
-                            dataset_metric.name
+                            dataset_metric["name"]
                         )
                         column_dict["score"] = (
-                            performance.value if performance else dataset_metric.default
+                            performance["value"]
+                            if performance
+                            else dataset_metric.get("default", 0.0)
                         )
                     else:
-                        column_dict["score"] = dataset_metric.default
+                        column_dict["score"] = dataset_metric.get("default", 0.0)
                     for df_key, df_arr in df_input.items():
                         df_arr.append(column_dict.get(df_key))
-
-        print(df_input)
 
         return pd.DataFrame(df_input)
 
     @staticmethod
-    def aggregate_view(input_df: pd.DataFrame, view_spec: dict) -> pd.DataFrame:
+    def aggregate_view(
+        input_df: pd.DataFrame, view_spec: BenchmarkViewConfig
+    ) -> pd.DataFrame:
         output_df = input_df.copy()
-        for operation in view_spec["operations"]:
+        for operation in view_spec.operations:
             if operation["op"] == "mean":
                 output_df = output_df.groupby(["system_name"]).mean()
             if operation["op"] == "multiply":
                 output_df["score"] = output_df["score"] * output_df[operation["other"]]
             if operation["op"] == "sum":
                 output_df = output_df.groupby(["system_name"]).sum()
+        output_df.reset_index(inplace=True)
         return output_df
 
     @staticmethod
@@ -166,18 +175,22 @@ class BenchmarkUtils:
     @staticmethod
     def _col_name(elem_names: list[str], df_entry):
         # TODO(gneubig): This string-based representation may not be ideal
-        return ", ".join([f"{elem}={df_entry[elem]}" for elem in elem_names])
+        return ", ".join(
+            [f"{elem}={df_entry[elem]}" for elem in elem_names if df_entry[elem]]
+        )
 
     @staticmethod
     def dataframe_to_table(input_df: pd.DataFrame) -> BenchmarkTable:
         elem_names = [x for x in input_df.columns if x not in {"score", "system_name"}]
         system_map = {v: i for i, v in enumerate(set(input_df["system_name"]))}
-        row_col_names = [BenchmarkUtils._col_name(elem_names, x) for x in input_df]
+        row_col_names = [
+            BenchmarkUtils._col_name(elem_names, x) for _, x in input_df.iterrows()
+        ]
         column_map = {v: i for i, v in enumerate(set(row_col_names))}
         scores = np.zeros((len(system_map), len(column_map)))
-        for df_data, df_col_name in zip(input_df, row_col_names):
+        for (_, df_data), df_col_name in zip(input_df.iterrows(), row_col_names):
             row_id = system_map[df_data["system_name"]]
-            col_id = system_map[df_col_name]
+            col_id = column_map[df_col_name]
             val = df_data["score"]
             scores[row_id][col_id] = val
         score_lists = cast(list[list[float]], scores.tolist())
