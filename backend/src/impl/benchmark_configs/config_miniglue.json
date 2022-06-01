@@ -3,9 +3,9 @@
   "description":"miniGLUE",
   "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
   "datasets": [
-    {"dataset_name": "sst2", "metrics": [{"name": "F1", "weight": 0.2, "default": 0.0},
-                                         {"name": "Accuracy", "weight": 0.8, "default":  0.0}]},
-    {"dataset_name": "snli", "metrics": [{"name": "Accuracy"}]}
+    {"dataset_name": "sst2", "task": "text-classification", "metrics": [{"name": "F1", "weight": 0.2, "default": 0.0},
+                                                                        {"name": "Accuracy", "weight": 0.8, "default":  0.0}]},
+    {"dataset_name": "snli", "task": "natural-language-inference", "metrics": [{"name": "Accuracy"}]}
   ],
   "views": [
     {

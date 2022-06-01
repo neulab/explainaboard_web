@@ -3,8 +3,8 @@
     "description":"Gaokao Benchmark",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
     "datasets": [
-        {"dataset_name": "sst2", "metrics": [{"name": "F1"}, {"name": "Accuracy"}]},
-        {"dataset_name": "snli", "metrics": [{"name": "Accuracy"}]}
+        {"dataset_name": "sst2", "task": "text-classification", "metrics": [{"name": "F1"}, {"name": "Accuracy"}]},
+        {"dataset_name": "snli", "task": "natural-language-inference", "metrics": [{"name": "Accuracy"}]}
     ],
     "views": [
         {
