@@ -3,22 +3,77 @@
     "description":"Gaokao Benchmark",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
     "datasets": [
-        {"dataset_name": "sst2", "task": "text-classification", "metrics": [{"name": "F1"}, {"name": "Accuracy"}]},
-        {"dataset_name": "snli", "task": "natural-language-inference", "metrics": [{"name": "Accuracy"}]}
+        {
+            "dataset_name": "gaokao2018_np3",
+            "sub_dataset": "listening",
+            "dataset_split": "test",
+            "metrics": [{"name":"CorrectScore"}]
+          },
+          {
+            "dataset_name": "gaokao2018_np3",
+            "sub_dataset": "cloze-multiple-choice",
+            "dataset_split": "test",
+            "metrics": [{"name":"CorrectScore"}]
+          }, 
+          {
+            "dataset_name": "gaokao2018_np3",
+            "sub_dataset": "cloze-hint",
+            "dataset_split": "test",
+            "metrics": [{"name":"CorrectScore"}]
+          },    
+          {
+            "dataset_name": "gaokao2018_np3",
+            "sub_dataset": "reading-multiple-choice",
+            "dataset_split": "test",
+            "metrics": [{"name":"CorrectScore"}]
+          },
+          {
+            "dataset_name": "gaokao2018_np3",
+            "sub_dataset": "reading-cloze",
+            "dataset_split": "test",
+            "metrics": [{"name":"CorrectScore"}]
+          },
+          {
+            "dataset_name": "gaokao2018_np3",
+            "sub_dataset": "writing-grammar",
+            "dataset_split": "test",
+            "metrics": [{"name":"SeqCorrectScore"}]
+          },
+          {
+            "dataset_name": "gaokao2018_np3",
+            "sub_dataset": "writing-essay",
+            "dataset_split": "test",
+            "metrics": [{"name":"bleu"}]
+          }  
     ],
     "views": [
         {
             "name": "Overall",
             "operations": [
-                {"op": "mean", "group_by": "dataset_name"},
-                {"op": "mean"}
+                {"op": "weighted_sum", "weight": "sub_dataset", "weight_map": {
+                    "listening":  1.5,
+                     "cloze-multiple-choice": 1.5,
+                     "cloze-hint":1.5,
+                     "reading-multiple-choice":10,
+                     "reading-cloze":2,
+                     "writing-grammar":2,
+                     "writing-essay":2
+                     }}
             ]
         },
         {
-            "name": "Task-wise Average",
+            "name": "Question Average",
             "operations": [
-                {"op": "mean", "group_by": ["dataset_name", "task"]},
-                {"op": "mean", "group_by": "task"}
+                {"op": "mean", "group_by": "sub_dataset"},
+                {"op": "multiply", "weight": "sub_dataset", "weight_map": {
+                    "listening":  2,
+                     "cloze-multiple-choice": 10,
+                     "cloze-hint":1,
+                     "reading-multiple-choice":1,
+                     "reading-cloze":1,
+                     "writing-grammar":1,
+                     "writing-essay":2
+                     }}
             ]
         }
     ],

@@ -118,7 +118,9 @@ class TestDatasetInfo(TestCase):
 
     def test_gaokao_aggregate(self):
 
-        json_file = os.path.join(TestDatasetInfo._config_path(), "config_gaokao.json")
+        json_file = os.path.join(
+            TestDatasetInfo._config_path(), "config_gaokao_test.json"
+        )
         config = BenchmarkUtils.config_from_json_file(json_file)
         orig_df = pd.DataFrame(
             {

@@ -167,7 +167,14 @@ class BenchmarkUtils:
             if operation["op"] == "mean":
                 output_df = output_df.groupby(group_by).mean()
             elif operation["op"] == "multiply":
-                output_df["score"] = output_df["score"] * output_df[operation["weight"]]
+                if "weight_map" in operation:
+                    output_df["score"] = output_df["score"] * output_df[
+                        operation["weight"]
+                    ].map(operation["weight_map"])
+                else:
+                    output_df["score"] = (
+                        output_df["score"] * output_df[operation["weight"]]
+                    )
             elif operation["op"] == "sum":
                 output_df = output_df.groupby(group_by).sum()
             elif operation["op"] == "weighted_sum":
