@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import json
 import os
 from dataclasses import dataclass
@@ -118,6 +116,10 @@ class BenchmarkUtils:
             for dataset, sys_info in zip(config.datasets, sys_infos):
                 column_dict = dict(dataset)
                 column_dict["system_name"] = sys_name
+                if column_dict["languages"]:
+                    column_dict["languages"] = column_dict["languages"][0]
+                else:
+                    column_dict["languages"] = None
                 dataset_metrics: list[BenchmarkMetric] = dataset.get(
                     "metrics", config.metrics
                 )
@@ -132,9 +134,9 @@ class BenchmarkUtils:
                     if type(dataset_metric) != dict:
                         dataset_metric = dataset_metric.to_dict()
                     column_dict["metric"] = dataset_metric["name"]
-                    column_dict["metric_weight"] = dataset_metric.get(
-                        "weight", 1.0 / len(dataset_metrics)
-                    )
+                    # column_dict["metric_weight"] = dataset_metric.get(
+                    # "weight", 1.0 / len(dataset_metrics)
+                    # )
                     if sys_info is not None:
                         performance = sys_info["results"]["overall"].get(
                             dataset_metric["name"]
@@ -156,22 +158,47 @@ class BenchmarkUtils:
         input_df: pd.DataFrame, view_spec: BenchmarkViewConfig
     ) -> pd.DataFrame:
         output_df = input_df.copy()
+        skip_systems = False
         for operation in view_spec.operations:
-            group_by = ["system_name"] + operation.get("group_by", [])
-            if operation["op"] == "mean":
-                output_df = output_df.groupby(group_by).mean()
-            elif operation["op"] == "multiply":
-                output_df["score"] = output_df["score"] * output_df[operation["other"]]
-            elif operation["op"] == "sum":
-                output_df = output_df.groupby(group_by).sum()
+            skip_systems = operation["skip_groupby_system"]
+            group_by = ["system_name"] + [operation.get("group_by", [])]
+            skip_system_group_by = operation.get("group_by", [])
+            if operation["op"] == "max" and operation["group_by"] == "languages":
+                if operation["skip_groupby_system"]:
+                    output_df = output_df.groupby(skip_system_group_by).max(
+                        numeric_only=True
+                    )
+                else:
+                    output_df = output_df.groupby(group_by).max(numeric_only=True)
+            elif operation["op"] == "mean":
+                if operation["skip_groupby_system"]:
+                    output_df = output_df.mean(numeric_only=True)
+                else:
+                    output_df = (
+                        output_df.groupby("system_name")
+                        .mean(numeric_only=True)
+                        .reset_index()
+                    )
             elif operation["op"] == "weighted_sum":
-                output_df["score"] = output_df["score"] * output_df[operation["weight"]]
-                output_df = output_df.groupby(group_by).sum()
+                output_df["score"] = output_df["score"] * operation["weight"]
+                if operation["skip_groupby_system"]:
+                    output_df = output_df.sum(numeric_only=True)
+                else:
+                    output_df = (
+                        output_df.groupby("system_name")
+                        .sum(numeric_only=True)
+                        .reset_index()
+                    )
             else:
                 raise ValueError(f"Unsupported operation {operation['op']} in spec.")
             if output_df.isnull().values.any():
                 raise ValueError(f"op {operation} resulted in NaN:\n{output_df}")
-        output_df.reset_index(inplace=True)
+        # output_df.reset_index(inplace=True)
+
+        if skip_systems:
+            output_df = output_df.to_frame().transpose()
+            output_df["system_name"] = "Global"
+        print("NOTICE ME", output_df.index)
         return output_df
 
     @staticmethod
@@ -204,6 +231,7 @@ class BenchmarkUtils:
     def dataframe_to_table(
         view_name: str, input_df: pd.DataFrame
     ) -> BenchmarkTableData:
+        print(input_df)
         elem_names = [x for x in input_df.columns if x not in {"score", "system_name"}]
         system_map = {v: i for i, v in enumerate(set(input_df["system_name"]))}
         row_col_names = [
