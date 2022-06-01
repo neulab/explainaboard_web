@@ -58,7 +58,7 @@ paths:
       parameters:
         - in: path
           name: benchmark_id
-          example: 61611c3a414abfb115397ca5
+          example: masakhaner
           schema:
             type: string
           required: true
@@ -1002,15 +1002,49 @@ components:
           text:
             type: string
 
-    Benchmark:
+    BenchmarkMetric:
       type: object
       properties:
-        overall:
+        name:
+          type: string
+        weight:
+          type: number
+        default:
+          type: number
+      required: [name]
+
+    BenchmarkOperationConfig:
+      type: object
+      properties:
+        op:
+          type: string
+      additionalProperties: true
+
+    BenchmarkViewConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        operations:
           type: array
           items:
-            type: object
+            $ref: '#/components/schemas/BenchmarkOperationConfig'
+
+    BenchmarkDatasetConfig:
+      type: object
+      properties:
+        dataset_name:
+          type: string
+        sub_dataset:
+          type: string
+        split:
+          type: string
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
       additionalProperties: true
-      required: [overall]
+      required: [dataset_name]
 
     BenchmarkConfig:
       type: object
@@ -1021,8 +1055,58 @@ components:
           type: string
         logo:
           type: string
-      additionalProperties: true
-      required: [name]
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkDatasetConfig'
+        views:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkViewConfig'
+        default_views:
+          type: array
+          items:
+            type: string
+      required: [name, datasets, views]
+
+    BenchmarkTableData:
+      type: object
+      properties:
+        name:
+          type: string
+        system_names:
+          type: array
+          description: the name of each system participating
+          items:
+            type: string
+        column_names:
+          type: array
+          description: the name of each column
+          items:
+            type: string
+        scores:
+          type: array
+          description: the values of scores in each row/column
+          items:
+            type: array
+            items:
+              type: number
+      required: [name, system_names, column_names, scores]
+
+    Benchmark:
+      type: object
+      properties:
+        config:
+          $ref: "#/components/schemas/BenchmarkConfig"
+        views:
+          type: array
+          items:
+            $ref: "#/components/schemas/BenchmarkTableData"
+      required: [config, views]
 
     User:
       type: object

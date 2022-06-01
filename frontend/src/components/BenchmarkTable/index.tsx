@@ -1,156 +1,66 @@
 import React, { useEffect, useState } from "react";
 import "./index.css";
 import { backendClient } from "../../clients";
-import { Benchmark } from "../../clients/openapi";
-import { Tabs } from "antd";
+import { Benchmark, BenchmarkTableData } from "../../clients/openapi";
+import { Tabs, Spin } from "antd";
 import { ColumnsType } from "antd/es/table";
 import { TableView } from "./TableView";
+import { PageState } from "../../utils";
 
 interface Props {
   /**initial value for task filter */
   benchmarkID: string;
 }
 
+function tableToPage(my_view: BenchmarkTableData) {
+  const cols = ["system_name"].concat(my_view.column_names);
+  const { TabPane } = Tabs;
+
+  const data_cols: ColumnsType<Array<string | number>> = cols.map(
+    (col_name, col_idx) => {
+      return { title: col_name, dataIndex: col_idx, key: col_idx };
+    }
+  );
+
+  // Add the system names and convert all numbers to strings
+  const sys_data = my_view.system_names.map((sys_name, i) =>
+    [sys_name].concat(my_view.scores[i].map((score) => score.toFixed(4)))
+  );
+  const view_name = my_view.name;
+  return (
+    <TabPane tab={view_name + " view"} key={view_name}>
+      <TableView view={view_name} columns={data_cols} dataSource={sys_data} />
+    </TabPane>
+  );
+}
+
 /** A table that lists all systems */
 export function BenchmarkTable({ benchmarkID }: Props) {
-  const { TabPane } = Tabs;
-  const [benchmark, setbenchmark] = useState<Benchmark>();
+  const [benchmark, setBenchmark] = useState<Benchmark>();
+  const [pageState, setPageState] = useState(PageState.loading);
 
   useEffect(() => {
     async function fetchBenchmark() {
-      setbenchmark(await backendClient.benchmarkBenchmarkIdGet(benchmarkID));
+      console.log("fetching benchmark");
+      setPageState(PageState.loading);
+      setBenchmark(await backendClient.benchmarkBenchmarkIdGet(benchmarkID));
+      console.log("done fetching benchmark");
+      setPageState(PageState.success);
     }
     fetchBenchmark();
   }, [benchmarkID]);
 
-  interface BenchmarkRecord {
-    system_name: string;
-    overall_result: number;
-    task_name: string;
-  }
-
-  const columns_overall: ColumnsType<BenchmarkRecord> = [
-    {
-      dataIndex: "idx",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      fixed: "left",
-      align: "center",
-    },
-    {
-      title: "System Name",
-      dataIndex: "system_name",
-      key: "system_name",
-    },
-    {
-      title: "Overall Result",
-      dataIndex: "overall_result",
-      key: "overall_result",
-    },
-  ];
-
-  const columns_task: ColumnsType<BenchmarkRecord> = [
-    {
-      dataIndex: "idx",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      fixed: "left",
-      align: "center",
-    },
-    {
-      title: "System Name",
-      dataIndex: "system_name",
-      key: "system_name",
-    },
-    {
-      title: "Overall Result",
-      dataIndex: "overall_result",
-      key: "overall_result",
-    },
-    {
-      title: "Task",
-      dataIndex: "task_name",
-      key: "task_name",
-    },
-  ];
-
-  const columns_dataset: ColumnsType<BenchmarkRecord> = [
-    {
-      dataIndex: "idx",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      fixed: "left",
-      align: "center",
-    },
-    {
-      title: "System Name",
-      dataIndex: "system_name",
-      key: "system_name",
-    },
-    {
-      title: "Overall Result",
-      dataIndex: "overall_result",
-      key: "overall_result",
-    },
-    {
-      title: "Dataset",
-      dataIndex: "dataset_name",
-      key: "dataset_name",
-    },
-  ];
-
-  const columns_source_language: ColumnsType<BenchmarkRecord> = [
-    {
-      dataIndex: "idx",
-      render: (text, record, index) => index + 1,
-      width: 50,
-      fixed: "left",
-      align: "center",
-    },
-    {
-      title: "System Name",
-      dataIndex: "system_name",
-      key: "system_name",
-    },
-    {
-      title: "Overall Result",
-      dataIndex: "overall_result",
-      key: "overall_result",
-    },
-    {
-      title: "Source Language",
-      dataIndex: "source_language",
-      key: "source_language",
-    },
-  ];
-
-  const columns_map: { [index: string]: ColumnsType<BenchmarkRecord> } = {
-    overall: columns_overall,
-    task: columns_task,
-    dataset: columns_dataset,
-    source_language: columns_source_language,
-  };
-
-  if (benchmark) {
-    // console.log(benchmark["task"]);
+  if (benchmark !== undefined) {
     return (
-      <Tabs>
-        {Object.keys(benchmark).map((key, sysIndex) => {
-          return (
-            <TabPane tab={key + " view"} key={key}>
-              <TableView
-                view={key}
-                columns={columns_map[key]}
-                dataSource={benchmark[key]}
-              />
-            </TabPane>
-          );
-        })}
-      </Tabs>
-
-      // <Table columns={columns} dataSource={benchmark["overall"]} />
+      <Spin spinning={pageState === PageState.loading} tip="Loading...">
+        <Tabs>
+          {benchmark.views.map((my_view) => {
+            return tableToPage(my_view);
+          })}
+        </Tabs>
+      </Spin>
     );
   } else {
-    return <div></div>;
+    return <div>&nbsp;</div>;
   }
 }
