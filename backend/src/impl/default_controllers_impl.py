@@ -18,11 +18,12 @@ from explainaboard.loaders.loader_registry import get_supported_file_types_for_l
 from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
+from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
-from explainaboard_web.models import DatasetMetadata
+from explainaboard_web.models import Benchmark, BenchmarkConfig, DatasetMetadata
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
@@ -109,6 +110,33 @@ def datasets_get(
     return DatasetDBUtils.find_datasets(
         page, page_size, parsed_dataset_ids, dataset_name, task
     )
+
+
+""" /benchmarks """
+
+
+def benchmarkconfigs_get() -> list[BenchmarkConfig]:
+    scriptpath = os.path.dirname(__file__)
+    config_folder = os.path.join(scriptpath, "./benchmark_configs/")
+    # Get all benchmark configs
+    benchmark_configs = []
+    for file_name in sorted(os.listdir(config_folder)):
+        if file_name.endswith(".json"):
+            benchmark_configs.append(
+                BenchmarkUtils.config_from_json_file(config_folder + file_name)
+            )
+
+    return benchmark_configs
+
+
+def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
+
+    config: BenchmarkConfig = BenchmarkUtils.config_from_benchmark_id(benchmark_id)
+    sys_infos = BenchmarkUtils.load_sys_infos(config)
+    orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
+    view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
+    views = [BenchmarkUtils.dataframe_to_table(k, v) for k, v in view_dfs]
+    return Benchmark(config, views)
 
 
 """ /systems """

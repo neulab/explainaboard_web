@@ -171,9 +171,8 @@ function createExampleTable(
         setPage={setPage}
       />
     );
-    // pairwise analysis
-  // } else if (systems.length === 2) {
-  } else  {
+    // multi-system analysis
+  } else {
     exampleTable = (
       <Space style={{ width: "fit-content" }}>
         <Tabs

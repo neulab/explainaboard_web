@@ -36,6 +36,47 @@ paths:
                 items:
                   $ref: "#/components/schemas/TaskCategory"
 
+  /benchmarkconfigs:
+    get:
+      summary: Returns all benchmark configs
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BenchmarkConfig"
+
+  /benchmark/{benchmark_id}:
+    get:
+      summary: Returns benchmark metadata by id
+      security: []
+      description: Returns benchmark metadata by id. 
+      parameters:
+        - in: path
+          name: benchmark_id
+          example: masakhaner
+          schema:
+            type: string
+          required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Benchmark"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
+
+
   /datasets/{dataset_id}:
     get:
       summary: Returns dataset metadata by id
@@ -955,6 +996,112 @@ components:
         sample_id:
           type: integer
       additionalProperties: true
+
+    BenchmarkMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        weight:
+          type: number
+        default:
+          type: number
+      required: [name]
+
+    BenchmarkOperationConfig:
+      type: object
+      properties:
+        op:
+          type: string
+      additionalProperties: true
+
+    BenchmarkViewConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        operations:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkOperationConfig'
+
+    BenchmarkDatasetConfig:
+      type: object
+      properties:
+        dataset_name:
+          type: string
+        sub_dataset:
+          type: string
+        split:
+          type: string
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
+      additionalProperties: true
+      required: [dataset_name]
+
+    BenchmarkConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        logo:
+          type: string
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkDatasetConfig'
+        views:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkViewConfig'
+        default_views:
+          type: array
+          items:
+            type: string
+      required: [name, datasets, views]
+
+    BenchmarkTableData:
+      type: object
+      properties:
+        name:
+          type: string
+        system_names:
+          type: array
+          description: the name of each system participating
+          items:
+            type: string
+        column_names:
+          type: array
+          description: the name of each column
+          items:
+            type: string
+        scores:
+          type: array
+          description: the values of scores in each row/column
+          items:
+            type: array
+            items:
+              type: number
+      required: [name, system_names, column_names, scores]
+
+    Benchmark:
+      type: object
+      properties:
+        config:
+          $ref: "#/components/schemas/BenchmarkConfig"
+        views:
+          type: array
+          items:
+            $ref: "#/components/schemas/BenchmarkTableData"
+      required: [config, views]
 
     User:
       type: object

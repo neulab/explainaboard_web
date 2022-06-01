@@ -107,6 +107,10 @@ export function SystemTableTools({
             Pairwise Analysis button will appear at the top. The dataset name
             can be unspecified, but proceed with caution.
           </p>
+          <p>
+            Multi-system Analysis: Select multiple system that use the same
+            dataset.
+          </p>
         </div>
       }
       placement="bottom"
@@ -138,7 +142,7 @@ export function SystemTableTools({
     } else if (selectedSystemDatasetNames.size > 1) {
       disabled = true;
       tooltipMessage =
-        "Cannot perform pairwise analysis on systems with different dataset names.";
+        "Cannot perform multiple system analysis on systems with different dataset names.";
     }
     analysisButton = (
       <Button
@@ -166,7 +170,7 @@ export function SystemTableTools({
     } else if (selectedSystemDatasetNames.size > 1) {
       disabled = true;
       tooltipMessage =
-        "Cannot perform pairwise analysis on systems with different dataset names.";
+        "Cannot perform multiple analysis on systems with different dataset names.";
     }
     analysisButton = (
       <Button
@@ -187,10 +191,10 @@ export function SystemTableTools({
   return (
     <div style={{ width: "100%" }}>
       <Space style={{ width: "fit-content", float: "left" }}>
-        {deleteButton}
+        {analysisButton}
       </Space>
       <Space style={{ width: "fit-content", float: "left" }}>
-        {analysisButton}
+        {deleteButton}
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
         <Select
