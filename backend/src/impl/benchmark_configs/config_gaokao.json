@@ -10,14 +10,14 @@
         {
             "name": "Overall",
             "operations": [
-                {"op": "weighted_mean", "group_by": "dataset_name", "other": "metric_weight"},
+                {"op": "mean", "group_by": "dataset_name"},
                 {"op": "mean"}
             ]
         },
         {
             "name": "Task-wise Average",
             "operations": [
-                {"op": "weighted_mean", "group_by": "dataset_name", "other": "metric_weight"},
+                {"op": "mean", "group_by": ["dataset_name", "task"]},
                 {"op": "mean", "group_by": "task"}
             ]
         }

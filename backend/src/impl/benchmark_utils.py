@@ -157,29 +157,45 @@ class BenchmarkUtils:
     ) -> pd.DataFrame:
         output_df = input_df.copy()
         for operation in view_spec.operations:
-            group_by = ["system_name"] + operation.get("group_by", [])
+            # group_by info
+            group_by: str | list[str] = operation.get("group_by", [])
+            if isinstance(group_by, str):
+                group_by = [group_by]
+            if not operation.get("skip_group_system"):
+                group_by = ["system_name"] + group_by
+            # Perform operations
             if operation["op"] == "mean":
                 output_df = output_df.groupby(group_by).mean()
             elif operation["op"] == "multiply":
-                output_df["score"] = output_df["score"] * output_df[operation["other"]]
+                output_df["score"] = output_df["score"] * output_df[operation["weight"]]
             elif operation["op"] == "sum":
                 output_df = output_df.groupby(group_by).sum()
             elif operation["op"] == "weighted_sum":
-                output_df["score"] = output_df["score"] * output_df[operation["weight"]]
+                if "weight_map" in operation:
+                    output_df["score"] = output_df["score"] * output_df[
+                        operation["weight"]
+                    ].map(operation["weight_map"])
+                else:
+                    output_df["score"] = (
+                        output_df["score"] * output_df[operation["weight"]]
+                    )
                 output_df = output_df.groupby(group_by).sum()
             else:
                 raise ValueError(f"Unsupported operation {operation['op']} in spec.")
             if output_df.isnull().values.any():
                 raise ValueError(f"op {operation} resulted in NaN:\n{output_df}")
-        output_df.reset_index(inplace=True)
+            output_df.reset_index(inplace=True)
+        # Remove all numerical columns other than score
+        output_df = pd.concat(
+            [output_df.select_dtypes(["object"]), output_df["score"]], axis=1
+        )
         return output_df
 
     @staticmethod
     def generate_view_dataframes(
-        config: BenchmarkConfig, systems: list[dict]
+        config: BenchmarkConfig, orig_df: pd.DataFrame
     ) -> list[tuple[str, pd.DataFrame]]:
 
-        orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, systems)
         view_dfs = []
         for view_spec in config.views:
             view_dfs.append(

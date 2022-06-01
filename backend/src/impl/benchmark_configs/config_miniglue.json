@@ -11,14 +11,21 @@
     {
       "name": "Overall",
       "operations": [
-        {"op": "weighted_mean", "group_by": "dataset_name", "other": "metric_weight"},
+        {"op": "weighted_sum", "group_by": "dataset_name", "weight": "metric_weight"},
         {"op": "mean"}
+      ]
+    },
+    {
+      "name": "Task-weighted Overall",
+      "operations": [
+        {"op": "weighted_sum", "group_by": ["dataset_name", "task"], "weight": "metric_weight"},
+        {"op": "weighted_sum", "weight": "task", "weight_map": {"text-classification":  0.7, "natural-language-inference": 0.3}}
       ]
     },
     {
       "name": "Task-wise Average",
       "operations": [
-        {"op": "weighted_mean", "group_by": "dataset_name", "other": "metric_weight"},
+        {"op": "weighted_sum", "group_by": ["dataset_name", "task"], "weight": "metric_weight"},
         {"op": "mean", "group_by": "task"}
       ]
     }
