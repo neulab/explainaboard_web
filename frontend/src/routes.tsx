@@ -49,15 +49,8 @@ const routes: Route[] = [
     requireLogin: false,
   },
   {
-    path: "/leaderboards",
-    title: "Leaderboards",
-    icon: <OrderedListOutlined />,
-    children: <LeaderboardPage />,
-    requireLogin: false,
-  },
-  {
     path: "/benchmark",
-    title: "Benchmark",
+    title: "Benchmarks",
     icon: <LineChartOutlined />,
     children: <BenchmarkPage />,
     requireLogin: false,
