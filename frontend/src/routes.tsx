@@ -68,5 +68,12 @@ const routes: Route[] = [
     children: <LoginCallback />,
     hideFromMenu: true,
   },
+  {
+    path: "/leaderboards",
+    title: "Leaderboards",
+    children: <LeaderboardPage />,
+    requireLogin: false,
+    hideFromMenu: true,
+  },
 ];
 export default routes;
