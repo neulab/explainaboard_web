@@ -43,18 +43,15 @@ class BenchmarkUtils:
     def load_sys_infos(config: BenchmarkConfig) -> list[dict]:
 
         sys_infos: list[dict] = []
-        
+
         systems_return = SystemDBUtils.find_systems(
-            ids=None,
-            page=0,
-            page_size=0,
-            task="named-entity-recognition"
+            ids=None, page=0, page_size=0, task="named-entity-recognition"
         )
 
-        systems = systems_return.systems 
+        systems = systems_return.systems
         for system in systems:
             sys_infos.append(system.system_info.to_dict())
-        
+
         return sys_infos
 
     @staticmethod
