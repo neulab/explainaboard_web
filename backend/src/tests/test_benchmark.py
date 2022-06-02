@@ -14,7 +14,8 @@ class TestDatasetInfo(TestCase):
             os.path.dirname(pathlib.Path(__file__)),
             os.path.pardir,
             "impl",
-            "benchmark_configs",
+            "tests",
+            "artifacts",
         )
 
     def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):

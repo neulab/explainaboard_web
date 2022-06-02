@@ -4,43 +4,43 @@
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
     "datasets": [
         {
-            "dataset_name": "gaokao2018_np3",
+            "dataset_name": "gaokao2018_np1",
             "sub_dataset": "listening",
             "dataset_split": "test",
-            "metrics": [{"name":"CorrectScore"}]
+            "metrics": [{"name":"CorrectCount"}]
           },
           {
-            "dataset_name": "gaokao2018_np3",
+            "dataset_name": "gaokao2018_np1",
             "sub_dataset": "cloze-multiple-choice",
             "dataset_split": "test",
-            "metrics": [{"name":"CorrectScore"}]
+            "metrics": [{"name":"CorrectCount"}]
           }, 
           {
-            "dataset_name": "gaokao2018_np3",
+            "dataset_name": "gaokao2018_np1",
             "sub_dataset": "cloze-hint",
             "dataset_split": "test",
-            "metrics": [{"name":"CorrectScore"}]
+            "metrics": [{"name":"CorrectCount"}]
           },    
           {
-            "dataset_name": "gaokao2018_np3",
+            "dataset_name": "gaokao2018_np1",
             "sub_dataset": "reading-multiple-choice",
             "dataset_split": "test",
-            "metrics": [{"name":"CorrectScore"}]
+            "metrics": [{"name":"CorrectCount"}]
           },
           {
-            "dataset_name": "gaokao2018_np3",
+            "dataset_name": "gaokao2018_np1",
             "sub_dataset": "reading-cloze",
             "dataset_split": "test",
-            "metrics": [{"name":"CorrectScore"}]
+            "metrics": [{"name":"CorrectCount"}]
           },
           {
-            "dataset_name": "gaokao2018_np3",
+            "dataset_name": "gaokao2018_np1",
             "sub_dataset": "writing-grammar",
             "dataset_split": "test",
-            "metrics": [{"name":"SeqCorrectScore"}]
+            "metrics": [{"name":"SeqCorrectCount"}]
           },
           {
-            "dataset_name": "gaokao2018_np3",
+            "dataset_name": "gaokao2018_np1",
             "sub_dataset": "writing-essay",
             "dataset_split": "test",
             "metrics": [{"name":"bleu"}]
@@ -54,7 +54,7 @@
                     "listening":  1.5,
                      "cloze-multiple-choice": 1.5,
                      "cloze-hint":1.5,
-                     "reading-multiple-choice":10,
+                     "reading-multiple-choice":2,
                      "reading-cloze":2,
                      "writing-grammar":2,
                      "writing-essay":2
