@@ -229,7 +229,6 @@ class BenchmarkUtils:
     def dataframe_to_table(
         view_name: str, input_df: pd.DataFrame
     ) -> BenchmarkTableData:
-        print(input_df)
         elem_names = [x for x in input_df.columns if x not in {"score", "system_name"}]
         system_map = {v: i for i, v in enumerate(set(input_df["system_name"]))}
         row_col_names = [
