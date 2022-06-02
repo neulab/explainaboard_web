@@ -43,24 +43,18 @@ class BenchmarkUtils:
     def load_sys_infos(config: BenchmarkConfig) -> list[dict]:
 
         sys_infos: list[dict] = []
-        for record in config.datasets:
-            dataset_name = record["dataset_name"]
-            subdataset_name = record.get("sub_dataset", None)
-            dataset_split = record.get("dataset_split", "test")
+        
+        systems_return = SystemDBUtils.find_systems(
+            ids=None,
+            page=0,
+            page_size=0,
+            task="named-entity-recognition"
+        )
 
-            # TODO(gneubig): it'd be better to use a single MongoDB query or session
-            #                to get all the systems, as this will probably be slow
-            systems_return = SystemDBUtils.find_systems(
-                ids=None,
-                page=0,
-                page_size=0,
-                dataset_name=dataset_name,
-                subdataset_name=subdataset_name,
-                split=dataset_split,
-            )
-            systems = systems_return.systems
-            for system in systems:
-                sys_infos.append(system.system_info.to_dict())
+        systems = systems_return.systems 
+        for system in systems:
+            sys_infos.append(system.system_info.to_dict())
+        
         return sys_infos
 
     @staticmethod

@@ -4,20 +4,25 @@ import "./index.css";
 import { Card, Col, PageHeader, Row, Typography } from "antd";
 import { backendClient } from "../../clients";
 import { BenchmarkConfig } from "../../clients/openapi";
+import { TaskCategory } from "../../clients/openapi";
 
 export function BenchmarkHome() {
   const history = useHistory();
   const { Title } = Typography;
-  const [benchmarkConfigs, setbenchmarkConfigs] = useState<BenchmarkConfig[]>(
+  // const [benchmarkConfigs, setbenchmarkConfigs] = useState<BenchmarkConfig[]>(
+    // []
+  // );
+  const [taskConfigs, settaskConfigs] = useState<TaskCategory[]>(
     []
   );
 
   useEffect(() => {
-    async function fetchBenchmarks() {
-      setbenchmarkConfigs(await backendClient.benchmarkconfigsGet());
+    async function fetchTasks() {
+      settaskConfigs(await backendClient.tasksGet());
     }
-    fetchBenchmarks();
+    fetchTasks();
   }, []);
+
 
   return (
     <div className="page">
@@ -27,9 +32,10 @@ export function BenchmarkHome() {
         subTitle="All benchmarks"
       />
       <Row gutter={[16, 16]} className="benchmarks-grid">
-        {benchmarkConfigs.map(({ name, logo }) => (
-          <Col key={name} span={6}>
-            <Card
+        {taskConfigs.map(({name, tasks}, i) => (
+          tasks.map(({ name }) => (
+            <Col key={name} span={6}>
+              <Card
               hoverable
               style={{
                 width: 240,
@@ -40,15 +46,14 @@ export function BenchmarkHome() {
                   <Title level={3}>{name}</Title>
                 </div>
               }
-              // title= {< div style= {{textAlign: "center"}} > Card title </div >}
               onClick={() =>
                 history.push(`${document.location.pathname}?name=${name}`)
               }
-              cover={<img alt="example" style={{ height: 200 }} src={logo} />}
+              cover={<img alt="example" style={{ height: 200 }} src={"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg"} />}
             >
-              {/* {name} */}
             </Card>
-          </Col>
+            </Col>
+          ))
         ))}
       </Row>
     </div>
