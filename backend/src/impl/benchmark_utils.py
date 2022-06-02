@@ -3,9 +3,7 @@ from __future__ import annotations
 import json
 import os
 from dataclasses import dataclass
-from typing import cast
 
-import numpy as np
 import pandas as pd
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.models import (
@@ -221,21 +219,23 @@ class BenchmarkUtils:
         view_name: str, input_df: pd.DataFrame
     ) -> BenchmarkTableData:
         elem_names = [x for x in input_df.columns if x not in {"score", "system_name"}]
-        system_map = {v: i for i, v in enumerate(set(input_df["system_name"]))}
+        system_idx = sorted(list(set(input_df["system_name"])))
+        # system_map = {v: i for i, v in enumerate(set(input_df["system_name"]))}
         row_col_names = [
             BenchmarkUtils._col_name(elem_names, x) for _, x in input_df.iterrows()
         ]
-        column_map = {v: i for i, v in enumerate(set(row_col_names))}
-        scores = np.zeros((len(system_map), len(column_map)))
-        for (_, df_data), df_col_name in zip(input_df.iterrows(), row_col_names):
-            row_id = system_map[df_data["system_name"]]
-            col_id = column_map[df_col_name]
+        column_idx = sorted(list(set(row_col_names)))
+        scores = pd.DataFrame(
+            {k: [0.0 for _ in system_idx] for k in column_idx}, index=system_idx
+        )
+        for (_, df_data), col_id in zip(input_df.iterrows(), row_col_names):
+            row_id = df_data["system_name"]
             val = df_data["score"]
-            scores[row_id][col_id] = val
-        score_lists = cast(list[list[float]], scores.tolist())
+            scores[col_id][row_id] = val
+        scores = scores.sort_values(scores.columns[0], axis=0, ascending=False)
         return BenchmarkTableData(
             name=view_name,
-            system_names=list(system_map.keys()),
-            column_names=list(column_map.keys()),
-            scores=score_lists,
+            system_names=list(scores.index),
+            column_names=list(scores.columns),
+            scores=[[scores[j][i] for j in scores.columns] for i in scores.index],
         )
