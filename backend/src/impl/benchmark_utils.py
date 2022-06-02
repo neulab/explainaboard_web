@@ -198,15 +198,13 @@ class BenchmarkUtils:
         if skip_systems:
             output_df = output_df.to_frame().transpose()
             output_df["system_name"] = "Global"
-        print("NOTICE ME", output_df.index)
         return output_df
 
     @staticmethod
     def generate_view_dataframes(
-        config: BenchmarkConfig, systems: list[dict]
+        config: BenchmarkConfig, orig_df: pd.DataFrame
     ) -> list[tuple[str, pd.DataFrame]]:
 
-        orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, systems)
         view_dfs = []
         for view_spec in config.views:
             view_dfs.append(

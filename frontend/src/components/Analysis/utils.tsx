@@ -40,17 +40,19 @@ export function initParsedResult(
   };
 }
 
-function formatName(name: string): string {
-  if (Number.isNaN(Number(name))) {
+function formatName(name: number | string): string {
+  if (typeof name === "string") {
     return name;
-  } else if (Number.isInteger(Number(name))) {
-    return Number.parseInt(name).toString();
+  } else if (Number.isNaN(Number(name)) || Number.isInteger(Number(name))) {
+    return name.toString();
   } else {
-    return Number.parseFloat(name).toFixed(2);
+    return name.toFixed(2);
   }
 }
 
-export function formatBucketName(unformattedName: Array<string>): string {
+export function formatBucketName(
+  unformattedName: Array<number | string>
+): string {
   const bucketInterval = unformattedName.map((name) => formatName(name));
   if (bucketInterval.length === 1) {
     return `${bucketInterval[0]}\n\n`;
@@ -65,22 +67,22 @@ export function formatBucketName(unformattedName: Array<string>): string {
 export function parse(
   systemID: string,
   task: string,
-  featureBuckets: { [bucketInterval: string]: BucketPerformance },
+  bucketPerformances: BucketPerformance[],
   featureName: string,
   featureDescription: string,
   bucketInfo: SystemInfoFeature["bucket_info"]
 ) {
   const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
 
-  const bucketPerformances: BucketPerformance[] = [];
-  for (const bucketPerformance of Object.values(featureBuckets)) {
-    bucketPerformances.push(bucketPerformance);
-  }
   // Sort by the correct bucket interval order
   bucketPerformances.sort((a, b) => {
-    return (
-      Number.parseFloat(a.bucket_name[0]) - Number.parseFloat(b.bucket_name[0])
-    );
+    if (a.bucket_interval[0] > b.bucket_interval[0]) {
+      return 1;
+    } else if (a.bucket_interval[0] < b.bucket_interval[0]) {
+      return -1;
+    } else {
+      return 0;
+    }
   });
 
   for (const bucketPerformance of bucketPerformances) {
@@ -89,7 +91,7 @@ export function parse(
     */
 
     // Convert the string representation of the bucket interval to numbers
-    const bucketName = formatBucketName(bucketPerformance.bucket_name);
+    const bucketName = formatBucketName(bucketPerformance.bucket_interval);
 
     for (const performance of bucketPerformance["performances"]) {
       const nSamples = bucketPerformance.n_samples;
@@ -108,21 +110,17 @@ export function parse(
       result.cases.push(bucketPerformance.bucket_samples);
       result.bucketNames.push(bucketName);
       result.numbersOfSamples.push(nSamples);
-      if (!Number.isNaN(bucketPerformance.bucket_name[0])) {
-        const bucketInterval = bucketPerformance.bucket_name.map((val) =>
-          Number.isInteger(val) ? Number.parseInt(val) : Number.parseFloat(val)
-        );
+      if (!(typeof bucketPerformance.bucket_interval[0] === typeof "")) {
+        const numInterval = bucketPerformance.bucket_interval as number[];
         result.bucketIntervals.min = Math.min(
           result.bucketIntervals.min,
-          ...bucketInterval
+          ...numInterval
         );
         result.bucketIntervals.max = Math.max(
           result.bucketIntervals.max,
-          ...bucketInterval
+          ...numInterval
         );
-        result.bucketIntervals.bounds.push(
-          bucketInterval[bucketInterval.length - 1]
-        );
+        result.bucketIntervals.bounds.push(numInterval[numInterval.length - 1]);
       }
       // bucketInfo are feature invariant across different metrics
       result.bucketInfo = bucketInfo;
@@ -180,8 +178,7 @@ export function parseFineGrainedResults(
       singleAnalyses[system.system_id];
 
     for (const featureName of systemActiveFeatures) {
-      const featureBuckets: { [key: string]: BucketPerformance } =
-        singleAnalysis[featureName];
+      const featureBuckets: BucketPerformance[] = singleAnalysis[featureName];
       const systemInfoFeature = findFeature(systemInfoFeatures, featureName);
       if (systemInfoFeature !== undefined) {
         const bucketInfo = systemInfoFeature["bucket_info"];

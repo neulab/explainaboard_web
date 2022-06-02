@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import binascii
-import dataclasses
 import os
 from functools import lru_cache
 from typing import Optional, cast
@@ -134,7 +133,8 @@ def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
 
     config: BenchmarkConfig = BenchmarkUtils.config_from_benchmark_id(benchmark_id)
     sys_infos = BenchmarkUtils.load_sys_infos(config)
-    view_dfs = BenchmarkUtils.generate_view_dataframes(config, sys_infos)
+    orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
+    view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
     views = [BenchmarkUtils.dataframe_to_table(k, v) for k, v in view_dfs]
     return Benchmark(config, views)
 
@@ -330,28 +330,16 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         ).system_outputs
         # Note we are casting here, as SystemOutput.from_dict() actually just returns a
         # dict
-        system_outputs = [cast(dict, x) for x in system_outputs]
+        system_outputs = [
+            processor.deserialize_system_output(cast(dict, x)) for x in system_outputs
+        ]
 
-        fine_grained_statistics = processor.get_fine_grained_statistics(
+        performance_over_bucket = processor.bucketing_samples(
             system_output_info,
             system_outputs,
             system.active_features,
             metric_stats,
         )
-        performance_over_bucket: dict = fine_grained_statistics.performance_over_bucket
-        # TODO This is a HACK. Should add proper to_dict methods in SDK
-        for feature, feature_dict in performance_over_bucket.items():
-            for bucket_key, bucket_performance in list(feature_dict.items()):
-                bucket_performance = dataclasses.asdict(bucket_performance)
-                new_bucket_key = [str(number) for number in bucket_key]
-                new_bucket_key_str = f"({', '.join(new_bucket_key)})"
-                bucket_performance["bucket_name"] = [
-                    str(num) for num in bucket_performance["bucket_name"]
-                ]
-                performance_over_bucket[feature][
-                    new_bucket_key_str
-                ] = bucket_performance
-                performance_over_bucket[feature].pop(bucket_key)
 
         single_analyses[system.system_id] = performance_over_bucket
 
