@@ -6,6 +6,7 @@ import { Tabs, Spin } from "antd";
 import { ColumnsType } from "antd/es/table";
 import { TableView } from "./TableView";
 import { PageState } from "../../utils";
+import { generateLeaderboardURL } from "../../utils";
 
 interface Props {
   /**initial value for task filter */
@@ -41,26 +42,40 @@ export function BenchmarkTable({ benchmarkID }: Props) {
 
   useEffect(() => {
     async function fetchBenchmark() {
-      console.log("fetching benchmark");
       setPageState(PageState.loading);
       setBenchmark(await backendClient.benchmarkBenchmarkIdGet(benchmarkID));
-      console.log("done fetching benchmark");
       setPageState(PageState.success);
     }
     fetchBenchmark();
   }, [benchmarkID]);
 
   if (benchmark !== undefined) {
+    const supportedDatasets = Array<JSX.Element>();
+    supportedDatasets.push(<b>Constituent Dataset Leaderboards: </b>);
+    for (const dataset of benchmark.config.datasets) {
+      console.log(dataset);
+      let datasetString = `${dataset["dataset_name"]} `;
+      if ("sub_dataset" in dataset) {
+        datasetString = `${datasetString} (${dataset["sub_dataset"]}) `;
+      }
+      const url = generateLeaderboardURL(
+        dataset["dataset_name"],
+        dataset["sub_dataset"],
+        dataset["split"]
+      );
+      supportedDatasets.push(<a href={url}>{datasetString}</a>);
+    }
     return (
-      <Spin spinning={pageState === PageState.loading} tip="Loading...">
+      <div>
+        <p> {supportedDatasets}</p>
         <Tabs>
           {benchmark.views.map((my_view) => {
             return tableToPage(my_view);
           })}
         </Tabs>
-      </Spin>
+      </div>
     );
   } else {
-    return <div>&nbsp;</div>;
+    return <Spin spinning={pageState === PageState.loading} tip="Loading..." />;
   }
 }
