@@ -27,8 +27,8 @@ export function BenchmarkHome() {
         subTitle="All benchmarks"
       />
       <Row gutter={[16, 16]} className="benchmarks-grid">
-        {benchmarkConfigs.map(({ name, logo }) => (
-          <Col key={name} span={6}>
+        {benchmarkConfigs.map(({ id, name, logo }) => (
+          <Col key={id} span={6}>
             <Card
               hoverable
               style={{
@@ -42,7 +42,7 @@ export function BenchmarkHome() {
               }
               // title= {< div style= {{textAlign: "center"}} > Card title </div >}
               onClick={() =>
-                history.push(`${document.location.pathname}?name=${name}`)
+                history.push(`${document.location.pathname}?id=${id}`)
               }
               cover={<img alt="example" style={{ height: 200 }} src={logo} />}
             >

@@ -1,5 +1,7 @@
 {
+    "id": "masakhaner",
     "name": "MasakhaNER",
+    "description": "A benchmark for named entity recognition in African languages",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/masakhane.png",
     "metrics": [{"name": "F1"}],
     "datasets": [
