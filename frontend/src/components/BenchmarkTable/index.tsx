@@ -7,7 +7,7 @@ import { ColumnsType } from "antd/es/table";
 import { TableView } from "./TableView";
 import { PageState } from "../../utils";
 import { generateLeaderboardURL } from "../../utils";
-import { useHistory } from "react-router-dom";
+import { useHistory, Link } from "react-router-dom";
 
 interface Props {
   /**initial value for task filter */
@@ -20,7 +20,21 @@ function tableToPage(my_view: BenchmarkTableData) {
 
   const data_cols: ColumnsType<Array<string | number>> = cols.map(
     (col_name, col_idx) => {
-      return { title: col_name, dataIndex: col_idx, key: col_idx };
+      return {
+        title: col_name,
+        dataIndex: col_idx,
+        key: col_idx,
+        render: (text, record) =>
+          col_name === "system_name" ? (
+            <h4>
+              <Link to={`/systems?system=${text.split(" ").join()}`}>
+                {text}
+              </Link>{" "}
+            </h4>
+          ) : (
+            <h4>{text}</h4>
+          ),
+      };
     }
   );
 

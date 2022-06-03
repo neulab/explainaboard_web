@@ -1,82 +1,640 @@
 {
-    "id": "gaokao",
-    "name": "Gaokao",
-    "description":"Gaokao Benchmark",
-    "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
-    "datasets": [
-        {
-            "dataset_name": "gaokao2018_np1",
-            "sub_dataset": "listening",
-            "dataset_split": "test",
-            "metrics": [{"name":"CorrectCount"}]
-          },
-          {
-            "dataset_name": "gaokao2018_np1",
-            "sub_dataset": "cloze-multiple-choice",
-            "dataset_split": "test",
-            "metrics": [{"name":"CorrectCount"}]
-          }, 
-          {
-            "dataset_name": "gaokao2018_np1",
-            "sub_dataset": "cloze-hint",
-            "dataset_split": "test",
-            "metrics": [{"name":"CorrectCount"}]
-          },    
-          {
-            "dataset_name": "gaokao2018_np1",
-            "sub_dataset": "reading-multiple-choice",
-            "dataset_split": "test",
-            "metrics": [{"name":"CorrectCount"}]
-          },
-          {
-            "dataset_name": "gaokao2018_np1",
-            "sub_dataset": "reading-cloze",
-            "dataset_split": "test",
-            "metrics": [{"name":"CorrectCount"}]
-          },
-          {
-            "dataset_name": "gaokao2018_np1",
-            "sub_dataset": "writing-grammar",
-            "dataset_split": "test",
-            "metrics": [{"name":"SeqCorrectCount"}]
-          },
-          {
-            "dataset_name": "gaokao2018_np1",
-            "sub_dataset": "writing-essay",
-            "dataset_split": "test",
-            "metrics": [{"name":"bleu"}]
-          }  
-    ],
-    "views": [
-        {
-            "name": "Overall",
-            "operations": [
-                {"op": "weighted_sum", "weight": "sub_dataset", "weight_map": {
-                    "listening":  1.5,
-                     "cloze-multiple-choice": 1.5,
-                     "cloze-hint":1.5,
-                     "reading-multiple-choice":2,
-                     "reading-cloze":2,
-                     "writing-grammar":2,
-                     "writing-essay":2
-                     }}
-            ]
-        },
-        {
-            "name": "Question Average",
-            "operations": [
-                {"op": "mean", "group_by": "sub_dataset"},
-                {"op": "multiply", "weight": "sub_dataset", "weight_map": {
-                    "listening":  2,
-                     "cloze-multiple-choice": 10,
-                     "cloze-hint":1,
-                     "reading-multiple-choice":1,
-                     "reading-cloze":1,
-                     "writing-grammar":1,
-                     "writing-essay":2
-                     }}
-            ]
-        }
-    ],
-    "default_views": ["Overall"]
+  "id": "gaokao",
+  "name": "Gaokao",
+  "description":"Gaokao Benchmark",
+  "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
+  "datasets": [
+    {
+      "dataset_name": "gaokao2018_np1",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np1",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np1",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np1",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np1",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np1",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np1",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2018_np3",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np3",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np3",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np3",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np3",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np3",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2018_np3",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2019_np1",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np1",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np1",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np1",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np1",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np1",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np1",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2019_np2",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np2",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np2",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np2",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np2",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np2",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np2",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2019_np3",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np3",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np3",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np3",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np3",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np3",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2019_np3",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2020_np1",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np1",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np1",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np1",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np1",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np1",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np1",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2020_np2",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np2",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np2",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np2",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np2",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np2",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np2",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2020_np3",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np3",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np3",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np3",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np3",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np3",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2020_np3",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2021_npa",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npa",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npa",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npa",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npa",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npa",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npa",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    },
+
+    {
+      "dataset_name": "gaokao2021_npb",
+      "sub_dataset": "listening",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npb",
+      "sub_dataset": "cloze-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npb",
+      "sub_dataset": "cloze-hint",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-generative",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npb",
+      "sub_dataset": "reading-multiple-choice",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "qa-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npb",
+      "sub_dataset": "reading-cloze",
+      "dataset_split": "test",
+      "metrics": [{"name":"CorrectCount"}],
+      "task": "cloze-multiple-choice",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npb",
+      "sub_dataset": "writing-grammar",
+      "dataset_split": "test",
+      "metrics": [{"name":"SeqCorrectCount"}],
+      "task": "grammatical-error-correction",
+      "output_file_type": "json"
+    },
+    {
+      "dataset_name": "gaokao2021_npb",
+      "sub_dataset": "writing-essay",
+      "dataset_split": "test",
+      "metrics": [{"name":"bleu"}],
+      "task": "conditional-generation",
+      "output_file_type": "text"
+    }
+  ],
+  "views": [
+      {
+          "name": "Overall with Essay",
+          "operations": [
+              {"op": "weighted_sum", "group_by": ["dataset_name"], "weight": "sub_dataset", "weight_map": {
+                  "listening":  1.5,
+                   "cloze-multiple-choice": 1.5,
+                   "cloze-hint":1.5,
+                   "reading-multiple-choice":2,
+                   "reading-cloze":2,
+                   "writing-grammar":1,
+                   "writing-essay":1
+                   }},
+                {"op": "mean"}
+          ]
+      },
+      {
+        "name": "Overall without Essay",
+        "operations": [
+          {"op": "weighted_sum", "group_by": ["dataset_name"], "weight": "sub_dataset", "weight_map": {
+              "listening":  1.5,
+               "cloze-multiple-choice": 1.5,
+               "cloze-hint":1.5,
+               "reading-multiple-choice":2,
+               "reading-cloze":2,
+               "writing-grammar":1,
+               "writing-essay":0
+               }},
+            {"op": "mean"}
+      ]
+    },
+      {
+          "name": "Question Type (with Essay)",
+          "operations": [
+              {"op": "mean", "group_by": "sub_dataset"},
+              {"op": "multiply", "weight": "sub_dataset", "weight_map": {
+                  "listening":  1.5,
+                  "cloze-multiple-choice": 1.5,
+                  "cloze-hint":1.5,
+                  "reading-multiple-choice":2,
+                  "reading-cloze":2,
+                  "writing-grammar":1,
+                   "writing-essay":1
+                   }}
+          ]
+      },
+      {
+        "name": "Question Type (without Essay)",
+        "operations": [
+            {"op": "mean", "group_by": "sub_dataset"},
+            {"op": "multiply", "weight": "sub_dataset", "weight_map": {
+                "listening":  1.5,
+                "cloze-multiple-choice": 1.5,
+                "cloze-hint":1.5,
+                "reading-multiple-choice":2,
+                "reading-cloze":2,
+                "writing-grammar":1,
+                 "writing-essay":0
+                 }}
+        ]
+    }
+  ],
+  "default_views": ["Overall"]
 }

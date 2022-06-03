@@ -4,7 +4,6 @@ import {
   HomeOutlined,
   DatabaseOutlined,
   LineChartOutlined,
-  OrderedListOutlined,
   CodeOutlined,
   FileOutlined,
 } from "@ant-design/icons";

@@ -120,7 +120,7 @@ def benchmarkconfigs_get() -> list[BenchmarkConfig]:
     config_folder = os.path.join(scriptpath, "./benchmark_configs/")
     # Add benchmarks to here if they should be displayed on the page.
     # This should perhaps be moved to the database or made dynamic later.
-    display_benchmarks = ["masakhaner"]
+    display_benchmarks = ["masakhaner", "gaokao"]
     # Get all benchmark configs
     benchmark_configs = [
         BenchmarkUtils.config_from_json_file(f"{config_folder}/config_{x}.json")

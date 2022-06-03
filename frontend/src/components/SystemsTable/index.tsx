@@ -12,6 +12,7 @@ import { LoginState, useUser } from "../useUser";
 
 interface Props {
   /**initial value for task filter */
+  name?: string;
   initialTaskFilter?: string;
   dataset?: string;
   subdataset?: string;
@@ -20,6 +21,7 @@ interface Props {
 
 /** A table that lists all systems */
 export function SystemsTable({
+  name,
   initialTaskFilter,
   dataset,
   subdataset,
@@ -33,7 +35,7 @@ export function SystemsTable({
   const [total, setTotal] = useState(0);
 
   // filters
-  const [nameFilter, setNameFilter] = useState("");
+  const [nameFilter, setNameFilter] = useState(name);
   const [taskFilter, setTaskFilter] = useState(initialTaskFilter);
   const [sortField, setSortField] = useState("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
