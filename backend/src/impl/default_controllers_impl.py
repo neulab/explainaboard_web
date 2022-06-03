@@ -118,13 +118,14 @@ def datasets_get(
 def benchmarkconfigs_get() -> list[BenchmarkConfig]:
     scriptpath = os.path.dirname(__file__)
     config_folder = os.path.join(scriptpath, "./benchmark_configs/")
+    # Add benchmarks to here if they should be displayed on the page.
+    # This should perhaps be moved to the database or made dynamic later.
+    display_benchmarks = ["masakhaner"]
     # Get all benchmark configs
-    benchmark_configs = []
-    for file_name in sorted(os.listdir(config_folder)):
-        if file_name.endswith(".json"):
-            benchmark_configs.append(
-                BenchmarkUtils.config_from_json_file(config_folder + file_name)
-            )
+    benchmark_configs = [
+        BenchmarkUtils.config_from_json_file(f"{config_folder}/config_{x}.json")
+        for x in display_benchmarks
+    ]
 
     return benchmark_configs
 
