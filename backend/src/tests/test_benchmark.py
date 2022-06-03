@@ -14,7 +14,8 @@ class TestDatasetInfo(TestCase):
             os.path.dirname(pathlib.Path(__file__)),
             os.path.pardir,
             "impl",
-            "benchmark_configs",
+            "tests",
+            "artifacts",
         )
 
     def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):
@@ -118,7 +119,9 @@ class TestDatasetInfo(TestCase):
 
     def test_gaokao_aggregate(self):
 
-        json_file = os.path.join(TestDatasetInfo._config_path(), "config_gaokao.json")
+        json_file = os.path.join(
+            TestDatasetInfo._config_path(), "config_gaokao_test.json"
+        )
         config = BenchmarkUtils.config_from_json_file(json_file)
         orig_df = pd.DataFrame(
             {
