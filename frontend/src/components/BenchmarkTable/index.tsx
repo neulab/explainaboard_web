@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./index.css";
 import { backendClient } from "../../clients";
 import { Benchmark, BenchmarkTableData } from "../../clients/openapi";
-import { Tabs, Spin, PageHeader } from "antd";
+import { Tabs, Spin, PageHeader, List, Collapse, Avatar } from "antd";
 import { ColumnsType } from "antd/es/table";
 import { TableView } from "./TableView";
 import { PageState } from "../../utils";
@@ -67,7 +67,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
 
   if (benchmark !== undefined) {
     const supportedDatasets = Array<JSX.Element>();
-    supportedDatasets.push(<b>Constituent Dataset Leaderboards: </b>);
+    // supportedDatasets.push(<b>Constituent Dataset Leaderboards: </b>);
     for (const dataset of benchmark.config.datasets) {
       console.log(dataset);
       let datasetString = `${dataset["dataset_name"]} `;
@@ -81,6 +81,12 @@ export function BenchmarkTable({ benchmarkID }: Props) {
       );
       supportedDatasets.push(<a href={url}>{datasetString}</a>);
     }
+
+    const { Panel } = Collapse;
+    const onChange = (key: string | string[]) => {
+      console.log(key);
+    };
+
     return (
       <div>
         <PageHeader
@@ -89,7 +95,26 @@ export function BenchmarkTable({ benchmarkID }: Props) {
           onBack={history.goBack}
         />
         <div style={{ padding: "10px 10px" }}>
-          <p> {supportedDatasets}</p>
+          <Collapse onChange={onChange}>
+            <Panel header="Constituent Dataset Leaderboards" key="1">
+              <List
+                itemLayout="horizontal"
+                dataSource={supportedDatasets}
+                renderItem={(item) => (
+                  <List.Item>
+                    <List.Item.Meta
+                      avatar={
+                        <Avatar src="https://explainaboard.s3.amazonaws.com/logo/logo.png" />
+                      }
+                      title={<a href="https://ant.design">{item}</a>}
+                      description=""
+                    />
+                  </List.Item>
+                )}
+              />
+            </Panel>
+          </Collapse>
+
           <Tabs>
             {benchmark.views.map((my_view) => {
               return tableToPage(my_view);

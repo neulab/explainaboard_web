@@ -636,5 +636,5 @@
         ]
     }
   ],
-  "default_views": ["Overall"]
+  "default_views": ["Overall with Essay", "Overall without Essay"]
 }
