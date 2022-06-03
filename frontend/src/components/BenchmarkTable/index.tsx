@@ -15,7 +15,7 @@ interface Props {
 }
 
 function tableToPage(my_view: BenchmarkTableData) {
-  const cols = ["system_name"].concat(my_view.column_names);
+  const cols = ["Rank", "system_name"].concat(my_view.column_names);
   const { TabPane } = Tabs;
 
   const data_cols: ColumnsType<Array<string | number>> = cols.map(
@@ -40,7 +40,7 @@ function tableToPage(my_view: BenchmarkTableData) {
 
   // Add the system names and convert all numbers to strings
   const sys_data = my_view.system_names.map((sys_name, i) =>
-    [sys_name].concat(my_view.scores[i].map((score) => score.toFixed(4)))
+    [i + 1, sys_name].concat(my_view.scores[i].map((score) => score.toFixed(4)))
   );
   const view_name = my_view.name;
   return (
