@@ -1,5 +1,5 @@
 {
-    "name": "NER",
+    "name": "Global",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
     "metrics": [{"name": "F1"}],
     "datasets": [

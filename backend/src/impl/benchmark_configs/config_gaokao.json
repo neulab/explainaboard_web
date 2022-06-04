@@ -10,15 +10,15 @@
         {
             "name": "Overall",
             "operations": [
-                {"op": "mean", "group_by": "dataset_name"},
-                {"op": "mean"}
+                {"op": "mean", "group_by": "dataset_name", "skip_groupby_system": false},
+                {"op": "mean", "skip_groupby_system": false}
             ]
         },
         {
             "name": "Task-wise Average",
             "operations": [
-                {"op": "mean", "group_by": ["dataset_name", "task"]},
-                {"op": "mean", "group_by": "task"}
+                {"op": "mean", "group_by": ["dataset_name", "task"], "skip_groupby_system": false},
+                {"op": "mean", "group_by": "task", "skip_groupby_system": false}
             ]
         }
     ],

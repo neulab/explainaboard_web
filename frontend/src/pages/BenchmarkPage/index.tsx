@@ -3,6 +3,7 @@ import "./index.css";
 import { PageHeader } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import { BenchmarkTable } from "../../components";
+import { BenchmarkGlobal } from "../BenchmarkGlobal";
 import { BenchmarkHome } from "../BenchmarkHome";
 
 // useEffect(() => {
@@ -22,7 +23,7 @@ export function BenchmarkPage() {
   const history = useHistory();
   const query = useQuery();
   const name = query.get("name") || undefined;
-
+  
   // const [benchmark, setbenchmark] = useState<Benchmark>();
   // const [benchmarkID, setbenchmarkID] = useState<string>("");
 
@@ -40,7 +41,10 @@ export function BenchmarkPage() {
   //   fetchBenchmark();
   // }, [benchmarkID]);
 
-  if (name) {
+  if (name === "Global") {
+    return <BenchmarkGlobal/>;
+  }
+  else if (name) {
     let title = "";
     title = name;
     let subTitle = "";

@@ -27,13 +27,13 @@
         {
             "name": "Mean",
             "operations": [
-                {"op": "mean"}
+                {"op": "mean", "skip_groupby_system": false}
             ]
         },
         {
             "name": "Population-weighted Mean",
             "operations": [
-                {"op": "weighted_sum", "weight": "pop_weight"}
+                {"op": "weighted_sum", "weight": 1, "skip_groupby_system": false}
             ]
         }
     ],
