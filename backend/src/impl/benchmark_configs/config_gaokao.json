@@ -1,7 +1,7 @@
 {
   "id": "gaokao",
   "name": "Gaokao",
-  "description":"Gaokao Benchmark",
+  "description":"Gaokao is a benchmark that can track how well we make progress towards human-level AI.",
   "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
   "datasets": [
     {
