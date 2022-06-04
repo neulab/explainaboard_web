@@ -3,6 +3,11 @@
     "name": "MasakhaNER",
     "description": "A benchmark for named entity recognition in African languages",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/masakhane.png",
+    "contact":"masakhanetranslation@gmail.com",
+    "paper":{
+      "title":"MasakhaNER: Named Entity Recognition for African Languages",
+      "url":"https://aclanthology.org/2021.tacl-1.66.pdf"
+    },    
     "metrics": [{"name": "F1"}],
     "datasets": [
         {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-bam", "pop_weight": 0.05751919466882523},

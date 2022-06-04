@@ -9,10 +9,7 @@ import {
   List,
   Collapse,
   Avatar,
-  Space,
-  Button,
   Layout,
-  Alert,
   Descriptions,
 } from "antd";
 import { ColumnsType } from "antd/es/table";
@@ -20,7 +17,7 @@ import { TableView } from "./TableView";
 import { PageState } from "../../utils";
 import { generateLeaderboardURL } from "../../utils";
 import { useHistory, Link } from "react-router-dom";
-import { SearchOutlined, CheckSquareTwoTone } from "@ant-design/icons";
+import { CheckSquareTwoTone } from "@ant-design/icons";
 
 interface Props {
   /**initial value for task filter */
@@ -82,7 +79,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
     const supportedDatasets = Array<JSX.Element>();
     // supportedDatasets.push(<b>Constituent Dataset Leaderboards: </b>);
     for (const dataset of benchmark.config.datasets) {
-      console.log(dataset);
+      // console.log(dataset);
       let datasetString = `${dataset["dataset_name"]} `;
       if ("sub_dataset" in dataset) {
         datasetString = `${datasetString} (${dataset["sub_dataset"]}) `;
@@ -95,7 +92,6 @@ export function BenchmarkTable({ benchmarkID }: Props) {
       supportedDatasets.push(<a href={url}>{datasetString}</a>);
     }
 
-    const { Header, Footer, Sider, Content } = Layout;
     const { Panel } = Collapse;
     const onChange = (key: string | string[]) => {
       console.log(key);
@@ -104,6 +100,23 @@ export function BenchmarkTable({ benchmarkID }: Props) {
     let tasks = benchmark.config.datasets.map((dataset) => dataset["task"]);
     if (tasks[0] === undefined) tasks = ["unknow"];
     const tasks_unique = new Set(tasks);
+
+    // initialize contact
+    let contact = "unknown";
+    if (benchmark.config.contact !== undefined) {
+      contact = benchmark.config.contact;
+    }
+
+    // initialize contact
+    let paper_title = "unknown";
+    let paper_url = "unknown";
+
+    if (benchmark.config.paper !== undefined) {
+      paper_title = benchmark.config.paper["title"];
+    }
+    if (benchmark.config.paper !== undefined) {
+      paper_url = benchmark.config.paper["url"];
+    }
 
     return (
       <div>
@@ -136,7 +149,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
                 </b>
               }
             >
-              {tasks_unique.size}
+              {contact}
             </Descriptions.Item>
             <Descriptions.Item
               label={
@@ -145,7 +158,9 @@ export function BenchmarkTable({ benchmarkID }: Props) {
                 </b>
               }
             >
-              {"This is the paper"}
+              <a target="_blank" rel="noreferrer" href={paper_url}>
+                {paper_title}
+              </a>
             </Descriptions.Item>
             <Descriptions.Item
               label={
@@ -199,7 +214,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
                       avatar={
                         <Avatar src="https://explainaboard.s3.amazonaws.com/logo/logo.png" />
                       }
-                      title={<a href="https://ant.design">{item}</a>}
+                      title={<h4>{item}</h4>}
                       description=""
                     />
                   </List.Item>

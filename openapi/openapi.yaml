@@ -1052,6 +1052,11 @@ components:
           type: string
         logo:
           type: string
+        contact:
+          type: string
+        paper:
+          type: object 
+          $ref: "#/components/schemas/Paper"                     
         metrics:
           type: array
           items:
@@ -1104,6 +1109,16 @@ components:
           items:
             $ref: "#/components/schemas/BenchmarkTableData"
       required: [config, views]
+
+    Paper:
+      type: object
+      properties:
+        title:
+          type: string
+        url:
+          type: string
+      required: [title, url]
+
 
     User:
       type: object
