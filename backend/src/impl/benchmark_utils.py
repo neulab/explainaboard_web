@@ -39,7 +39,6 @@ class BenchmarkUtils:
             )
         )
 
-
     """
     @staticmethod
     def load_sys_infos(config: BenchmarkConfig) -> list[dict]:
@@ -56,29 +55,31 @@ class BenchmarkUtils:
 
         return sys_infos
     """
+
     @staticmethod
     def load_sys_infos(config: BenchmarkConfig, task: str) -> list[dict]:
         sys_infos: list[dict] = []
         if config.name == "Global":
-            # hard-coded this task for now, will change later 
+            # hard-coded this task for now, will change later
             systems_return = SystemDBUtils.find_systems(
                 ids=None, page=0, page_size=0, task=task
             )
-            
-        else: 
+
+        else:
             dataset_list = []
             for record in config.datasets:
                 dataset_name = record["dataset_name"]
                 subdataset_name = record.get("sub_dataset", None)
                 dataset_split = record.get("dataset_split", "test")
                 dataset_list.append((dataset_name, subdataset_name, dataset_split))
-            systems_return = SystemDBUtils.find_systems(ids=None, page=0, page_size=0, dataset_list=dataset_list)
-        
+            systems_return = SystemDBUtils.find_systems(
+                ids=None, page=0, page_size=0, dataset_list=dataset_list
+            )
+
         systems = systems_return.systems
         for system in systems:
             sys_infos.append(system.system_info.to_dict())
         return sys_infos
-
 
     @staticmethod
     def generate_dataframe_from_sys_ids(config: BenchmarkConfig, system_ids: list[str]):

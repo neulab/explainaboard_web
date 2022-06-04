@@ -126,10 +126,10 @@ class SystemDBUtils:
         shared_users: Optional[list[str]] = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
-        dataset_list: Optional[list[tuple[str, str]]] = None
+        dataset_list: Optional[list[tuple[str, str]]] = None,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
-        
+
         filt: dict[str, Any] = {}
         if ids:
             filt["_id"] = {"$in": [ObjectId(_id) for _id in ids]}
@@ -155,10 +155,17 @@ class SystemDBUtils:
 
         if not dataset_list:
             filt["$or"] = permissions_list
-        else: 
-            dataset_dicts = [{"system_info.dataset_name": ds[0], "system_info.sub_dataset_name": ds[1], "system_info.dataset_split": ds[2]} for ds in dataset_list]
+        else:
+            dataset_dicts = [
+                {
+                    "system_info.dataset_name": ds[0],
+                    "system_info.sub_dataset_name": ds[1],
+                    "system_info.dataset_split": ds[2],
+                }
+                for ds in dataset_list
+            ]
             filt["$and"] = [{"$or": permissions_list}, {"$or": dataset_dicts}]
-        
+
         cursor, total = DBUtils.find(
             DBUtils.DEV_SYSTEM_METADATA, filt, sort, page * page_size, page_size
         )

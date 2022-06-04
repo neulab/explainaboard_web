@@ -131,10 +131,11 @@ def benchmarkconfigs_get() -> list[BenchmarkConfig]:
 
 def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
     tasks = ["named-entity-recognition"]
-    if benchmark_id not in tasks: 
-        config: BenchmarkConfig = BenchmarkUtils.config_from_benchmark_id(benchmark_id)
-    else: 
-        config: BenchmarkConfig = BenchmarkUtils.config_from_benchmark_id("global")
+    config: BenchmarkConfig = None
+    if benchmark_id not in tasks:
+        config = BenchmarkUtils.config_from_benchmark_id(benchmark_id)
+    else:
+        config = BenchmarkUtils.config_from_benchmark_id("global")
     sys_infos = BenchmarkUtils.load_sys_infos(config, benchmark_id)
     orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
     view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
