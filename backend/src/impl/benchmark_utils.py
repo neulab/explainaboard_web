@@ -39,7 +39,6 @@ class BenchmarkUtils:
             )
         )
 
-
     @staticmethod
     def load_sys_infos(config: BenchmarkConfig, task: str) -> list[dict]:
         sys_infos: list[dict] = []
