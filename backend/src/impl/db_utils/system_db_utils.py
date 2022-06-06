@@ -126,11 +126,11 @@ class SystemDBUtils:
         shared_users: Optional[list[str]] = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
-        dataset_list: Optional[list[tuple[str, str]]] = None,
+        dataset_list: Optional[list[tuple[str, str, str]]] = None,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
 
-        search_conditions = []
+        search_conditions: list[dict[str, Any]] = []
         filt: dict[str, Any] = {}
 
         if ids:
