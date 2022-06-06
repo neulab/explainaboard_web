@@ -4,6 +4,7 @@
     "description": "A benchmark for named entity recognition in African languages",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/masakhane.png",
     "contact":"masakhanetranslation@gmail.com",
+    "homepage":"https://github.com/masakhane-io/masakhane-ner",
     "paper":{
       "title":"MasakhaNER: Named Entity Recognition for African Languages",
       "url":"https://aclanthology.org/2021.tacl-1.66.pdf"

@@ -110,12 +110,16 @@ export function BenchmarkTable({ benchmarkID }: Props) {
     // initialize contact
     let paper_title = "unknown";
     let paper_url = "unknown";
+    let homepage = "unknown";
 
     if (benchmark.config.paper !== undefined) {
       paper_title = benchmark.config.paper["title"];
     }
     if (benchmark.config.paper !== undefined) {
       paper_url = benchmark.config.paper["url"];
+    }
+    if (benchmark.config.homepage !== undefined) {
+      homepage = benchmark.config.homepage;
     }
 
     return (
@@ -140,6 +144,18 @@ export function BenchmarkTable({ benchmarkID }: Props) {
               span={2}
             >
               {benchmark.config.description}
+            </Descriptions.Item>
+            <Descriptions.Item
+              label={
+                <b style={{ fontSize: "14px" }}>
+                  {" "}
+                  <CheckSquareTwoTone /> Homepage
+                </b>
+              }
+            >
+              <a target="_blank" rel="noreferrer" href={homepage}>
+                {"Website"}
+              </a>
             </Descriptions.Item>
             <Descriptions.Item
               label={
@@ -212,7 +228,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
                   <List.Item>
                     <List.Item.Meta
                       avatar={
-                        <Avatar src="https://explainaboard.s3.amazonaws.com/logo/logo.png" />
+                        <Avatar src="https://explainaboard.s3.amazonaws.com/logo/dataset.png" />
                       }
                       title={<h4>{item}</h4>}
                       description=""
@@ -230,7 +246,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
                   <List.Item>
                     <List.Item.Meta
                       avatar={
-                        <Avatar src="https://explainaboard.s3.amazonaws.com/logo/logo.png" />
+                        <Avatar src="https://explainaboard.s3.amazonaws.com/logo/task.png" />
                       }
                       title={<h4>{item}</h4>}
                       description=""
