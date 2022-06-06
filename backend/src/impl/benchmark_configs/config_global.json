@@ -103,4 +103,4 @@
         }
     ],
     "default_views": ["Linguistic-weighted Global Average", "Demographic-weighted Global Average", "Linguistic-weighted System-by-system Average", "Demographic-weighted System-by-system Average", "Original"]
-}
+}   
