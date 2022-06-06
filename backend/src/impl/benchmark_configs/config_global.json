@@ -76,28 +76,28 @@
         {
             "name": "Linguistic-weighted Global Average",
             "operations": [
-                {"op": "max", "group_by": "languages", "skip_groupby_system": true},
+                {"op": "max", "group_by": ["languages"], "skip_groupby_system": true},
                 {"op": "mean", "skip_groupby_system": true}
             ]
         },
         {
             "name": "Demographic-weighted Global Average",
             "operations": [
-                {"op": "max", "group_by": "languages", "skip_groupby_system": true},
+                {"op": "max", "group_by": ["languages"], "skip_groupby_system": true},
                 {"op": "weighted_sum", "weight": 1, "skip_groupby_system": true}
             ]
         }, 
         {
             "name": "Linguistic-weighted System-by-system Average",
             "operations": [
-                {"op": "max", "group_by": "languages", "skip_groupby_system": false},
+                {"op": "max", "group_by": ["languages"], "skip_groupby_system": false},
                 {"op": "mean", "skip_groupby_system": false}
             ]
         },
         {
             "name": "Demographic-weighted System-by-system Average",
             "operations": [
-                {"op": "max", "group_by": "languages", "skip_groupby_system": false},
+                {"op": "max", "group_by": ["languages"], "skip_groupby_system": false},
                 {"op": "weighted_sum", "weight": 1, "skip_groupby_system": false}
             ]
         }

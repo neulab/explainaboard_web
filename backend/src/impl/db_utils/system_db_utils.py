@@ -130,32 +130,29 @@ class SystemDBUtils:
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
 
+        search_conditions = []
         filt: dict[str, Any] = {}
-        if ids:
-            filt["_id"] = {"$in": [ObjectId(_id) for _id in ids]}
-        if system_name:
-            filt["system_info.system_name"] = {"$regex": rf"^{system_name}.*"}
-        if task:
-            filt["system_info.task_name"] = task
-        if dataset_name:
-            filt["system_info.dataset_name"] = dataset_name
-        if subdataset_name:
-            filt["system_info.sub_dataset_name"] = subdataset_name
-        if split:
-            filt["system_info.dataset_split"] = split
-        if creator:
-            filt["creator"] = creator
-        if shared_users:
-            filt["shared_users"] = {"shared_users": shared_users}
-        permissions_list = [{"is_private": False}]
-        if get_user().is_authenticated:
-            email = get_user().email
-            permissions_list.append({"creator": email})
-            permissions_list.append({"shared_users": email})
 
-        if not dataset_list:
-            filt["$or"] = permissions_list
-        else:
+        if ids:
+            search_conditions.append({"_id": {"$in": [ObjectId(_id) for _id in ids]}})
+        if system_name:
+            search_conditions.append(
+                {"system_info.system_name": {"$regex": rf"^{system_name}.*"}}
+            )
+        if task:
+            search_conditions.append({"system_info.task_name": task})
+        if dataset_name:
+            search_conditions.append({"system_info.dataset_name": dataset_name})
+        if subdataset_name:
+            search_conditions.append({"system_info.sub_dataset_name": subdataset_name})
+        if split:
+            search_conditions.append({"system_info.dataset_split": split})
+        if creator:
+            search_conditions.append({"creator": creator})
+        if shared_users:
+            search_conditions.append({"shared_users": shared_users})
+
+        if dataset_list:
             dataset_dicts = [
                 {
                     "system_info.dataset_name": ds[0],
@@ -164,8 +161,17 @@ class SystemDBUtils:
                 }
                 for ds in dataset_list
             ]
-            filt["$and"] = [{"$or": permissions_list}, {"$or": dataset_dicts}]
+            search_conditions.append({"$or": dataset_dicts})
 
+        permissions_list = [{"is_private": False}]
+        if get_user().is_authenticated:
+            email = get_user().email
+            permissions_list.append({"creator": email})
+            permissions_list.append({"shared_users": email})
+
+        search_conditions.append({"$or": permissions_list})
+
+        filt = {"$and": search_conditions}
         cursor, total = DBUtils.find(
             DBUtils.DEV_SYSTEM_METADATA, filt, sort, page * page_size, page_size
         )

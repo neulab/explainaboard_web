@@ -11,7 +11,7 @@
     {
       "name": "Overall",
       "operations": [
-        {"op": "weighted_sum", "group_by": "dataset_name", "weight": "metric_weight"},
+        {"op": "weighted_sum", "group_by": ["dataset_name"], "weight": "metric_weight"},
         {"op": "mean"}
       ]
     },

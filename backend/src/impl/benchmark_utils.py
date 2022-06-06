@@ -162,15 +162,11 @@ class BenchmarkUtils:
         skip_systems = False
         for operation in view_spec.operations:
             skip_systems = operation["skip_groupby_system"]
-            group_by = ["system_name"] + [operation.get("group_by", [])]
-            skip_system_group_by = operation.get("group_by", [])
-            if operation["op"] == "max" and operation["group_by"] == "languages":
-                if operation["skip_groupby_system"]:
-                    output_df = output_df.groupby(skip_system_group_by).max(
-                        numeric_only=True
-                    )
-                else:
-                    output_df = output_df.groupby(group_by).max(numeric_only=True)
+            group_by = ([] if skip_systems else ["system_name"]) + operation.get(
+                "group_by", []
+            )
+            if operation["op"] == "max" and operation["group_by"] == ["languages"]:
+                output_df = output_df.groupby(group_by).max(numeric_only=True)
             elif operation["op"] == "mean":
                 if operation["skip_groupby_system"]:
                     output_df = output_df.mean(numeric_only=True)
@@ -195,6 +191,17 @@ class BenchmarkUtils:
             if output_df.isnull().values.any():
                 raise ValueError(f"op {operation} resulted in NaN:\n{output_df}")
         # output_df.reset_index(inplace=True)
+
+        """ The global benchmark takes the max of everything,
+        which means the return df (output_df) only has one row.
+        By default, when a pandas df only has one row,
+        it becomes a series and is represented as a column
+        so the labels are in the row indices.
+        To be compatible with later code,
+        we force it to be a dataframe with one row and labels in the columns.
+        When taking max or mean over all systems,
+        the value is no longer associated to one particular system,
+        so we just associate it to "global" """
 
         if skip_systems:
             output_df = output_df.to_frame().transpose()
