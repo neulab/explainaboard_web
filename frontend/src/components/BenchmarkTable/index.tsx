@@ -124,12 +124,6 @@ export function BenchmarkTable({ benchmarkID }: Props) {
 
     return (
       <div>
-        {/* <PageHeader
-          title={benchmark.config.name + " Benchmark"}
-          subTitle={benchmark.config.description}
-          onBack={history.goBack}
-        /> */}
-
         <div style={{ padding: "10px 10px" }}>
           <Descriptions
             title={<b style={{ fontSize: "30px" }}>{benchmark.config.name}</b>}
@@ -257,21 +251,6 @@ export function BenchmarkTable({ benchmarkID }: Props) {
             </Panel>
           </Collapse>
         </Layout>
-
-        {/* <Alert
-              message="Tutorial for Submission"
-              description="You can submit your systems to the benchmark easily"
-              type="info"
-              showIcon
-              action={
-                <Space direction="vertical">
-                  <Button size="small" danger type="ghost" href={"https://github.com/ExpressAI/ExplainaBoard"}>
-                    Detail
-                  </Button>
-                </Space>
-              }
-              closable
-            /> */}
 
         <div style={{ padding: "10px 10px" }}>
           <Tabs>

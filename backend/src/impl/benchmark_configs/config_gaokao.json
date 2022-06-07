@@ -8,7 +8,7 @@
     "url":"www.xxx.com"
   },
   "description":"Gaokao is a benchmark that can track how well we make progress towards human-level AI.",
-  "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
+  "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao2022.png",
   "datasets": [
     {
       "dataset_name": "gaokao2018_np1",
