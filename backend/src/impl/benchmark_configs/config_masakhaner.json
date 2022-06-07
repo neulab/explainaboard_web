@@ -3,25 +3,25 @@
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
     "metrics": [{"name": "F1"}],
     "datasets": [
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-bam", "pop_weight": 0.05751919466882523},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-bbj", "pop_weight": 0.0014379798667206306},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-ewe", "pop_weight": 0.015694523116779453},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-fon", "pop_weight": 0.004889131546850144},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-hau", "pop_weight": 0.13763521581468893},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-ibo", "pop_weight": 0.07395325028848958},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-kin", "pop_weight": 0.043550247392110525},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-lug", "pop_weight": 0.026951851216249535},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-mos", "pop_weight": 0.026130148435266315},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-nya", "pop_weight": 0.02670534038195457},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-pcm", "pop_weight": 0.12325541714748263},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-sna", "pop_weight": 0.036812284588048146},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-swa", "pop_weight": 0.06570750396646204},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-tsn", "pop_weight": 0.007641835863143923},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-twi", "pop_weight": 0.0373874765347364},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-wol", "pop_weight": 0.021405357444612815},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-xho", "pop_weight": 0.07867804127914307},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-yor", "pop_weight": 0.08586794061274623},
-        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-zul", "pop_weight": 0.11216242960420919}
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-bam"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-bbj"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-ewe"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-fon"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-hau"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-ibo"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-kin"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-lug"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-mos"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-nya"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-pcm"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-sna"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-swa"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-tsn"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-twi"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-wol"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-xho"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-yor"},
+        {"dataset_name": "masakhaner", "sub_dataset": "masakhaner-zul"}
     ],
     "views": [
         {
@@ -33,7 +33,7 @@
         {
             "name": "Population-weighted Mean",
             "operations": [
-                {"op": "weighted_sum", "weight": 1, "skip_groupby_system": false}
+                {"op": "weighted_sum", "weight": "pop_weight", "skip_groupby_system": false}
             ]
         }
     ],

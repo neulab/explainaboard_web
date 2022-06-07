@@ -118,18 +118,32 @@ def datasets_get(
 def benchmarkconfigs_get() -> list[BenchmarkConfig]:
     scriptpath = os.path.dirname(__file__)
     config_folder = os.path.join(scriptpath, "./benchmark_configs/")
+    # Get all benchmark configs
+    """
     display_benchmarks = ["masakhaner", "gaokao"]
     # Get all benchmark configs
     benchmark_configs = [
         BenchmarkUtils.config_from_json_file(f"{config_folder}/config_{x}.json")
         for x in display_benchmarks
     ]
+    """
+    benchmark_configs = []
+    for file_name in sorted(os.listdir(config_folder)):
+        if file_name.endswith(".json"):
+            benchmark_configs.append(
+                BenchmarkUtils.config_from_json_file(config_folder + file_name)
+            )
 
     return benchmark_configs
 
 
 def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
-    tasks = ["named-entity-recognition"]
+    tasks = [
+        "machine-translation",
+        "summarization",
+        "conditional-generation",
+        "named-entity-recognition",
+    ]
     config: BenchmarkConfig = None
     if benchmark_id not in tasks:
         config = BenchmarkUtils.config_from_benchmark_id(benchmark_id)

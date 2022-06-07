@@ -3,102 +3,35 @@
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
     "metrics": [{"name": "F1"}],
     "datasets": [
-        {"dataset_name": "conll2003", "dataset_class_name": "Conll2003", "sub_dataset": "ner", "splits": {"train": 14041, "validation": 3250, "test": 3453}, "languages": [], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-bam", "splits": {"train": 4462, "validation": 638, "test": 1274}, "languages": ["bam"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-bbj", "splits": {"train": 3384, "validation": 483, "test": 966}, "languages": ["bbj"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-ewe", "splits": {"train": 3505, "validation": 501, "test": 1001}, "languages": ["ewe"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-fon", "splits": {"train": 4343, "validation": 621, "test": 1240}, "languages": ["fon"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-hau", "splits": {"train": 5716, "validation": 816, "test": 1633}, "languages": ["hau"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-ibo", "splits": {"train": 7634, "validation": 1090, "test": 2181}, "languages": ["ibo"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-kin", "splits": {"train": 7825, "validation": 1118, "test": 2235}, "languages": ["kin"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-lug", "splits": {"train": 4942, "validation": 706, "test": 1412}, "languages": ["lug"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-mos", "splits": {"train": 4532, "validation": 648, "test": 1294}, "languages": ["mos"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-nya", "splits": {"train": 6250, "validation": 893, "test": 1785}, "languages": ["nya"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-pcm", "splits": {"train": 5646, "validation": 806, "test": 1613}, "languages": ["pcm"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-sna", "splits": {"train": 6207, "validation": 887, "test": 1773}, "languages": ["sna"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-swa", "splits": {"train": 6593, "validation": 942, "test": 1883}, "languages": ["swa"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-tsn", "splits": {"train": 3489, "validation": 499, "test": 996}, "languages": ["tsn"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-twi", "splits": {"train": 4240, "validation": 605, "test": 1211}, "languages": ["twi"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-wol", "splits": {"train": 4593, "validation": 656, "test": 1312}, "languages": ["wol"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-xho", "splits": {"train": 5718, "validation": 817, "test": 1633}, "languages": ["xho"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-yor", "splits": {"train": 6877, "validation": 983, "test": 1964}, "languages": ["yor"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "masakhaner", "dataset_class_name": "MasakhaNER", "sub_dataset": "masakhaner-zul", "splits": {"train": 5848, "validation": 836, "test": 1670}, "languages": ["zul"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "ontonotes_ner", "dataset_class_name": "OntonotesNER", "sub_dataset": "notebc", "splits": {"train": 11846, "test": 2206, "validation": 2112}, "languages": [], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "ontonotes_ner", "dataset_class_name": "OntonotesNER", "sub_dataset": "notebn", "splits": {"train": 10658, "test": 1357, "validation": 1292}, "languages": [], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "ontonotes_ner", "dataset_class_name": "OntonotesNER", "sub_dataset": "notemz", "splits": {"train": 6905, "test": 779, "validation": 641}, "languages": [], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "ontonotes_ner", "dataset_class_name": "OntonotesNER", "sub_dataset": "notenw", "splits": {"train": 34945, "test": 2326, "validation": 5893}, "languages": [], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "ontonotes_ner", "dataset_class_name": "OntonotesNER", "sub_dataset": "notetc", "splits": {"train": 11314, "test": 1309, "validation": 1371}, "languages": [], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "ontonotes_ner", "dataset_class_name": "OntonotesNER", "sub_dataset": "notewb", "splits": {"train": 16735, "test": 2281, "validation": 2297}, "languages": [], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "wnut_17", "dataset_class_name": "WNUT_17", "sub_dataset": "wnut_17", "splits": {"train": 3394, "validation": 1009, "test": 1287}, "languages": [], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.afr", "splits": {"train": 5000, "validation": 1000, "test": 1000}, "languages": ["afr"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.ara", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["ara"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.bul", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["bul"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.ben", "splits": {"train": 10000, "validation": 1000, "test": 1000}, "languages": ["ben"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.deu", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["deu"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.ell", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["ell"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.eng", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["eng"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.spa", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["spa"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.est", "splits": {"train": 15000, "validation": 10000, "test": 10000}, "languages": ["est"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.eus", "splits": {"train": 10000, "validation": 10000, "test": 10000}, "languages": ["eus"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.fas", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["fas"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.fin", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["fin"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.fra", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["fra"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.heb", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["heb"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.hin", "splits": {"train": 5000, "validation": 1000, "test": 1000}, "languages": ["hin"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.hun", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["hun"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.ind", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["ind"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.ita", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["ita"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.jpn", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["jpn"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.jav", "splits": {"train": 100, "validation": 100, "test": 100}, "languages": ["jav"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.kat", "splits": {"train": 10000, "validation": 10000, "test": 10000}, "languages": ["kat"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.kaz", "splits": {"train": 1000, "validation": 1000, "test": 1000}, "languages": ["kaz"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.kor", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["kor"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.mal", "splits": {"train": 10000, "validation": 1000, "test": 1000}, "languages": ["mal"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.mar", "splits": {"train": 5000, "validation": 1000, "test": 1000}, "languages": ["mar"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.msa", "splits": {"train": 20000, "validation": 1000, "test": 1000}, "languages": ["msa"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.mya", "splits": {"train": 100, "validation": 100, "test": 100}, "languages": ["mya"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.nld", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["nld"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.por", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["por"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.rus", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["rus"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.swa", "splits": {"train": 1000, "validation": 1000, "test": 1000}, "languages": ["swa"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.tam", "splits": {"train": 15000, "validation": 1000, "test": 1000}, "languages": ["tam"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.tel", "splits": {"train": 1000, "validation": 1000, "test": 1000}, "languages": ["tel"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.tha", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["tha"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.tgl", "splits": {"train": 10000, "validation": 1000, "test": 1000}, "languages": ["tgl"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.tur", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["tur"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.urd", "splits": {"train": 20000, "validation": 1000, "test": 1000}, "languages": ["urd"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.vie", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["vie"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.yor", "splits": {"train": 100, "validation": 100, "test": 100}, "languages": ["yor"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]},
-{"dataset_name": "xtreme", "dataset_class_name": "Xtreme", "sub_dataset": "PAN-X.cmn", "splits": {"train": 20000, "validation": 10000, "test": 10000}, "languages": ["cmn"], "task_categories": [["sequence-labeling"]], "tasks": ["named-entity-recognition"]}
 
     ],
     "views": [
         {
             "name": "Linguistic-weighted Global Average",
             "operations": [
-                {"op": "max", "group_by": ["languages"], "skip_groupby_system": true},
+                {"op": "max", "group_by": ["source_language"], "skip_groupby_system": true},
                 {"op": "mean", "skip_groupby_system": true}
             ]
         },
         {
             "name": "Demographic-weighted Global Average",
             "operations": [
-                {"op": "max", "group_by": ["languages"], "skip_groupby_system": true},
-                {"op": "weighted_sum", "weight": 1, "skip_groupby_system": true}
+                {"op": "max", "group_by": ["source_language"], "skip_groupby_system": true},
+                {"op": "weighted_sum", "weight": "pop_weight", "skip_groupby_system": true}
             ]
         }, 
         {
             "name": "Linguistic-weighted System-by-system Average",
             "operations": [
-                {"op": "max", "group_by": ["languages"], "skip_groupby_system": false},
+                {"op": "max", "group_by": ["source_language"], "skip_groupby_system": false},
                 {"op": "mean", "skip_groupby_system": false}
             ]
         },
         {
             "name": "Demographic-weighted System-by-system Average",
             "operations": [
-                {"op": "max", "group_by": ["languages"], "skip_groupby_system": false},
-                {"op": "weighted_sum", "weight": 1, "skip_groupby_system": false}
+                {"op": "max", "group_by": ["source_language"], "skip_groupby_system": false},
+                {"op": "weighted_sum", "weight": "pop_weight", "skip_groupby_system": false}
             ]
         }
     ],
