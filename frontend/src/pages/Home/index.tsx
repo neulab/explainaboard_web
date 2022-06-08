@@ -51,6 +51,15 @@ export function Home() {
                   </a>
                   .
                 </li>
+                <a
+                  href="https://clustrmaps.com/site/1bous"
+                  title="Visit tracker"
+                >
+                  <img
+                    src="//www.clustrmaps.com/map_v2.png?d=4w5ZLB0Wy8N5px0mxkUN7jnJAOrw2RFa7AuVKa-9DQs&cl=ffffff"
+                    style={{ display: "none" }}
+                  />
+                </a>
               </ul>
             </div>
           </div>
