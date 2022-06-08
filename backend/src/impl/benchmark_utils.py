@@ -8,7 +8,6 @@ import pandas as pd
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.models import (
     BenchmarkConfig,
-    BenchmarkMetric,
     BenchmarkTableData,
     BenchmarkViewConfig,
 )
@@ -6717,7 +6716,6 @@ class BenchmarkUtils:
     def load_sys_infos(config: BenchmarkConfig, task: str) -> list[dict]:
         sys_infos: list[dict] = []
         if config.name == "Global":
-            # hard-coded this task for now, will change later
             systems_return = SystemDBUtils.find_systems(
                 ids=None, page=0, page_size=0, task=task
             )
@@ -6750,30 +6748,6 @@ class BenchmarkUtils:
         :param systems: A list of system info dictionaries
         :return: leaderboard:Leaderboard
         """
-
-        # TODO(gneubig): this function is a bit hacky/fragile, using objects and dicts
-        #                interchangeably due to OpenAPI deserialization being
-        #                incomplete. Should be fixed.
-
-        # --- Rearrange so we have each system's result over each dataset
-        dataset_to_id = {
-            (
-                x["dataset_name"],
-                x.get("sub_dataset_name", None),
-                x.get("dataset_split", "test"),
-            ): i
-            for i, x in enumerate(systems)
-        }
-        system_dataset_results: dict[str, list[dict | None]] = {}
-        for sys in systems:
-            sys_name = sys["system_name"]
-            if sys_name not in system_dataset_results:
-                system_dataset_results[sys_name] = [None for _ in systems]
-            dataset_id = dataset_to_id[
-                (sys["dataset_name"], sys["sub_dataset_name"], sys["dataset_split"])
-            ]
-            system_dataset_results[sys_name][dataset_id] = sys
-
         # --- Get df entries
         df_input: dict[str, list] = {
             "system_name": [],
@@ -6781,55 +6755,31 @@ class BenchmarkUtils:
             "sub_dataset_name": [],
             "dataset_split": [],
             "source_language": [],
+            "metric": [],
+            "metric_weight": [],
+            "score": [],
         }
-        exclude_keys = {"metrics"}
-        for dataset in systems:
-            for dataset_key in dataset.keys():
-                if not (dataset_key in df_input or dataset_key in exclude_keys):
-                    df_input[dataset_key] = []
-        df_input["metric"] = []
-        df_input["metric_weight"] = []
-        df_input["score"] = []
 
-        # Create the actual data
-        for sys_name, sys_infos in system_dataset_results.items():
-            for dataset, sys_info in zip(systems, sys_infos):
-                column_dict = dict(dataset)
-                column_dict["system_name"] = sys_name
-                if "languages" in column_dict.keys() and column_dict["languages"]:
-                    column_dict["languages"] = column_dict["languages"][0]
-                else:
-                    column_dict["languages"] = None
-                dataset_metrics: list[BenchmarkMetric] = dataset.get(
-                    "metrics", config.metrics
+        for sys in systems:
+            column_dict = {}
+            column_dict["system_name"] = sys["system_name"]
+            column_dict["dataset_name"] = sys["dataset_name"]
+            column_dict["sub_dataset_name"] = sys["sub_dataset_name"]
+            column_dict["dataset_split"] = sys["dataset_split"]
+            column_dict["source_language"] = sys["source_language"]
+
+            for metric in sys["metric_configs"]:
+                if type(metric) != dict:
+                    metric = metric.to_dict()
+                column_dict["metric"] = metric["name"]
+                column_dict["metric_weight"] = metric.get(
+                    "weight", 1.0 / len(sys["metric_configs"])
                 )
-                if dataset_metrics is None:
-                    raise ValueError(
-                        f"metrics must be specified either on a global or "
-                        f'local level, but {dataset["dataset_name"]} -- '
-                        f'{dataset["sub_dataset_name"]} -- '
-                        f'{dataset["dataset_split"]} specified neither'
-                    )
-                for dataset_metric in dataset_metrics:
-                    if type(dataset_metric) != dict:
-                        dataset_metric = dataset_metric.to_dict()
-                    column_dict["metric"] = dataset_metric["name"]
-                    column_dict["metric_weight"] = dataset_metric.get(
-                        "weight", 1.0 / len(dataset_metrics)
-                    )
-                    if sys_info is not None:
-                        performance = sys_info["results"]["overall"].get(
-                            dataset_metric["name"]
-                        )
-                        column_dict["score"] = (
-                            performance["value"]
-                            if performance
-                            else (dataset_metric.get("default") or 0.0)
-                        )
-                    else:
-                        column_dict["score"] = dataset_metric.get("default") or 0.0
-                    for df_key, df_arr in df_input.items():
-                        df_arr.append(column_dict.get(df_key))
+                column_dict["score"] = sys["results"]["overall"][column_dict["metric"]][
+                    "value"
+                ]
+                for k, v in df_input.items():
+                    v.append(column_dict[k])
 
         return pd.DataFrame(df_input)
 
@@ -6837,8 +6787,6 @@ class BenchmarkUtils:
     def aggregate_view(
         input_df: pd.DataFrame, view_spec: BenchmarkViewConfig
     ) -> pd.DataFrame:
-        print(input_df.columns)
-        print(input_df["source_language"])
         if input_df.empty:
             return input_df
         output_df = input_df.copy()
