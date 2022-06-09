@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import "./index.css";
-import { PageHeader } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import { BenchmarkTable } from "../../components";
 import { BenchmarkCards } from "../../components/BenchmarkCards";
 import { backendClient } from "../../clients";
+import { PageHeader } from "antd";
 
 function useQuery() {
   const { search } = useLocation();

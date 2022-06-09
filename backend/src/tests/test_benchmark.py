@@ -14,7 +14,8 @@ class TestDatasetInfo(TestCase):
             os.path.dirname(pathlib.Path(__file__)),
             os.path.pardir,
             "impl",
-            "benchmark_configs",
+            "tests",
+            "artifacts",
         )
 
     def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):
@@ -118,7 +119,9 @@ class TestDatasetInfo(TestCase):
 
     def test_gaokao_aggregate(self):
 
-        json_file = os.path.join(TestDatasetInfo._config_path(), "config_gaokao.json")
+        json_file = os.path.join(
+            TestDatasetInfo._config_path(), "config_gaokao_test.json"
+        )
         config = BenchmarkUtils.config_from_json_file(json_file)
         orig_df = pd.DataFrame(
             {
@@ -254,3 +257,15 @@ class TestDatasetInfo(TestCase):
         self.assertDeepAlmostEqual(mean_df.to_dict(), view_dfs[0][1].to_dict())
         self.assertDeepAlmostEqual(pop_df.to_dict(), view_dfs[1][1].to_dict())
         self.assertDeepAlmostEqual(orig_df.to_dict(), view_dfs[2][1].to_dict())
+
+    def test_dataframe_to_table(self):
+        orig_df = pd.DataFrame(
+            {
+                "system_name": ["sys1", "sys2", "sys3", "sys1", "sys2", "sys3"],
+                "dataset_name": ["data1", "data1", "data1", "data2", "data2", "data2"],
+                "score": [0.6, 0.7, 0.5, 0.9, 0.8, 0.0],
+            }
+        )
+        table = BenchmarkUtils.dataframe_to_table("my_view", orig_df)
+        exp_scores = [[0.7, 0.8], [0.6, 0.9], [0.5, 0.0]]
+        self.assertDeepAlmostEqual(exp_scores, table.scores)

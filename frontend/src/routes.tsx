@@ -4,7 +4,6 @@ import {
   HomeOutlined,
   DatabaseOutlined,
   LineChartOutlined,
-  OrderedListOutlined,
   CodeOutlined,
   FileOutlined,
 } from "@ant-design/icons";
@@ -49,15 +48,8 @@ const routes: Route[] = [
     requireLogin: false,
   },
   {
-    path: "/leaderboards",
-    title: "Leaderboards",
-    icon: <OrderedListOutlined />,
-    children: <LeaderboardPage />,
-    requireLogin: false,
-  },
-  {
     path: "/benchmark",
-    title: "Benchmark",
+    title: "Benchmarks",
     icon: <LineChartOutlined />,
     children: <BenchmarkPage />,
     requireLogin: false,
@@ -73,6 +65,13 @@ const routes: Route[] = [
     path: "/login-callback",
     exact: true,
     children: <LoginCallback />,
+    hideFromMenu: true,
+  },
+  {
+    path: "/leaderboards",
+    title: "Leaderboards",
+    children: <LeaderboardPage />,
+    requireLogin: false,
     hideFromMenu: true,
   },
 ];

@@ -118,6 +118,9 @@ def datasets_get(
 def benchmarkconfigs_get() -> list[BenchmarkConfig]:
     scriptpath = os.path.dirname(__file__)
     config_folder = os.path.join(scriptpath, "./benchmark_configs/")
+    # Add benchmarks to here if they should be displayed on the page.
+    # This should perhaps be moved to the database or made dynamic later.
+    # display_benchmarks = ["masakhaner", "gaokao"]
     # Get all benchmark configs
     """
     display_benchmarks = ["masakhaner", "gaokao"]
