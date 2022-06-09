@@ -14,19 +14,16 @@ function useQuery() {
 async function getTasks() {
   const allTasks = Array<string>();
   const taskConfigs = await backendClient.tasksGet();
-  taskConfigs.map(({tasks}, i) => (
-    tasks.map(({ name }) => 
-    allTasks.push(name))
-  ))
+  taskConfigs.map(({ tasks }, i) =>
+    tasks.map(({ name }) => allTasks.push(name))
+  );
   return allTasks;
 }
 
 async function getBenchmarks() {
   const allBenchmarks = Array<string>();
   const benchmarkConfigs = await backendClient.benchmarkconfigsGet();
-  benchmarkConfigs.map(({name}) => 
-  allBenchmarks.push(name)
-  )
+  benchmarkConfigs.map(({ name }) => allBenchmarks.push(name));
   return allBenchmarks;
 }
 
@@ -40,19 +37,17 @@ export function BenchmarkPage() {
   useEffect(() => {
     async function fetchItems() {
       if (name === "Global") {
-        setItems(await getTasks())
-      }
-      else if (name == null) {
-        setItems(await getBenchmarks())
+        setItems(await getTasks());
+      } else if (name == null) {
+        setItems(await getBenchmarks());
       }
     }
     fetchItems();
   }, [name, history]);
 
   if (name === "Global" || name == null) {
-    return <BenchmarkCards items={ items } subtitle="Select a benchmark"/>;
-  }
-  else {
+    return <BenchmarkCards items={items} subtitle="Select a benchmark" />;
+  } else {
     let title = "";
     title = name;
     let subTitle = "";
@@ -70,5 +65,5 @@ export function BenchmarkPage() {
         </div>
       </div>
     );
-  } 
+  }
 }
