@@ -264,10 +264,6 @@ export function BenchmarkTable({ benchmarkID }: Props) {
   } else {
     return (
       <div>
-        <PageHeader
-          title={benchmarkID + " Benchmark"}
-          onBack={history.goBack}
-        />
         <Spin spinning={pageState === PageState.loading} tip="Loading..." />
       </div>
     );
