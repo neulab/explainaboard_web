@@ -1,6 +1,7 @@
 {
   "id": "gaokao",
   "name": "Gaokao",
+  "visibility": "public",
   "contact":"stefanpengfei@gmail.com",
   "homepage":"https://github.com/gaokao",
   "paper":{

@@ -1,0 +1,9 @@
+{
+    "id": "globalbench_ner",
+    "name": "GlobalBench NER",
+    "description": "A benchmark for measuring global progress in named entity recognition.",
+    "parent": "globalbench",
+    "system_query": {
+        "task": "named-entity-recognition"
+    }
+}

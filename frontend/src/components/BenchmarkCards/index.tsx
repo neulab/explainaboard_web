@@ -2,15 +2,18 @@ import React from "react";
 import { useHistory } from "react-router-dom";
 import "./index.css";
 import { Card, Col, PageHeader, Row, Typography } from "antd";
+import { BenchmarkConfig } from "../../clients/openapi";
 
 interface Props {
-  items: Array<string>;
+  items: Array<BenchmarkConfig>;
   subtitle: string;
 }
 
 export function BenchmarkCards({ items, subtitle }: Props) {
   const history = useHistory();
   const { Title } = Typography;
+
+  const visibleItems = items.filter((config) => config.visibility === "public");
 
   return (
     <div className="page">
@@ -20,8 +23,8 @@ export function BenchmarkCards({ items, subtitle }: Props) {
         subTitle={subtitle}
       />
       <Row gutter={[16, 16]} className="benchmarks-grid">
-        {items.map((name) => (
-          <Col key={name} span={6}>
+        {visibleItems.map((config) => (
+          <Col key={config.id} span={6}>
             <Card
               hoverable
               style={{
@@ -30,22 +33,16 @@ export function BenchmarkCards({ items, subtitle }: Props) {
               className="benchmark-card"
               title={
                 <div style={{ textAlign: "center" }}>
-                  <Title level={3}>{name}</Title>
+                  <Title level={3}>{config.name}</Title>
                 </div>
               }
               // title= {< div style= {{textAlign: "center"}} > Card title </div >}
 
               onClick={() =>
-                history.push(`${document.location.pathname}?name=${name}`)
+                history.push(`${document.location.pathname}?id=${config.id}`)
               }
               cover={
-                <img
-                  alt="example"
-                  style={{ height: 200 }}
-                  src={
-                    "https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg"
-                  }
-                />
+                <img alt="example" style={{ height: 200 }} src={config.logo} />
               }
             >
               {/* {name} */}

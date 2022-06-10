@@ -18,37 +18,39 @@ from explainaboard_web.models import (
 @dataclass
 class BenchmarkUtils:
     @staticmethod
-    def config_from_json_file(path_json: str) -> BenchmarkConfig:
+    def config_dict_from_file(path_json: str) -> dict:
         with open(path_json, "r") as fin:
             benchmark_config = json.load(fin)
-        return BenchmarkConfig.from_dict(benchmark_config)
+        # If a parent exists, then get the parent and update
+        parent_id = benchmark_config.get("parent")
+        if parent_id:
+            parent_config = BenchmarkUtils.config_dict_from_id(parent_id)
+            parent_config.update(benchmark_config)
+            return parent_config
+        return benchmark_config
 
     @staticmethod
-    def config_from_json_str(json_str: str) -> BenchmarkConfig:
-        benchmark_config = json.loads(json_str)
-        return BenchmarkConfig.from_dict(benchmark_config)
+    def config_dict_from_str(json_str: str) -> dict:
+        return json.loads(json_str)
 
     @staticmethod
-    def config_from_benchmark_id(benchmark_id: str):
+    def config_dict_from_id(benchmark_id: str) -> dict:
         # TODO(gneubig): get this from the database eventually
         scriptpath = os.path.dirname(__file__)
 
         # Get config
-        return BenchmarkUtils.config_from_json_file(
-            os.path.join(
-                scriptpath, "./benchmark_configs/config_" + benchmark_id + ".json"
-            )
+        return BenchmarkUtils.config_dict_from_file(
+            os.path.join(scriptpath, "./benchmark_configs/" + benchmark_id + ".json")
         )
 
     @staticmethod
-    def load_sys_infos(config: BenchmarkConfig, task: str) -> list[dict]:
+    def load_sys_infos(config: BenchmarkConfig) -> list[dict]:
         sys_infos: list[dict] = []
-        if config.name == "Global":
-            systems_return = SystemDBUtils.find_systems(
-                ids=None, page=0, page_size=0, task=task
+        if config.system_query is not None:
+            systems_return = SystemDBUtils.query_systems(
+                query=config.system_query, page=0, page_size=0
             )
-
-        else:
+        elif config.datasets is not None:
             dataset_list = []
             for record in config.datasets:
                 dataset_name = record["dataset_name"]
@@ -58,6 +60,8 @@ class BenchmarkUtils:
             systems_return = SystemDBUtils.find_systems(
                 ids=None, page=0, page_size=0, dataset_list=dataset_list
             )
+        else:
+            raise ValueError("system_query or datasets must be set by each benchmark")
 
         systems = systems_return.systems
         for system in systems:
@@ -82,11 +86,27 @@ class BenchmarkUtils:
         #                interchangeably due to OpenAPI deserialization being
         #                incomplete. Should be fixed.
 
+        # --- Collect each dataset to be included in the benchmark
+        if config.datasets:
+            dataset_to_id = {
+                (
+                    x["dataset_name"],
+                    x.get("sub_dataset", None),
+                    x.get("split", "test"),
+                ): i
+                for i, x in enumerate(config.datasets)
+            }
+        else:
+            dataset_to_id = {}
+            for sys in systems:
+                data_id = (
+                    sys["dataset_name"],
+                    sys["sub_dataset_name"],
+                    sys["dataset_split"],
+                )
+                dataset_to_id[data_id] = dataset_to_id.get(data_id, len(dataset_to_id))
+
         # --- Rearrange so we have each system's result over each dataset
-        dataset_to_id = {
-            (x["dataset_name"], x.get("sub_dataset", None), x.get("split", "test")): i
-            for i, x in enumerate(config.datasets)
-        }
         system_dataset_results: dict[str, list[dict | None]] = {}
         for sys in systems:
             sys_name = sys["system_name"]
@@ -107,10 +127,11 @@ class BenchmarkUtils:
         }
         # Extra dataset information columns needed by datasets or operations
         exclude_keys = {"metrics"}
-        for dataset in config.datasets:
-            for dataset_key in dataset.keys():
-                if not (dataset_key in df_input or dataset_key in exclude_keys):
-                    df_input[dataset_key] = []
+        if config.datasets:
+            for dataset in config.datasets:
+                for dataset_key in dataset.keys():
+                    if not (dataset_key in df_input or dataset_key in exclude_keys):
+                        df_input[dataset_key] = []
         for view in config.views:
             for operation in view.operations:
                 op_key = operation.get("weight")
@@ -160,6 +181,9 @@ class BenchmarkUtils:
                         elif sys_info and df_key in sys_info:
                             info = sys_info[df_key]
                         else:
+                            # TODO(gneubig): this is not ideal, we should probably not
+                            #   be using information in benchmarks that we can't get
+                            #   from either the dataset or system info
                             info = None
                         df_arr.append(info)
 

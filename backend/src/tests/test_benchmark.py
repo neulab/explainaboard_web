@@ -61,7 +61,7 @@ class TestBenchmark(TestCase):
 
     def test_masakhaner_aggregate(self):
 
-        json_file = os.path.join(TestBenchmark._config_path(), "config_masakhaner.json")
+        json_file = os.path.join(TestBenchmark._config_path(), "masakhaner.json")
         config = BenchmarkUtils.config_from_json_file(json_file)
 
         languages = [

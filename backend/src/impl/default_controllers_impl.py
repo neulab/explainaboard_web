@@ -115,7 +115,7 @@ def datasets_get(
 """ /benchmarks """
 
 
-def benchmarkconfigs_get() -> list[BenchmarkConfig]:
+def benchmarkconfigs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
     scriptpath = os.path.dirname(__file__)
     config_folder = os.path.join(scriptpath, "./benchmark_configs/")
     # Add benchmarks to here if they should be displayed on the page.
@@ -133,26 +133,19 @@ def benchmarkconfigs_get() -> list[BenchmarkConfig]:
     benchmark_configs = []
     for file_name in sorted(os.listdir(config_folder)):
         if file_name.endswith(".json"):
-            benchmark_configs.append(
-                BenchmarkUtils.config_from_json_file(config_folder + file_name)
+            benchmark_dict = BenchmarkUtils.config_dict_from_file(
+                config_folder + file_name
             )
+            # must match parent if one exists
+            if (parent or "") == (benchmark_dict.get("parent", "")):
+                benchmark_configs.append(BenchmarkConfig.from_dict(benchmark_dict))
 
     return benchmark_configs
 
 
 def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
-    tasks = [
-        "machine-translation",
-        "summarization",
-        "conditional-generation",
-        "named-entity-recognition",
-    ]
-    config: BenchmarkConfig = None
-    if benchmark_id not in tasks:
-        config = BenchmarkUtils.config_from_benchmark_id(benchmark_id)
-    else:
-        config = BenchmarkUtils.config_from_benchmark_id("global")
-    sys_infos = BenchmarkUtils.load_sys_infos(config, benchmark_id)
+    config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
+    sys_infos = BenchmarkUtils.load_sys_infos(config)
     orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
     view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
     views = [BenchmarkUtils.dataframe_to_table(k, v) for k, v in view_dfs]

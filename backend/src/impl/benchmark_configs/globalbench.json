@@ -1,10 +1,11 @@
 {
-    "name": "Global",
+    "id": "globalbench",
+    "name": "GlobalBench",
+    "description": "A benchmark for measuring global progress in NLP.",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/gaokao.jpg",
+    "visibility": "public",
+    "type": "abstract",
     "metrics": [{"name": "F1"}],
-    "datasets": [
-
-    ],
     "views": [
         {
             "name": "Linguistic-weighted Global Average",
