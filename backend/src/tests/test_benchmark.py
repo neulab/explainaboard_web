@@ -5,17 +5,17 @@ from unittest import TestCase
 import numpy as np
 import pandas as pd
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
+from explainaboard_web.impl.constants import POP_WEIGHT
 
 
-class TestDatasetInfo(TestCase):
+class TestBenchmark(TestCase):
     @staticmethod
     def _config_path():
         return os.path.join(
             os.path.dirname(pathlib.Path(__file__)),
             os.path.pardir,
             "impl",
-            "tests",
-            "artifacts",
+            "benchmark_configs",
         )
 
     def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):
@@ -59,162 +59,34 @@ class TestDatasetInfo(TestCase):
                 exc = AssertionError("%s\nTRACE: %s" % (exc.message, trace))
             raise exc
 
-    def test_miniglue_aggregate(self):
-
-        json_file = os.path.join(TestDatasetInfo._config_path(), "config_miniglue.json")
-        config = BenchmarkUtils.config_from_json_file(json_file)
-        orig_df = pd.DataFrame(
-            {
-                "dataset_name": ["sst2", "sst2", "snli", "sst2", "sst2", "snli"],
-                "task": [
-                    "text-classification",
-                    "text-classification",
-                    "natural-language-inference",
-                    "text-classification",
-                    "text-classification",
-                    "natural-language-inference",
-                ],
-                "system_name": ["sys1", "sys1", "sys1", "sys2", "sys2", "sys2"],
-                "metric": ["Accuracy", "F1", "Accuracy", "Accuracy", "F1", "Accuracy"],
-                "metric_weight": [0.8, 0.2, 1.0, 0.8, 0.2, 1.0],
-                "score": [0.7, 0.6, 0.5, 0.8, 0.9, 0.0],
-            }
-        )
-        view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
-        mean_df = pd.DataFrame(
-            {
-                "system_name": ["sys1", "sys2"],
-                "score": [
-                    (0.7 * 0.8 + 0.6 * 0.2) * 0.5 + 0.5 * 0.5,
-                    (0.8 * 0.8 + 0.9 * 0.2) * 0.5,
-                ],
-            }
-        )
-        task_weighted_df = pd.DataFrame(
-            {
-                "system_name": ["sys1", "sys2"],
-                "score": [
-                    (0.7 * 0.8 + 0.6 * 0.2) * 0.7 + 0.5 * 0.3,
-                    (0.8 * 0.8 + 0.9 * 0.2) * 0.7,
-                ],
-            }
-        )
-        taskwise_df = pd.DataFrame(
-            {
-                "system_name": ["sys1", "sys1", "sys2", "sys2"],
-                "task": [
-                    "natural-language-inference",
-                    "text-classification",
-                    "natural-language-inference",
-                    "text-classification",
-                ],
-                "score": [0.5, (0.7 * 0.8 + 0.6 * 0.2), 0.0, (0.8 * 0.8 + 0.9 * 0.2)],
-            }
-        )
-
-        self.assertEqual(mean_df.to_dict(), view_dfs[0][1].to_dict())
-        self.assertEqual(task_weighted_df.to_dict(), view_dfs[1][1].to_dict())
-        self.assertEqual(taskwise_df.to_dict(), view_dfs[2][1].to_dict())
-        self.assertEqual(orig_df.to_dict(), view_dfs[3][1].to_dict())
-
-    def test_gaokao_aggregate(self):
-
-        json_file = os.path.join(
-            TestDatasetInfo._config_path(), "config_gaokao_test.json"
-        )
-        config = BenchmarkUtils.config_from_json_file(json_file)
-        orig_df = pd.DataFrame(
-            {
-                "dataset_name": ["sst2", "sst2", "snli", "sst2", "sst2", "snli"],
-                "task": [
-                    "text-classification",
-                    "text-classification",
-                    "natural-language-inference",
-                    "text-classification",
-                    "text-classification",
-                    "natural-language-inference",
-                ],
-                "system_name": ["sys1", "sys1", "sys1", "sys2", "sys2", "sys2"],
-                "metric": ["Accuracy", "F1", "Accuracy", "Accuracy", "F1", "Accuracy"],
-                "score": [0.7, 0.6, 0.5, 0.8, 0.9, 0.0],
-            }
-        )
-        view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
-        mean_df = pd.DataFrame(
-            {
-                "system_name": ["sys1", "sys2"],
-                "score": [
-                    (0.7 * 0.5 + 0.6 * 0.5) * 0.5 + 0.5 * 0.5,
-                    (0.8 * 0.5 + 0.9 * 0.5) * 0.5,
-                ],
-            }
-        )
-        taskwise_df = pd.DataFrame(
-            {
-                "system_name": ["sys1", "sys1", "sys2", "sys2"],
-                "task": [
-                    "natural-language-inference",
-                    "text-classification",
-                    "natural-language-inference",
-                    "text-classification",
-                ],
-                "score": [0.5, (0.7 * 0.5 + 0.6 * 0.5), 0.0, (0.8 * 0.5 + 0.9 * 0.5)],
-            }
-        )
-
-        self.assertDeepAlmostEqual(mean_df.to_dict(), view_dfs[0][1].to_dict())
-        self.assertDeepAlmostEqual(taskwise_df.to_dict(), view_dfs[1][1].to_dict())
-        self.assertDeepAlmostEqual(orig_df.to_dict(), view_dfs[2][1].to_dict())
-
     def test_masakhaner_aggregate(self):
 
-        json_file = os.path.join(
-            TestDatasetInfo._config_path(), "config_masakhaner.json"
-        )
+        json_file = os.path.join(TestBenchmark._config_path(), "config_masakhaner.json")
         config = BenchmarkUtils.config_from_json_file(json_file)
 
-        sub_datasets = [
-            "masakhaner-bam",
-            "masakhaner-bbj",
-            "masakhaner-ewe",
-            "masakhaner-fon",
-            "masakhaner-hau",
-            "masakhaner-ibo",
-            "masakhaner-kin",
-            "masakhaner-lug",
-            "masakhaner-mos",
-            "masakhaner-nya",
-            "masakhaner-pcm",
-            "masakhaner-sna",
-            "masakhaner-swa",
-            "masakhaner-tsn",
-            "masakhaner-twi",
-            "masakhaner-wol",
-            "masakhaner-xho",
-            "masakhaner-yor",
-            "masakhaner-zul",
+        languages = [
+            "bam",
+            "bbj",
+            "ewe",
+            "fon",
+            "hau",
+            "ibo",
+            "kin",
+            "lug",
+            "mos",
+            "nya",
+            "pcm",
+            "sna",
+            "swa",
+            "tsn",
+            "twi",
+            "wol",
+            "xho",
+            "yor",
+            "zul",
         ]
-        pop_weights = [
-            0.05751919466882523,
-            0.0014379798667206306,
-            0.015694523116779453,
-            0.004889131546850144,
-            0.13763521581468893,
-            0.07395325028848958,
-            0.043550247392110525,
-            0.026951851216249535,
-            0.026130148435266315,
-            0.02670534038195457,
-            0.12325541714748263,
-            0.036812284588048146,
-            0.06570750396646204,
-            0.007641835863143923,
-            0.0373874765347364,
-            0.021405357444612815,
-            0.07867804127914307,
-            0.08586794061274623,
-            0.11216242960420919,
-        ]
+        sub_datasets = [f"masakhaner-{x}" for x in languages]
+        pop_weights = [POP_WEIGHT[x] for x in languages]
         np_pop_weight = np.array(pop_weights)
         all_systems = ["sys1" for _ in sub_datasets] + ["sys2" for _ in sub_datasets]
         all_metrics = ["F1" for _ in sub_datasets] + ["F1" for _ in sub_datasets]
@@ -222,7 +94,7 @@ class TestDatasetInfo(TestCase):
             "masakhaner" for _ in sub_datasets
         ]
         all_sub_datasets = sub_datasets + sub_datasets
-        all_pop_weights = pop_weights + pop_weights
+        all_languages = languages + languages
         np_sys1_f1s = np.random.rand(len(sub_datasets))
         np_sys2_f1s = np.random.rand(len(sub_datasets))
         all_f1s = list(np_sys1_f1s) + list(np_sys2_f1s)
@@ -232,7 +104,7 @@ class TestDatasetInfo(TestCase):
                 "dataset_name": all_dataset_names,
                 "sub_dataset": all_sub_datasets,
                 "system_name": all_systems,
-                "pop_weight": all_pop_weights,
+                "source_language": all_languages,
                 "metric": all_metrics,
                 "score": all_f1s,
             }

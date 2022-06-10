@@ -41,7 +41,7 @@
         {
             "name": "Population-weighted Mean",
             "operations": [
-                {"op": "weighted_sum", "weight": "pop_weight", "skip_groupby_system": false}
+                {"op": "weighted_sum", "weight": "source_language", "weight_map": "pop_weight", "skip_groupby_system": false}
             ]
         }
     ],
