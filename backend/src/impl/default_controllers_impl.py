@@ -185,17 +185,17 @@ def systems_get(
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
     return SystemDBUtils.find_systems(
-        ids,
-        page,
-        page_size,
-        system_name,
-        task,
-        dataset,
-        subdataset,
-        split,
-        [(sort_field, dir)],
-        creator,
-        shared_users,
+        page=page,
+        page_size=page_size,
+        ids=ids,
+        system_name=system_name,
+        task=task,
+        dataset_name=dataset,
+        subdataset_name=subdataset,
+        split=split,
+        sort=[(sort_field, dir)],
+        creator=creator,
+        shared_users=shared_users,
     )
 
 
@@ -282,17 +282,17 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     page_size = len(system_ids)
     sort = None
     systems: list[System] = SystemDBUtils.find_systems(
-        system_ids,
-        page,
-        page_size,
-        task,
-        system_name,
-        dataset_name,
-        subdataset_name,
-        split,
-        sort,
-        creator,
-        shared_users,
+        ids=system_ids,
+        page=page,
+        page_size=page_size,
+        task=task,
+        system_name=system_name,
+        dataset_name=dataset_name,
+        subdataset_name=subdataset_name,
+        split=split,
+        sort=sort,
+        creator=creator,
+        shared_users=shared_users,
         include_metric_stats=True,
     ).systems
     systems_len = len(systems)

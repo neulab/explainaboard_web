@@ -177,14 +177,16 @@ class SystemDBUtils:
 
     @staticmethod
     def find_systems(
-        ids: Optional[list[str]],
         page: int,
         page_size: int,
+        ids: Optional[list[str]] = None,
         system_name: Optional[str] = None,
         task: Optional[str] = None,
         dataset_name: Optional[str] = None,
         subdataset_name: Optional[str] = None,
         split: Optional[str] = None,
+        source_language: Optional[str] = None,
+        target_language: Optional[str] = None,
         sort: Optional[list] = None,
         creator: Optional[str] = None,
         shared_users: Optional[list[str]] = None,
@@ -208,6 +210,10 @@ class SystemDBUtils:
             search_conditions.append({"system_info.dataset_name": dataset_name})
         if subdataset_name:
             search_conditions.append({"system_info.sub_dataset_name": subdataset_name})
+        if source_language:
+            search_conditions.append({"system_info.source_language": source_language})
+        if target_language:
+            search_conditions.append({"system_info.target_language": target_language})
         if split:
             search_conditions.append({"system_info.dataset_split": split})
         if creator:

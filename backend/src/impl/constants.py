@@ -6671,3 +6671,4 @@ POP_DICT: dict[str, int] = {
 
 
 POP_WEIGHT: dict[str, float] = {k: v / WORLD_POPULATION for k, v in POP_DICT.items()}
+LING_WEIGHT: dict[str, float] = {k: 1.0 / len(POP_DICT) for k, v in POP_DICT.items()}

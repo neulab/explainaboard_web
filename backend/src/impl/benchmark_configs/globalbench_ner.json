@@ -3,6 +3,7 @@
     "name": "GlobalBench NER",
     "description": "A benchmark for measuring global progress in named entity recognition.",
     "parent": "globalbench",
+    "metrics": [{"name": "F1"}],
     "system_query": {
         "task": "named-entity-recognition"
     }
