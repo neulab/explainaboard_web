@@ -128,6 +128,16 @@ export function BenchmarkTable({ benchmarkID }: Props) {
     if (benchmark.config.homepage !== undefined) {
       homepage = benchmark.config.homepage;
     }
+    let tabs = <div>No benchmark data.</div>;
+    if (benchmark.views !== undefined) {
+      tabs = (
+        <Tabs>
+          {benchmark.views.map((my_view) => {
+            return tableToPage(my_view);
+          })}
+        </Tabs>
+      );
+    }
 
     return (
       <div>
@@ -259,13 +269,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
           </Collapse>
         </Layout>
 
-        <div style={{ padding: "10px 10px" }}>
-          <Tabs>
-            {benchmark.views.map((my_view) => {
-              return tableToPage(my_view);
-            })}
-          </Tabs>
-        </div>
+        <div style={{ padding: "10px 10px" }}>{tabs}</div>
       </div>
     );
   } else {

@@ -3,7 +3,7 @@
     "name": "GlobalBench",
     "description": "A benchmark for measuring global progress in NLP.",
     "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/globalbench.png",
-    "visibility": "public",
+    "visibility": "hidden",
     "paper":{
       "title":"Systematic Inequalities in Language Technology Performance across the World's Languages",
       "url":"https://arxiv.org/abs/2110.06733"

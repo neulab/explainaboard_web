@@ -145,6 +145,8 @@ def benchmarkconfigs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
 
 def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
     config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
+    if config.type == "abstract":
+        return Benchmark(config, None)
     sys_infos = BenchmarkUtils.load_sys_infos(config)
     orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
     view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
