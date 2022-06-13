@@ -1,34 +1,30 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useHistory } from "react-router-dom";
 import "./index.css";
 import { Card, Col, PageHeader, Row, Typography } from "antd";
-import { backendClient } from "../../clients";
 import { BenchmarkConfig } from "../../clients/openapi";
 
-export function BenchmarkHome() {
+interface Props {
+  items: Array<BenchmarkConfig>;
+  subtitle: string;
+}
+
+export function BenchmarkCards({ items, subtitle }: Props) {
   const history = useHistory();
   const { Title } = Typography;
-  const [benchmarkConfigs, setbenchmarkConfigs] = useState<BenchmarkConfig[]>(
-    []
-  );
 
-  useEffect(() => {
-    async function fetchBenchmarks() {
-      setbenchmarkConfigs(await backendClient.benchmarkconfigsGet());
-    }
-    fetchBenchmarks();
-  }, []);
+  const visibleItems = items.filter((config) => config.visibility === "public");
 
   return (
     <div className="page">
       <PageHeader
         onBack={() => history.goBack()}
         title="Benchmarks"
-        subTitle="All benchmarks"
+        subTitle={subtitle}
       />
       <Row gutter={[16, 16]} className="benchmarks-grid">
-        {benchmarkConfigs.map(({ id, name, logo }) => (
-          <Col key={id} span={6}>
+        {visibleItems.map((config) => (
+          <Col key={config.id} span={6}>
             <Card
               hoverable
               style={{
@@ -37,14 +33,17 @@ export function BenchmarkHome() {
               className="benchmark-card"
               title={
                 <div style={{ textAlign: "center" }}>
-                  <Title level={3}>{name}</Title>
+                  <Title level={3}>{config.name}</Title>
                 </div>
               }
               // title= {< div style= {{textAlign: "center"}} > Card title </div >}
+
               onClick={() =>
-                history.push(`${document.location.pathname}?id=${id}`)
+                history.push(`${document.location.pathname}?id=${config.id}`)
               }
-              cover={<img alt="example" style={{ height: 200 }} src={logo} />}
+              cover={
+                <img alt="example" style={{ height: 200 }} src={config.logo} />
+              }
             >
               {/* {name} */}
             </Card>

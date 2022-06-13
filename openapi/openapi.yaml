@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.1.7"
+  version: "0.1.8"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -38,8 +38,15 @@ paths:
 
   /benchmarkconfigs:
     get:
-      summary: Returns all benchmark configs
+      summary: Returns all benchmark configs matching the specification
       security: []
+      parameters:
+        - in: query
+          name: parent_id
+          example: globalbench
+          schema:
+            type: string
+          required: false
       responses:
         "200":
           description: OK
@@ -1050,6 +1057,15 @@ components:
           type: string
         description:
           type: string
+        type:
+          type: string
+          decription: "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+        parent:
+          type: string
+          decription: "a parent benchmark that this benchmark inherits config from"
+        visibility:
+          type: string
+          description: "a visibility level, public/hidden/none"
         logo:
           type: string
         contact:
@@ -1067,6 +1083,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkDatasetConfig'
+        system_query:
+          type: object
         views:
           type: array
           items:
@@ -1075,7 +1093,7 @@ components:
           type: array
           items:
             type: string
-      required: [name, datasets, views]
+      required: [name, views]
 
     BenchmarkTableData:
       type: object
@@ -1110,7 +1128,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BenchmarkTableData"
-      required: [config, views]
+      required: [config]
 
     Paper:
       type: object

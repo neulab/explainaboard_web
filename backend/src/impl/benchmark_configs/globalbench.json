@@ -1,0 +1,43 @@
+{
+    "id": "globalbench",
+    "name": "GlobalBench",
+    "description": "A benchmark for measuring global progress in NLP.",
+    "logo":"https://explainaboard.s3.amazonaws.com/benchmarks/figures/globalbench.png",
+    "visibility": "hidden",
+    "paper":{
+      "title":"Systematic Inequalities in Language Technology Performance across the World's Languages",
+      "url":"https://arxiv.org/abs/2110.06733"
+    },
+    "type": "abstract",
+    "views": [
+        {
+            "name": "Demographic-weighted Global Average",
+            "operations": [
+                {"op": "max", "group_by": ["source_language"], "skip_group_system": true},
+                {"op": "weighted_sum", "weight": "source_language", "weight_map": "pop_weight", "skip_group_system": true}
+            ]
+        },
+        {
+            "name": "Linguistic-weighted Global Average",
+            "operations": [
+                {"op": "max", "group_by": ["source_language"], "skip_group_system": true},
+                {"op": "weighted_sum", "weight": "source_language", "weight_map": "ling_weight", "skip_group_system": true}
+            ]
+        },
+        {
+            "name": "Demographic-weighted System-by-system Average",
+            "operations": [
+                {"op": "max", "group_by": ["source_language"], "skip_group_system": false},
+                {"op": "weighted_sum", "weight": "source_language", "weight_map": "pop_weight", "skip_group_system": false}
+            ]
+        },
+        {
+            "name": "Linguistic-weighted System-by-system Average",
+            "operations": [
+                {"op": "max", "group_by": ["source_language"], "skip_group_system": false},
+                {"op": "weighted_sum", "weight": "source_language", "weight_map": "ling_weight", "skip_group_system": false}
+            ]
+        }
+    ],
+    "default_views": ["Linguistic-weighted Global Average", "Demographic-weighted Global Average", "Linguistic-weighted System-by-system Average", "Demographic-weighted System-by-system Average", "Original"]
+}   

@@ -100,6 +100,7 @@ class DatasetDBUtils:
         page_size: int = 0,
         dataset_ids: Optional[list[str]] = None,
         dataset_name: Optional[str] = None,
+        sub_dataset: Optional[str] = None,
         task: Optional[str] = None,
         no_limit: bool = False,
     ) -> DatasetsReturn:
@@ -124,6 +125,12 @@ class DatasetDBUtils:
             metadata_ids = (
                 metadata_ids.intersection(task_ids) if metadata_ids else set(task_ids)
             )
+        if sub_dataset is not None:
+            new_metadata_ids = set()
+            for id in metadata_ids or my_db.id_dict.values():
+                if my_db.metadatas[id].sub_dataset == sub_dataset:
+                    new_metadata_ids.add(id)
+            metadata_ids = new_metadata_ids
         sid, eid = page * page_size, (page + 1) * page_size
         my_values = (
             my_db.metadatas

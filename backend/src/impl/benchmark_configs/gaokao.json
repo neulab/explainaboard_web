@@ -1,6 +1,7 @@
 {
   "id": "gaokao",
   "name": "Gaokao",
+  "visibility": "public",
   "contact":"stefanpengfei@gmail.com",
   "homepage":"https://github.com/gaokao",
   "paper":{
@@ -614,7 +615,7 @@
       {
           "name": "Question Type (with Essay)",
           "operations": [
-              {"op": "mean", "group_by": "sub_dataset"},
+              {"op": "mean", "group_by": ["sub_dataset"]},
               {"op": "multiply", "weight": "sub_dataset", "weight_map": {
                   "listening":  1.5,
                   "cloze-multiple-choice": 1.5,
@@ -629,7 +630,7 @@
       {
         "name": "Question Type (without Essay)",
         "operations": [
-            {"op": "mean", "group_by": "sub_dataset"},
+            {"op": "mean", "group_by": ["sub_dataset"]},
             {"op": "multiply", "weight": "sub_dataset", "weight_map": {
                 "listening":  1.5,
                 "cloze-multiple-choice": 1.5,

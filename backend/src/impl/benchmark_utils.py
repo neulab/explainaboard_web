@@ -5,62 +5,81 @@ import os
 from dataclasses import dataclass
 
 import pandas as pd
+from explainaboard_web.impl.constants import LING_WEIGHT, POP_WEIGHT
+from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.models import (
     BenchmarkConfig,
     BenchmarkMetric,
     BenchmarkTableData,
     BenchmarkViewConfig,
+    DatasetMetadata,
 )
+from pandas import Series
 
 
 @dataclass
 class BenchmarkUtils:
+
+    _SPECIAL_WEIGHT_MAPS = {"pop_weight": POP_WEIGHT, "ling_weight": LING_WEIGHT}
+
     @staticmethod
-    def config_from_json_file(path_json: str) -> BenchmarkConfig:
+    def config_dict_from_file(path_json: str) -> dict:
         with open(path_json, "r") as fin:
             benchmark_config = json.load(fin)
-        return BenchmarkConfig.from_dict(benchmark_config)
+        # If a parent exists, then get the parent and update
+        parent_id = benchmark_config.get("parent")
+        if parent_id:
+            parent_config = BenchmarkUtils.config_dict_from_id(parent_id)
+            parent_config.update(benchmark_config)
+            return parent_config
+        return benchmark_config
 
     @staticmethod
-    def config_from_json_str(json_str: str) -> BenchmarkConfig:
-        benchmark_config = json.loads(json_str)
-        return BenchmarkConfig.from_dict(benchmark_config)
+    def config_dict_from_str(json_str: str) -> dict:
+        return json.loads(json_str)
 
     @staticmethod
-    def config_from_benchmark_id(benchmark_id: str):
+    def config_dict_from_id(benchmark_id: str) -> dict:
         # TODO(gneubig): get this from the database eventually
         scriptpath = os.path.dirname(__file__)
 
         # Get config
-        return BenchmarkUtils.config_from_json_file(
-            os.path.join(
-                scriptpath, "./benchmark_configs/config_" + benchmark_id + ".json"
-            )
+        return BenchmarkUtils.config_dict_from_file(
+            os.path.join(scriptpath, "./benchmark_configs/" + benchmark_id + ".json")
         )
 
     @staticmethod
     def load_sys_infos(config: BenchmarkConfig) -> list[dict]:
-
         sys_infos: list[dict] = []
-        for record in config.datasets:
-            dataset_name = record["dataset_name"]
-            subdataset_name = record.get("sub_dataset", None)
-            dataset_split = record.get("dataset_split", "test")
-
-            # TODO(gneubig): it'd be better to use a single MongoDB query or session
-            #                to get all the systems, as this will probably be slow
+        if config.system_query is not None:
             systems_return = SystemDBUtils.find_systems(
-                ids=None,
+                dataset_name=config.system_query.get("dataset_name"),
+                subdataset_name=config.system_query.get("sub_dataset"),
+                task=config.system_query.get("task"),
+                source_language=config.system_query.get("source_language"),
+                target_language=config.system_query.get("target_language"),
                 page=0,
                 page_size=0,
-                dataset_name=dataset_name,
-                subdataset_name=subdataset_name,
-                split=dataset_split,
             )
-            systems = systems_return.systems
-            for system in systems:
-                sys_infos.append(system.system_info.to_dict())
+            if systems_return.total == 0:
+                raise ValueError(f"no system outputs found for {config.system_query}")
+        elif config.datasets is not None:
+            dataset_list = []
+            for record in config.datasets:
+                dataset_name = record["dataset_name"]
+                subdataset_name = record.get("sub_dataset", None)
+                dataset_split = record.get("dataset_split", "test")
+                dataset_list.append((dataset_name, subdataset_name, dataset_split))
+            systems_return = SystemDBUtils.find_systems(
+                page=0, page_size=0, dataset_list=dataset_list
+            )
+        else:
+            raise ValueError("system_query or datasets must be set by each benchmark")
+
+        systems = systems_return.systems
+        for system in systems:
+            sys_infos.append(system.system_info.to_dict())
         return sys_infos
 
     @staticmethod
@@ -68,63 +87,107 @@ class BenchmarkUtils:
         return NotImplementedError
 
     @staticmethod
-    def generate_dataframe_from_sys_infos(config: BenchmarkConfig, systems: list[dict]):
+    def generate_dataframe_from_sys_infos(
+        benchmark_config: BenchmarkConfig, systems: list[dict]
+    ):
         """
         Generate a leaderboard from a list of system_output_info:SysOutputInfo
         :param config: A benchmark config
         :param systems: A list of system info dictionaries
         :return: leaderboard:Leaderboard
         """
+        # --- Get df entries
 
         # TODO(gneubig): this function is a bit hacky/fragile, using objects and dicts
         #                interchangeably due to OpenAPI deserialization being
         #                incomplete. Should be fixed.
 
-        # --- Rearrange so we have each system's result over each dataset
+        # --- Collect each dataset to be included in the benchmark
+        # Get from configuration if it exists
+        if benchmark_config.datasets:
+            dataset_configs = [dict(x) for x in benchmark_config.datasets]
+        # Collect (and deduplicate) all datasets from system infos otherwise
+        else:
+            dataset_tuples = list(
+                set(
+                    [
+                        (x["dataset_name"], x["sub_dataset_name"], x["dataset_split"])
+                        for x in systems
+                    ]
+                )
+            )
+            dataset_configs = [
+                {"dataset_name": x, "sub_dataset": y, "dataset_split": z}
+                for x, y, z in dataset_tuples
+            ]
         dataset_to_id = {
             (x["dataset_name"], x.get("sub_dataset", None), x.get("split", "test")): i
-            for i, x in enumerate(config.datasets)
+            for i, x in enumerate(dataset_configs)
         }
+        dataset_metadatas: list[DatasetMetadata] = []
+        for x in dataset_configs:
+            dataset_return = DatasetDBUtils.find_datasets(
+                dataset_name=x["dataset_name"], sub_dataset=x["sub_dataset"]
+            )
+            if dataset_return.total != 1:
+                raise ValueError(
+                    f'Could not find dataset {x["dataset_name"]}, {x["sub_dataset"]}'
+                )
+            dataset_metadatas.append(dataset_return.datasets[0])
+
+        # --- Rearrange so we have each system's result over each dataset
         system_dataset_results: dict[str, list[dict | None]] = {}
         for sys in systems:
             sys_name = sys["system_name"]
             if sys_name not in system_dataset_results:
-                system_dataset_results[sys_name] = [None for _ in config.datasets]
+                system_dataset_results[sys_name] = [None for _ in dataset_configs]
             dataset_id = dataset_to_id[
                 (sys["dataset_name"], sys["sub_dataset_name"], sys["dataset_split"])
             ]
             system_dataset_results[sys_name][dataset_id] = sys
 
-        # --- Get df entries
+        # --- Set up the columns of the dataframe
+        # Default dataset information columns
         df_input: dict[str, list] = {
             "system_name": [],
             "dataset_name": [],
-            "sub_dataset_name": [],
+            "sub_dataset": [],
             "dataset_split": [],
         }
-        exclude_keys = {"metrics"}
-        for dataset in config.datasets:
-            for dataset_key in dataset.keys():
+        # Extra dataset information columns needed by datasets or operations
+        exclude_keys = ["metrics"] + list(BenchmarkUtils._SPECIAL_WEIGHT_MAPS.keys())
+        for dataset_config in dataset_configs:
+            for dataset_key in dataset_config.keys():
                 if not (dataset_key in df_input or dataset_key in exclude_keys):
                     df_input[dataset_key] = []
+        for view in benchmark_config.views:
+            for operation in view.operations:
+                op_keys = [operation.get("weight")] + operation.get("group_by", [])
+                for op_key in op_keys:
+                    if op_key and not (op_key in df_input or op_key in exclude_keys):
+                        df_input[op_key] = []
+
+        # Columns regarding metric scores
         df_input["metric"] = []
         df_input["metric_weight"] = []
         df_input["score"] = []
 
-        # Create the actual data
+        # --- Create the actual data
         for sys_name, sys_infos in system_dataset_results.items():
-            for dataset, sys_info in zip(config.datasets, sys_infos):
-                column_dict = dict(dataset)
+            for dataset_config, dataset_metadata, sys_info in zip(
+                dataset_configs, dataset_metadatas, sys_infos
+            ):
+                column_dict = dict(dataset_config)
                 column_dict["system_name"] = sys_name
-                dataset_metrics: list[BenchmarkMetric] = dataset.get(
-                    "metrics", config.metrics
+                dataset_metrics: list[BenchmarkMetric] = dataset_config.get(
+                    "metrics", benchmark_config.metrics
                 )
                 if dataset_metrics is None:
                     raise ValueError(
                         f"metrics must be specified either on a global or "
-                        f'local level, but {dataset["dataset_name"]} -- '
-                        f'{dataset["sub_dataset_name"]} -- '
-                        f'{dataset["dataset_split"]} specified neither'
+                        f'local level, but {dataset_config["dataset_name"]} -- '
+                        f'{dataset_config["sub_dataset"]} -- '
+                        f'{dataset_config["dataset_split"]} specified neither'
                     )
                 for dataset_metric in dataset_metrics:
                     if type(dataset_metric) != dict:
@@ -145,7 +208,17 @@ class BenchmarkUtils:
                     else:
                         column_dict["score"] = dataset_metric.get("default") or 0.0
                     for df_key, df_arr in df_input.items():
-                        df_arr.append(column_dict.get(df_key))
+                        if df_key in column_dict:
+                            info = column_dict[df_key]
+                        elif df_key == "dataset_split":
+                            info = "test"
+                        elif df_key == "source_language":
+                            info = dataset_metadata.languages[0]
+                        elif df_key == "target_language":
+                            info = dataset_metadata.languages[-1]
+                        else:
+                            raise ValueError(f"could not find information for {df_key}")
+                        df_arr.append(info)
 
         return pd.DataFrame(df_input)
 
@@ -153,6 +226,8 @@ class BenchmarkUtils:
     def aggregate_view(
         input_df: pd.DataFrame, view_spec: BenchmarkViewConfig
     ) -> pd.DataFrame:
+        if input_df.empty:
+            return input_df
         output_df = input_df.copy()
         for operation in view_spec.operations:
             # group_by info
@@ -161,35 +236,46 @@ class BenchmarkUtils:
                 group_by = [group_by]
             if not operation.get("skip_group_system"):
                 group_by = ["system_name"] + group_by
+            # weight map info, including special ones indexed by a string
+            weight_map: dict[str, float] | str | None = operation.get("weight_map")
+            if isinstance(weight_map, str):
+                weight_map = BenchmarkUtils._SPECIAL_WEIGHT_MAPS[weight_map]
             # Perform operations
-            if operation["op"] == "mean":
-                output_df = output_df.groupby(group_by).mean()
-            elif operation["op"] == "multiply":
-                if "weight_map" in operation:
-                    output_df["score"] = output_df["score"] * output_df[
-                        operation["weight"]
-                    ].map(operation["weight_map"])
-                else:
-                    output_df["score"] = (
-                        output_df["score"] * output_df[operation["weight"]]
-                    )
-            elif operation["op"] == "sum":
-                output_df = output_df.groupby(group_by).sum()
-            elif operation["op"] == "weighted_sum":
-                if "weight_map" in operation:
-                    output_df["score"] = output_df["score"] * output_df[
-                        operation["weight"]
-                    ].map(operation["weight_map"])
-                else:
-                    output_df["score"] = (
-                        output_df["score"] * output_df[operation["weight"]]
-                    )
-                output_df = output_df.groupby(group_by).sum()
+            op = operation["op"]
+            if op in {"mean", "sum", "max", "min"}:
+                if len(group_by) > 0:
+                    output_df = output_df.groupby(group_by)
+                if op == "mean":
+                    output_df = output_df.mean(numeric_only=True)
+                elif op == "sum":
+                    output_df = output_df.sum(numeric_only=True)
+                elif op == "max":
+                    output_df = output_df.max(numeric_only=True)
+                elif op == "min":
+                    output_df = output_df.max(numeric_only=True)
+            elif op in {"multiply", "weighted_sum"}:
+                weight = output_df[operation["weight"]]
+                if weight_map:
+                    weight = weight.map(weight_map)
+                output_df["score"] = output_df["score"] * weight
+                if op == "weighted_sum":
+                    if len(group_by):
+                        output_df = output_df.groupby(group_by).sum(numeric_only=True)
+                    else:
+                        output_df = output_df.sum(numeric_only=True)
             else:
                 raise ValueError(f"Unsupported operation {operation['op']} in spec.")
             if output_df.isnull().values.any():
                 raise ValueError(f"op {operation} resulted in NaN:\n{output_df}")
-            output_df.reset_index(inplace=True)
+            # By default, when a pandas df is aggregated without groupby it becomes a
+            # series and is represented as a column so the labels are in the row
+            # indices. The below code compensates for this.
+            if isinstance(output_df, Series):
+                output_df = output_df.to_frame().transpose()
+                output_df["system_name"] = "Overall"
+            else:
+                output_df.reset_index(inplace=True)
+
         # Remove all numerical columns other than score
         output_df = pd.concat(
             [output_df.select_dtypes(["object"]), output_df["score"]], axis=1

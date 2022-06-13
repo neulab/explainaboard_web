@@ -77,29 +77,36 @@ export function BenchmarkTable({ benchmarkID }: Props) {
 
   if (benchmark !== undefined) {
     const supportedDatasets = Array<JSX.Element>();
-    // supportedDatasets.push(<b>Constituent Dataset Leaderboards: </b>);
-    for (const dataset of benchmark.config.datasets) {
-      // console.log(dataset);
-      let datasetString = `${dataset["dataset_name"]} `;
-      if ("sub_dataset" in dataset) {
-        datasetString = `${datasetString} (${dataset["sub_dataset"]}) `;
-      }
-      const url = generateLeaderboardURL(
-        dataset["dataset_name"],
-        dataset["sub_dataset"],
-        dataset["split"]
-      );
-      supportedDatasets.push(<a href={url}>{datasetString}</a>);
-    }
+    let supportedTasks = Array<string>();
 
     const { Panel } = Collapse;
     const onChange = (key: string | string[]) => {
       console.log(key);
     };
-    // const tasks = new Set(benchmark.config.datasets.map((dataset) => dataset["task"]))
-    let tasks = benchmark.config.datasets.map((dataset) => dataset["task"]);
-    if (tasks[0] === undefined) tasks = ["unknow"];
-    const tasks_unique = new Set(tasks);
+
+    if (benchmark.config.datasets !== undefined) {
+      for (const dataset of benchmark.config.datasets) {
+        // console.log(dataset);
+        let datasetString = `${dataset["dataset_name"]} `;
+        if ("sub_dataset" in dataset) {
+          datasetString = `${datasetString} (${dataset["sub_dataset"]}) `;
+        }
+        const url = generateLeaderboardURL(
+          dataset["dataset_name"],
+          dataset["sub_dataset"],
+          dataset["split"]
+        );
+        supportedDatasets.push(<a href={url}>{datasetString}</a>);
+      }
+
+      // const tasks = new Set(benchmark.config.datasets.map((dataset) => dataset["task"]))
+      const tasks = benchmark.config.datasets.map((dataset) => dataset["task"]);
+      if (tasks[0] === undefined) {
+        supportedTasks = ["unknown"];
+      } else {
+        supportedTasks = Array.from(new Set(tasks));
+      }
+    }
 
     // initialize contact
     let contact = "unknown";
@@ -120,6 +127,16 @@ export function BenchmarkTable({ benchmarkID }: Props) {
     }
     if (benchmark.config.homepage !== undefined) {
       homepage = benchmark.config.homepage;
+    }
+    let tabs = <div>No benchmark data.</div>;
+    if (benchmark.views !== undefined) {
+      tabs = (
+        <Tabs>
+          {benchmark.views.map((my_view) => {
+            return tableToPage(my_view);
+          })}
+        </Tabs>
+      );
     }
 
     return (
@@ -179,7 +196,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
                 </b>
               }
             >
-              {benchmark.config.datasets.length}
+              {supportedDatasets.length}
             </Descriptions.Item>
             <Descriptions.Item
               label={
@@ -188,7 +205,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
                 </b>
               }
             >
-              {tasks_unique.size}
+              {supportedTasks.length}
             </Descriptions.Item>
             <Descriptions.Item
               label={
@@ -235,7 +252,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
             <Panel header="Constituent Tasks" key="2">
               <List
                 itemLayout="horizontal"
-                dataSource={Array.from(tasks_unique)}
+                dataSource={supportedTasks}
                 renderItem={(item) => (
                   <List.Item>
                     <List.Item.Meta
@@ -252,22 +269,16 @@ export function BenchmarkTable({ benchmarkID }: Props) {
           </Collapse>
         </Layout>
 
-        <div style={{ padding: "10px 10px" }}>
-          <Tabs>
-            {benchmark.views.map((my_view) => {
-              return tableToPage(my_view);
-            })}
-          </Tabs>
-        </div>
+        <div style={{ padding: "10px 10px" }}>{tabs}</div>
       </div>
     );
   } else {
     return (
       <div>
         <PageHeader
-          title={benchmarkID + " Benchmark"}
+          title={<b style={{ fontSize: "30px" }}>{benchmarkID} Benchmark</b>}
           onBack={history.goBack}
-        />
+        ></PageHeader>
         <Spin spinning={pageState === PageState.loading} tip="Loading..." />
       </div>
     );

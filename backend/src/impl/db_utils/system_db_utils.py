@@ -112,48 +112,28 @@ class SystemDBUtils:
         return system
 
     @staticmethod
-    def find_systems(
-        ids: Optional[list[str]],
+    def query_systems(
+        query: list | dict,
         page: int,
         page_size: int,
-        system_name: Optional[str] = None,
-        task: Optional[str] = None,
-        dataset_name: Optional[str] = None,
-        subdataset_name: Optional[str] = None,
-        split: Optional[str] = None,
         sort: Optional[list] = None,
-        creator: Optional[str] = None,
-        shared_users: Optional[list[str]] = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
-    ) -> SystemsReturn:
-        """find multiple systems that matches the filters"""
+    ):
 
-        filt: dict[str, Any] = {}
-        if ids:
-            filt["_id"] = {"$in": [ObjectId(_id) for _id in ids]}
-        if system_name:
-            filt["system_info.system_name"] = {"$regex": rf"^{system_name}.*"}
-        if task:
-            filt["system_info.task_name"] = task
-        if dataset_name:
-            filt["system_info.dataset_name"] = dataset_name
-        if subdataset_name:
-            filt["system_info.sub_dataset_name"] = subdataset_name
-        if split:
-            filt["system_info.dataset_split"] = split
-        if creator:
-            filt["creator"] = creator
-        if shared_users:
-            filt["shared_users"] = {"shared_users": shared_users}
-        filt["$or"] = [{"is_private": False}]
+        permissions_list = [{"is_private": False}]
         if get_user().is_authenticated:
             email = get_user().email
-            filt["$or"].append({"creator": email})
-            filt["$or"].append({"shared_users": email})
+            permissions_list.append({"creator": email})
+            permissions_list.append({"shared_users": email})
+        permission_query = {"$or": permissions_list}
+
+        if isinstance(query, dict):
+            query = [query]
+        query = {"$and": query + [permission_query]}
 
         cursor, total = DBUtils.find(
-            DBUtils.DEV_SYSTEM_METADATA, filt, sort, page * page_size, page_size
+            DBUtils.DEV_SYSTEM_METADATA, query, sort, page * page_size, page_size
         )
         documents = list(cursor)
 
@@ -194,6 +174,72 @@ class SystemDBUtils:
             systems.append(system)
 
         return SystemsReturn(systems, total)
+
+    @staticmethod
+    def find_systems(
+        page: int,
+        page_size: int,
+        ids: Optional[list[str]] = None,
+        system_name: Optional[str] = None,
+        task: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        subdataset_name: Optional[str] = None,
+        split: Optional[str] = None,
+        source_language: Optional[str] = None,
+        target_language: Optional[str] = None,
+        sort: Optional[list] = None,
+        creator: Optional[str] = None,
+        shared_users: Optional[list[str]] = None,
+        include_datasets: bool = True,
+        include_metric_stats: bool = False,
+        dataset_list: Optional[list[tuple[str, str, str]]] = None,
+    ) -> SystemsReturn:
+        """find multiple systems that matches the filters"""
+
+        search_conditions: list[dict[str, Any]] = []
+
+        if ids:
+            search_conditions.append({"_id": {"$in": [ObjectId(_id) for _id in ids]}})
+        if system_name:
+            search_conditions.append(
+                {"system_info.system_name": {"$regex": rf"^{system_name}.*"}}
+            )
+        if task:
+            search_conditions.append({"system_info.task_name": task})
+        if dataset_name:
+            search_conditions.append({"system_info.dataset_name": dataset_name})
+        if subdataset_name:
+            search_conditions.append({"system_info.sub_dataset_name": subdataset_name})
+        if source_language:
+            search_conditions.append({"system_info.source_language": source_language})
+        if target_language:
+            search_conditions.append({"system_info.target_language": target_language})
+        if split:
+            search_conditions.append({"system_info.dataset_split": split})
+        if creator:
+            search_conditions.append({"creator": creator})
+        if shared_users:
+            search_conditions.append({"shared_users": shared_users})
+
+        if dataset_list:
+            dataset_dicts = [
+                {
+                    "system_info.dataset_name": ds[0],
+                    "system_info.sub_dataset_name": ds[1],
+                    "system_info.dataset_split": ds[2],
+                }
+                for ds in dataset_list
+            ]
+            search_conditions.append({"$or": dataset_dicts})
+
+        return SystemDBUtils.query_systems(
+            search_conditions,
+            page,
+            page_size,
+            sort,
+            include_datasets,
+            include_metric_stats,
+        )
 
     @staticmethod
     def create_system(
