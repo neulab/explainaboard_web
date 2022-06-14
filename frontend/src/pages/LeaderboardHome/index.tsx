@@ -4,8 +4,10 @@ import "./index.css";
 import { Collapse, Card, Col, PageHeader, Row, Space, Typography } from "antd";
 import { backendClient } from "../../clients";
 import { TaskCategory } from "../../clients/openapi";
+import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
 
 export function LeaderboardHome() {
+  useGoogleAnalytics();
   const history = useHistory();
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
 

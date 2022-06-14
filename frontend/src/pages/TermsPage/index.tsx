@@ -2,8 +2,10 @@ import React from "react";
 
 import logo from "../../logo-full.png";
 import "./index.css";
+import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
 
 export function TermsPage() {
+  useGoogleAnalytics();
   return (
     <div className="h-full flex items-center">
       <div

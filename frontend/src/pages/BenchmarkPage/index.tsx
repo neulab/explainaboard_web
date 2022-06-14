@@ -5,6 +5,7 @@ import { BenchmarkTable } from "../../components";
 import { BenchmarkCards } from "../../components/BenchmarkCards";
 import { backendClient } from "../../clients";
 import { BenchmarkConfig } from "../../clients/openapi";
+import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
 
 function useQuery() {
   const { search } = useLocation();
@@ -12,6 +13,7 @@ function useQuery() {
 }
 
 export function BenchmarkPage() {
+  useGoogleAnalytics();
   const history = useHistory();
   const query = useQuery();
   const id = query.get("id") || "";
