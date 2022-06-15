@@ -19,7 +19,7 @@ export function BenchmarkCards({ items, subtitle }: Props) {
   return (
     <div className="page">
       <Helmet>
-        <title>ExplainaBoard - Datasets</title>
+        <title>ExplainaBoard - Benchmarks</title>
       </Helmet>
       <PageHeader
         onBack={() => history.goBack()}
