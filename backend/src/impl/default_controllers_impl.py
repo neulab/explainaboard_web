@@ -108,7 +108,11 @@ def datasets_get(
 ) -> DatasetsReturn:
     parsed_dataset_ids = dataset_ids.split(",") if dataset_ids else None
     return DatasetDBUtils.find_datasets(
-        page, page_size, parsed_dataset_ids, dataset_name, task
+        page=page,
+        page_size=page_size,
+        dataset_ids=parsed_dataset_ids,
+        dataset_name=dataset_name,
+        task=task,
     )
 
 
