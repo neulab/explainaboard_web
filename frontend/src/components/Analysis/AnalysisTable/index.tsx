@@ -236,7 +236,7 @@ export function AnalysisTable({
     "word-segmentation",
   ];
 
-  let dataSource: { [p: string]: any }[];
+  let dataSource: { [p: string]: string }[];
   let colInfo;
   if (seqLabTasks.includes(task)) {
     dataSource = specifyDataSeqLab(systemOutputs, outputIDs, columns);
