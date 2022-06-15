@@ -11,6 +11,7 @@ import {
 } from "../../../clients/openapi";
 import { parseFineGrainedResults, valuesToIntervals } from "../utils";
 import { ResultFineGrainedParsed, BucketIntervals } from "../types";
+import ReactGA from "react-ga4";
 const { Text, Link } = Typography;
 
 interface Props {
@@ -120,6 +121,19 @@ export function AnalysisDrawer({
         setFeatureNameToBucketInfo(featureNameToBucketInfo);
         setPageState(PageState.success);
         setBucketInfoUpdated(false);
+        if (activeSystems.length === 1) {
+          ReactGA.event({
+            category: "Analysis",
+            action: `analysis_single`,
+            label: task,
+          });
+        } else {
+          ReactGA.event({
+            category: "Analysis",
+            action: `analysis_multi`,
+            label: task,
+          });
+        }
       }
     }
 
