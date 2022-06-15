@@ -21,6 +21,7 @@ import { useForm } from "antd/lib/form/Form";
 import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
+import ReactGA from "react-ga4";
 
 const { TextArea } = Input;
 
@@ -162,6 +163,11 @@ export function SystemSubmitDrawer(props: Props) {
         });
       }
 
+      ReactGA.event({
+        category: "System",
+        action: `system_submit_success`,
+        label: task,
+      });
       message.success(`Successfully submitted system (${system.system_id}).`);
       onClose();
       form.resetFields([
@@ -177,6 +183,11 @@ export function SystemSubmitDrawer(props: Props) {
         "system_details",
       ]);
     } catch (e) {
+      ReactGA.event({
+        category: "System",
+        action: `system_submit_failure`,
+        label: task,
+      });
       if (e instanceof Response) {
         const err = await parseBackendError(e);
         message.error(err.getErrorMsg());
