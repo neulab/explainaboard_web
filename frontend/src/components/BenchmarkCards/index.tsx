@@ -3,6 +3,7 @@ import { useHistory } from "react-router-dom";
 import "./index.css";
 import { Card, Col, PageHeader, Row, Typography } from "antd";
 import { BenchmarkConfig } from "../../clients/openapi";
+import { Helmet } from "react-helmet";
 
 interface Props {
   items: Array<BenchmarkConfig>;
@@ -17,6 +18,9 @@ export function BenchmarkCards({ items, subtitle }: Props) {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>ExplainaBoard - Datasets</title>
+      </Helmet>
       <PageHeader
         onBack={() => history.goBack()}
         title="Benchmarks"

@@ -4,6 +4,7 @@ import { useHistory, useLocation } from "react-router-dom";
 import { SystemsTable } from "../../components";
 import "./index.css";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
+import { Helmet } from "react-helmet";
 
 function useQuery() {
   const { search } = useLocation();
@@ -22,6 +23,9 @@ export function SystemsPage() {
   if (system) {
     return (
       <div className="page">
+        <Helmet>
+          <title>ExplainaBoard - Systems</title>
+        </Helmet>
         <PageHeader
           onBack={() => history.goBack()}
           title="Systems"
@@ -34,6 +38,9 @@ export function SystemsPage() {
   } else {
     return (
       <div className="page">
+        <Helmet>
+          <title>ExplainaBoard - Systems</title>
+        </Helmet>
         <PageHeader
           onBack={() => history.goBack()}
           title="Systems"

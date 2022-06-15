@@ -12,6 +12,7 @@ import {
 import { useHistory } from "react-router";
 import { Link } from "react-router-dom";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
+import { Helmet } from "react-helmet";
 
 /**
  * Dataset Page
@@ -63,6 +64,9 @@ export function DatasetsPage() {
           alignItems: "center",
         }}
       >
+        <Helmet>
+          <title>ExplainaBoard - Datasets</title>
+        </Helmet>
         <PageHeader
           onBack={() => history.goBack()}
           title="Datasets"

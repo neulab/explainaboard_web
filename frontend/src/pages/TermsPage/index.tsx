@@ -3,11 +3,15 @@ import React from "react";
 import logo from "../../logo-full.png";
 import "./index.css";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
+import { Helmet } from "react-helmet";
 
 export function TermsPage() {
   useGoogleAnalytics();
   return (
     <div className="h-full flex items-center">
+      <Helmet>
+        <title>ExplainaBoard - Terms</title>
+      </Helmet>
       <div
         className="w-full h-full bg-center bg-cover"
         style={{ backgroundImage: `url(${logo})` }}

@@ -5,6 +5,7 @@ import { Collapse, Card, Col, PageHeader, Row, Space, Typography } from "antd";
 import { backendClient } from "../../clients";
 import { TaskCategory } from "../../clients/openapi";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
+import { Helmet } from "react-helmet";
 
 export function LeaderboardHome() {
   useGoogleAnalytics();
@@ -20,6 +21,9 @@ export function LeaderboardHome() {
 
   return (
     <div className="page">
+      <Helmet>
+        <title>ExplainaBoard - Leaderboards</title>
+      </Helmet>
       <PageHeader
         onBack={() => history.goBack()}
         title="Leaderboards"

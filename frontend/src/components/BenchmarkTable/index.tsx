@@ -18,6 +18,7 @@ import { PageState } from "../../utils";
 import { generateLeaderboardURL } from "../../utils";
 import { useHistory, Link } from "react-router-dom";
 import { CheckSquareTwoTone } from "@ant-design/icons";
+import { Helmet } from "react-helmet";
 
 interface Props {
   /**initial value for task filter */
@@ -142,6 +143,9 @@ export function BenchmarkTable({ benchmarkID }: Props) {
     return (
       <div>
         <div style={{ padding: "10px 10px" }}>
+          <Helmet>
+            <title>ExplainaBoard - {benchmark.config.name} Benchmark</title>
+          </Helmet>
           <Descriptions
             title={<b style={{ fontSize: "30px" }}>{benchmark.config.name}</b>}
           >
@@ -275,10 +279,13 @@ export function BenchmarkTable({ benchmarkID }: Props) {
   } else {
     return (
       <div>
+        <Helmet>
+          <title>ExplainaBoard - {benchmarkID} Benchmark</title>
+        </Helmet>
         <PageHeader
           title={<b style={{ fontSize: "30px" }}>{benchmarkID} Benchmark</b>}
           onBack={history.goBack}
-        ></PageHeader>
+        />
         <Spin spinning={pageState === PageState.loading} tip="Loading..." />
       </div>
     );
