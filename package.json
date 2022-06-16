@@ -25,5 +25,8 @@
     "concurrently": "^6.3.0",
     "husky": "^7.0.4"
   },
-  "dependencies": {}
+  "dependencies": {
+    "setup": "^0.0.3",
+    "start": "^5.1.0"
+  }
 }

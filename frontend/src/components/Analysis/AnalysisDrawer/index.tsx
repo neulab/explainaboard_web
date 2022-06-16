@@ -199,7 +199,11 @@ export function AnalysisDrawer({
 
   let drawerTitle;
   if (activeSystems.length === 1) {
-    drawerTitle = `Single Analysis of ${activeSystems[0].system_info.system_name}`;
+    drawerTitle = `Single Analysis of ${
+      activeSystems[0].system_info.system_name
+    }, Detailed Info: ${JSON.stringify(
+      activeSystems[0].system_info.system_details
+    )}`;
   } else if (activeSystems.length === 2) {
     const systemNames = activeSystems
       .map((sys) => sys.system_info.system_name)
