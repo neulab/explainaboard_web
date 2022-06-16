@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./index.css";
 import { backendClient } from "../../clients";
-import { Benchmark, BenchmarkTableData } from "../../clients/openapi";
+import { Benchmark, BenchmarkTableData, PlotData } from "../../clients/openapi";
 import {
   Tabs,
   Spin,
@@ -18,6 +18,7 @@ import { PageState } from "../../utils";
 import { generateLeaderboardURL } from "../../utils";
 import { useHistory, Link } from "react-router-dom";
 import { CheckSquareTwoTone } from "@ant-design/icons";
+import { Plot } from "../../components";
 
 interface Props {
   /**initial value for task filter */
@@ -64,18 +65,20 @@ function tableToPage(my_view: BenchmarkTableData) {
 export function BenchmarkTable({ benchmarkID }: Props) {
   const [benchmark, setBenchmark] = useState<Benchmark>();
   const [pageState, setPageState] = useState(PageState.loading);
+  const [plotData, setPlotData] = useState<PlotData>();
   const history = useHistory();
 
   useEffect(() => {
     async function fetchBenchmark() {
       setPageState(PageState.loading);
       setBenchmark(await backendClient.benchmarkBenchmarkIdGet(benchmarkID));
+      setPlotData(await backendClient.benchmarkPlotBenchmarkIdGet(benchmarkID));
       setPageState(PageState.success);
     }
     fetchBenchmark();
   }, [benchmarkID]);
 
-  if (benchmark !== undefined) {
+  if (benchmark !== undefined && plotData !== undefined) {
     const supportedDatasets = Array<JSX.Element>();
     let supportedTasks = Array<string>();
 
@@ -268,6 +271,11 @@ export function BenchmarkTable({ benchmarkID }: Props) {
             </Panel>
           </Collapse>
         </Layout>
+
+        <Plot
+          xAxisData={plotData.times}
+          seriesDataList={[plotData.demographic, plotData.linguistic]}
+        />
 
         <div style={{ padding: "10px 10px" }}>{tabs}</div>
       </div>

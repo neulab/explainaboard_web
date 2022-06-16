@@ -83,6 +83,32 @@ paths:
               schema:
                 $ref: "#/components/schemas/APIError"
 
+  /benchmark/plot/{benchmark_id}:
+    get:
+      summary: Returns data needed to generate plots for global benchmark
+      security: []
+      description: Returns data needed to generate plots for global benchmark.
+      parameters: 
+        - in: path 
+          name: benchmark_id
+          example: globalbench_ner 
+          schema: 
+            type: string 
+          required: true 
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlotData"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
+          
 
   /datasets/{dataset_id}:
     get:
@@ -1152,3 +1178,20 @@ components:
         api_key:
           type: string
       required: [email, preferred_username, username, api_key]
+
+    PlotData:
+      type: object 
+      properties: 
+        demographic: 
+          type: array
+          items:
+            type: number
+        linguistic: 
+          type: array 
+          items: 
+            type: number
+        times: 
+          type: array 
+          items: 
+            type: string
+      required: [demographic, linguistic, times]

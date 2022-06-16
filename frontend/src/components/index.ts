@@ -12,3 +12,4 @@ export * from "./useUser";
 export * from "./PrivateIcon";
 export * from "./UserPanel";
 export * from "./BenchmarkTable";
+export * from "./Plot";

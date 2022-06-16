@@ -25,5 +25,7 @@
     "concurrently": "^6.3.0",
     "husky": "^7.0.4"
   },
-  "dependencies": {}
+  "dependencies": {
+    "echarts": "^5.3.3"
+  }
 }
