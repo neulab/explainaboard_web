@@ -237,6 +237,17 @@ export function BenchmarkTable({ benchmarkID }: Props) {
               </a>
               for detailed submission instructions
             </Descriptions.Item>
+            <Descriptions.Item
+              label={
+                <b style={{ fontSize: "14px" }}>
+                  {" "}
+                  <CheckSquareTwoTone /> Last Updated at
+                </b>
+              }
+              span={2}
+            >
+              {benchmark.time}
+            </Descriptions.Item>
           </Descriptions>
         </div>
 

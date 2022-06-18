@@ -156,7 +156,7 @@ def benchmarkconfigs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
 def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
     config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
     if config.type == "abstract":
-        return Benchmark(config, None)
+        return Benchmark(config, None, None)
     file_path = benchmark_id + "_benchmark.json"
     plot_path = benchmark_id + "_plot.csv"
     benchmark_file = open_cached_file(file_path, datetime.timedelta(days=1))
@@ -179,12 +179,13 @@ def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
                 writer_object = writer(f_object)
                 writer_object.writerow(list_data)
                 f_object.close()
+    update_time = str(datetime.datetime.fromtimestamp(os.path.getmtime(benchmark_file)))
     f = open(benchmark_file)
     views = [
         BenchmarkUtils.dataframe_to_table(k, pd.DataFrame.from_dict(v))
         for k, v in json.load(f).items()
     ]
-    return Benchmark(config, views)
+    return Benchmark(config, views, update_time)
 
 
 def benchmark_plot_benchmark_id_get(benchmark_id):

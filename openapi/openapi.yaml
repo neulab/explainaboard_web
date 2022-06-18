@@ -1154,6 +1154,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BenchmarkTableData"
+        time: 
+          type: string 
       required: [config]
 
     Paper:
