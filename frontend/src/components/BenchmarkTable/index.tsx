@@ -141,7 +141,15 @@ export function BenchmarkTable({ benchmarkID }: Props) {
         </Tabs>
       );
     }
-
+    let plot = <div></div>;
+    if (benchmark.config.parent !== undefined) {
+      plot = (
+        <Plot
+          xAxisData={plotData.times}
+          seriesDataList={[plotData.demographic, plotData.linguistic]}
+        />
+      );
+    }
     return (
       <div>
         <div style={{ padding: "10px 10px" }}>
@@ -271,12 +279,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
             </Panel>
           </Collapse>
         </Layout>
-
-        <Plot
-          xAxisData={plotData.times}
-          seriesDataList={[plotData.demographic, plotData.linguistic]}
-        />
-
+        {plot}
         <div style={{ padding: "10px 10px" }}>{tabs}</div>
       </div>
     );

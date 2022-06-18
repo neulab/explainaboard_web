@@ -21,6 +21,7 @@ from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
 from explainaboard.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
+from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -156,21 +157,16 @@ def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
     config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
     if config.type == "abstract":
         return Benchmark(config, None)
-    file_path = os.path.join(
-        "explainaboard_web/impl/cached_benchmark_results/", benchmark_id + ".json"
-    )
-    plot_path = os.path.join(
-        "explainaboard_web/impl/cached_plot_data/", benchmark_id + ".csv"
-    )
-    if os.path.exists(file_path):
-        mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
-        age = datetime.datetime.now() - mod_time
-    if not os.path.exists(file_path) or age >= datetime.timedelta(days=1):
+    file_path = benchmark_id + "_benchmark.json"
+    plot_path = benchmark_id + "_plot.csv"
+    benchmark_file = open_cached_file(file_path, datetime.timedelta(days=1))
+    if not benchmark_file:
         sys_infos = BenchmarkUtils.load_sys_infos(config)
         orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
         view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
         json_dict = {k: v.to_dict() for k, v in view_dfs}
-        with open(file_path, "w") as outfile:
+        benchmark_file = os.path.join(get_cache_dir(), sanitize_path(file_path))
+        with open(benchmark_file, "w") as outfile:
             json.dump(json_dict, outfile)
         if config.parent:
             list_data = [
@@ -178,11 +174,12 @@ def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
                 json_dict["Linguistic-weighted Global Average"]["score"][0],
                 datetime.datetime.now(),
             ]
+            plot_path = os.path.join(get_cache_dir(), sanitize_path(plot_path))
             with open(plot_path, "a", newline="") as f_object:
                 writer_object = writer(f_object)
                 writer_object.writerow(list_data)
                 f_object.close()
-    f = open(file_path)
+    f = open(benchmark_file)
     views = [
         BenchmarkUtils.dataframe_to_table(k, pd.DataFrame.from_dict(v))
         for k, v in json.load(f).items()
@@ -192,11 +189,9 @@ def benchmark_benchmark_id_get(benchmark_id: str) -> Benchmark:
 
 def benchmark_plot_benchmark_id_get(benchmark_id):
     config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
-    if config.type == "abstract":
+    if config.type == "abstract" or not config.parent:
         return PlotData([], [], [])
-    plot_path = os.path.join(
-        "explainaboard_web/impl/cached_plot_data/", benchmark_id + ".csv"
-    )
+    plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.csv")
     demographic_weighted_list, linguistic_weighted_list, times = [], [], []
     with open(plot_path, "r", newline="") as f_object:
         reader_object = reader(f_object)
