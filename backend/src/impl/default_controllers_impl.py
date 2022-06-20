@@ -15,7 +15,7 @@ from explainaboard import metric as exb_metric
 from explainaboard.feature import FeatureType
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
-from explainaboard.metric import MetricStats
+from explainaboard.metrics.metric import MetricStats
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
