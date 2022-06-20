@@ -11,11 +11,11 @@ from explainaboard import (
     get_processor,
     get_task_categories,
 )
-from explainaboard import metric as exb_metric
 from explainaboard.feature import FeatureType
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
-from explainaboard.metric import MetricStats
+from explainaboard.metrics.metric import MetricStats
+from explainaboard.metrics.registry import metric_name_to_config_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
@@ -333,7 +333,9 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             system_output_info.features[feature_name] = feature
 
         metric_configs = [
-            getattr(exb_metric, metric_config_dict["cls_name"])(**metric_config_dict)
+            metric_name_to_config_class(metric_config_dict["cls_name"])(
+                **metric_config_dict
+            )
             for metric_config_dict in system_output_info.metric_configs
         ]
 
