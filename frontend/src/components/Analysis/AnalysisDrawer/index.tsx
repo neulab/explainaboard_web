@@ -55,7 +55,7 @@ export function AnalysisDrawer({
         await new Promise<SystemAnalysesReturn>((resolve, reject) => {
           const timeoutID = setTimeout(() => {
             reject(new Error("timeout"));
-          }, 20000); // 20 seconds
+          }, 40000); // 40 seconds
           backendClient
             .systemsAnalysesPost({
               system_ids: activeSystemIDs.join(","),
