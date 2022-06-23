@@ -117,7 +117,10 @@ export function SystemSubmitDrawer(props: Props) {
       setState(State.loading);
       const systemOutBase64 = await extractAndEncodeFile(sys_out_file);
       let system: System;
-      const trimmedUsers = shared_users.map((user) => user.trim());
+      const trimmedUsers =
+        shared_users === undefined
+          ? undefined
+          : shared_users.map((user) => user.trim());
       if (useCustomDataset) {
         const customDatasetBase64 = await extractAndEncodeFile(
           custom_dataset_file
