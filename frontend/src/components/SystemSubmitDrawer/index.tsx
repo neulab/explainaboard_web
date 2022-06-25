@@ -21,6 +21,7 @@ import { useForm } from "antd/lib/form/Form";
 import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
+import ReactGA from "react-ga4";
 
 const { TextArea } = Input;
 
@@ -116,6 +117,10 @@ export function SystemSubmitDrawer(props: Props) {
       setState(State.loading);
       const systemOutBase64 = await extractAndEncodeFile(sys_out_file);
       let system: System;
+      const trimmedUsers =
+        shared_users === undefined
+          ? undefined
+          : shared_users.map((user) => user.trim());
       if (useCustomDataset) {
         const customDatasetBase64 = await extractAndEncodeFile(
           custom_dataset_file
@@ -128,7 +133,7 @@ export function SystemSubmitDrawer(props: Props) {
             source_language,
             target_language,
             is_private,
-            shared_users,
+            shared_users: trimmedUsers,
             system_details: { __TO_PARSE__: system_details },
           },
           system_output: {
@@ -152,7 +157,7 @@ export function SystemSubmitDrawer(props: Props) {
             source_language,
             target_language,
             is_private,
-            shared_users,
+            shared_users: trimmedUsers,
             system_details: { __TO_PARSE__: system_details },
           },
           system_output: {
@@ -162,6 +167,11 @@ export function SystemSubmitDrawer(props: Props) {
         });
       }
 
+      ReactGA.event({
+        category: "System",
+        action: `system_submit_success`,
+        label: task,
+      });
       message.success(`Successfully submitted system (${system.system_id}).`);
       onClose();
       form.resetFields([
@@ -177,6 +187,11 @@ export function SystemSubmitDrawer(props: Props) {
         "system_details",
       ]);
     } catch (e) {
+      ReactGA.event({
+        category: "System",
+        action: `system_submit_failure`,
+        label: task,
+      });
       if (e instanceof Response) {
         const err = await parseBackendError(e);
         message.error(err.getErrorMsg());
@@ -271,7 +286,7 @@ export function SystemSubmitDrawer(props: Props) {
     const validRegex =
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/;
     for (const user of users) {
-      if (!user.match(validRegex)) {
+      if (!user.trim().match(validRegex)) {
         return Promise.reject(`${user} not a valid email`);
       }
     }

@@ -11,6 +11,8 @@ import {
 } from "../../utils";
 import { useHistory } from "react-router";
 import { Link } from "react-router-dom";
+import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
+import { Helmet } from "react-helmet";
 
 /**
  * Dataset Page
@@ -19,6 +21,7 @@ import { Link } from "react-router-dom";
  * 2. filter by task
  */
 export function DatasetsPage() {
+  useGoogleAnalytics();
   const [pageState, setPageState] = useState(PageState.loading);
   const [datasets, setDatasets] = useState<DatasetMetadata[]>([]);
   const [page, setPage] = useState(0);
@@ -61,6 +64,9 @@ export function DatasetsPage() {
           alignItems: "center",
         }}
       >
+        <Helmet>
+          <title>ExplainaBoard - Datasets</title>
+        </Helmet>
         <PageHeader
           onBack={() => history.goBack()}
           title="Datasets"

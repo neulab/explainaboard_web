@@ -15,11 +15,11 @@ from explainaboard import (
     get_processor,
     get_task_categories,
 )
-from explainaboard import metric as exb_metric
 from explainaboard.feature import FeatureType
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
-from explainaboard.metric import MetricStats
+from explainaboard.metrics.metric import MetricStats
+from explainaboard.metrics.registry import metric_name_to_config_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard_web.impl.auth import get_user
@@ -118,7 +118,11 @@ def datasets_get(
 ) -> DatasetsReturn:
     parsed_dataset_ids = dataset_ids.split(",") if dataset_ids else None
     return DatasetDBUtils.find_datasets(
-        page, page_size, parsed_dataset_ids, dataset_name, task
+        page=page,
+        page_size=page_size,
+        dataset_ids=parsed_dataset_ids,
+        dataset_name=dataset_name,
+        task=task,
     )
 
 
@@ -379,7 +383,9 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             system_output_info.features[feature_name] = feature
 
         metric_configs = [
-            getattr(exb_metric, metric_config_dict["cls_name"])(**metric_config_dict)
+            metric_name_to_config_class(metric_config_dict["cls_name"])(
+                **metric_config_dict
+            )
             for metric_config_dict in system_output_info.metric_configs
         ]
 

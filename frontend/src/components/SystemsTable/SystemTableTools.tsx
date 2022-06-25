@@ -64,13 +64,13 @@ export function SystemTableTools({
       try {
         await backendClient.systemsSystemIdDelete(systemID);
         message.success("Success");
-        document.location.reload();
       } catch (e) {
         if (e instanceof Response) {
           message.error((await parseBackendError(e)).getErrorMsg());
         }
       }
     }
+    document.location.reload();
   }
 
   let deleteButton = (
