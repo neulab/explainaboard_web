@@ -57,7 +57,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/BenchmarkConfig"
 
-  /benchmark/{benchmark_id}:
+  /benchmark/{benchmark_id}+{by_creator}:
     get:
       summary: Returns benchmark metadata by id
       security: []
@@ -69,6 +69,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: path 
+          name: by_creator 
+          example: True 
+          schema: 
+            type: boolean 
+          required: true 
       responses:
         "200":
           description: OK

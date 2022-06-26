@@ -79,7 +79,10 @@ class BenchmarkUtils:
 
         systems = systems_return.systems
         for system in systems:
-            sys_infos.append(system.system_info.to_dict())
+            temp = system.system_info.to_dict()
+            temp["creator"] = system.creator.split("@")[0]
+            temp["created_at"] = system.created_at
+            sys_infos.append(temp)
         return sys_infos
 
     @staticmethod
@@ -140,12 +143,13 @@ class BenchmarkUtils:
         for sys in systems:
             sys_name = sys["system_name"]
             if sys_name not in system_dataset_results:
-                system_dataset_results[sys_name] = [None for _ in dataset_configs]
+                system_dataset_results[sys_name] = [
+                    {"creator": sys["creator"]} for _ in dataset_configs
+                ]
             dataset_id = dataset_to_id[
                 (sys["dataset_name"], sys["sub_dataset_name"], sys["dataset_split"])
             ]
             system_dataset_results[sys_name][dataset_id] = sys
-
         # --- Set up the columns of the dataframe
         # Default dataset information columns
         df_input: dict[str, list] = {
@@ -153,6 +157,7 @@ class BenchmarkUtils:
             "dataset_name": [],
             "sub_dataset": [],
             "dataset_split": [],
+            "creator": [],
         }
         # Extra dataset information columns needed by datasets or operations
         exclude_keys = ["metrics"] + list(BenchmarkUtils._SPECIAL_WEIGHT_MAPS.keys())
@@ -196,7 +201,9 @@ class BenchmarkUtils:
                     column_dict["metric_weight"] = dataset_metric.get(
                         "weight", 1.0 / len(dataset_metrics)
                     )
-                    if sys_info is not None:
+                    if len(sys_info) != 1:
+
+                        column_dict["creator"] = sys_info["creator"]
                         performance = sys_info["results"]["overall"].get(
                             dataset_metric["name"]
                         )
@@ -206,6 +213,7 @@ class BenchmarkUtils:
                             else (dataset_metric.get("default") or 0.0)
                         )
                     else:
+                        column_dict["creator"] = sys_info["creator"]
                         column_dict["score"] = dataset_metric.get("default") or 0.0
                     for df_key, df_arr in df_input.items():
                         if df_key in column_dict:
@@ -219,12 +227,11 @@ class BenchmarkUtils:
                         else:
                             raise ValueError(f"could not find information for {df_key}")
                         df_arr.append(info)
-
         return pd.DataFrame(df_input)
 
     @staticmethod
     def aggregate_view(
-        input_df: pd.DataFrame, view_spec: BenchmarkViewConfig
+        input_df: pd.DataFrame, view_spec: BenchmarkViewConfig, by_creator: bool
     ) -> pd.DataFrame:
         if input_df.empty:
             return input_df
@@ -234,8 +241,10 @@ class BenchmarkUtils:
             group_by: str | list[str] = operation.get("group_by", [])
             if isinstance(group_by, str):
                 group_by = [group_by]
-            if not operation.get("skip_group_system"):
+            if not operation.get("skip_group_system") and not by_creator:
                 group_by = ["system_name"] + group_by
+            if not operation.get("skip_group_system") and by_creator:
+                group_by = ["creator"] + group_by
             # weight map info, including special ones indexed by a string
             weight_map: dict[str, float] | str | None = operation.get("weight_map")
             if isinstance(weight_map, str):
@@ -272,7 +281,10 @@ class BenchmarkUtils:
             # indices. The below code compensates for this.
             if isinstance(output_df, Series):
                 output_df = output_df.to_frame().transpose()
-                output_df["system_name"] = "Overall"
+                if by_creator:
+                    output_df["creator"] = "Overall"
+                else:
+                    output_df["system_name"] = "Overall"
             else:
                 output_df.reset_index(inplace=True)
 
@@ -284,13 +296,16 @@ class BenchmarkUtils:
 
     @staticmethod
     def generate_view_dataframes(
-        config: BenchmarkConfig, orig_df: pd.DataFrame
+        config: BenchmarkConfig, orig_df: pd.DataFrame, by_creator
     ) -> list[tuple[str, pd.DataFrame]]:
 
         view_dfs = []
         for view_spec in config.views:
             view_dfs.append(
-                (view_spec.name, BenchmarkUtils.aggregate_view(orig_df, view_spec))
+                (
+                    view_spec.name,
+                    BenchmarkUtils.aggregate_view(orig_df, view_spec, by_creator),
+                )
             )
         view_dfs.append(("Original", orig_df))
         return view_dfs
@@ -309,11 +324,15 @@ class BenchmarkUtils:
 
     @staticmethod
     def dataframe_to_table(
-        view_name: str, input_df: pd.DataFrame
+        view_name: str, input_df: pd.DataFrame, by_creator: bool
     ) -> BenchmarkTableData:
-        elem_names = [x for x in input_df.columns if x not in {"score", "system_name"}]
-        system_idx = sorted(list(set(input_df["system_name"])))
-        # system_map = {v: i for i, v in enumerate(set(input_df["system_name"]))}
+        if by_creator:
+            col_name = "creator"
+        else:
+            col_name = "system_name"
+        elem_names = [x for x in input_df.columns if x not in {"score", col_name}]
+        system_idx = sorted(list(set(input_df[col_name])))
+        # system_map = {v: i for i, v in enumerate(set(input_df[col_name]))}
         row_col_names = [
             BenchmarkUtils._col_name(elem_names, x) for _, x in input_df.iterrows()
         ]
@@ -322,7 +341,7 @@ class BenchmarkUtils:
             {k: [0.0 for _ in system_idx] for k in column_idx}, index=system_idx
         )
         for (_, df_data), col_id in zip(input_df.iterrows(), row_col_names):
-            row_id = df_data["system_name"]
+            row_id = df_data[col_name]
             val = df_data["score"]
             scores[col_id][row_id] = val
         scores = scores.sort_values(scores.columns[0], axis=0, ascending=False)

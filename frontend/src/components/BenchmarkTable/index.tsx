@@ -66,17 +66,18 @@ export function BenchmarkTable({ benchmarkID }: Props) {
   const [benchmark, setBenchmark] = useState<Benchmark>();
   const [pageState, setPageState] = useState(PageState.loading);
   const [plotData, setPlotData] = useState<PlotData>();
+  const [byCreator, setByCreator] = useState<boolean>(false);
   const history = useHistory();
 
   useEffect(() => {
     async function fetchBenchmark() {
       setPageState(PageState.loading);
-      setBenchmark(await backendClient.benchmarkBenchmarkIdGet(benchmarkID));
+      setBenchmark(await backendClient.benchmarkBenchmarkIdbyCreatorGet(benchmarkID, byCreator));
       setPlotData(await backendClient.benchmarkPlotBenchmarkIdGet(benchmarkID));
       setPageState(PageState.success);
     }
     fetchBenchmark();
-  }, [benchmarkID]);
+  }, [benchmarkID, byCreator]);
 
   if (benchmark !== undefined && plotData !== undefined) {
     const supportedDatasets = Array<JSX.Element>();
@@ -291,6 +292,16 @@ export function BenchmarkTable({ benchmarkID }: Props) {
           </Collapse>
         </Layout>
         {plot}
+        <fieldset>
+          <div> 
+            <input type="radio" value="check" id="check" name="bycreator" onChange={(e) => setByCreator(true)}/>
+            <label htmlFor="check">sort by creator</label>
+          </div>
+          <div>
+            <input type="radio" value="uncheck" id="uncheck" name="bycreator" onChange={(e) => setByCreator(false)}/>
+            <label htmlFor="uncheck">sort by system</label>
+          </div>
+        </fieldset>
         <div style={{ padding: "10px 10px" }}>{tabs}</div>
       </div>
     );
