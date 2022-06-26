@@ -177,12 +177,13 @@ export function BarChart(props: Props) {
           const confidenceScores = confidenceScoresList[paramIdx];
           const numbersOfSamples = numbersOfSamplesList[paramIdx];
           const confidenceScoreRange =
-            dataIndex < confidenceScores.length
+            dataIndex < confidenceScores.length &&
+            confidenceScores[dataIndex][0] !== null
               ? `[${confidenceScores[dataIndex][0].toFixed(
                   decimalPlaces
                 )}, ${confidenceScores[dataIndex][1].toFixed(decimalPlaces)}]`
               : "";
-          let ret = `${data} ${confidenceScoreRange}`;
+          let ret = `name: ${param.name} <br /> value: ${data} ${confidenceScoreRange}`;
           if (numbersOfSamples[dataIndex] > 0) {
             ret = `${ret} <br /> sample size: ${numbersOfSamples[dataIndex]}`;
           }

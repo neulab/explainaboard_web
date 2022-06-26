@@ -4,6 +4,8 @@ import { PageHeader } from "antd";
 import { useHistory, useLocation } from "react-router-dom";
 import { SystemsTable } from "../../components";
 import { LeaderboardHome } from "../LeaderboardHome";
+import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
+import { Helmet } from "react-helmet";
 
 function useQuery() {
   const { search } = useLocation();
@@ -15,6 +17,7 @@ function useQuery() {
  * 1. handle task name not valid
  */
 export function LeaderboardPage() {
+  useGoogleAnalytics();
   const history = useHistory();
   const query = useQuery();
   const task = query.get("task") || undefined;
@@ -40,6 +43,9 @@ export function LeaderboardPage() {
     }
     return (
       <div>
+        <Helmet>
+          <title>ExplainaBoard - {title} Leaderboard</title>
+        </Helmet>
         <PageHeader
           onBack={() => history.goBack()}
           title={title + " Leaderboard"}

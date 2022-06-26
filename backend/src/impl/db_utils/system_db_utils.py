@@ -327,13 +327,14 @@ class SystemDBUtils:
                 metric_configs.append(metrics_lookup[metric_name])
             processor_metadata = {
                 **metadata.to_dict(),
-                "task_name": metadata.task,
                 "dataset_name": system.dataset.dataset_name if system.dataset else None,
                 "sub_dataset_name": system.dataset.sub_dataset
                 if system.dataset
                 else None,
                 "dataset_split": metadata.dataset_split,
+                "task_name": metadata.task,
                 "metric_configs": metric_configs,
+                "custom_features": system_output_data.metadata.custom_features,
             }
 
             return processor.get_overall_statistics(
