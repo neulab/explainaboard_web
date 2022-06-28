@@ -213,8 +213,12 @@ class BenchmarkUtils:
                         elif df_key == "dataset_split":
                             info = "test"
                         elif df_key == "source_language":
+                            if len(dataset_metadata.languages) == 0:
+                                raise ValueError(f"no {df_key} in {dataset_metadata}")
                             info = dataset_metadata.languages[0]
                         elif df_key == "target_language":
+                            if len(dataset_metadata.languages) == 0:
+                                raise ValueError(f"no {df_key} in {dataset_metadata}")
                             info = dataset_metadata.languages[-1]
                         else:
                             raise ValueError(f"could not find information for {df_key}")
