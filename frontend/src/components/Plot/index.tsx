@@ -3,7 +3,7 @@ import ReactECharts from "echarts-for-react";
 
 interface Props {
   xAxisData: string[];
-  seriesDataList: number[][];
+  seriesDataList: number[];
 }
 
 export function Plot(props: Props) {
@@ -21,22 +21,10 @@ export function Plot(props: Props) {
         },
         series: [
           {
-            data: seriesDataList[0],
+            data: seriesDataList,
             type: "line",
             lineStyle: {
               color: "#25f1f5",
-              width: 2,
-            },
-            itemStyle: {
-              borderWidth: 2,
-              borderColor: "#a5b0af",
-            },
-          },
-          {
-            data: seriesDataList[1],
-            type: "line",
-            lineStyle: {
-              color: "#674ea7",
               width: 2,
             },
             itemStyle: {

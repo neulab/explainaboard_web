@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./index.css";
 import { backendClient } from "../../clients";
-import { Benchmark, BenchmarkTableData, PlotData } from "../../clients/openapi";
+import { Benchmark, BenchmarkTableData } from "../../clients/openapi";
 import {
   Tabs,
   Spin,
@@ -27,7 +27,7 @@ interface Props {
 }
 
 function tableToPage(my_view: BenchmarkTableData) {
-  const cols = ["Rank", "system_name"].concat(my_view.column_names);
+  const cols = ["Rank", "name"].concat(my_view.column_names);
   const { TabPane } = Tabs;
 
   const data_cols: ColumnsType<Array<string | number>> = cols.map(
@@ -37,7 +37,7 @@ function tableToPage(my_view: BenchmarkTableData) {
         dataIndex: col_idx,
         key: col_idx,
         render: (text, record) =>
-          col_name === "system_name" ? (
+          col_name === "name" ? (
             <h4>
               <Link to={`/systems?system=${text.split(" ").join()}`}>
                 {text}
@@ -55,18 +55,27 @@ function tableToPage(my_view: BenchmarkTableData) {
     [i + 1, sys_name].concat(my_view.scores[i].map((score) => score.toFixed(4)))
   );
   const view_name = my_view.name;
-  return (
-    <TabPane tab={view_name} key={view_name}>
-      <TableView view={view_name} columns={data_cols} dataSource={sys_data} />
-    </TabPane>
-  );
+  if (my_view.plot_y_values.length === 0) {
+    return (
+      <TabPane tab={view_name} key={view_name}>
+        <TableView view={view_name} columns={data_cols} dataSource={sys_data} />
+      </TabPane>
+    );
+  }
+  else {
+    return (
+      <TabPane tab={view_name} key={view_name}>
+         <Plot xAxisData={my_view.plot_x_values} seriesDataList={my_view.plot_y_values} />
+        <TableView view={view_name} columns={data_cols} dataSource={sys_data} />
+      </TabPane>
+    );
+  }
 }
 
 /** A table that lists all systems */
 export function BenchmarkTable({ benchmarkID }: Props) {
   const [benchmark, setBenchmark] = useState<Benchmark>();
   const [pageState, setPageState] = useState(PageState.loading);
-  const [plotData, setPlotData] = useState<PlotData>();
   const [byCreator, setByCreator] = useState<boolean>(false);
   const history = useHistory();
 
@@ -74,13 +83,12 @@ export function BenchmarkTable({ benchmarkID }: Props) {
     async function fetchBenchmark() {
       setPageState(PageState.loading);
       setBenchmark(await backendClient.benchmarkBenchmarkIdbyCreatorGet(benchmarkID, byCreator));
-      setPlotData(await backendClient.benchmarkPlotBenchmarkIdGet(benchmarkID));
       setPageState(PageState.success);
     }
     fetchBenchmark();
   }, [benchmarkID, byCreator]);
 
-  if (benchmark !== undefined && plotData !== undefined) {
+  if (benchmark !== undefined) {
     const supportedDatasets = Array<JSX.Element>();
     let supportedTasks = Array<string>();
 
@@ -143,15 +151,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
         </Tabs>
       );
     }
-    let plot = <div></div>;
-    if (benchmark.config.parent !== undefined) {
-      plot = (
-        <Plot
-          xAxisData={plotData.times}
-          seriesDataList={[plotData.demographic, plotData.linguistic]}
-        />
-      );
-    }
+
     return (
       <div>
         <div style={{ padding: "10px 10px" }}>
@@ -295,13 +295,11 @@ export function BenchmarkTable({ benchmarkID }: Props) {
             </Panel>
           </Collapse>
         </Layout>
-        {plot}
         <fieldset>
-          <div> 
+          <div> &ensp;
             <input type="radio" value="check" id="check" name="bycreator" onChange={(e) => setByCreator(true)}/>
             <label htmlFor="check">sort by creator</label>
-          </div>
-          <div>
+            &emsp;
             <input type="radio" value="uncheck" id="uncheck" name="bycreator" onChange={(e) => setByCreator(false)}/>
             <label htmlFor="uncheck">sort by system</label>
           </div>

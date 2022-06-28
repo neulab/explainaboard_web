@@ -4,7 +4,6 @@ import binascii
 import datetime
 import json
 import os
-from csv import reader, writer
 from functools import lru_cache
 from typing import Optional, cast
 
@@ -21,19 +20,14 @@ from explainaboard.loaders.loader_registry import get_supported_file_types_for_l
 from explainaboard.metrics.metric import MetricStats
 from explainaboard.metrics.registry import metric_name_to_config_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
-from explainaboard.utils.cache_api import get_cache_dir, sanitize_path, open_cached_file
+from explainaboard.utils.cache_api import get_cache_dir, sanitize_path
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
-from explainaboard_web.models import (
-    Benchmark,
-    BenchmarkConfig,
-    DatasetMetadata,
-    PlotData,
-)
+from explainaboard_web.models import Benchmark, BenchmarkConfig, DatasetMetadata
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
@@ -157,6 +151,17 @@ def benchmarkconfigs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
     return benchmark_configs
 
 
+def open_cached_file(relative_path, lifetime):
+    sanitized_path = sanitize_path(relative_path)
+    file_path = os.path.join(get_cache_dir(), sanitized_path)
+    if os.path.exists(file_path):
+        mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+        age = datetime.datetime.now() - mod_time
+        if lifetime is None or age < lifetime:
+            return file_path
+    return None
+
+
 def benchmark_benchmark_idby_creator_get(
     benchmark_id: str, by_creator: bool
 ) -> Benchmark:
@@ -189,64 +194,14 @@ def benchmark_benchmark_idby_creator_get(
         view_dict = json.load(f)["creator"]
     else:
         view_dict = json.load(f)["system"]
+    plot_dict = BenchmarkUtils.generate_plots(benchmark_id)
     views = [
-        BenchmarkUtils.dataframe_to_table(k, pd.DataFrame.from_dict(v), by_creator)
+        BenchmarkUtils.dataframe_to_table(
+            k, pd.DataFrame.from_dict(v), by_creator, plot_dict
+        )
         for k, v in view_dict.items()
     ]
     return Benchmark(config, views, update_time)
-
-
-def benchmark_plot_benchmark_id_get(benchmark_id):
-    config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
-    if config.type == "abstract" or not config.parent:
-        return PlotData([], [], [])
-    plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.csv")
-    plot_file = open_cached_file(benchmark_id + "_plot.csv", datetime.timedelta(days=1))
-    if not plot_file:
-        f = open(plot_path, "w")
-        f.truncate()
-        f.close()
-
-        sys_infos = BenchmarkUtils.load_sys_infos(config)
-        sorted_sys_infos = sorted(sys_infos, key=lambda sys: sys["created_at"].date())
-        time = sorted_sys_infos[0]["created_at"]
-        current_time = datetime.datetime.now().date()
-        while time.date() <= current_time:
-            systems = [
-                sys for sys in sys_infos if sys["created_at"].date() <= time.date()
-            ]
-            orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, systems)
-
-            system_dfs = BenchmarkUtils.generate_view_dataframes(
-                config, orig_df, by_creator=False
-            )
-            system_dict = {k: v.to_dict() for k, v in system_dfs}
-            creator_dfs = BenchmarkUtils.generate_view_dataframes(
-                config, orig_df, by_creator=True
-            )
-            creator_dict = {k: v.to_dict() for k, v in creator_dfs}
-
-            json_dict = {"system": system_dict, "creator": creator_dict}
-            list_data = [
-                json_dict["system"]["Demographic-weighted Global Average"]["score"][0],
-                json_dict["system"]["Linguistic-weighted Global Average"]["score"][0],
-                time,
-            ]
-            with open(plot_path, "a", newline="") as f_object:
-                writer_object = writer(f_object)
-                writer_object.writerow(list_data)
-                f_object.close()
-            time += datetime.timedelta(days=1)
-
-    demographic_weighted_list, linguistic_weighted_list, times = [], [], []
-    with open(plot_path, "r", newline="") as f_object:
-        reader_object = reader(f_object)
-        for row in reader_object:
-            demographic_weighted_list.append(float(row[0]))
-            linguistic_weighted_list.append(float(row[1]))
-            times.append(datetime.datetime.strptime(row[2], "%Y-%m-%d %H:%M:%S.%f"))
-    times = [time.date() for time in times]
-    return PlotData(demographic_weighted_list, linguistic_weighted_list, times)
 
 
 """ /systems """

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import datetime
 import json
 import os
 from dataclasses import dataclass
 
 import pandas as pd
+from explainaboard.utils.cache_api import get_cache_dir, sanitize_path
 from explainaboard_web.impl.constants import LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -221,8 +223,12 @@ class BenchmarkUtils:
                         elif df_key == "dataset_split":
                             info = "test"
                         elif df_key == "source_language":
+                            if len(dataset_metadata.languages) == 0:
+                                raise ValueError(f"no {df_key} in {dataset_metadata}")
                             info = dataset_metadata.languages[0]
                         elif df_key == "target_language":
+                            if len(dataset_metadata.languages) == 0:
+                                raise ValueError(f"no {df_key} in {dataset_metadata}")
                             info = dataset_metadata.languages[-1]
                         else:
                             raise ValueError(f"could not find information for {df_key}")
@@ -324,7 +330,7 @@ class BenchmarkUtils:
 
     @staticmethod
     def dataframe_to_table(
-        view_name: str, input_df: pd.DataFrame, by_creator: bool
+        view_name: str, input_df: pd.DataFrame, by_creator: bool, plot_dict: dict
     ) -> BenchmarkTableData:
         if by_creator:
             col_name = "creator"
@@ -350,4 +356,62 @@ class BenchmarkUtils:
             system_names=list(scores.index),
             column_names=list(scores.columns),
             scores=[[scores[j][i] for j in scores.columns] for i in scores.index],
+            plot_y_values=plot_dict[view_name],
+            plot_x_values=plot_dict["times"],
         )
+
+    @staticmethod
+    def open_cached_file(relative_path, lifetime):
+        sanitized_path = sanitize_path(relative_path)
+        file_path = os.path.join(get_cache_dir(), sanitized_path)
+        if os.path.exists(file_path):
+            mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
+            age = datetime.datetime.now() - mod_time
+            if lifetime is None or age < lifetime:
+                return file_path
+        return None
+
+    @staticmethod
+    def generate_plots(benchmark_id):
+        config = BenchmarkConfig.from_dict(
+            BenchmarkUtils.config_dict_from_id(benchmark_id)
+        )
+        if config.type == "abstract":
+            return {}
+        plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.json")
+        plot_file = BenchmarkUtils.open_cached_file(
+            benchmark_id + "_plot.json", datetime.timedelta(days=1)
+        )
+        if not plot_file:
+            sys_infos = BenchmarkUtils.load_sys_infos(config)
+            sorted_sys_infos = sorted(
+                sys_infos, key=lambda sys: sys["created_at"].date()
+            )
+            time = sorted_sys_infos[0]["created_at"]
+            current_time = datetime.datetime.now().date()
+            json_dict = {k.name: [] for k in config.views}
+            json_dict["Original"] = []
+            json_dict["times"] = []
+            while time.date() <= current_time:
+                systems = [
+                    sys for sys in sys_infos if sys["created_at"].date() <= time.date()
+                ]
+                orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(
+                    config, systems
+                )
+
+                system_dfs = BenchmarkUtils.generate_view_dataframes(
+                    config, orig_df, by_creator=False
+                )
+                system_dict = {k: v for k, v in system_dfs}
+                for k, v in system_dfs:
+                    if set(system_dict[k].columns) == set(["score", "system_name"]):
+                        json_dict[k].append(system_dict[k].max()["score"])
+                json_dict["times"].append(str(time))
+                time += datetime.timedelta(days=1)
+            with open(plot_path, "w") as outfile:
+                json.dump(json_dict, outfile)
+
+        with open(plot_path) as f:
+            plot_data = json.load(f)
+        return plot_data
