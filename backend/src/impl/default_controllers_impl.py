@@ -20,7 +20,7 @@ from explainaboard.loaders.loader_registry import get_supported_file_types_for_l
 from explainaboard.metrics.metric import MetricStats
 from explainaboard.metrics.registry import metric_name_to_config_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
-from explainaboard.utils.cache_api import get_cache_dir, sanitize_path
+from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -149,17 +149,6 @@ def benchmarkconfigs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
                 benchmark_configs.append(BenchmarkConfig.from_dict(benchmark_dict))
 
     return benchmark_configs
-
-
-def open_cached_file(relative_path, lifetime):
-    sanitized_path = sanitize_path(relative_path)
-    file_path = os.path.join(get_cache_dir(), sanitized_path)
-    if os.path.exists(file_path):
-        mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
-        age = datetime.datetime.now() - mod_time
-        if lifetime is None or age < lifetime:
-            return file_path
-    return None
 
 
 def benchmark_benchmark_idby_creator_get(

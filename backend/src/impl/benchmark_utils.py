@@ -6,7 +6,7 @@ import os
 from dataclasses import dataclass
 
 import pandas as pd
-from explainaboard.utils.cache_api import get_cache_dir, sanitize_path
+from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
 from explainaboard_web.impl.constants import LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -361,17 +361,6 @@ class BenchmarkUtils:
         )
 
     @staticmethod
-    def open_cached_file(relative_path, lifetime):
-        sanitized_path = sanitize_path(relative_path)
-        file_path = os.path.join(get_cache_dir(), sanitized_path)
-        if os.path.exists(file_path):
-            mod_time = datetime.datetime.fromtimestamp(os.path.getmtime(file_path))
-            age = datetime.datetime.now() - mod_time
-            if lifetime is None or age < lifetime:
-                return file_path
-        return None
-
-    @staticmethod
     def generate_plots(benchmark_id):
         config = BenchmarkConfig.from_dict(
             BenchmarkUtils.config_dict_from_id(benchmark_id)
@@ -379,7 +368,7 @@ class BenchmarkUtils:
         if config.type == "abstract":
             return {}
         plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.json")
-        plot_file = BenchmarkUtils.open_cached_file(
+        plot_file = open_cached_file(
             benchmark_id + "_plot.json", datetime.timedelta(seconds=1)
         )
         if not plot_file:
