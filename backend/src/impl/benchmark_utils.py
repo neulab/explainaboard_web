@@ -356,8 +356,8 @@ class BenchmarkUtils:
             system_names=list(scores.index),
             column_names=list(scores.columns),
             scores=[[scores[j][i] for j in scores.columns] for i in scores.index],
-            plot_y_values=plot_dict[view_name],
-            plot_x_values=plot_dict["times"],
+            plot_y_values=[pt[1] for pt in plot_dict[view_name]],
+            plot_x_values=[pt[0] for pt in plot_dict[view_name]],
         )
 
     @staticmethod
@@ -380,7 +380,7 @@ class BenchmarkUtils:
             return {}
         plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.json")
         plot_file = BenchmarkUtils.open_cached_file(
-            benchmark_id + "_plot.json", datetime.timedelta(days=1)
+            benchmark_id + "_plot.json", datetime.timedelta(seconds=1)
         )
         if not plot_file:
             sys_infos = BenchmarkUtils.load_sys_infos(config)
@@ -405,9 +405,17 @@ class BenchmarkUtils:
                 )
                 system_dict = {k: v for k, v in system_dfs}
                 for k, v in system_dfs:
-                    if set(system_dict[k].columns) == set(["score", "system_name"]):
-                        json_dict[k].append(system_dict[k].max()["score"])
-                json_dict["times"].append(str(time))
+                    if (
+                        (set(system_dict[k].columns) == set(["score", "system_name"]))
+                        and len(json_dict[k]) == 0
+                        or (
+                            len(json_dict[k]) > 0
+                            and json_dict[k][-1][1] < system_dict[k].max()["score"]
+                        )
+                    ):
+                        json_dict[k].append(
+                            (str(time.date()), system_dict[k].max()["score"])
+                        )
                 time += datetime.timedelta(days=1)
             with open(plot_path, "w") as outfile:
                 json.dump(json_dict, outfile)

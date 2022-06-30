@@ -187,8 +187,9 @@ def benchmark_benchmark_idby_creator_get(
         benchmark_file = os.path.join(get_cache_dir(), sanitize_path(file_path))
         with open(benchmark_file, "w") as outfile:
             json.dump(json_dict, outfile)
-
-    update_time = str(datetime.datetime.fromtimestamp(os.path.getmtime(benchmark_file)))
+    update_time = (
+        datetime.datetime.fromtimestamp(os.path.getmtime(benchmark_file))
+    ).strftime("%m-%d-%Y %H:%M:%S")
     f = open(benchmark_file)
     if by_creator:
         view_dict = json.load(f)["creator"]
