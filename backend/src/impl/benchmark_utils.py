@@ -332,10 +332,7 @@ class BenchmarkUtils:
     def dataframe_to_table(
         view_name: str, input_df: pd.DataFrame, by_creator: bool, plot_dict: dict
     ) -> BenchmarkTableData:
-        if by_creator:
-            col_name = "creator"
-        else:
-            col_name = "system_name"
+        col_name = "creator" if by_creator else "system_name"
         elem_names = [x for x in input_df.columns if x not in {"score", col_name}]
         system_idx = sorted(list(set(input_df[col_name])))
         # system_map = {v: i for i, v in enumerate(set(input_df[col_name]))}
@@ -369,22 +366,18 @@ class BenchmarkUtils:
             return {}
         plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.json")
         plot_file = open_cached_file(
-            benchmark_id + "_plot.json", datetime.timedelta(seconds=1)
+            benchmark_id + "_plot.json", datetime.timedelta(days=1)
         )
         if not plot_file:
             sys_infos = BenchmarkUtils.load_sys_infos(config)
-            sorted_sys_infos = sorted(
-                sys_infos, key=lambda sys: sys["created_at"].date()
-            )
-            time = sorted_sys_infos[0]["created_at"]
-            current_time = datetime.datetime.now().date()
             json_dict = {k.name: [] for k in config.views}
             json_dict["Original"] = []
             json_dict["times"] = []
-            while time.date() <= current_time:
-                systems = [
-                    sys for sys in sys_infos if sys["created_at"].date() <= time.date()
-                ]
+            unique_dates = sorted(
+                list(set([x["created_at"].date() for x in sys_infos]))
+            )
+            for date in unique_dates:
+                systems = [sys for sys in sys_infos if sys["created_at"].date() <= date]
                 orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(
                     config, systems
                 )
@@ -402,10 +395,7 @@ class BenchmarkUtils:
                             and json_dict[k][-1][1] < system_dict[k].max()["score"]
                         )
                     ):
-                        json_dict[k].append(
-                            (str(time.date()), system_dict[k].max()["score"])
-                        )
-                time += datetime.timedelta(days=1)
+                        json_dict[k].append((str(date), system_dict[k].max()["score"]))
             with open(plot_path, "w") as outfile:
                 json.dump(json_dict, outfile)
 
