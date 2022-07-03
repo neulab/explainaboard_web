@@ -57,7 +57,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/BenchmarkConfig"
 
-  /benchmark/{benchmark_id}:
+  /benchmark/{benchmark_id}+{by_creator}:
     get:
       summary: Returns benchmark metadata by id
       security: []
@@ -69,6 +69,12 @@ paths:
           schema:
             type: string
           required: true
+        - in: path 
+          name: by_creator 
+          example: True 
+          schema: 
+            type: boolean 
+          required: true 
       responses:
         "200":
           description: OK
@@ -82,7 +88,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/APIError"
-
+          
 
   /datasets/{dataset_id}:
     get:
@@ -1117,7 +1123,15 @@ components:
             type: array
             items:
               type: number
-      required: [name, system_names, column_names, scores]
+        plot_y_values:
+          type: array 
+          items:
+            type: number
+        plot_x_values: 
+          type: array 
+          items: 
+            type: string
+      required: [name, system_names, column_names, scores, plot_y_values, plot_x_values]
 
     Benchmark:
       type: object
@@ -1128,6 +1142,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BenchmarkTableData"
+        time: 
+          type: string 
       required: [config]
 
     Paper:
