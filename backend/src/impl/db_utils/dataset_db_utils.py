@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import json
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -49,6 +50,7 @@ class DatasetDB:
                 "split": v_dataset["splits"],
                 "tasks": tasks,
                 "languages": v_dataset.get("languages"),
+                "custom_features": v_dataset.get("custom_features"),
             }
             self.metadatas.append(DatasetMetadata.from_dict(doc))
         self.name_trie = marisa_trie.Trie(self.name_dict.keys())
@@ -62,6 +64,18 @@ class DatasetDBUtils:
     _cached_lifetime: timedelta = timedelta(hours=6)
 
     @staticmethod
+    def get_combined_custom_features(
+        dataset_id: str, system_custom_feats: dict | None
+    ) -> dict | None:
+        dataset = DatasetDBUtils.find_dataset_by_id(dataset_id)
+        if dataset is None or dataset.custom_features is None:
+            return system_custom_feats
+        custom_feats = dict(dataset.custom_features)
+        if system_custom_feats is not None:
+            custom_feats.update(system_custom_feats)
+        return custom_feats
+
+    @staticmethod
     def get_dataset_db() -> DatasetDB:
         """
         Get a collection of datasets, indexed by dataset name, containing every
@@ -71,6 +85,17 @@ class DatasetDBUtils:
             datetime.now() - unwrap(DatasetDBUtils._cached_time)
             > DatasetDBUtils._cached_lifetime
         ):
+            # Load the custom features
+            scriptpath = os.path.dirname(__file__)
+            json_path = os.path.join(
+                scriptpath,
+                os.path.pardir,
+                "general_configs",
+                "dataset_custom_features.json",
+            )
+            with open(json_path, "r") as fin:
+                custom_features = json.load(fin)
+            # Load the dataset db
             local_path = cache_online_file(
                 DatasetDBUtils.online_path,
                 "info/dataset_info.jsonl",
@@ -83,8 +108,12 @@ class DatasetDBUtils:
                     for k, v in data.items():
                         # skip 'ERROR' or 'SKIPPED' entries
                         if isinstance(v, dict) and len(v) > 0:
+                            v["custom_features"] = custom_features.get(
+                                v["dataset_name"]
+                            )
                             datasets[k] = v
-            DatasetDBUtils._cached_db = DatasetDB(datasets)
+            # Create the DB
+            DatasetDBUtils._cached_db = DatasetDB(data=datasets)
             DatasetDBUtils._cached_time = datetime.now()
         return DatasetDBUtils._cached_db
 
