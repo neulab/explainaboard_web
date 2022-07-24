@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
-from explainaboard_web.impl.constants import LING_WEIGHT, POP_WEIGHT
+from explainaboard_web.impl.constants import ALL_LANG, LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.models import (
@@ -267,7 +267,7 @@ class BenchmarkUtils:
                 elif op == "max":
                     output_df = output_df.max(numeric_only=True)
                 elif op == "min":
-                    output_df = output_df.max(numeric_only=True)
+                    output_df = output_df.min(numeric_only=True)
             elif op in {"multiply", "weighted_sum"}:
                 weight = output_df[operation["weight"]]
                 if weight_map:
@@ -278,6 +278,27 @@ class BenchmarkUtils:
                         output_df = output_df.groupby(group_by).sum(numeric_only=True)
                     else:
                         output_df = output_df.sum(numeric_only=True)
+            elif op in {"add_default"}:
+                languages = [
+                    lang
+                    for lang in ALL_LANG
+                    if lang not in output_df[operation["column"]].values
+                ]
+                temp_df = pd.DataFrame(
+                    [[lang, 0] for lang in languages],
+                    columns=[operation["column"], "score"],
+                )
+                output_df = pd.concat([output_df, temp_df], axis=0, ignore_index=True)
+                if not by_creator:
+                    output_df.rename(
+                        columns={"source_language": "system_name"}, inplace=True
+                    )
+                else:
+                    output_df.rename(
+                        columns={"source_language": "creator"}, inplace=True
+                    )
+            elif op in {"subtract"}:
+                output_df["score"] = output_df["score"].apply(lambda x: 1 - x)
             else:
                 raise ValueError(f"Unsupported operation {operation['op']} in spec.")
             if output_df.isnull().values.any():

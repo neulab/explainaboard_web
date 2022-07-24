@@ -37,7 +37,15 @@
                 {"op": "max", "group_by": ["source_language"], "skip_group_system": false},
                 {"op": "weighted_sum", "weight": "source_language", "weight_map": "ling_weight", "skip_group_system": false}
             ]
+        }, 
+        {
+            "name": "Languages",
+            "operations": [
+                {"op": "max", "group_by": ["source_language"], "skip_group_system": true},
+                {"op": "add_default", "column": "source_language", "score": 0},
+                {"op": "subtract"}
+            ]
         }
     ],
-    "default_views": ["Linguistic-weighted Global Average", "Demographic-weighted Global Average", "Linguistic-weighted System-by-system Average", "Demographic-weighted System-by-system Average", "Original"]
+    "default_views": ["Linguistic-weighted Global Average", "Demographic-weighted Global Average", "Linguistic-weighted System-by-system Average", "Demographic-weighted System-by-system Average", "Languages", "Original"]
 }   
