@@ -281,7 +281,8 @@ def systems_system_id_outputs_get(
     sys = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
     has_access = user.is_authenticated and (
-        sys.creator == user.email or user.email in sys.shared_users
+        sys.creator == user.email
+        or (sys.shared_users and user.email in sys.shared_users)
     )
     if sys.is_private and not has_access:
         abort_with_error_message(403, "system access denied", 40302)
