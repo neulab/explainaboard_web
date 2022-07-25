@@ -1,0 +1,12 @@
+{
+    "id": "globalbench_qa-extractive",
+    "name": "GlobalBench qa-extractive",
+    "description": "A benchmark for measuring global progress in qa-extractive.",
+    "parent": "globalbench",
+    "visibility": "public",
+    "type": "standard",
+    "metrics": [{"name": "F1"}, {"name": "ExactMatch"}],
+    "system_query": {
+        "task": "qa-extractive"
+    }
+}

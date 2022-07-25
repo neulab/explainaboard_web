@@ -1,0 +1,12 @@
+{
+    "id": "globalbench_tpc",
+    "name": "GlobalBench text-pair-classification",
+    "description": "A benchmark for measuring global progress in text-pair-classification.",
+    "parent": "globalbench",
+    "visibility": "public",
+    "type": "standard",
+    "metrics": [{"name": "Accuracy"}],
+    "system_query": {
+        "task": "text-pair-classification"
+    }
+}
