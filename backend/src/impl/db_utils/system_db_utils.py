@@ -325,6 +325,9 @@ class SystemDBUtils:
                         400, f"{metric_name} is not a supported metric"
                     )
                 metric_configs.append(metrics_lookup[metric_name])
+            custom_features = DatasetDBUtils.get_combined_custom_features(
+                system.dataset.dataset_id, system_output_data.metadata.custom_features
+            )
             processor_metadata = {
                 **metadata.to_dict(),
                 "dataset_name": system.dataset.dataset_name if system.dataset else None,
@@ -334,7 +337,7 @@ class SystemDBUtils:
                 "dataset_split": metadata.dataset_split,
                 "task_name": metadata.task,
                 "metric_configs": metric_configs,
-                "custom_features": system_output_data.metadata.custom_features,
+                "custom_features": custom_features,
             }
 
             return processor.get_overall_statistics(
