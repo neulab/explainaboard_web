@@ -32,7 +32,7 @@ export function ModalForImportTip(props: Props) {
 
   return (
     <>
-      <Button type="primary" onClick={showModal}>
+      <Button size="small" onClick={showModal}>
         usage
       </Button>
       <Modal
