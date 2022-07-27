@@ -16,6 +16,7 @@ from explainaboard import (
     get_datalab_loader,
     get_processor,
 )
+from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard_web.impl.auth import get_user
@@ -242,6 +243,71 @@ class SystemDBUtils:
         )
 
     @staticmethod
+    def _load_sys_output(
+        system: System,
+        metadata: SystemMetadata,
+        system_output: SystemOutputProps,
+        custom_dataset: SystemOutputProps | None,
+        dataset_custom_features: dict,
+    ):
+        if custom_dataset:
+            return get_custom_dataset_loader(
+                task=metadata.task,
+                dataset_data=custom_dataset.data,
+                output_data=system_output.data,
+                dataset_source=Source.in_memory,
+                output_source=Source.in_memory,
+                dataset_file_type=FileType(custom_dataset.file_type),
+                output_file_type=FileType(system_output.file_type),
+            ).load()
+        else:
+            return get_datalab_loader(
+                task=metadata.task,
+                dataset=DatalabLoaderOption(
+                    system.dataset.dataset_name,
+                    system.dataset.sub_dataset,
+                    metadata.dataset_split,
+                    custom_features=list(dataset_custom_features.keys()),
+                ),
+                output_data=system_output.data,
+                output_file_type=FileType(system_output.file_type),
+                output_source=Source.in_memory,
+            ).load()
+
+    @staticmethod
+    def _process(
+        system: System,
+        metadata: SystemMetadata,
+        system_output_data: FileLoaderReturn,
+        custom_features: dict,
+    ):
+        processor = get_processor(metadata.task)
+        metrics_lookup = {
+            metric.name: metric
+            for metric in get_metric_list_for_processor(TaskType(metadata.task))
+        }
+        metric_configs = []
+        for metric_name in metadata.metric_names:
+            if metric_name not in metrics_lookup:
+                abort_with_error_message(
+                    400, f"{metric_name} is not a supported metric"
+                )
+            metric_configs.append(metrics_lookup[metric_name])
+        processor_metadata = {
+            **metadata.to_dict(),
+            "dataset_name": system.dataset.dataset_name if system.dataset else None,
+            "sub_dataset_name": system.dataset.sub_dataset if system.dataset else None,
+            "dataset_split": metadata.dataset_split,
+            "task_name": metadata.task,
+            "metric_configs": metric_configs,
+            "custom_features": custom_features,
+        }
+
+        return processor.get_overall_statistics(
+            metadata=processor_metadata, sys_output=system_output_data.samples
+        )
+
+    @staticmethod
     def create_system(
         metadata: SystemMetadata,
         system_output: SystemOutputProps,
@@ -288,65 +354,24 @@ class SystemDBUtils:
                     f"{metadata.task} tasks",
                 )
 
-        def load_sys_output():
-            if custom_dataset:
-                return get_custom_dataset_loader(
-                    task=metadata.task,
-                    dataset_data=custom_dataset.data,
-                    output_data=system_output.data,
-                    dataset_source=Source.in_memory,
-                    output_source=Source.in_memory,
-                    dataset_file_type=FileType(custom_dataset.file_type),
-                    output_file_type=FileType(system_output.file_type),
-                ).load()
-            else:
-                return get_datalab_loader(
-                    task=metadata.task,
-                    dataset=DatalabLoaderOption(
-                        system.dataset.dataset_name,
-                        system.dataset.sub_dataset,
-                        metadata.dataset_split,
-                    ),
-                    output_data=system_output.data,
-                    output_file_type=FileType(system_output.file_type),
-                    output_source=Source.in_memory,
-                ).load()
-
-        def process():
-            processor = get_processor(metadata.task)
-            metrics_lookup = {
-                metric.name: metric
-                for metric in get_metric_list_for_processor(TaskType(metadata.task))
-            }
-            metric_configs = []
-            for metric_name in metadata.metric_names:
-                if metric_name not in metrics_lookup:
-                    abort_with_error_message(
-                        400, f"{metric_name} is not a supported metric"
-                    )
-                metric_configs.append(metrics_lookup[metric_name])
-            custom_features = DatasetDBUtils.get_combined_custom_features(
-                system.dataset.dataset_id, system_output_data.metadata.custom_features
-            )
-            processor_metadata = {
-                **metadata.to_dict(),
-                "dataset_name": system.dataset.dataset_name if system.dataset else None,
-                "sub_dataset_name": system.dataset.sub_dataset
-                if system.dataset
-                else None,
-                "dataset_split": metadata.dataset_split,
-                "task_name": metadata.task,
-                "metric_configs": metric_configs,
-                "custom_features": custom_features,
-            }
-
-            return processor.get_overall_statistics(
-                metadata=processor_metadata, sys_output=system_output_data.samples
-            )
-
         try:
-            system_output_data = load_sys_output()
-            overall_statistics = process()
+            dataset_info = DatasetDBUtils.find_dataset_by_id(system.dataset.dataset_id)
+            dataset_custom_features: dict = (
+                dict(dataset_info.custom_features)
+                if dataset_info and dataset_info.custom_features
+                else {}
+            )
+            system_output_data = SystemDBUtils._load_sys_output(
+                system, metadata, system_output, custom_dataset, dataset_custom_features
+            )
+            system_custom_features: dict = (
+                system_output_data.metadata.custom_features or {}
+            )
+            custom_features = dict(system_custom_features)
+            custom_features.update(dataset_custom_features)
+            overall_statistics = SystemDBUtils._process(
+                system, metadata, system_output_data, custom_features
+            )
             metric_stats = [
                 binarize_bson(metric_stat.get_data())
                 for metric_stat in overall_statistics.metric_stats

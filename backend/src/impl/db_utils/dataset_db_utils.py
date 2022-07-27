@@ -64,18 +64,6 @@ class DatasetDBUtils:
     _cached_lifetime: timedelta = timedelta(hours=6)
 
     @staticmethod
-    def get_combined_custom_features(
-        dataset_id: str, system_custom_feats: dict | None
-    ) -> dict | None:
-        dataset = DatasetDBUtils.find_dataset_by_id(dataset_id)
-        if dataset is None or dataset.custom_features is None:
-            return system_custom_feats
-        custom_feats = dict(dataset.custom_features)
-        if system_custom_feats is not None:
-            custom_feats.update(system_custom_feats)
-        return custom_feats
-
-    @staticmethod
     def get_dataset_db() -> DatasetDB:
         """
         Get a collection of datasets, indexed by dataset name, containing every
