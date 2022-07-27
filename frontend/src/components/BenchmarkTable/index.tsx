@@ -61,11 +61,13 @@ function tableToPage(my_view: BenchmarkTableData) {
         <TableView view={view_name} columns={data_cols} dataSource={sys_data} />
       </TabPane>
     );
-  }
-  else {
+  } else {
     return (
       <TabPane tab={view_name} key={view_name}>
-         <Plot xAxisData={my_view.plot_x_values} seriesDataList={my_view.plot_y_values} />
+        <Plot
+          xAxisData={my_view.plot_x_values}
+          seriesDataList={my_view.plot_y_values}
+        />
         <TableView view={view_name} columns={data_cols} dataSource={sys_data} />
       </TabPane>
     );
@@ -82,7 +84,12 @@ export function BenchmarkTable({ benchmarkID }: Props) {
   useEffect(() => {
     async function fetchBenchmark() {
       setPageState(PageState.loading);
-      setBenchmark(await backendClient.benchmarkBenchmarkIdbyCreatorGet(benchmarkID, byCreator));
+      setBenchmark(
+        await backendClient.benchmarkBenchmarkIdbyCreatorGet(
+          benchmarkID,
+          byCreator
+        )
+      );
       setPageState(PageState.success);
     }
     fetchBenchmark();
@@ -296,11 +303,25 @@ export function BenchmarkTable({ benchmarkID }: Props) {
           </Collapse>
         </Layout>
         <fieldset>
-          <div> &ensp;
-            <input type="radio" value="check" id="check" name="bycreator" onChange={(e) => setByCreator(true)}/>
+          <div>
+            {" "}
+            &ensp;
+            <input
+              type="radio"
+              value="check"
+              id="check"
+              name="bycreator"
+              onChange={(e) => setByCreator(true)}
+            />
             <label htmlFor="check">sort by creator</label>
             &emsp;
-            <input type="radio" value="uncheck" id="uncheck" name="bycreator" onChange={(e) => setByCreator(false)}/>
+            <input
+              type="radio"
+              value="uncheck"
+              id="uncheck"
+              name="bycreator"
+              onChange={(e) => setByCreator(false)}
+            />
             <label htmlFor="uncheck">sort by system</label>
           </div>
         </fieldset>
