@@ -164,6 +164,12 @@ export function BarChart(props: Props) {
       },
     },
     legend: legend,
+    toolbox: {
+      show: true,
+      feature: {
+        saveAsImage: { show: true },
+      },
+    },
     tooltip: {
       trigger: "axis",
       axisPointer: {
