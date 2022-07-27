@@ -13,6 +13,7 @@ import { useHistory } from "react-router";
 import { Link } from "react-router-dom";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
 import { Helmet } from "react-helmet";
+import { ModalForImportTip } from "../../components/DatasetComponent";
 
 /**
  * Dataset Page
@@ -31,6 +32,8 @@ export function DatasetsPage() {
   // filters
   const [nameQuery, setNameQuery] = useState("");
 
+  const [nameTaskQuery, setNameTaskQuery] = useState("");
+
   const history = useHistory();
 
   useEffect(() => {
@@ -39,7 +42,7 @@ export function DatasetsPage() {
       const { datasets: newDatasets, total } = await backendClient.datasetsGet(
         undefined,
         nameQuery ? nameQuery : undefined,
-        undefined,
+        nameTaskQuery ? nameTaskQuery : undefined,
         page,
         pageSize
       );
@@ -48,10 +51,15 @@ export function DatasetsPage() {
       setPageState(PageState.success);
     }
     refreshDatasets();
-  }, [page, pageSize, nameQuery]);
+  }, [page, pageSize, nameQuery, nameTaskQuery]);
 
   function searchName(text: string) {
     setNameQuery(text);
+    setPage(0);
+  }
+
+  function searchNameTask(text: string) {
+    setNameTaskQuery(text);
     setPage(0);
   }
 
@@ -78,6 +86,11 @@ export function DatasetsPage() {
             placeholder="Search by dataset name"
             value={nameQuery}
             onChange={(e) => searchName(e.target.value)}
+          />
+          <Input.Search
+            placeholder="Search by task name"
+            value={nameTaskQuery}
+            onChange={(e) => searchNameTask(e.target.value)}
           />
         </Space>
       </div>
@@ -181,6 +194,20 @@ const columns: ColumnsType<DatasetMetadata> = [
           DataLab
         </Typography.Link>
       </>
+    ),
+  },
+  {
+    title: "Action",
+    key: "action",
+    render: (_, record) => (
+      <Space size="middle">
+        <ModalForImportTip
+          sub_dataset={
+            record.sub_dataset === undefined ? "" : record.sub_dataset
+          }
+          dataset_name={record.dataset_name}
+        />
+      </Space>
     ),
   },
 ];
