@@ -23,12 +23,12 @@ export function ModalForImportTip(props: Props) {
 
   const text =
     props.sub_dataset === ""
-      ? "dataset = load_dataset(" + props.dataset_name + ")"
-      : "dataset = load_dataset(" +
+      ? 'dataset = load_dataset("' + props.dataset_name + '")'
+      : 'dataset = load_dataset("' +
         props.dataset_name +
-        "," +
+        '" , "' +
         props.sub_dataset +
-        ")";
+        '")';
 
   return (
     <>
