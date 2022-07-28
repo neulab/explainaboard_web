@@ -39,11 +39,12 @@
             ]
         }, 
         {
-            "name": "Languages",
+            "name": "Most-underserved Languages",
             "operations": [
                 {"op": "max", "group_by": ["source_language"], "skip_group_system": true},
-                {"op": "add_default", "column": "source_language", "score": 0},
-                {"op": "subtract"}
+                {"op": "add_default", "column": "source_language", "default_set": "all_lang", "score": 0},
+                {"op": "subtract", "num": 1}, 
+                {"op": "multiply", "weight": "source_language", "weight_map": "pop_weight"}
             ]
         }
     ],

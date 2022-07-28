@@ -24,6 +24,7 @@ from pandas import Series
 class BenchmarkUtils:
 
     _SPECIAL_WEIGHT_MAPS = {"pop_weight": POP_WEIGHT, "ling_weight": LING_WEIGHT}
+    _DEFAULT_SETS = {"all_lang": ALL_LANG}
 
     @staticmethod
     def config_dict_from_file(path_json: str) -> dict:
@@ -281,7 +282,7 @@ class BenchmarkUtils:
             elif op in {"add_default"}:
                 languages = [
                     lang
-                    for lang in ALL_LANG
+                    for lang in BenchmarkUtils._DEFAULT_SETS[operation["default_set"]]
                     if lang not in output_df[operation["column"]].values
                 ]
                 temp_df = pd.DataFrame(
@@ -289,16 +290,11 @@ class BenchmarkUtils:
                     columns=[operation["column"], "score"],
                 )
                 output_df = pd.concat([output_df, temp_df], axis=0, ignore_index=True)
-                if not by_creator:
-                    output_df.rename(
-                        columns={"source_language": "system_name"}, inplace=True
-                    )
-                else:
-                    output_df.rename(
-                        columns={"source_language": "creator"}, inplace=True
-                    )
+                continue
             elif op in {"subtract"}:
-                output_df["score"] = output_df["score"].apply(lambda x: 1 - x)
+                output_df["score"] = output_df["score"].apply(
+                    lambda x: operation["num"] - x
+                )
             else:
                 raise ValueError(f"Unsupported operation {operation['op']} in spec.")
             if output_df.isnull().values.any():
@@ -351,12 +347,10 @@ class BenchmarkUtils:
 
     @staticmethod
     def dataframe_to_table(
-        view_name: str, input_df: pd.DataFrame, by_creator: bool, plot_dict: dict
+        view_name: str, input_df: pd.DataFrame, plot_dict: dict, col_name: str
     ) -> BenchmarkTableData:
-        col_name = "creator" if by_creator else "system_name"
         elem_names = [x for x in input_df.columns if x not in {"score", col_name}]
         system_idx = sorted(list(set(input_df[col_name])))
-        # system_map = {v: i for i, v in enumerate(set(input_df[col_name]))}
         row_col_names = [
             BenchmarkUtils._col_name(elem_names, x) for _, x in input_df.iterrows()
         ]
@@ -387,7 +381,7 @@ class BenchmarkUtils:
             return {}
         plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.json")
         plot_file = open_cached_file(
-            benchmark_id + "_plot.json", datetime.timedelta(days=1)
+            benchmark_id + "_plot.json", datetime.timedelta(seconds=1)
         )
         if not plot_file:
             sys_infos = BenchmarkUtils.load_sys_infos(config)
