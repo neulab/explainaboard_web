@@ -138,7 +138,14 @@ class DatasetDBUtils:
                 else set(chained_ids)
             )
         if task is not None:
-            task_ids = my_db.task_dict.get(task, [])
+            # change the rule for search task from exact match to partly match.
+            task_ids = []
+            for name in my_db.task_dict.keys():
+                if task in name:
+
+                    task_ids += my_db.task_dict.get(name, [])
+
+            # task_ids = my_db.task_dict.get(task, [])
             metadata_ids = (
                 metadata_ids.intersection(task_ids) if metadata_ids else set(task_ids)
             )
