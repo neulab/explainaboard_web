@@ -8,12 +8,7 @@ from functools import lru_cache
 from typing import Optional, cast
 
 import pandas as pd
-from explainaboard import (
-    DatalabLoaderOption,
-    TaskType,
-    get_processor,
-    get_task_categories,
-)
+from explainaboard import DatalabLoaderOption, TaskType, get_processor
 from explainaboard.feature import FeatureType
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
@@ -26,6 +21,7 @@ from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
+from explainaboard_web.impl.tasks import get_task_categories
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.models import Benchmark, BenchmarkConfig, DatasetMetadata
 from explainaboard_web.models.datasets_return import DatasetsReturn
