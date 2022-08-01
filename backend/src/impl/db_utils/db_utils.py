@@ -1,3 +1,4 @@
+import dataclasses
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Optional, TypeVar
@@ -19,12 +20,12 @@ class DBCollection:
 class DBUtils:
 
     # Names of DBs or collections
-    SYSTEM_OUTPUT_DB = "system_outputs"
+    SYSTEM_OUTPUT_DB = "system_outputs_v011"
     # DATASET_METADATA = DBCollection(
     #     db_name="metadata", collection_name="dataset_metadata"
     # )
     DEV_SYSTEM_METADATA = DBCollection(
-        db_name="metadata", collection_name="dev_system_metadata"
+        db_name="metadata", collection_name="system_metadata_v011"
     )
 
     @staticmethod
@@ -34,6 +35,22 @@ class DBUtils:
     @staticmethod
     def get_client() -> ClientSession:
         return get_db().db.client
+
+    @staticmethod
+    def sanitize_document(document):
+        """
+        Sanitize a document for storing in MongoDB
+        """
+        if isinstance(document, dict):
+            return {k: DBUtils.sanitize_document(v) for k, v in document.items()}
+        elif isinstance(document, list):
+            return [DBUtils.sanitize_document(v) for v in document]
+        elif dataclasses.is_dataclass(document):
+            return dataclasses.asdict(document)
+        elif isinstance(document, Callable):
+            return "__Callable__"
+        else:
+            return document
 
     @staticmethod
     def get_collection(collection: DBCollection, check_collection_exist=True):

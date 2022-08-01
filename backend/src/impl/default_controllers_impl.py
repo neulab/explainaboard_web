@@ -3,9 +3,10 @@ from __future__ import annotations
 import binascii
 import datetime
 import json
+import logging
 import os
 from functools import lru_cache
-from typing import Optional, cast
+from typing import Optional
 
 import pandas as pd
 from explainaboard import (
@@ -14,9 +15,8 @@ from explainaboard import (
     get_processor,
     get_task_categories,
 )
-from explainaboard.feature import FeatureType
 from explainaboard.info import SysOutputInfo
-from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
+from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import MetricStats
 from explainaboard.metrics.registry import metric_name_to_config_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
@@ -27,7 +27,12 @@ from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
-from explainaboard_web.models import Benchmark, BenchmarkConfig, DatasetMetadata
+from explainaboard_web.models import (
+    Benchmark,
+    BenchmarkConfig,
+    DatasetMetadata,
+    SingleAnalysis,
+)
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
@@ -80,7 +85,8 @@ def tasks_get() -> list[TaskCategory]:
     for _category in _categories:
         tasks: list[Task] = []
         for _task in _category.tasks:
-            supported_formats = get_supported_file_types_for_loader(_task.name)
+            loader_class = get_loader_class(_task.name)
+            supported_formats = loader_class.supported_file_types()
             supported_metrics = [
                 metric.name for metric in get_metric_list_for_processor(_task.name)
             ]
@@ -309,10 +315,9 @@ def systems_system_id_delete(system_id: str):
 
 def systems_analyses_post(body: SystemsAnalysesBody):
     system_ids_str = body.system_ids
-    pairwise_performance_gap = body.pairwise_performance_gap
-    custom_feature_to_bucket_info = body.feature_to_bucket_info
+    # custom_feature_to_bucket_info = body.feature_to_bucket_info
 
-    single_analyses: dict = {}
+    system_analyses: list[SingleAnalysis] = []
     system_ids: list = system_ids_str.split(",")
     system_name = None
     task = None
@@ -340,34 +345,28 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     ).systems
     systems_len = len(systems)
     if systems_len == 0:
-        return SystemAnalysesReturn(single_analyses)
-
-    if pairwise_performance_gap and systems_len != 2:
-        abort_with_error_message(
-            400,
-            "pairwise_performance_gap=true"
-            + f" only accepts 2 systems, got: {systems_len}",
-        )
+        return SystemAnalysesReturn(system_analyses)
 
     for system in systems:
         system_info: SystemInfo = system.system_info
         system_info_dict = system_info.to_dict()
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
-        for feature_name, feature in system_output_info.features.items():
-            feature = FeatureType.from_dict(feature)  # dict -> Feature
-
-            # user-defined bucket info
-            if feature_name in custom_feature_to_bucket_info:
-                custom_bucket_info = custom_feature_to_bucket_info[feature_name]
-                # Hardcoded as SDK doesn't export this name
-                feature.bucket_info.method = (
-                    "bucket_attribute_specified_bucket_interval"
-                )
-                feature.bucket_info.number = custom_bucket_info.number
-                setting = [tuple(interval) for interval in custom_bucket_info.setting]
-                feature.bucket_info.setting = setting
-            system_output_info.features[feature_name] = feature
+        logging.getLogger().warning(
+            "user-defined bucket analyses are not " "re-implemented"
+        )
+        # for feature_name, feature in system_output_info.features.items():
+        #     feature = FeatureType.from_dict(feature)  # dict -> Feature
+        #     if feature_name in custom_feature_to_bucket_info:
+        #         custom_bucket_info = custom_feature_to_bucket_info[feature_name]
+        #         # Hardcoded as SDK doesn't export this name
+        #         feature.bucket_info.method = (
+        #             "bucket_attribute_specified_bucket_interval"
+        #         )
+        #         feature.bucket_info.number = custom_bucket_info.number
+        #         setting = [tuple(interval) for interval in custom_bucket_info.setting]
+        #         feature.bucket_info.setting = setting
+        #     system_output_info.features[feature_name] = feature
 
         metric_configs = [
             metric_name_to_config_class(metric_config_dict["cls_name"])(
@@ -379,26 +378,26 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_output_info.metric_configs = metric_configs
 
         processor = get_processor(TaskType(system_output_info.task_name))
-        metric_stats = [MetricStats(stat) for stat in system.metric_stats]
+        metric_stats = [[MetricStats(y) for y in x] for x in system.metric_stats]
 
-        # Get the entire system outputs
-        output_ids = None
-        system_outputs = SystemDBUtils.find_system_outputs(
-            system.system_id, output_ids, limit=0
-        ).system_outputs
-        # Note we are casting here, as SystemOutput.from_dict() actually just returns a
-        # dict
-        system_outputs = [
-            processor.deserialize_system_output(cast(dict, x)) for x in system_outputs
-        ]
+        # TODO(gneubig): this can probably be deleted
+        # # Get the entire system outputs
+        # output_ids = None
+        # system_outputs = SystemDBUtils.find_system_outputs(
+        #     system.system_id, output_ids, limit=0
+        # ).system_outputs
+        # # Note we are casting here, as SystemOutput.from_dict() actually just returns
+        # # a dict
+        # system_outputs = [
+        #     processor.deserialize_system_output(cast(dict, x)) for x in system_outputs
+        # ]
 
-        performance_over_bucket = processor.bucketing_samples(
+        processor_result = processor.perform_analyses(
             system_output_info,
-            system_outputs,
-            system.active_features,
+            system.analysis_cases,
             metric_stats,
         )
+        single_analysis = SingleAnalysis(analysis_results=processor_result)
+        system_analyses.append(single_analysis)
 
-        single_analyses[system.system_id] = performance_over_bucket
-
-    return SystemAnalysesReturn(single_analyses)
+    return SystemAnalysesReturn(system_analyses)

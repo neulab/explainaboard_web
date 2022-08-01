@@ -7,16 +7,9 @@ from datetime import datetime
 from typing import Any, Optional
 
 from bson import ObjectId
-from explainaboard import (
-    DatalabLoaderOption,
-    FileType,
-    Source,
-    TaskType,
-    get_custom_dataset_loader,
-    get_datalab_loader,
-    get_processor,
-)
+from explainaboard import DatalabLoaderOption, FileType, Source, TaskType, get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
+from explainaboard.loaders.loader_registry import get_loader_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard_web.impl.auth import get_user
@@ -250,9 +243,11 @@ class SystemDBUtils:
         custom_dataset: SystemOutputProps | None,
         dataset_custom_features: dict,
     ):
+        """
+        Load the system output from the uploaded file
+        """
         if custom_dataset:
-            return get_custom_dataset_loader(
-                task=metadata.task,
+            return get_loader_class(task=metadata.task)(
                 dataset_data=custom_dataset.data,
                 output_data=system_output.data,
                 dataset_source=Source.in_memory,
@@ -261,18 +256,21 @@ class SystemDBUtils:
                 output_file_type=FileType(system_output.file_type),
             ).load()
         else:
-            return get_datalab_loader(
-                task=metadata.task,
-                dataset=DatalabLoaderOption(
-                    system.dataset.dataset_name,
-                    system.dataset.sub_dataset,
-                    metadata.dataset_split,
-                    custom_features=list(dataset_custom_features.keys()),
-                ),
-                output_data=system_output.data,
-                output_file_type=FileType(system_output.file_type),
-                output_source=Source.in_memory,
-            ).load()
+            return (
+                get_loader_class(task=metadata.task)
+                .from_datalab(
+                    dataset=DatalabLoaderOption(
+                        system.dataset.dataset_name,
+                        system.dataset.sub_dataset,
+                        metadata.dataset_split,
+                        custom_features=list(dataset_custom_features.keys()),
+                    ),
+                    output_data=system_output.data,
+                    output_file_type=FileType(system_output.file_type),
+                    output_source=Source.in_memory,
+                )
+                .load()
+            )
 
     @staticmethod
     def _process(
@@ -314,17 +312,10 @@ class SystemDBUtils:
         custom_dataset: SystemOutputProps | None = None,
     ) -> System:
         """
-        create a system
-          1. validate and initialize a SystemModel
-          2. load system_output data
-          3. generate analysis report from system_output
-          -- DB --
-          5. write to system_metadata
-            (metadata + sufficient statistics + overall analysis)
-          6. write to system_outputs
+        Create a system given metadata and outputs, etc.
         """
 
-        # Parse the system details if getting a string from the frontend
+        # -- parse the system details if getting a string from the frontend
         document = metadata.to_dict()
         if (
             document.get("system_details")
@@ -336,12 +327,14 @@ class SystemDBUtils:
             metadata.system_details = parsed
             document["system_details"] = parsed
 
-        system = SystemDBUtils.system_from_dict(document)
+        # -- create the object defined in openapi.yaml from only uploaded metadata
+        system: System = SystemDBUtils.system_from_dict(document)
 
+        # -- set the creator
         user = get_user()
         system.creator = user.email
 
-        # validation
+        # -- validate the dataset metadata
         if metadata.dataset_metadata_id:
             if not system.dataset:
                 abort_with_error_message(
@@ -355,38 +348,39 @@ class SystemDBUtils:
                 )
 
         try:
+            # -- find the dataset and grab custom features if they exist
             dataset_info = DatasetDBUtils.find_dataset_by_id(system.dataset.dataset_id)
             dataset_custom_features: dict = (
                 dict(dataset_info.custom_features)
                 if dataset_info and dataset_info.custom_features
                 else {}
             )
+
+            # -- load the system output into memory from the uploaded file(s)
             system_output_data = SystemDBUtils._load_sys_output(
                 system, metadata, system_output, custom_dataset, dataset_custom_features
             )
             system_custom_features: dict = (
                 system_output_data.metadata.custom_features or {}
             )
+
+            # -- combine custom features from the two sources
             custom_features = dict(system_custom_features)
             custom_features.update(dataset_custom_features)
+
+            # -- do the actual analysis and binarize the metric stats
             overall_statistics = SystemDBUtils._process(
                 system, metadata, system_output_data, custom_features
             )
-            metric_stats = [
-                binarize_bson(metric_stat.get_data())
-                for metric_stat in overall_statistics.metric_stats
+            binarized_stats = [
+                [binarize_bson(y.get_data()) for y in x]
+                for x in overall_statistics.metric_stats
             ]
 
-            # TODO avoid None as nullable seems undeclarable for array and object
-            # in openapi.yaml
-            if overall_statistics.sys_info.results.calibration is None:
-                overall_statistics.sys_info.results.calibration = []
-            if overall_statistics.sys_info.results.fine_grained is None:
-                overall_statistics.sys_info.results.fine_grained = {}
-
+            # -- add the analysis results to the system object
             system.system_info = overall_statistics.sys_info.to_dict()
-            system.metric_stats = metric_stats
-            system.active_features = overall_statistics.active_features
+            system.analysis_cases = overall_statistics.analysis_cases
+            system.metric_stats = binarized_stats
 
             def db_operations(session: ClientSession) -> str:
                 # Insert system
@@ -397,6 +391,7 @@ class SystemDBUtils:
                     system.dataset.dataset_id if system.dataset else None
                 )
                 document.pop("dataset")
+                document = DBUtils.sanitize_document(document)
                 system_db_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
                 # Insert system output
                 output_collection = DBCollection(
@@ -407,6 +402,7 @@ class SystemDBUtils:
                 DBUtils.insert_many(output_collection, sample_list, False, session)
                 return system_db_id
 
+            # -- perform upload to the DB
             system_id = DBUtils.execute_transaction(db_operations)
 
             # Metric_stats is replaced with empty list for now as

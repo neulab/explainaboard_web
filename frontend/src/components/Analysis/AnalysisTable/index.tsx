@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { message, Table, Tooltip, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
-import { BucketCase, SystemOutput } from "../../../clients/openapi";
+import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
 
 interface Props {
   systemID: string;
   task: string;
-  outputIDs: BucketCase[];
+  outputIDs: AnalysisCase[];
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -91,7 +91,7 @@ function specifyDataGeneric(
 
 function specifyDataSeqLab(
   systemOutputs: SystemOutput[],
-  outputIDs: BucketCase[],
+  outputIDs: AnalysisCase[],
   columns: ColumnsType<SystemOutput>
 ): { [key: string]: string }[] {
   const dataSource: { [key: string]: string }[] = [];

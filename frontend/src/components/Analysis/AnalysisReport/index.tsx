@@ -9,10 +9,10 @@ import { BarChart, AnalysisTable } from "../../../components";
 import { Row, Col, Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
 import {
-  BucketCase,
+  AnalysisCase,
   SystemAnalysesReturn,
   Performance,
-} from "../../../clients/openapi";
+} from "../../../clients/openapi/api";
 import { BucketSlider } from "../BucketSlider";
 
 const { Title } = Typography;
@@ -21,7 +21,7 @@ const { TabPane } = Tabs;
 interface Props {
   task: string;
   systems: SystemModel[];
-  singleAnalyses: SystemAnalysesReturn["single_analyses"];
+  systemAnalyses: SystemAnalysesReturn["system_analyses"];
   metricToSystemAnalysesParsed: {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
@@ -269,7 +269,7 @@ function createFineGrainedBarChart(
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
-  const resultsBucketsOfSamples: BucketCase[][][] = [];
+  const resultsBucketsOfSamples: AnalysisCase[][][] = [];
   for (const result of results) {
     resultsNumbersOfSamples.push(result.numbersOfSamples);
     resultsBucketsOfSamples.push(result.cases);

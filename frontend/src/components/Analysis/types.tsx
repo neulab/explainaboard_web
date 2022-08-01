@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { BucketCase, Performance } from "../../clients/openapi";
+import { AnalysisCase, Performance } from "../../clients/openapi";
 
 export interface ResultFineGrainedParsed {
   /**
@@ -23,7 +23,7 @@ export interface ResultFineGrainedParsed {
   // performances[i]: performance (value/confidence) for bucket i
   performances: Performance[];
   // cases[i][j]: is the ith bucket's jth example
-  cases: BucketCase[][];
+  cases: AnalysisCase[][];
 }
 
 // Examples to be shown in the analysis table when a bar is clicked
@@ -35,7 +35,7 @@ export interface ActiveSystemExamples {
 
   // system-dependent information across systems
   systemIndex: number;
-  bucketOfSamplesList: BucketCase[][];
+  bucketOfSamplesList: AnalysisCase[][];
 }
 
 export interface SystemInfoFeatureBucketInfo {

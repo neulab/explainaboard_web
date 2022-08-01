@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.1.8"
+  version: "0.2.0"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -353,12 +353,9 @@ paths:
               type: object
               properties:
                 system_ids:
-                  description: a string of comma-separated system ids
+                  description: a string representing a system id
                   type: string
                   example: "61b02e0baadd2f674845b1c2,6254e4cd0f1133e7436ef298"
-                pairwise_performance_gap:
-                  description: returns the pairwise performance gap. Requires the length of systems_ids to be 2.
-                  type: boolean
                 feature_to_bucket_info:
                   description: feature -> bucket info
                   type: object
@@ -800,16 +797,20 @@ components:
             system_details:
               type: object
               description: a place to store arbitrary system details you want to remember
-            active_features:
-              description: Active features of a system, used in SDK's fine-grained analysis
+            analysis_cases:
+              description: the cases that were analyzed for the system
               type: array
               items:
-                type: string
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnalysisCase"
             metric_stats:
               description: An array of sufficient statistics for each metric, used in SDK's fine-grained analysis
               type: array
               items:
-                type: number
+                type: array
+                items:
+                  type: number
           required:
             [
               system_id,
@@ -949,6 +950,15 @@ components:
         - systems
         - total
 
+    AnalysisResult:
+      type: object
+      properties:
+        name:
+          type: string
+        _type:
+          type: string
+      additionalProperties: true
+
     BucketPerformance:
       type: object
       properties:
@@ -963,32 +973,33 @@ components:
         bucket_samples:
           type: array
           items:
-            $ref: '#/components/schemas/BucketCase'
+            type: number
         performances:
           type: array
           items:
             $ref: "#/components/schemas/Performance"
       required: [bucket_interval, n_samples, bucket_samples, performances]
 
-    SingleAnalysisReturn:
+    SingleAnalysis:
       type: object
-      description: feature -> bucket interval
-      additionalProperties:
-        type: array
-        items:
-          $ref: "#/components/schemas/BucketPerformance"
+      properties:
+        analysis_results:
+          type: array
+          description: results for each analysis level
+          items:
+            type: array
+            items:
+              $ref: "#/components/schemas/AnalysisResult"
+      required: [analysis_results]
 
     SystemAnalysesReturn:
       type: object
       properties:
-        single_analyses:
-          type: object
-          description: system_id -> SingleAnalysisReturn
-          additionalProperties:
-            $ref: "#/components/schemas/SingleAnalysisReturn"
-        pairwise_performance_gap:
-          type: object
-      required: [single_analyses]
+        system_analyses:
+          type: array
+          items:
+            $ref: "#/components/schemas/SingleAnalysis"
+      required: [system_analyses]
 
     Performance:
       type: object
@@ -1005,7 +1016,7 @@ components:
           nullable: true
       required: [metric_name, value]
 
-    BucketCase:
+    AnalysisCase:
       type: object
       properties:
         sample_id:
