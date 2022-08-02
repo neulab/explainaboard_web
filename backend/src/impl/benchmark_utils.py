@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
-from explainaboard_web.impl.constants import LING_WEIGHT, POP_WEIGHT
+from explainaboard_web.impl.constants import ALL_LANG, LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.models import (
@@ -24,6 +24,7 @@ from pandas import Series
 class BenchmarkUtils:
 
     _SPECIAL_WEIGHT_MAPS = {"pop_weight": POP_WEIGHT, "ling_weight": LING_WEIGHT}
+    _DEFAULT_SETS = {"all_lang": ALL_LANG}
 
     @staticmethod
     def config_dict_from_file(path_json: str) -> dict:
@@ -267,7 +268,7 @@ class BenchmarkUtils:
                 elif op == "max":
                     output_df = output_df.max(numeric_only=True)
                 elif op == "min":
-                    output_df = output_df.max(numeric_only=True)
+                    output_df = output_df.min(numeric_only=True)
             elif op in {"multiply", "weighted_sum"}:
                 weight = output_df[operation["weight"]]
                 if weight_map:
@@ -278,6 +279,22 @@ class BenchmarkUtils:
                         output_df = output_df.groupby(group_by).sum(numeric_only=True)
                     else:
                         output_df = output_df.sum(numeric_only=True)
+            elif op in {"add_default"}:
+                languages = [
+                    lang
+                    for lang in BenchmarkUtils._DEFAULT_SETS[operation["default_set"]]
+                    if lang not in output_df[operation["column"]].values
+                ]
+                temp_df = pd.DataFrame(
+                    [[lang, 0] for lang in languages],
+                    columns=[operation["column"], "score"],
+                )
+                output_df = pd.concat([output_df, temp_df], axis=0, ignore_index=True)
+                continue
+            elif op in {"subtract"}:
+                output_df["score"] = output_df["score"].apply(
+                    lambda x: operation["num"] - x
+                )
             else:
                 raise ValueError(f"Unsupported operation {operation['op']} in spec.")
             if output_df.isnull().values.any():
@@ -330,12 +347,10 @@ class BenchmarkUtils:
 
     @staticmethod
     def dataframe_to_table(
-        view_name: str, input_df: pd.DataFrame, by_creator: bool, plot_dict: dict
+        view_name: str, input_df: pd.DataFrame, plot_dict: dict, col_name: str
     ) -> BenchmarkTableData:
-        col_name = "creator" if by_creator else "system_name"
         elem_names = [x for x in input_df.columns if x not in {"score", col_name}]
         system_idx = sorted(list(set(input_df[col_name])))
-        # system_map = {v: i for i, v in enumerate(set(input_df[col_name]))}
         row_col_names = [
             BenchmarkUtils._col_name(elem_names, x) for _, x in input_df.iterrows()
         ]
@@ -366,7 +381,7 @@ class BenchmarkUtils:
             return {}
         plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.json")
         plot_file = open_cached_file(
-            benchmark_id + "_plot.json", datetime.timedelta(days=1)
+            benchmark_id + "_plot.json", datetime.timedelta(seconds=1)
         )
         if not plot_file:
             sys_infos = BenchmarkUtils.load_sys_infos(config)

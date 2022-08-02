@@ -154,7 +154,7 @@ def benchmark_benchmark_idby_creator_get(
     if config.type == "abstract":
         return Benchmark(config, None, None)
     file_path = benchmark_id + "_benchmark.json"
-    benchmark_file = open_cached_file(file_path, datetime.timedelta(days=1))
+    benchmark_file = open_cached_file(file_path, datetime.timedelta(seconds=1))
     if not benchmark_file:
         sys_infos = BenchmarkUtils.load_sys_infos(config)
         orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
@@ -181,12 +181,19 @@ def benchmark_benchmark_idby_creator_get(
     else:
         view_dict = json.load(f)["system"]
     plot_dict = BenchmarkUtils.generate_plots(benchmark_id)
-    views = [
-        BenchmarkUtils.dataframe_to_table(
-            k, pd.DataFrame.from_dict(v), by_creator, plot_dict
+    views = []
+    for k, v in view_dict.items():
+        if by_creator:
+            col_name = "creator"
+        elif k == "Most-underserved Languages":
+            col_name = "source_language"
+        else:
+            col_name = "system_name"
+        views.append(
+            BenchmarkUtils.dataframe_to_table(
+                k, pd.DataFrame.from_dict(v), plot_dict, col_name
+            )
         )
-        for k, v in view_dict.items()
-    ]
     return Benchmark(config, views, update_time)
 
 
