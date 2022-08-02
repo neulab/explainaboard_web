@@ -9,7 +9,7 @@ import {
   SingleAnalysis,
   SystemAnalysesReturn,
   SystemsAnalysesBody,
-} from "../../../clients/openapi/api";
+} from "../../../clients/openapi";
 import { parseFineGrainedResults, valuesToIntervals } from "../utils";
 import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 import ReactGA from "react-ga4";
@@ -120,12 +120,14 @@ export function AnalysisDrawer({
             };
           }
         }
+
         setTask(task);
         setSystemAnalyses(systemAnalyses);
         setMetricToAnalyses(metricToAnalyses);
         setFeatureNameToBucketInfo(featureNameToBucketInfo);
         setPageState(PageState.success);
         setBucketInfoUpdated(false);
+
         if (activeSystems.length === 1) {
           ReactGA.event({
             category: "Analysis",

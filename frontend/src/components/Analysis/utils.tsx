@@ -186,12 +186,12 @@ export function parseFineGrainedResults(
         const myResult = resultLevel[anl_i];
         const myAnalysis = analysisLevel.analyses[anl_i];
         // Skip non-bucketing analyses for now
-        if (myResult._type !== "BucketAnalysisResult") {
+        if (myResult.cls_name !== "BucketAnalysisResult") {
           continue;
         }
         const analysisName = myResult.name;
         const analysisBuckets: BucketPerformance[] =
-          myAnalysis["bucket_performances"];
+          myResult["bucket_performances"];
         const analysisDescription = myAnalysis.description;
         const bucketType = myAnalysis["method"];
 

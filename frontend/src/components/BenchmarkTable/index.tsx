@@ -103,7 +103,6 @@ export function BenchmarkTable({ benchmarkID }: Props) {
 
     if (benchmark.config.datasets !== undefined) {
       for (const dataset of benchmark.config.datasets) {
-        // console.log(dataset);
         let datasetString = `${dataset["dataset_name"]} `;
         if ("sub_dataset" in dataset) {
           datasetString = `${datasetString} (${dataset["sub_dataset"]}) `;

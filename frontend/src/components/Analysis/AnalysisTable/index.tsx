@@ -132,9 +132,6 @@ function specifyDataSeqLab(
         sentence: sentence,
         id: `${outputIDs[i]["sample_id"]}[${spanPos}]`,
       };
-      console.log(systemOutputs[i]);
-      console.log(outputIDs[i]);
-      console.log(dataRow);
       dataSource.push(dataRow);
     }
   }
