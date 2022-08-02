@@ -4,7 +4,7 @@ import {
   ResultFineGrainedParsed,
   BucketIntervals,
 } from "../types";
-import { compareBucketOfSamples } from "../utils";
+import { compareBucketOfSamples, getOverallMap } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
 import { Row, Col, Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
@@ -12,7 +12,7 @@ import {
   AnalysisCase,
   SystemAnalysesReturn,
   Performance,
-} from "../../../clients/openapi/api";
+} from "../../../clients/openapi";
 import { BucketSlider } from "../BucketSlider";
 
 const { Title } = Typography;
@@ -87,17 +87,14 @@ function createOverallBarChart(
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
   // The metric names that exist in overall results
-  const activeMetricNames: string[] = Object.keys(
-    systems[0].system_info.results.overall
-  );
   for (const system of systems) {
-    const overallResults = system.system_info.results.overall;
+    const overallMap = getOverallMap(system.system_info.results.overall);
     const metricPerformance = [];
     const metricConfidence = [];
     const metricNumberOfSamples = [];
-    for (const metricName of activeMetricNames) {
-      if (metricName in overallResults) {
-        const metricResults = overallResults[metricName];
+    for (const metricName of metricNames) {
+      if (metricName in overallMap) {
+        const metricResults = overallMap[metricName];
         metricPerformance.push(metricResults.value);
         metricConfidence.push(unwrapConfidence(metricResults));
       } else {
@@ -118,7 +115,7 @@ function createOverallBarChart(
       <BarChart
         title="Overall Performance"
         seriesNames={systemNames}
-        xAxisData={activeMetricNames}
+        xAxisData={metricNames}
         seriesDataList={resultsValues}
         seriesLabelsList={resultsValues}
         confidenceScoresList={resultsConfidenceScores}

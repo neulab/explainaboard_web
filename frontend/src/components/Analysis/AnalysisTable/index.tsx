@@ -184,7 +184,7 @@ export function AnalysisTable({
     async function refreshSystemOutputs() {
       setPageState(PageState.loading);
       try {
-        const result = await backendClient.systemsSystemIdOutputsGet(
+        const result = await backendClient.systemOutputsGetById(
           systemID,
           outputIDString
         );

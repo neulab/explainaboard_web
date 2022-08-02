@@ -62,10 +62,16 @@ export function AnalysisDrawer({
               system_ids: activeSystemIDs.join(","),
               feature_to_bucket_info: featureNameToBucketInfoToPost,
             })
-            .then((singleAnalysis) => {
-              clearTimeout(timeoutID);
-              resolve(singleAnalysis);
-            });
+            .then(
+              (
+                singleAnalysis:
+                  | SystemAnalysesReturn
+                  | PromiseLike<SystemAnalysesReturn>
+              ) => {
+                clearTimeout(timeoutID);
+                resolve(singleAnalysis);
+              }
+            );
         }).catch(() => {
           return null;
         });
@@ -96,13 +102,13 @@ export function AnalysisDrawer({
           }
           // Take from the first element as the bucket interval is system-invariant
           const resultFineGrainedParsed = systemAnalysesParsed[feature][0];
-          const { bucketInfo, featureName, bucketIntervals } =
+          const { featureName, bucketIntervals, bucketType } =
             resultFineGrainedParsed;
           /* Hardcode for now as SDK doesn't export the string.
           bucket_attribute_discrete_value seems to be used for categorical features,
           which do not support custom bucket range.
           */
-          if (bucketInfo?.method !== "bucket_attribute_discrete_value") {
+          if (bucketType !== "discrete") {
             featureNameToBucketInfo[featureName] = {
               min: bucketIntervals.min,
               max: bucketIntervals.max,

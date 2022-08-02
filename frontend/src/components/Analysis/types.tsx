@@ -12,12 +12,12 @@ export interface ResultFineGrainedParsed {
   featureDescription: string;
   // The name of the metric
   metricName: string;
+  // The type of the bucket
+  bucketType: string;
   // bucketNames[i] is name of bucket i
   bucketNames: string[];
   // The intervals of each bucket
   bucketIntervals: BucketIntervals;
-  // Information about how bucketing should be done
-  bucketInfo: SystemInfoFeatureBucketInfo | null;
   // The number of samples in each bucket
   numbersOfSamples: number[];
   // performances[i]: performance (value/confidence) for bucket i

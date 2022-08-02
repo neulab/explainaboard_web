@@ -1,6 +1,7 @@
 import dataclasses
 from collections.abc import Callable
 from dataclasses import dataclass
+from inspect import getsource
 from typing import Optional, TypeVar
 
 from bson.objectid import InvalidId, ObjectId
@@ -46,9 +47,11 @@ class DBUtils:
         elif isinstance(document, list):
             return [DBUtils.sanitize_document(v) for v in document]
         elif dataclasses.is_dataclass(document):
-            return dataclasses.asdict(document)
+            return DBUtils.sanitize_document(dataclasses.asdict(document))
+        elif hasattr(document, "to_dict"):
+            return DBUtils.sanitize_document(document.to_dict())
         elif isinstance(document, Callable):
-            return "__Callable__"
+            return getsource(document)
         else:
             return document
 

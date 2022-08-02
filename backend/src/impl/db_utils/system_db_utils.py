@@ -4,6 +4,8 @@ import json
 import re
 import traceback
 from datetime import datetime
+from inspect import getsource
+from types import FunctionType
 from typing import Any, Optional
 
 from bson import ObjectId
@@ -23,6 +25,7 @@ from explainaboard_web.impl.utils import (
 from explainaboard_web.models import (
     DatasetMetadata,
     System,
+    SystemInfo,
     SystemMetadata,
     SystemOutput,
     SystemOutputProps,
@@ -102,7 +105,9 @@ class SystemDBUtils:
         system = System.from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
-            system.metric_stats = [unbinarize_bson(stat) for stat in metric_stats]
+            system.metric_stats = [
+                [unbinarize_bson(y) for y in x] for x in metric_stats
+            ]
         return system
 
     @staticmethod
@@ -378,8 +383,8 @@ class SystemDBUtils:
             ]
 
             # -- add the analysis results to the system object
-            system.system_info = overall_statistics.sys_info.to_dict()
-            system.analysis_cases = overall_statistics.analysis_cases
+            sys_info_dict = overall_statistics.sys_info.to_dict()
+            system.system_info = SystemInfo.from_dict(sys_info_dict)
             system.metric_stats = binarized_stats
 
             def db_operations(session: ClientSession) -> str:
@@ -394,23 +399,40 @@ class SystemDBUtils:
                 document = DBUtils.sanitize_document(document)
                 system_db_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
                 # Insert system output
+                str_db_id = str(system_db_id)
                 output_collection = DBCollection(
-                    db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str(system_db_id)
+                    db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str_db_id
                 )
                 DBUtils.drop(output_collection)
                 sample_list = [general_to_dict(v) for v in system_output_data.samples]
                 DBUtils.insert_many(output_collection, sample_list, False, session)
+                # Insert analysis cases
+                for i, analysis_cases in enumerate(overall_statistics.analysis_cases):
+                    analysis_collection = DBCollection(
+                        db_name=DBUtils.SYSTEM_OUTPUT_DB,
+                        collection_name=f"{str_db_id}_cases{i}",
+                    )
+                    DBUtils.drop(analysis_collection)
+                    sample_list = [general_to_dict(v) for v in analysis_cases]
+                    DBUtils.insert_many(
+                        analysis_collection, sample_list, False, session
+                    )
                 return system_db_id
 
             # -- perform upload to the DB
             system_id = DBUtils.execute_transaction(db_operations)
-
-            # Metric_stats is replaced with empty list for now as
-            # bson's Binary and numpy array is not directly serializable
-            # in swagger. If the frontend needs it,
-            # we can come up with alternatives.
-            system.metric_stats = []
             system.system_id = system_id
+
+            # -- replace things that can't be returned through JSON for now
+            system.metric_stats = []
+            for analysis_level in system.system_info.analysis_levels:
+                for feature_name, feature in analysis_level.features.items():
+                    if isinstance(feature.func, FunctionType):
+                        # Convert the function to a string, this is noqa to prevent a
+                        # typing error
+                        feature.func = getsource(feature.func)  # noqa
+
+            # -- return the system
             return system
         except ValueError as e:
             traceback.print_exc()

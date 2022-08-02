@@ -25,6 +25,7 @@ paths:
   /tasks:
     get:
       summary: Returns all task categories and tasks
+      operationId: tasksGet
       security: []
       responses:
         "200":
@@ -39,6 +40,7 @@ paths:
   /benchmarkconfigs:
     get:
       summary: Returns all benchmark configs matching the specification
+      operationId: benchmarkConfigsGet
       security: []
       parameters:
         - in: query
@@ -60,6 +62,7 @@ paths:
   /benchmark/{benchmark_id}+{by_creator}:
     get:
       summary: Returns benchmark metadata by id
+      operationId: benchmarkGetById
       security: []
       description: Returns benchmark metadata by id. 
       parameters:
@@ -93,6 +96,7 @@ paths:
   /datasets/{dataset_id}:
     get:
       summary: Returns dataset metadata by id
+      operationId: datasetsGetById
       security: []
       description: Returns dataset metadata by id. id is the DB id so it is mostly used internally. See datasets MGet endpoints for general use.
       parameters:
@@ -119,6 +123,7 @@ paths:
   /datasets:
     get:
       summary: Returns a list of datasets
+      operationId: datasetsGet
       security: []
       description: Returns a list of datasets. Returns empty list if current page is empty. Returns `total=0` if no match datasets.
       parameters:
@@ -164,6 +169,7 @@ paths:
   /systems/{system_id}:
     get:
       summary: Returns system metadata info by id
+      operationId: systemsGetById
       description: Returns a system_metadata by id. id is the DB id so it is mostly used internally.
       parameters:
         - in: path
@@ -187,6 +193,7 @@ paths:
                 $ref: "#/components/schemas/APIError"
     delete:
       summary: Deletes a system by id
+      operationId: systemsDeleteById
       parameters:
         - in: path
           name: system_id
@@ -206,6 +213,7 @@ paths:
   /systems:
     get:
       summary: Returns a list of systems
+      operationId: systemsGet
       description: only public systems are returned for unauthenticated requests
       security:
         - ApiKeyAuth: []
@@ -286,6 +294,7 @@ paths:
 
     post:
       summary: Submits a system
+      operationId: systemsPost
       description: Submits a system
       requestBody:
         required: true
@@ -310,6 +319,7 @@ paths:
   /systems/{system_id}/outputs:
     get:
       summary: Returns a list of outputs of a particular system.
+      operationId: systemOutputsGetById
       description: This will fail if the user doesn't have permissions for that system.
       security:
         - ApiKeyAuth: [ ]
@@ -340,6 +350,7 @@ paths:
   /systems/analyses:
     post:
       summary: Returns analysis result(s) of one or multiple systems
+      operationId: systemsAnalysesPost
       description: Returns analysis result(s) of one or multiple systems
       security:
         - ApiKeyAuth: []
@@ -374,7 +385,7 @@ paths:
                           maxItems: 2
                         example: [[0.0, 0.4], [0.4, 1.0]]
               required:
-                [system_ids, pairwise_performance_gap, feature_to_bucket_info]
+                [system_ids, feature_to_bucket_info]
 
       responses:
         "200":
@@ -387,6 +398,7 @@ paths:
   /info:
     get:
       summary: information for environment identifier, backend version, login URL, etc. (not intent for public users)
+      operationId: infoGet
       security: []
       responses:
         "200":
@@ -407,6 +419,7 @@ paths:
   /user:
     get:
       summary: get user info
+      operationId: userGet
       responses:
         "200":
           description: OK
@@ -498,13 +511,70 @@ components:
         _type:
           type: string
 
-    SystemInfoFeature:
-      # TODO(chihhao) Commented out for now as it's not clear why using oneOf causes validaiton failure
-      # oneOf:
-      #   - $ref: '#/components/schemas/Value'
-      #   - $ref: '#/components/schemas/ClassLabel'
-      # TODO(chihhao) define detailed fields
+    Analysis:
+      description: The specification of an analysis to return
       type: object
+      properties:
+        description:
+          type: string
+        _type:
+          type: string
+      additionalProperties: true
+      required: [_type]
+
+    AnalysisLevel:
+      description: A level of analysis to be performed
+      type: object
+      properties:
+        name:
+          type: string
+        features:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/FeatureType"
+        analyses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Analysis"
+        metric_configs:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricConfig"
+      required: [name, features, analyses, metric_configs]
+
+    MetricConfig:
+      type: object
+      properties:
+        name:
+          type: string
+        source_language:
+          type: string
+          nullable: True
+        target_language:
+          type: string
+          nullable: True
+        _type:
+          type: string
+      additionalProperties: true
+      required: [name, _type]
+
+    FeatureType:
+      type: object
+      properties:
+        dtype:
+          type: string
+        _type:
+          type: string
+        description:
+          type: string
+        func:
+          type: string
+        is_custom:
+          type: boolean
+        require_training_set:
+          type: boolean
+        id:
+          type: string
 
     SystemInfo:
       description: Information about a system output, used in SDK's fine-grained analysis
@@ -533,30 +603,15 @@ components:
           example: en
         reload_stat:
           type: boolean
-        is_print_case:
-          type: boolean
         conf_value:
           type: number
         system_details:
           type: object
           nullable: True
-        metric_configs:
+        analysis_levels:
           type: array
           items:
-            type: object
-            properties:
-              name:
-                type: string
-              source_language:
-                type: string
-                nullable: True
-              target_language:
-                type: string
-                nullable: True
-              cls_name:
-                type: string
-            additionalProperties: true
-            required: [name, cls_name]
+            $ref: "#/components/schemas/AnalysisLevel"
         source_tokenizer:
           type: object
           properties:
@@ -569,25 +624,19 @@ components:
             cls_name:
               type: string
               example: "SingleSpaceTokenizer"
-        features:
-          type: object
-          additionalProperties:
-            $ref: "#/components/schemas/SystemInfoFeature"
         results:
           type: object
           properties:
             overall:
-              type: object
-              description: metric_name -> metric_value
-              additionalProperties:
-                $ref: "#/components/schemas/Performance"
-            calibration:
               type: array
+              description: metrics for each analysis level
               items:
-                type: string
-            fine_grained:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Performance"
+            analyses:
               type: object
-          required: [overall, calibration, fine_grained]
+          required: [overall]
       required:
         [
           task_name,
@@ -595,13 +644,11 @@ components:
           source_language,
           target_language,
           reload_stat,
-          is_print_case,
           conf_value,
           source_tokenizer,
           target_tokenizer,
-          features,
+          analysis_levels,
           results,
-          metric_configs,
         ]
 
     APIError:
@@ -797,13 +844,6 @@ components:
             system_details:
               type: object
               description: a place to store arbitrary system details you want to remember
-            analysis_cases:
-              description: the cases that were analyzed for the system
-              type: array
-              items:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AnalysisCase"
             metric_stats:
               description: An array of sufficient statistics for each metric, used in SDK's fine-grained analysis
               type: array
@@ -816,7 +856,6 @@ components:
               system_id,
               is_private,
               system_info,
-              active_features,
               metric_stats,
             ]
         - $ref: "#/components/schemas/Time"
@@ -1078,10 +1117,10 @@ components:
           type: string
         type:
           type: string
-          decription: "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+          description: "could be 'abstract' to indicate this doesn't fully specify a benchmark"
         parent:
           type: string
-          decription: "a parent benchmark that this benchmark inherits config from"
+          description: "a parent benchmark that this benchmark inherits config from"
         visibility:
           type: string
           description: "a visibility level, public/hidden/none"

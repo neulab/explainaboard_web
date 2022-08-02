@@ -85,10 +85,7 @@ export function BenchmarkTable({ benchmarkID }: Props) {
     async function fetchBenchmark() {
       setPageState(PageState.loading);
       setBenchmark(
-        await backendClient.benchmarkBenchmarkIdbyCreatorGet(
-          benchmarkID,
-          byCreator
-        )
+        await backendClient.benchmarkGetById(benchmarkID, byCreator)
       );
       setPageState(PageState.success);
     }
