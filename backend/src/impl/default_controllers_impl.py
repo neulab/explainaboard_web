@@ -9,12 +9,7 @@ from functools import lru_cache
 from typing import Optional
 
 import pandas as pd
-from explainaboard import (
-    DatalabLoaderOption,
-    TaskType,
-    get_processor,
-    get_task_categories,
-)
+from explainaboard import DatalabLoaderOption, TaskType, get_processor
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
@@ -28,6 +23,7 @@ from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.private_dataset import is_private_dataset
+from explainaboard_web.impl.tasks import get_task_categories
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.models import (
     Benchmark,
@@ -166,7 +162,7 @@ def benchmark_benchmark_idby_creator_get(
     if config.type == "abstract":
         return Benchmark(config, None, None)
     file_path = benchmark_id + "_benchmark.json"
-    benchmark_file = open_cached_file(file_path, datetime.timedelta(days=1))
+    benchmark_file = open_cached_file(file_path, datetime.timedelta(seconds=1))
     if not benchmark_file:
         sys_infos = BenchmarkUtils.load_sys_infos(config)
         orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
@@ -193,12 +189,19 @@ def benchmark_benchmark_idby_creator_get(
     else:
         view_dict = json.load(f)["system"]
     plot_dict = BenchmarkUtils.generate_plots(benchmark_id)
-    views = [
-        BenchmarkUtils.dataframe_to_table(
-            k, pd.DataFrame.from_dict(v), by_creator, plot_dict
+    views = []
+    for k, v in view_dict.items():
+        if by_creator:
+            col_name = "creator"
+        elif k == "Most-underserved Languages":
+            col_name = "source_language"
+        else:
+            col_name = "system_name"
+        views.append(
+            BenchmarkUtils.dataframe_to_table(
+                k, pd.DataFrame.from_dict(v), plot_dict, col_name
+            )
         )
-        for k, v in view_dict.items()
-    ]
     return Benchmark(config, views, update_time)
 
 
