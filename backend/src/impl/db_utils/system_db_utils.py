@@ -23,6 +23,8 @@ from explainaboard_web.impl.utils import (
     unbinarize_bson,
 )
 from explainaboard_web.models import (
+    AnalysisCase,
+    AnalysisCasesReturn,
     DatasetMetadata,
     System,
     SystemInfo,
@@ -390,13 +392,12 @@ class SystemDBUtils:
             def db_operations(session: ClientSession) -> str:
                 # Insert system
                 system.created_at = system.last_modified = datetime.utcnow()
-                document = system.to_dict()
+                document = general_to_dict(system)
                 document.pop("system_id")
                 document["dataset_metadata_id"] = (
                     system.dataset.dataset_id if system.dataset else None
                 )
                 document.pop("dataset")
-                document = DBUtils.sanitize_document(document)
                 system_db_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
                 # Insert system output
                 str_db_id = str(system_db_id)
@@ -456,6 +457,12 @@ class SystemDBUtils:
         return SystemOutput.from_dict(document)
 
     @staticmethod
+    def analysis_case_from_dict(dikt: dict[str, Any]) -> AnalysisCase:
+        document = dikt.copy()
+        document.pop("_id", None)
+        return AnalysisCase.from_dict(document)
+
+    @staticmethod
     def find_system_outputs(
         system_id: str, output_ids: str | None, limit=0
     ) -> SystemOutputsReturn:
@@ -474,6 +481,26 @@ class SystemDBUtils:
         )
         return SystemOutputsReturn(
             [SystemDBUtils.system_output_from_dict(doc) for doc in cursor], total
+        )
+
+    @staticmethod
+    def find_analysis_cases(
+        system_id: str, case_ids: str | None, level: int, limit=0
+    ) -> AnalysisCasesReturn:
+        """
+        find multiple system outputs whose ids are in case_ids
+        TODO: raise error if system doesn't exist
+        """
+        filt: dict[str, Any] = {}
+        if case_ids:
+            filt["id"] = {"$in": [str(id) for id in case_ids.split(",")]}
+        case_collection = DBCollection(
+            db_name=DBUtils.SYSTEM_OUTPUT_DB,
+            collection_name=f"{str(system_id)}_cases{level}",
+        )
+        cursor, total = DBUtils.find(collection=case_collection, filt=filt, limit=limit)
+        return AnalysisCasesReturn(
+            [SystemDBUtils.analysis_case_from_dict(doc) for doc in cursor], total
         )
 
     @staticmethod

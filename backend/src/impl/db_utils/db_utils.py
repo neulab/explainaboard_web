@@ -1,7 +1,5 @@
-import dataclasses
 from collections.abc import Callable
 from dataclasses import dataclass
-from inspect import getsource
 from typing import Optional, TypeVar
 
 from bson.objectid import InvalidId, ObjectId
@@ -36,24 +34,6 @@ class DBUtils:
     @staticmethod
     def get_client() -> ClientSession:
         return get_db().db.client
-
-    @staticmethod
-    def sanitize_document(document):
-        """
-        Sanitize a document for storing in MongoDB
-        """
-        if isinstance(document, dict):
-            return {k: DBUtils.sanitize_document(v) for k, v in document.items()}
-        elif isinstance(document, list):
-            return [DBUtils.sanitize_document(v) for v in document]
-        elif dataclasses.is_dataclass(document):
-            return DBUtils.sanitize_document(dataclasses.asdict(document))
-        elif hasattr(document, "to_dict"):
-            return DBUtils.sanitize_document(document.to_dict())
-        elif isinstance(document, Callable):
-            return getsource(document)
-        else:
-            return document
 
     @staticmethod
     def get_collection(collection: DBCollection, check_collection_exist=True):

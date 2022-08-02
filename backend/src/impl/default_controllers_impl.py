@@ -15,12 +15,14 @@ from explainaboard import (
     get_processor,
     get_task_categories,
 )
+from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import MetricStats
-from explainaboard.metrics.registry import metric_name_to_config_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
+from explainaboard.utils.serialization import general_to_dict
+from explainaboard.utils.typing_utils import narrow
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -349,7 +351,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
     for system in systems:
         system_info: SystemInfo = system.system_info
-        system_info_dict = system_info.to_dict()
+        system_info_dict = general_to_dict(system_info)
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
         logging.getLogger().warning(
@@ -368,33 +370,33 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         #         feature.bucket_info.setting = setting
         #     system_output_info.features[feature_name] = feature
 
-        metric_configs = [
-            metric_name_to_config_class(metric_config_dict["cls_name"])(
-                **metric_config_dict
-            )
-            for metric_config_dict in system_output_info.metric_configs
-        ]
+        # metric_configs = [
+        #     metric_name_to_config_class(metric_config_dict["cls_name"])(
+        #         **metric_config_dict
+        #     )
+        #     for metric_config_dict in system_output_info.metric_configs
+        # ]
 
-        system_output_info.metric_configs = metric_configs
+        # system_output_info.metric_configs = metric_configs
 
         processor = get_processor(TaskType(system_output_info.task_name))
         metric_stats = [[MetricStats(y) for y in x] for x in system.metric_stats]
 
-        # TODO(gneubig): this can probably be deleted
-        # # Get the entire system outputs
-        # output_ids = None
-        # system_outputs = SystemDBUtils.find_system_outputs(
-        #     system.system_id, output_ids, limit=0
-        # ).system_outputs
-        # # Note we are casting here, as SystemOutput.from_dict() actually just returns
-        # # a dict
-        # system_outputs = [
-        #     processor.deserialize_system_output(cast(dict, x)) for x in system_outputs
-        # ]
+        # Get analysis cases
+        analysis_cases = []
+        case_ids = None
+        for i, _ in enumerate(system.system_info.analysis_levels):
+            level_cases = SystemDBUtils.find_analysis_cases(
+                system.system_id, case_ids, level=i, limit=0
+            ).analysis_cases
+            # Note we are casting here, as SystemOutput.from_dict() actually just
+            # returns a dict
+            level_cases = [AnalysisCase.from_dict(narrow(dict, x)) for x in level_cases]
+            analysis_cases.append(level_cases)
 
         processor_result = processor.perform_analyses(
             system_output_info,
-            system.analysis_cases,
+            analysis_cases,
             metric_stats,
         )
         single_analysis = SingleAnalysis(analysis_results=processor_result)
