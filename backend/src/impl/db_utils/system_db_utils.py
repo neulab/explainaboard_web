@@ -415,6 +415,9 @@ class SystemDBUtils:
                     )
                     DBUtils.drop(analysis_collection)
                     sample_list = [general_to_dict(v) for v in analysis_cases]
+                    # Add IDs for search using mongodb
+                    for i, sample in enumerate(sample_list):
+                        sample["id"] = str(i)
                     DBUtils.insert_many(
                         analysis_collection, sample_list, False, session
                     )
@@ -464,7 +467,10 @@ class SystemDBUtils:
 
     @staticmethod
     def find_system_outputs(
-        system_id: str, output_ids: str | None, limit=0
+        system_id: str,
+        output_ids: str | None,
+        page=0,
+        page_size=10,
     ) -> SystemOutputsReturn:
         """
         find multiple system outputs whose ids are in output_ids
@@ -477,7 +483,10 @@ class SystemDBUtils:
             db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str(system_id)
         )
         cursor, total = DBUtils.find(
-            collection=output_collection, filt=filt, limit=limit
+            collection=output_collection,
+            filt=filt,
+            skip=page * page_size,
+            limit=page_size,
         )
         return SystemOutputsReturn(
             [SystemDBUtils.system_output_from_dict(doc) for doc in cursor], total
@@ -485,12 +494,17 @@ class SystemDBUtils:
 
     @staticmethod
     def find_analysis_cases(
-        system_id: str, case_ids: str | None, level: int, limit=0
+        system_id: str,
+        case_ids: str | None,
+        level: int | float,
+        page: int = 0,
+        page_size: int = 10,
     ) -> AnalysisCasesReturn:
         """
         find multiple system outputs whose ids are in case_ids
         TODO: raise error if system doesn't exist
         """
+        level = int(level)
         filt: dict[str, Any] = {}
         if case_ids:
             filt["id"] = {"$in": [str(id) for id in case_ids.split(",")]}
@@ -498,7 +512,12 @@ class SystemDBUtils:
             db_name=DBUtils.SYSTEM_OUTPUT_DB,
             collection_name=f"{str(system_id)}_cases{level}",
         )
-        cursor, total = DBUtils.find(collection=case_collection, filt=filt, limit=limit)
+        cursor, total = DBUtils.find(
+            collection=case_collection,
+            filt=filt,
+            skip=page * page_size,
+            limit=page_size,
+        )
         return AnalysisCasesReturn(
             [SystemDBUtils.analysis_case_from_dict(doc) for doc in cursor], total
         )

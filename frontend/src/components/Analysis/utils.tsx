@@ -15,7 +15,8 @@ import { SystemModel } from "../../models";
 export function initParsedResult(
   metricName: string,
   featureName: string,
-  featureDescription: string
+  featureDescription: string,
+  levelIdx: number
 ): ResultFineGrainedParsed {
   const bucketIntervals: BucketIntervals = {
     min: Number.POSITIVE_INFINITY,
@@ -32,6 +33,7 @@ export function initParsedResult(
     metricName,
     featureName,
     featureDescription,
+    levelIdx,
     bucketType,
     bucketNames,
     bucketIntervals,
@@ -70,6 +72,7 @@ export function parse(
   task: string,
   bucketPerformances: AnalysisResult[],
   bucketType: string,
+  levelIdx: number,
   featureName: string,
   featureDescription: string
 ) {
@@ -101,11 +104,11 @@ export function parse(
         parsedResult[metricName] = initParsedResult(
           metricName,
           featureName,
-          featureDescription
+          featureDescription,
+          levelIdx
         );
       }
       const result = parsedResult[metricName];
-      result.metricName = performance.metric_name;
       result.performances.push(performance);
       result.cases.push(bucketPerformance.bucket_samples);
       result.bucketNames.push(bucketName);
@@ -123,8 +126,6 @@ export function parse(
         );
         result.bucketIntervals.bounds.push(numInterval[numInterval.length - 1]);
       }
-      // bucketInfo are feature invariant across different metrics
-      result.featureName = featureName;
     }
   }
   return parsedResult;
@@ -171,20 +172,25 @@ export function parseFineGrainedResults(
   } = {};
 
   // Loop through each system analysis and parse
-  for (let sys_i = 0; sys_i < systems.length; sys_i++) {
-    const system = systems[sys_i];
-    const singleAnalysis: SingleAnalysis = singleAnalyses[sys_i];
+  for (let systemIdx = 0; systemIdx < systems.length; systemIdx++) {
+    const system = systems[systemIdx];
+    const singleAnalysis: SingleAnalysis = singleAnalyses[systemIdx];
 
     for (
-      let lev_i = 0;
-      lev_i < singleAnalysis.analysis_results.length;
-      lev_i++
+      let levelIdx = 0;
+      levelIdx < singleAnalysis.analysis_results.length;
+      levelIdx++
     ) {
-      const analysisLevel = system.system_info.analysis_levels[lev_i];
-      const resultLevel = singleAnalysis.analysis_results[lev_i];
-      for (let anl_i = 0; anl_i < resultLevel.length; anl_i++) {
-        const myResult = resultLevel[anl_i];
-        const myAnalysis = analysisLevel.analyses[anl_i];
+      const resultLevel = singleAnalysis.analysis_results[levelIdx];
+      const analysisLevel = system.system_info.analysis_levels[levelIdx];
+
+      for (
+        let analysisIdx = 0;
+        analysisIdx < resultLevel.length;
+        analysisIdx++
+      ) {
+        const myResult = resultLevel[analysisIdx];
+        const myAnalysis = analysisLevel.analyses[analysisIdx];
         // Skip non-bucketing analyses for now
         if (myResult.cls_name !== "BucketAnalysisResult") {
           continue;
@@ -201,6 +207,7 @@ export function parseFineGrainedResults(
             task,
             analysisBuckets,
             bucketType,
+            levelIdx,
             analysisName,
             analysisDescription
           );
@@ -231,10 +238,7 @@ export function parseFineGrainedResults(
   return parsedResults;
 }
 
-export function compareBucketOfSamples(
-  caseA: AnalysisCase,
-  caseB: AnalysisCase
-) {
+export function compareBucketOfCases(caseA: AnalysisCase, caseB: AnalysisCase) {
   // TODO(gneubig): this sorts only by sample ID
   const a = caseA["sample_id"];
   const b = caseB["sample_id"];

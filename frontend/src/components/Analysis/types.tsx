@@ -22,8 +22,10 @@ export interface ResultFineGrainedParsed {
   numbersOfSamples: number[];
   // performances[i]: performance (value/confidence) for bucket i
   performances: Performance[];
-  // cases[i][j]: is the ith bucket's jth example
-  cases: AnalysisCase[][];
+  // levelIdx: is the analysis level that this result belongs to
+  levelIdx: number;
+  // cases[i][j]: is the index of the ith bucket's jth example
+  cases: number[][];
 }
 
 // Examples to be shown in the analysis table when a bar is clicked
@@ -35,7 +37,8 @@ export interface ActiveSystemExamples {
 
   // system-dependent information across systems
   systemIndex: number;
-  bucketOfSamplesList: AnalysisCase[][];
+  // bucket of analysis cases
+  bucketOfCasesList: AnalysisCase[][];
 }
 
 export interface SystemInfoFeatureBucketInfo {

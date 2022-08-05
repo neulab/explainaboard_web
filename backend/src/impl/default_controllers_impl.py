@@ -26,6 +26,7 @@ from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.models import (
+    AnalysisCasesReturn,
     Benchmark,
     BenchmarkConfig,
     DatasetMetadata,
@@ -283,32 +284,72 @@ def systems_post(body: SystemCreateProps) -> System:
         )
 
 
-def systems_system_id_outputs_get(
-    system_id: str, output_ids: Optional[str]
+def system_outputs_get_by_id(
+    system_id: str,
+    output_ids: Optional[str],
+    page: int = 0,
+    page_size: int = 10,
 ) -> SystemOutputsReturn:
     """
     TODO: return special error/warning if some ids cannot be found
     """
-    sys = SystemDBUtils.find_system_by_id(system_id)
+    system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
     has_access = user.is_authenticated and (
-        sys.creator == user.email
-        or (sys.shared_users and user.email in sys.shared_users)
+        system.creator == user.email
+        or (system.shared_users and user.email in system.shared_users)
     )
-    if sys.is_private and not has_access:
+    if system.is_private and not has_access:
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(
-            sys.system_info.dataset_name,
-            sys.system_info.sub_dataset_name,
-            sys.system_info.dataset_split,
+            system.system_info.dataset_name,
+            system.system_info.sub_dataset_name,
+            system.system_info.dataset_split,
         )
     ):
         abort_with_error_message(
-            403, f"{sys.system_info.dataset_name} is a private dataset", 40301
+            403, f"{system.system_info.dataset_name} is a private dataset", 40301
         )
 
-    return SystemDBUtils.find_system_outputs(system_id, output_ids, limit=10)
+    return SystemDBUtils.find_system_outputs(
+        system_id, output_ids, page=page, page_size=page_size
+    )
+
+
+def system_cases_get_by_id(
+    system_id: str,
+    level: int,
+    case_ids: Optional[str],
+    page: int = 0,
+    page_size: int = 10,
+) -> AnalysisCasesReturn:
+    """
+    TODO: return special error/warning if some ids cannot be found
+    """
+    system = SystemDBUtils.find_system_by_id(system_id)
+    user = get_user()
+    has_access = user.is_authenticated and (
+        system.creator == user.email
+        or (system.shared_users and user.email in system.shared_users)
+    )
+    if system.is_private and not has_access:
+        abort_with_error_message(403, "system access denied", 40302)
+    if is_private_dataset(
+        DatalabLoaderOption(
+            system.system_info.dataset_name,
+            system.system_info.sub_dataset_name,
+            system.system_info.dataset_split,
+        )
+    ):
+        abort_with_error_message(
+            403, f"{system.system_info.dataset_name} is a private dataset", 40301
+        )
+
+    analysis_case_return = SystemDBUtils.find_analysis_cases(
+        system_id, level=level, case_ids=case_ids, page=page, page_size=page_size
+    )
+    return analysis_case_return
 
 
 def systems_system_id_delete(system_id: str):
@@ -360,27 +401,6 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         logging.getLogger().warning(
             "user-defined bucket analyses are not " "re-implemented"
         )
-        # for feature_name, feature in system_output_info.features.items():
-        #     feature = FeatureType.from_dict(feature)  # dict -> Feature
-        #     if feature_name in custom_feature_to_bucket_info:
-        #         custom_bucket_info = custom_feature_to_bucket_info[feature_name]
-        #         # Hardcoded as SDK doesn't export this name
-        #         feature.bucket_info.method = (
-        #             "bucket_attribute_specified_bucket_interval"
-        #         )
-        #         feature.bucket_info.number = custom_bucket_info.number
-        #         setting = [tuple(interval) for interval in custom_bucket_info.setting]
-        #         feature.bucket_info.setting = setting
-        #     system_output_info.features[feature_name] = feature
-
-        # metric_configs = [
-        #     metric_name_to_config_class(metric_config_dict["cls_name"])(
-        #         **metric_config_dict
-        #     )
-        #     for metric_config_dict in system_output_info.metric_configs
-        # ]
-
-        # system_output_info.metric_configs = metric_configs
 
         processor = get_processor(TaskType(system_output_info.task_name))
         metric_stats = [[MetricStats(y) for y in x] for x in system.metric_stats]
@@ -390,7 +410,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         case_ids = None
         for i, _ in enumerate(system.system_info.analysis_levels):
             level_cases = SystemDBUtils.find_analysis_cases(
-                system.system_id, case_ids, level=i, limit=0
+                system.system_id, case_ids, level=i, page_size=0
             ).analysis_cases
             # Note we are casting here, as SystemOutput.from_dict() actually just
             # returns a dict

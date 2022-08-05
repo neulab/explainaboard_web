@@ -347,6 +347,44 @@ paths:
               schema:
                 $ref: "#/components/schemas/SystemOutputsReturn"
 
+  /systems/{system_id}/cases:
+    get:
+      summary: Returns a list of analysis cases of a particular system.
+      operationId: systemCasesGetById
+      description: This will fail if the user doesn't have permissions for that system.
+      security:
+        - ApiKeyAuth: [ ]
+        - BearerAuth: [ ]
+        - { }
+      parameters:
+        - in: path
+          name: system_id
+          description: system id
+          schema:
+            type: string
+          required: true
+          example: "61b02e0baadd2f674845b1c2"
+        - in: query
+          name: level
+          description: analysis level
+          schema:
+            type: number
+          required: true
+          example: "0"
+        - in: query
+          name: case_ids
+          description: multiple output_ids, comma-separated
+          schema:
+            type: string
+          example: "1,5,6"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisCasesReturn"
+
   /systems/analyses:
     post:
       summary: Returns analysis result(s) of one or multiple systems
