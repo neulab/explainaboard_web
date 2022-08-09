@@ -1,5 +1,5 @@
 #!/bin/sh
-# . "$(dirname "$0")/_/husky.sh"
+. "$(dirname "$0")/_/husky.sh"
 
 pre-commit run && \
 cd frontend && npx lint-staged
