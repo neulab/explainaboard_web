@@ -11,7 +11,9 @@ import pandas as pd
 from explainaboard import DatalabLoaderOption, TaskType, get_processor
 from explainaboard.feature import FeatureType
 from explainaboard.info import SysOutputInfo
-from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
+
+# from explainaboard.loaders.loader_registry import get_supported_file_types_for_loader
+from explainaboard.loaders.loader_registry import get_loader_class
 from explainaboard.metrics.metric import MetricStats
 from explainaboard.metrics.registry import metric_name_to_config_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
@@ -76,7 +78,7 @@ def tasks_get() -> list[TaskCategory]:
     for _category in _categories:
         tasks: list[Task] = []
         for _task in _category.tasks:
-            supported_formats = get_supported_file_types_for_loader(_task.name)
+            supported_formats = get_loader_class(_task.name).supported_file_types()
             supported_metrics = [
                 metric.name for metric in get_metric_list_for_processor(_task.name)
             ]
