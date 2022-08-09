@@ -12,8 +12,7 @@ from explainaboard import (
     FileType,
     Source,
     TaskType,
-    get_custom_dataset_loader,
-    get_datalab_loader,
+    get_loader_class,
     get_processor,
 )
 from explainaboard.loaders.file_loader import FileLoaderReturn
@@ -251,8 +250,7 @@ class SystemDBUtils:
         dataset_custom_features: dict,
     ):
         if custom_dataset:
-            return get_custom_dataset_loader(
-                task=metadata.task,
+            return get_loader_class(metadata.task)(
                 dataset_data=custom_dataset.data,
                 output_data=system_output.data,
                 dataset_source=Source.in_memory,
@@ -261,18 +259,21 @@ class SystemDBUtils:
                 output_file_type=FileType(system_output.file_type),
             ).load()
         else:
-            return get_datalab_loader(
-                task=metadata.task,
-                dataset=DatalabLoaderOption(
-                    system.dataset.dataset_name,
-                    system.dataset.sub_dataset,
-                    metadata.dataset_split,
-                    custom_features=list(dataset_custom_features.keys()),
-                ),
-                output_data=system_output.data,
-                output_file_type=FileType(system_output.file_type),
-                output_source=Source.in_memory,
-            ).load()
+            return (
+                get_loader_class(task=metadata.task)
+                .from_datalab(
+                    dataset=DatalabLoaderOption(
+                        system.dataset.dataset_name,
+                        system.dataset.sub_dataset,
+                        metadata.dataset_split,
+                        custom_features=list(dataset_custom_features.keys()),
+                    ),
+                    output_data=system_output.data,
+                    output_file_type=FileType(system_output.file_type),
+                    output_source=Source.in_memory,
+                )
+                .load()
+            )
 
     @staticmethod
     def _process(
