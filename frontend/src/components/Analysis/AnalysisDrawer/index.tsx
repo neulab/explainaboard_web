@@ -34,6 +34,9 @@ export function AnalysisDrawer({
   const [singleAnalyses, setSingleAnalyses] = useState<
     SystemAnalysesReturn["single_analyses"]
   >({});
+  const [significanceTestInfo, setSignificanceTestInfo] = useState<
+    SystemAnalysesReturn["significance_test_info"]
+  >({});
   const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
     [key: string]: BucketIntervals;
   }>({});
@@ -74,7 +77,11 @@ export function AnalysisDrawer({
         setPageState(PageState.error);
         return;
       }
-      const { single_analyses: singleAnalyses } = systemAnalysesReturn;
+      const {
+        single_analyses: singleAnalyses,
+        significance_test_info: significanceTestInfo,
+      } = systemAnalysesReturn;
+      // const { significance_test_info: significanceTestInfo } = systemAnalysesReturn;
       /*
       Take from the first element as the task and type/number of metrics should be 
       invariant across sytems in pairwise analysis
@@ -117,6 +124,7 @@ export function AnalysisDrawer({
         }
         setTask(task);
         setSingleAnalyses(singleAnalyses);
+        setSignificanceTestInfo(significanceTestInfo);
         setMetricToAnalyses(metricToAnalyses);
         setFeatureNameToBucketInfo(featureNameToBucketInfo);
         setPageState(PageState.success);
@@ -193,6 +201,7 @@ export function AnalysisDrawer({
     setActiveSystemIDs([]);
     setPageState(PageState.loading);
     setSingleAnalyses({});
+    setSignificanceTestInfo({});
     setFeatureNameToBucketInfo({});
     setBucketInfoUpdated(false);
   }
@@ -275,6 +284,7 @@ export function AnalysisDrawer({
               task={task}
               systems={activeSystems}
               singleAnalyses={singleAnalyses}
+              significanceTestInfo={significanceTestInfo}
               metricToSystemAnalysesParsed={metricToAnalyses}
               featureNameToBucketInfo={featureNameToBucketInfo}
               updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}

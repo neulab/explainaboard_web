@@ -978,6 +978,8 @@ components:
         items:
           $ref: "#/components/schemas/BucketPerformance"
 
+
+
     SystemAnalysesReturn:
       type: object
       properties:
@@ -986,6 +988,8 @@ components:
           description: system_id -> SingleAnalysisReturn
           additionalProperties:
             $ref: "#/components/schemas/SingleAnalysisReturn"
+        significance_test_info:
+          type: object
         pairwise_performance_gap:
           type: object
       required: [single_analyses]

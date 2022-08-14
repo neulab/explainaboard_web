@@ -20,6 +20,10 @@ from explainaboard.metrics.metric import MetricStats
 from explainaboard.metrics.registry import get_metric_config_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
+from explainaboard_web.impl.analyses.significance_analysis import (
+    significance_test,
+    update_metric_config,
+)
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -356,6 +360,35 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             + f" only accepts 2 systems, got: {systems_len}",
         )
 
+    # performance significance test if there are two systems
+    sig_info = {}
+    if len(systems) == 2:
+
+        system1_info: SystemInfo = systems[0].system_info
+        system1_info_dict = system1_info.to_dict()
+        system1_output_info = update_metric_config(
+            SysOutputInfo.from_dict(system1_info_dict)
+        )
+        system1_metric_stats: MetricStats = [
+            MetricStats(stat) for stat in systems[0].metric_stats
+        ]
+
+        system2_info: SystemInfo = systems[1].system_info
+        system2_info_dict = system2_info.to_dict()
+        system2_output_info = update_metric_config(
+            SysOutputInfo.from_dict(system2_info_dict)
+        )
+        system2_metric_stats: MetricStats = [
+            MetricStats(stat) for stat in systems[1].metric_stats
+        ]
+
+        sig_info = significance_test(
+            system1_output_info,
+            system2_output_info,
+            system1_metric_stats,
+            system2_metric_stats,
+        )
+
     for system in systems:
         system_info: SystemInfo = system.system_info
         system_info_dict = system_info.to_dict()
@@ -408,4 +441,4 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
         single_analyses[system.system_id] = performance_over_bucket
 
-    return SystemAnalysesReturn(single_analyses)
+    return SystemAnalysesReturn(single_analyses, sig_info)
