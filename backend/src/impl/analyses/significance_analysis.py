@@ -5,7 +5,8 @@ from explainaboard.metrics.registry import get_metric_config_class
 from explainaboard.utils.typing_utils import unwrap
 
 
-def update_metric_config(system_output: SysOutputInfo):
+
+def update_metric_config(system_output: SysOutputInfo) -> SysOutputInfo:
     metric_configs = [
         get_metric_config_class(metric_config_dict["cls_name"])(**metric_config_dict)
         for metric_config_dict in system_output.metric_configs
@@ -15,6 +16,14 @@ def update_metric_config(system_output: SysOutputInfo):
     return system_output
 
 
+
+"""
+significance test based on bootstrapped resampling method, which are controlled by two major
+hyper-parameters:
+(1) n_samples: The number of bootstrapped samples
+(2) prop_samples: The ratio of samples to take every time
+
+"""
 def significance_test(
     sys1_info: SysOutputInfo,
     sys2_info: SysOutputInfo,
@@ -35,6 +44,7 @@ def significance_test(
     for config in unwrap(sys2_info.metric_configs):
         sys2_metric_names.append(config.name)
 
+    # metric validation
     if sys1_metric_names != sys2_metric_names:
         raise ValueError(
             f"Evaluation metrics of two system should be with the same "
@@ -50,19 +60,22 @@ def significance_test(
         all_indices = np.array(range(len(sys1_metric_stat)))
         rng = np.random.default_rng()
         all_indices = rng.choice(all_indices, size=(n_samples, n_elems), replace=True)
+        # Get sampling examples
         sys1_filt_stats = sys1_metric_stat.filter(all_indices)
         sys2_filt_stats = sys2_metric_stat.filter(all_indices)
 
+        # Calculating performance for system 1
         sys1_agg_stats = metric_func.aggregate_stats(sys1_filt_stats)
         sys1_samp_results = metric_func.calc_metric_from_aggregate(
             sys1_agg_stats, config
         )
-
+        # Calculating performance for system 2
         sys2_agg_stats = metric_func.aggregate_stats(sys2_filt_stats)
         sys2_samp_results = metric_func.calc_metric_from_aggregate(
             sys2_agg_stats, config
         )
 
+        # Judge which system wins based on their performance in each sampling round
         wins = [0.0, 0.0, 0.0]
         for sys1_score, sys2_score in zip(sys1_samp_results, sys2_samp_results):
             if sys1_score > sys2_score:
@@ -72,7 +85,7 @@ def significance_test(
             else:
                 wins[2] += 1
 
-        # Print win stats
+        # Get system names
         sys1_name = (
             "system1" if sys1_info.system_name is None else sys1_info.system_name
         )
@@ -90,6 +103,7 @@ def significance_test(
             f"p-value: {format(1 - wins[1],'.4f')}"
         ) + " (Note that p < 0.05 represents statistical significance)"
 
+        # Save relevant information
         sig_info[metric_name] = {
             "win_ratio": {sys1_name: wins[0], sys2_name: wins[1]},
             "description": description,
