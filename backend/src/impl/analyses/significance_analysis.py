@@ -5,25 +5,27 @@ from explainaboard.metrics.registry import get_metric_config_class
 from explainaboard.utils.typing_utils import unwrap
 
 
-
 def update_metric_config(system_output: SysOutputInfo) -> SysOutputInfo:
     metric_configs = [
         get_metric_config_class(metric_config_dict["cls_name"])(**metric_config_dict)
         for metric_config_dict in system_output.metric_configs
     ]
+    # update metric_configs in system_output
     system_output.metric_configs = metric_configs
 
     return system_output
 
 
-
 """
-significance test based on bootstrapped resampling method, which are controlled by two major
+significance test based on bootstrapped resampling method, which are
+controlled by two major
 hyper-parameters:
 (1) n_samples: The number of bootstrapped samples
 (2) prop_samples: The ratio of samples to take every time
 
 """
+
+
 def significance_test(
     sys1_info: SysOutputInfo,
     sys2_info: SysOutputInfo,
