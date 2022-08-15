@@ -270,7 +270,7 @@ class SystemDBUtils:
                         system.dataset.dataset_name,
                         system.dataset.sub_dataset,
                         metadata.dataset_split,
-                        custom_features=list(dataset_custom_features.keys()),
+                        custom_features=dataset_custom_features,
                     ),
                     output_data=system_output.data,
                     output_file_type=FileType(system_output.file_type),

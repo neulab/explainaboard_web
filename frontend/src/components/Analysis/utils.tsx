@@ -1,8 +1,4 @@
-import {
-  BucketIntervals,
-  ResultFineGrainedParsed,
-  SystemInfoFeature,
-} from "./types";
+import { BucketIntervals, ResultFineGrainedParsed } from "./types";
 import {
   AnalysisCase,
   SingleAnalysis,
@@ -176,50 +172,49 @@ export function parseFineGrainedResults(
     const system = systems[systemIdx];
     const singleAnalysis: SingleAnalysis = singleAnalyses[systemIdx];
 
+    const levelMap: { [key: string]: number } = {};
+    for (let lid = 0; lid < system.system_info.analysis_levels.length; lid++) {
+      const level = system.system_info.analysis_levels[lid];
+      levelMap[level.name] = lid;
+    }
+
     for (
-      let levelIdx = 0;
-      levelIdx < singleAnalysis.analysis_results.length;
-      levelIdx++
+      let analysisIdx = 0;
+      analysisIdx < singleAnalysis.analysis_results.length;
+      analysisIdx++
     ) {
-      const resultLevel = singleAnalysis.analysis_results[levelIdx];
-      const analysisLevel = system.system_info.analysis_levels[levelIdx];
+      const myAnalysis = system.system_info.analyses[analysisIdx];
+      const myResult = singleAnalysis.analysis_results[analysisIdx];
+      const levelIdx = levelMap[myResult.level];
 
-      for (
-        let analysisIdx = 0;
-        analysisIdx < resultLevel.length;
-        analysisIdx++
-      ) {
-        const myResult = resultLevel[analysisIdx];
-        const myAnalysis = analysisLevel.analyses[analysisIdx];
-        // Skip non-bucketing analyses for now
-        if (myResult.cls_name !== "BucketAnalysisResult") {
-          continue;
-        }
-        const analysisName = myResult.name;
-        const analysisBuckets: BucketPerformance[] =
-          myResult["bucket_performances"];
-        const analysisDescription = myAnalysis.description;
-        const bucketType = myAnalysis["method"];
+      // Skip non-bucketing analyses for now
+      if (myResult.cls_name !== "BucketAnalysisResult") {
+        continue;
+      }
+      const analysisName = myResult.name;
+      const analysisBuckets: BucketPerformance[] =
+        myResult["bucket_performances"];
+      const analysisDescription = myAnalysis.description;
+      const bucketType = myAnalysis["method"];
 
-        const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
-          parse(
-            system.system_id,
-            task,
-            analysisBuckets,
-            bucketType,
-            levelIdx,
-            analysisName,
-            analysisDescription
-          );
-        for (const [metric, singleResult] of Object.entries(metricToParsed)) {
-          if (!(metric in parsedResults)) {
-            parsedResults[metric] = {};
-          }
-          if (!(analysisName in parsedResults[metric])) {
-            parsedResults[metric][analysisName] = [];
-          }
-          parsedResults[metric][analysisName].push(singleResult);
+      const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
+        parse(
+          system.system_id,
+          task,
+          analysisBuckets,
+          bucketType,
+          levelIdx,
+          analysisName,
+          analysisDescription
+        );
+      for (const [metric, singleResult] of Object.entries(metricToParsed)) {
+        if (!(metric in parsedResults)) {
+          parsedResults[metric] = {};
         }
+        if (!(analysisName in parsedResults[metric])) {
+          parsedResults[metric][analysisName] = [];
+        }
+        parsedResults[metric][analysisName].push(singleResult);
       }
     }
   }

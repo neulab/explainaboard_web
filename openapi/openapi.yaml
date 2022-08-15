@@ -570,10 +570,6 @@ components:
           type: object
           additionalProperties:
             $ref: "#/components/schemas/FeatureType"
-        analyses:
-          type: array
-          items:
-            $ref: "#/components/schemas/Analysis"
         metric_configs:
           type: array
           items:
@@ -651,6 +647,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AnalysisLevel"
+        analyses:
+          type: array
+          items:
+            $ref: "#/components/schemas/Analysis"
         source_tokenizer:
           type: object
           properties:
@@ -687,6 +687,7 @@ components:
           source_tokenizer,
           target_tokenizer,
           analysis_levels,
+          analyses,
           results,
         ]
 
@@ -1080,9 +1081,7 @@ components:
           type: array
           description: results for each analysis level
           items:
-            type: array
-            items:
-              $ref: "#/components/schemas/AnalysisResult"
+            $ref: "#/components/schemas/AnalysisResult"
       required: [analysis_results]
 
     SystemAnalysesReturn:
