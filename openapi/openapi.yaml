@@ -574,7 +574,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetricConfig"
-      required: [name, features, analyses, metric_configs]
+      required: [name, features, metric_configs]
 
     MetricConfig:
       type: object
