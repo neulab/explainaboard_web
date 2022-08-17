@@ -59,7 +59,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/BenchmarkConfig"
 
-  /benchmark/{benchmark_id}+{by_creator}:
+  /benchmark/{benchmark_id}:
     get:
       summary: Returns benchmark metadata by id
       operationId: benchmarkGetById
@@ -72,7 +72,7 @@ paths:
           schema:
             type: string
           required: true
-        - in: path 
+        - in: query 
           name: by_creator 
           example: True 
           schema: 
