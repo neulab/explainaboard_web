@@ -22,7 +22,7 @@ export function BenchmarkPage() {
 
   useEffect(() => {
     async function fetchItems() {
-      setItems(await backendClient.benchmarkconfigsGet(id));
+      setItems(await backendClient.benchmarkConfigsGet(id));
     }
     fetchItems();
   }, [id, history]);

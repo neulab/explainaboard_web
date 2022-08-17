@@ -1,13 +1,10 @@
+import { BucketIntervals, ResultFineGrainedParsed } from "./types";
 import {
-  BucketIntervals,
-  ResultFineGrainedParsed,
-  SystemInfoFeature,
-} from "./types";
-import {
-  BucketCase,
+  AnalysisCase,
+  SingleAnalysis,
+  AnalysisResult,
   BucketPerformance,
-  SingleAnalysisReturn,
-  SystemAnalysesReturn,
+  Performance,
 } from "../../clients/openapi";
 import { SystemModel } from "../../models";
 
@@ -15,15 +12,16 @@ export function initParsedResult(
   metricName: string,
   featureName: string,
   featureDescription: string,
-  bucketInfo: SystemInfoFeature["bucket_info"]
+  levelIdx: number
 ): ResultFineGrainedParsed {
-  const bucketNames: ResultFineGrainedParsed["bucketNames"] = [];
   const bucketIntervals: BucketIntervals = {
     min: Number.POSITIVE_INFINITY,
     max: Number.NEGATIVE_INFINITY,
     bounds: [],
     updated: false,
   };
+  const bucketNames: string[] = [];
+  const bucketType = "";
   const performances: ResultFineGrainedParsed["performances"] = [];
   const cases: ResultFineGrainedParsed["cases"] = [];
   const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
@@ -31,9 +29,10 @@ export function initParsedResult(
     metricName,
     featureName,
     featureDescription,
-    bucketInfo,
-    bucketIntervals,
+    levelIdx,
+    bucketType,
     bucketNames,
+    bucketIntervals,
     numbersOfSamples,
     performances,
     cases,
@@ -67,10 +66,11 @@ export function formatBucketName(
 export function parse(
   systemID: string,
   task: string,
-  bucketPerformances: BucketPerformance[],
+  bucketPerformances: AnalysisResult[],
+  bucketType: string,
+  levelIdx: number,
   featureName: string,
-  featureDescription: string,
-  bucketInfo: SystemInfoFeature["bucket_info"]
+  featureDescription: string
 ) {
   const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
 
@@ -101,15 +101,15 @@ export function parse(
           metricName,
           featureName,
           featureDescription,
-          bucketInfo
+          levelIdx
         );
       }
       const result = parsedResult[metricName];
-      result.metricName = performance.metric_name;
       result.performances.push(performance);
       result.cases.push(bucketPerformance.bucket_samples);
       result.bucketNames.push(bucketName);
       result.numbersOfSamples.push(nSamples);
+      result.bucketType = bucketType;
       if (!(typeof bucketPerformance.bucket_interval[0] === typeof "")) {
         const numInterval = bucketPerformance.bucket_interval as number[];
         result.bucketIntervals.min = Math.min(
@@ -122,87 +122,99 @@ export function parse(
         );
         result.bucketIntervals.bounds.push(numInterval[numInterval.length - 1]);
       }
-      // bucketInfo are feature invariant across different metrics
-      result.bucketInfo = bucketInfo;
-      result.featureName = featureName;
     }
   }
   return parsedResult;
 }
 
-export function findFeature(
-  features: { [key: string]: unknown },
-  name: string
-): SystemInfoFeature | undefined {
-  if (name in features) {
-    return features[name] as SystemInfoFeature;
-  } else {
-    for (const key in features) {
-      if (typeof features[key] === "object" && features[key] !== null) {
-        const val = findFeature(
-          features[key] as { [key: string]: unknown },
-          name
-        );
-        if (val !== undefined) {
-          return val;
-        }
-      }
-    }
-  }
-  return undefined;
-}
+// TODO(gneubig): can probably be deleted
+// export function findFeature(
+//   features: { [key: string]: unknown },
+//   name: string
+// ): SystemInfoFeature | undefined {
+//   if (name in features) {
+//     return features[name] as SystemInfoFeature;
+//   } else {
+//     for (const key in features) {
+//       if (typeof features[key] === "object" && features[key] !== null) {
+//         const val = findFeature(
+//           features[key] as { [key: string]: unknown },
+//           name
+//         );
+//         if (val !== undefined) {
+//           return val;
+//         }
+//       }
+//     }
+//   }
+//   return undefined;
+// }
 
 export function parseFineGrainedResults(
   task: string,
   systems: SystemModel[],
-  singleAnalyses: SystemAnalysesReturn["single_analyses"]
+  singleAnalyses: SingleAnalysis[]
 ): { [metric: string]: { [feature: string]: ResultFineGrainedParsed[] } } {
   /**
    * Takes in a task, metric names, and systems, and returns fine-grained evaluation
    * results that can be accessed in the format:
-   * > value[metric_name : string][feature_name : string][system_id : int]
+   * > value[metric_name : string][analysis_name : int][system_id : int]
    */
 
   const parsedResults: {
     [metric: string]: {
-      [feature: string]: ResultFineGrainedParsed[];
+      [analysis: string]: ResultFineGrainedParsed[];
     };
   } = {};
 
   // Loop through each system analysis and parse
-  for (let sys_i = 0; sys_i < systems.length; sys_i++) {
-    const system = systems[sys_i];
-    const systemInfoFeatures = system.system_info.features;
-    const systemActiveFeatures = system.active_features.sort();
-    const singleAnalysis: SingleAnalysisReturn =
-      singleAnalyses[system.system_id];
+  for (let systemIdx = 0; systemIdx < systems.length; systemIdx++) {
+    const system = systems[systemIdx];
+    const singleAnalysis: SingleAnalysis = singleAnalyses[systemIdx];
 
-    for (const featureName of systemActiveFeatures) {
-      const featureBuckets: BucketPerformance[] = singleAnalysis[featureName];
-      const systemInfoFeature = findFeature(systemInfoFeatures, featureName);
-      if (systemInfoFeature !== undefined) {
-        const bucketInfo = systemInfoFeature["bucket_info"];
-        const featureDescription =
-          systemInfoFeature["description"] || featureName;
+    const levelMap: { [key: string]: number } = {};
+    for (let lid = 0; lid < system.system_info.analysis_levels.length; lid++) {
+      const level = system.system_info.analysis_levels[lid];
+      levelMap[level.name] = lid;
+    }
 
-        const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
-          parse(
-            system.system_id,
-            task,
-            featureBuckets,
-            featureName,
-            featureDescription,
-            bucketInfo
-          );
-        for (const [metric, singleResult] of Object.entries(metricToParsed)) {
-          if (!(metric in parsedResults)) {
-            parsedResults[metric] = {};
-          }
-          if (!(featureName in parsedResults[metric])) {
-            parsedResults[metric][featureName] = [];
-          }
-          parsedResults[metric][featureName].push(singleResult);
+    for (
+      let analysisIdx = 0;
+      analysisIdx < singleAnalysis.analysis_results.length;
+      analysisIdx++
+    ) {
+      const myAnalysis = system.system_info.analyses[analysisIdx];
+      const myResult = singleAnalysis.analysis_results[analysisIdx];
+      const levelIdx = levelMap[myResult.level];
+
+      // Skip non-bucketing analyses for now
+      if (myResult.cls_name !== "BucketAnalysisResult") {
+        continue;
+      }
+      const analysisName = myResult.name;
+      const analysisBuckets: BucketPerformance[] =
+        myResult["bucket_performances"];
+      const analysisDescription = myAnalysis.description;
+      const bucketType = myAnalysis["method"];
+
+      const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
+        parse(
+          system.system_id,
+          task,
+          analysisBuckets,
+          bucketType,
+          levelIdx,
+          analysisName,
+          analysisDescription
+        );
+      for (const [metric, singleResult] of Object.entries(metricToParsed)) {
+        if (!(metric in parsedResults)) {
+          parsedResults[metric] = {};
         }
+        if (!(analysisName in parsedResults[metric])) {
+          parsedResults[metric][analysisName] = [];
+        }
+        parsedResults[metric][analysisName].push(singleResult);
       }
     }
   }
@@ -221,7 +233,7 @@ export function parseFineGrainedResults(
   return parsedResults;
 }
 
-export function compareBucketOfSamples(caseA: BucketCase, caseB: BucketCase) {
+export function compareBucketOfCases(caseA: AnalysisCase, caseB: AnalysisCase) {
   // TODO(gneubig): this sorts only by sample ID
   const a = caseA["sample_id"];
   const b = caseB["sample_id"];
@@ -243,4 +255,16 @@ export function valuesToIntervals(values: number[]): number[][] {
   return values
     .slice(0, values.length - 1)
     .map((value, index) => [value, values[index + 1]]);
+}
+
+export function getOverallMap(overallResults: Performance[][]): {
+  [name: string]: Performance;
+} {
+  const overallMap: { [name: string]: Performance } = {};
+  for (const overallLevel of overallResults) {
+    for (const overallResult of overallLevel) {
+      overallMap[overallResult.metric_name] = overallResult;
+    }
+  }
+  return overallMap;
 }

@@ -4,18 +4,14 @@ import json
 import re
 import traceback
 from datetime import datetime
+from inspect import getsource
+from types import FunctionType
 from typing import Any, Optional
 
 from bson import ObjectId
-from explainaboard import (
-    DatalabLoaderOption,
-    FileType,
-    Source,
-    TaskType,
-    get_loader_class,
-    get_processor,
-)
+from explainaboard import DatalabLoaderOption, FileType, Source, TaskType, get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
+from explainaboard.loaders.loader_registry import get_loader_class
 from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard_web.impl.auth import get_user
@@ -27,8 +23,11 @@ from explainaboard_web.impl.utils import (
     unbinarize_bson,
 )
 from explainaboard_web.models import (
+    AnalysisCase,
+    AnalysisCasesReturn,
     DatasetMetadata,
     System,
+    SystemInfo,
     SystemMetadata,
     SystemOutput,
     SystemOutputProps,
@@ -108,7 +107,9 @@ class SystemDBUtils:
         system = System.from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
-            system.metric_stats = [unbinarize_bson(stat) for stat in metric_stats]
+            system.metric_stats = [
+                [unbinarize_bson(y) for y in x] for x in metric_stats
+            ]
         return system
 
     @staticmethod
@@ -249,8 +250,11 @@ class SystemDBUtils:
         custom_dataset: SystemOutputProps | None,
         dataset_custom_features: dict,
     ):
+        """
+        Load the system output from the uploaded file
+        """
         if custom_dataset:
-            return get_loader_class(metadata.task)(
+            return get_loader_class(task=metadata.task)(
                 dataset_data=custom_dataset.data,
                 output_data=system_output.data,
                 dataset_source=Source.in_memory,
@@ -266,7 +270,7 @@ class SystemDBUtils:
                         system.dataset.dataset_name,
                         system.dataset.sub_dataset,
                         metadata.dataset_split,
-                        custom_features=list(dataset_custom_features.keys()),
+                        custom_features=dataset_custom_features,
                     ),
                     output_data=system_output.data,
                     output_file_type=FileType(system_output.file_type),
@@ -315,17 +319,10 @@ class SystemDBUtils:
         custom_dataset: SystemOutputProps | None = None,
     ) -> System:
         """
-        create a system
-          1. validate and initialize a SystemModel
-          2. load system_output data
-          3. generate analysis report from system_output
-          -- DB --
-          5. write to system_metadata
-            (metadata + sufficient statistics + overall analysis)
-          6. write to system_outputs
+        Create a system given metadata and outputs, etc.
         """
 
-        # Parse the system details if getting a string from the frontend
+        # -- parse the system details if getting a string from the frontend
         document = metadata.to_dict()
         if (
             document.get("system_details")
@@ -337,12 +334,14 @@ class SystemDBUtils:
             metadata.system_details = parsed
             document["system_details"] = parsed
 
-        system = SystemDBUtils.system_from_dict(document)
+        # -- create the object defined in openapi.yaml from only uploaded metadata
+        system: System = SystemDBUtils.system_from_dict(document)
 
+        # -- set the creator
         user = get_user()
         system.creator = user.email
 
-        # validation
+        # -- validate the dataset metadata
         if metadata.dataset_metadata_id:
             if not system.dataset:
                 abort_with_error_message(
@@ -356,43 +355,44 @@ class SystemDBUtils:
                 )
 
         try:
+            # -- find the dataset and grab custom features if they exist
             dataset_info = DatasetDBUtils.find_dataset_by_id(system.dataset.dataset_id)
             dataset_custom_features: dict = (
                 dict(dataset_info.custom_features)
                 if dataset_info and dataset_info.custom_features
                 else {}
             )
+
+            # -- load the system output into memory from the uploaded file(s)
             system_output_data = SystemDBUtils._load_sys_output(
                 system, metadata, system_output, custom_dataset, dataset_custom_features
             )
             system_custom_features: dict = (
                 system_output_data.metadata.custom_features or {}
             )
+
+            # -- combine custom features from the two sources
             custom_features = dict(system_custom_features)
             custom_features.update(dataset_custom_features)
+
+            # -- do the actual analysis and binarize the metric stats
             overall_statistics = SystemDBUtils._process(
                 system, metadata, system_output_data, custom_features
             )
-            metric_stats = [
-                binarize_bson(metric_stat.get_data())
-                for metric_stat in overall_statistics.metric_stats
+            binarized_stats = [
+                [binarize_bson(y.get_data()) for y in x]
+                for x in overall_statistics.metric_stats
             ]
 
-            # TODO avoid None as nullable seems undeclarable for array and object
-            # in openapi.yaml
-            if overall_statistics.sys_info.results.calibration is None:
-                overall_statistics.sys_info.results.calibration = []
-            if overall_statistics.sys_info.results.fine_grained is None:
-                overall_statistics.sys_info.results.fine_grained = {}
-
-            system.system_info = overall_statistics.sys_info.to_dict()
-            system.metric_stats = metric_stats
-            system.active_features = overall_statistics.active_features
+            # -- add the analysis results to the system object
+            sys_info_dict = overall_statistics.sys_info.to_dict()
+            system.system_info = SystemInfo.from_dict(sys_info_dict)
+            system.metric_stats = binarized_stats
 
             def db_operations(session: ClientSession) -> str:
                 # Insert system
                 system.created_at = system.last_modified = datetime.utcnow()
-                document = system.to_dict()
+                document = general_to_dict(system)
                 document.pop("system_id")
                 document["dataset_metadata_id"] = (
                     system.dataset.dataset_id if system.dataset else None
@@ -400,22 +400,43 @@ class SystemDBUtils:
                 document.pop("dataset")
                 system_db_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
                 # Insert system output
+                str_db_id = str(system_db_id)
                 output_collection = DBCollection(
-                    db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str(system_db_id)
+                    db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str_db_id
                 )
                 DBUtils.drop(output_collection)
                 sample_list = [general_to_dict(v) for v in system_output_data.samples]
                 DBUtils.insert_many(output_collection, sample_list, False, session)
+                # Insert analysis cases
+                for i, analysis_cases in enumerate(overall_statistics.analysis_cases):
+                    analysis_collection = DBCollection(
+                        db_name=DBUtils.SYSTEM_OUTPUT_DB,
+                        collection_name=f"{str_db_id}_cases{i}",
+                    )
+                    DBUtils.drop(analysis_collection)
+                    sample_list = [general_to_dict(v) for v in analysis_cases]
+                    # Add IDs for search using mongodb
+                    for i, sample in enumerate(sample_list):
+                        sample["id"] = str(i)
+                    DBUtils.insert_many(
+                        analysis_collection, sample_list, False, session
+                    )
                 return system_db_id
 
+            # -- perform upload to the DB
             system_id = DBUtils.execute_transaction(db_operations)
-
-            # Metric_stats is replaced with empty list for now as
-            # bson's Binary and numpy array is not directly serializable
-            # in swagger. If the frontend needs it,
-            # we can come up with alternatives.
-            system.metric_stats = []
             system.system_id = system_id
+
+            # -- replace things that can't be returned through JSON for now
+            system.metric_stats = []
+            for analysis_level in system.system_info.analysis_levels:
+                for feature_name, feature in analysis_level.features.items():
+                    if isinstance(feature.func, FunctionType):
+                        # Convert the function to a string, this is noqa to prevent a
+                        # typing error
+                        feature.func = getsource(feature.func)  # noqa
+
+            # -- return the system
             return system
         except ValueError as e:
             traceback.print_exc()
@@ -439,8 +460,17 @@ class SystemDBUtils:
         return SystemOutput.from_dict(document)
 
     @staticmethod
+    def analysis_case_from_dict(dikt: dict[str, Any]) -> AnalysisCase:
+        document = dikt.copy()
+        document.pop("_id", None)
+        return AnalysisCase.from_dict(document)
+
+    @staticmethod
     def find_system_outputs(
-        system_id: str, output_ids: str | None, limit=0
+        system_id: str,
+        output_ids: str | None,
+        page=0,
+        page_size=10,
     ) -> SystemOutputsReturn:
         """
         find multiple system outputs whose ids are in output_ids
@@ -453,10 +483,43 @@ class SystemDBUtils:
             db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str(system_id)
         )
         cursor, total = DBUtils.find(
-            collection=output_collection, filt=filt, limit=limit
+            collection=output_collection,
+            filt=filt,
+            skip=page * page_size,
+            limit=page_size,
         )
         return SystemOutputsReturn(
             [SystemDBUtils.system_output_from_dict(doc) for doc in cursor], total
+        )
+
+    @staticmethod
+    def find_analysis_cases(
+        system_id: str,
+        case_ids: str | None,
+        level: int | float,
+        page: int = 0,
+        page_size: int = 10,
+    ) -> AnalysisCasesReturn:
+        """
+        find multiple system outputs whose ids are in case_ids
+        TODO: raise error if system doesn't exist
+        """
+        level = int(level)
+        filt: dict[str, Any] = {}
+        if case_ids:
+            filt["id"] = {"$in": [str(id) for id in case_ids.split(",")]}
+        case_collection = DBCollection(
+            db_name=DBUtils.SYSTEM_OUTPUT_DB,
+            collection_name=f"{str(system_id)}_cases{level}",
+        )
+        cursor, total = DBUtils.find(
+            collection=case_collection,
+            filt=filt,
+            skip=page * page_size,
+            limit=page_size,
+        )
+        return AnalysisCasesReturn(
+            [SystemDBUtils.analysis_case_from_dict(doc) for doc in cursor], total
         )
 
     @staticmethod

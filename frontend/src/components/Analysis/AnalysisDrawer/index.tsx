@@ -6,6 +6,7 @@ import { ErrorBoundary, AnalysisReport } from "../../../components";
 import { PageState } from "../../../utils";
 import { backendClient } from "../../../clients";
 import {
+  SingleAnalysis,
   SystemAnalysesReturn,
   SystemsAnalysesBody,
 } from "../../../clients/openapi";
@@ -31,9 +32,9 @@ export function AnalysisDrawer({
     useState<boolean>(true);
   const [pageState, setPageState] = useState(PageState.loading);
   const [task, setTask] = useState<string>("");
-  const [singleAnalyses, setSingleAnalyses] = useState<
-    SystemAnalysesReturn["single_analyses"]
-  >({});
+  const [systemAnalyses, setSystemAnalyses] = useState<
+    SystemAnalysesReturn["system_analyses"]
+  >(Array<SingleAnalysis>());
   const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
     [key: string]: BucketIntervals;
   }>({});
@@ -59,14 +60,18 @@ export function AnalysisDrawer({
           backendClient
             .systemsAnalysesPost({
               system_ids: activeSystemIDs.join(","),
-              // Hardcoded to false. TODO(chihhao) wait for SDK's update
-              pairwise_performance_gap: false,
               feature_to_bucket_info: featureNameToBucketInfoToPost,
             })
-            .then((systemAnalysesReturn) => {
-              clearTimeout(timeoutID);
-              resolve(systemAnalysesReturn);
-            });
+            .then(
+              (
+                singleAnalysis:
+                  | SystemAnalysesReturn
+                  | PromiseLike<SystemAnalysesReturn>
+              ) => {
+                clearTimeout(timeoutID);
+                resolve(singleAnalysis);
+              }
+            );
         }).catch(() => {
           return null;
         });
@@ -74,7 +79,7 @@ export function AnalysisDrawer({
         setPageState(PageState.error);
         return;
       }
-      const { single_analyses: singleAnalyses } = systemAnalysesReturn;
+      const { system_analyses: systemAnalyses } = systemAnalysesReturn;
       /*
       Take from the first element as the task and type/number of metrics should be 
       invariant across sytems in pairwise analysis
@@ -85,7 +90,7 @@ export function AnalysisDrawer({
       const metricToAnalyses = parseFineGrainedResults(
         task,
         activeSystems,
-        singleAnalyses
+        systemAnalyses
       );
 
       const featureNameToBucketInfo: { [key: string]: BucketIntervals } = {};
@@ -97,13 +102,13 @@ export function AnalysisDrawer({
           }
           // Take from the first element as the bucket interval is system-invariant
           const resultFineGrainedParsed = systemAnalysesParsed[feature][0];
-          const { bucketInfo, featureName, bucketIntervals } =
+          const { featureName, bucketIntervals, bucketType } =
             resultFineGrainedParsed;
           /* Hardcode for now as SDK doesn't export the string.
           bucket_attribute_discrete_value seems to be used for categorical features,
           which do not support custom bucket range.
           */
-          if (bucketInfo?.method !== "bucket_attribute_discrete_value") {
+          if (bucketType !== "discrete") {
             featureNameToBucketInfo[featureName] = {
               min: bucketIntervals.min,
               max: bucketIntervals.max,
@@ -115,12 +120,14 @@ export function AnalysisDrawer({
             };
           }
         }
+
         setTask(task);
-        setSingleAnalyses(singleAnalyses);
+        setSystemAnalyses(systemAnalyses);
         setMetricToAnalyses(metricToAnalyses);
         setFeatureNameToBucketInfo(featureNameToBucketInfo);
         setPageState(PageState.success);
         setBucketInfoUpdated(false);
+
         if (activeSystems.length === 1) {
           ReactGA.event({
             category: "Analysis",
@@ -192,7 +199,7 @@ export function AnalysisDrawer({
     setShouldUpdateAnalysis(true);
     setActiveSystemIDs([]);
     setPageState(PageState.loading);
-    setSingleAnalyses({});
+    setSystemAnalyses(Array<SingleAnalysis>());
     setFeatureNameToBucketInfo({});
     setBucketInfoUpdated(false);
   }
@@ -270,11 +277,11 @@ export function AnalysisDrawer({
   */}
       <ErrorBoundary fallbackUI={fallbackUI("unknown")}>
         <Spin spinning={pageState === PageState.loading} tip="Analyzing...">
-          {visible && Object.keys(singleAnalyses).length > 0 && (
+          {visible && Object.keys(systemAnalyses).length > 0 && (
             <AnalysisReport
               task={task}
               systems={activeSystems}
-              singleAnalyses={singleAnalyses}
+              systemAnalyses={systemAnalyses}
               metricToSystemAnalysesParsed={metricToAnalyses}
               featureNameToBucketInfo={featureNameToBucketInfo}
               updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}

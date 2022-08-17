@@ -15,6 +15,7 @@ import { SystemModel } from "../../models";
 import { DeleteOutlined } from "@ant-design/icons";
 import { PrivateIcon } from "..";
 import { generateLeaderboardURL } from "../../utils";
+import { getOverallMap } from "../Analysis/utils";
 const { Text } = Typography;
 
 interface Props {
@@ -45,7 +46,8 @@ export function SystemTableContent({
 }: Props) {
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
-    render: (_, record) => record.system_info.results.overall[metric]?.value,
+    render: (_, record) =>
+      getOverallMap(record.system_info.results.overall)[metric]?.value,
     title: metric,
     width: 100,
     ellipsis: true,
@@ -58,7 +60,7 @@ export function SystemTableContent({
 
   async function deleteSystem(systemID: string) {
     try {
-      await backendClient.systemsSystemIdDelete(systemID);
+      await backendClient.systemsDeleteById(systemID);
       message.success("Success");
       document.location.reload();
     } catch (e) {

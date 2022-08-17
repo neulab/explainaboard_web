@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { BucketCase, Performance } from "../../clients/openapi";
+import { AnalysisCase, Performance } from "../../clients/openapi";
 
 export interface ResultFineGrainedParsed {
   /**
@@ -12,18 +12,20 @@ export interface ResultFineGrainedParsed {
   featureDescription: string;
   // The name of the metric
   metricName: string;
+  // The type of the bucket
+  bucketType: string;
   // bucketNames[i] is name of bucket i
   bucketNames: string[];
   // The intervals of each bucket
   bucketIntervals: BucketIntervals;
-  // Information about how bucketing should be done
-  bucketInfo: SystemInfoFeatureBucketInfo | null;
   // The number of samples in each bucket
   numbersOfSamples: number[];
   // performances[i]: performance (value/confidence) for bucket i
   performances: Performance[];
-  // cases[i][j]: is the ith bucket's jth example
-  cases: BucketCase[][];
+  // levelIdx: is the analysis level that this result belongs to
+  levelIdx: number;
+  // cases[i][j]: is the index of the ith bucket's jth example
+  cases: number[][];
 }
 
 // Examples to be shown in the analysis table when a bar is clicked
@@ -35,7 +37,8 @@ export interface ActiveSystemExamples {
 
   // system-dependent information across systems
   systemIndex: number;
-  bucketOfSamplesList: BucketCase[][];
+  // bucket of analysis cases
+  bucketOfCasesList: AnalysisCase[][];
 }
 
 export interface SystemInfoFeatureBucketInfo {

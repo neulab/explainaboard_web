@@ -19,12 +19,12 @@ class DBCollection:
 class DBUtils:
 
     # Names of DBs or collections
-    SYSTEM_OUTPUT_DB = "system_outputs"
+    SYSTEM_OUTPUT_DB = "system_outputs_v011"
     # DATASET_METADATA = DBCollection(
     #     db_name="metadata", collection_name="dataset_metadata"
     # )
     DEV_SYSTEM_METADATA = DBCollection(
-        db_name="metadata", collection_name="dev_system_metadata"
+        db_name="metadata", collection_name="system_metadata_v011"
     )
 
     @staticmethod
