@@ -62,7 +62,7 @@ export function SystemTableTools({
   async function deleteSystems(systemIDs: string[]) {
     for (const systemID of systemIDs) {
       try {
-        await backendClient.systemsSystemIdDelete(systemID);
+        await backendClient.systemsDeleteById(systemID);
         message.success("Success");
       } catch (e) {
         if (e instanceof Response) {

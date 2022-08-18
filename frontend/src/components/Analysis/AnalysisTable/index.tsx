@@ -1,14 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { message, Table, Tooltip, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
-import { BucketCase, SystemOutput } from "../../../clients/openapi";
+import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
 
 interface Props {
   systemID: string;
   task: string;
-  outputIDs: BucketCase[];
+  cases: AnalysisCase[];
   page: number;
   setPage: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -91,13 +91,13 @@ function specifyDataGeneric(
 
 function specifyDataSeqLab(
   systemOutputs: SystemOutput[],
-  outputIDs: BucketCase[],
+  cases: AnalysisCase[],
   columns: ColumnsType<SystemOutput>
 ): { [key: string]: string }[] {
   const dataSource: { [key: string]: string }[] = [];
 
   // This is a feature defined over individual entities
-  if ("token_span" in outputIDs[0]) {
+  if ("token_span" in cases[0]) {
     const col_info = [
       { id: "span", name: "Span Text" },
       { id: "true_label", name: "True Label" },
@@ -109,9 +109,9 @@ function specifyDataSeqLab(
 
     for (let i = 0; i < systemOutputs.length; i++) {
       // Get the outputs from the bucket case
-      const origToks = systemOutputs[i][outputIDs[i]["orig_str"]];
+      const origToks = systemOutputs[i][cases[i]["orig_str"]];
       let sentence = origToks;
-      const pos = outputIDs[i]["token_span"];
+      const pos = cases[i]["token_span"];
       if (Array.isArray(origToks)) {
         const copiedToks = origToks.map((x: string) => `${x} `);
         const prefix = copiedToks.slice(0, pos[0]).join(" ");
@@ -126,15 +126,12 @@ function specifyDataSeqLab(
       const spanPos =
         pos[0] === pos[1] - 1 ? `${pos[0]}` : `${pos[0]}:${pos[1]}`;
       const dataRow = {
-        span: outputIDs[i]["text"],
-        true_label: outputIDs[i]["true_label"],
-        pred_label: outputIDs[i]["predicted_label"],
+        span: cases[i]["text"],
+        true_label: cases[i]["true_label"],
+        pred_label: cases[i]["predicted_label"],
         sentence: sentence,
-        id: `${outputIDs[i]["sample_id"]}[${spanPos}]`,
+        id: `${cases[i]["sample_id"]}[${spanPos}]`,
       };
-      console.log(systemOutputs[i]);
-      console.log(outputIDs[i]);
-      console.log(dataRow);
       dataSource.push(dataRow);
     }
   }
@@ -150,7 +147,7 @@ function specifyDataSeqLab(
       const sentence = Array.isArray(origToks) ? origToks.join(" ") : origToks;
       const dataRow = {
         sentence: sentence,
-        id: outputIDs[i]["sample_id"],
+        id: cases[i]["sample_id"],
       };
       dataSource.push(dataRow);
     }
@@ -159,20 +156,14 @@ function specifyDataSeqLab(
   return dataSource;
 }
 
-export function AnalysisTable({
-  systemID,
-  task,
-  outputIDs,
-  page,
-  setPage,
-}: Props) {
+export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
-  const total = outputIDs.length;
+  const total = cases.length;
   const offset = page * pageSize;
-  const end = Math.min(offset + pageSize, outputIDs.length);
-  const outputIDString = outputIDs
+  const end = Math.min(offset + pageSize, cases.length);
+  const outputIDString = cases
     .slice(offset, end)
     .map(function (x) {
       return x["sample_id"];
@@ -184,7 +175,7 @@ export function AnalysisTable({
     async function refreshSystemOutputs() {
       setPageState(PageState.loading);
       try {
-        const result = await backendClient.systemsSystemIdOutputsGet(
+        const result = await backendClient.systemOutputsGetById(
           systemID,
           outputIDString
         );
@@ -239,7 +230,7 @@ export function AnalysisTable({
   let dataSource: { [p: string]: string }[];
   let colInfo;
   if (seqLabTasks.includes(task)) {
-    dataSource = specifyDataSeqLab(systemOutputs, outputIDs, columns);
+    dataSource = specifyDataSeqLab(systemOutputs, cases, columns);
   } else if (condgenTasks.includes(task)) {
     colInfo = [
       { id: "source", name: "Source", maxWidth: "500px" },

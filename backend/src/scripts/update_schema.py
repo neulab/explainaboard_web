@@ -39,9 +39,10 @@ def main():
         entries, total = DBUtils.find(DBUtils.DEV_SYSTEM_METADATA, limit=0)
         for entry in entries:
             new_entry = modify_entry(entry)
-            # print(new_entry)
             if args.actually_update:
                 DBUtils.replace_one_by_id(DBUtils.DEV_SYSTEM_METADATA, new_entry)
+            else:
+                print(new_entry)
 
 
 if __name__ == "__main__":

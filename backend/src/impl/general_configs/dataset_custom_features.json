@@ -1,11 +1,4 @@
 {
-  "sst2": {
-    "true_label": {
-      "dtype": "string",
-      "description": "the true label",
-      "num_buckets": 10
-    }
-  },
   "sumeval2022": {
       "overall_setting": {
         "dtype": "string",

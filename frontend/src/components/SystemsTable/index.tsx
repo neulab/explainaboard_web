@@ -3,7 +3,7 @@ import "./index.css";
 import { message, Space } from "antd";
 import { SystemSubmitDrawer, AnalysisDrawer } from "../../components";
 import { backendClient, parseBackendError } from "../../clients";
-import { SystemModel, newSystemModel } from "../../models/SystemModel";
+import { SystemModel, newSystemModel } from "../../models";
 import { Filter, SystemTableTools } from "./SystemTableTools";
 import { SystemTableContent } from "./SystemTableContent";
 import { findTask, PageState } from "../../utils";
@@ -60,9 +60,9 @@ export function SystemsTable({
   function getMetricsNames() {
     const metricNames = new Set<string>();
     for (const sys of systems) {
-      Object.keys(sys.system_info.results.overall).forEach((name) =>
-        metricNames.add(name)
-      );
+      for (const resultsLevel of sys.system_info.results.overall) {
+        resultsLevel.forEach((name) => metricNames.add(name.metric_name));
+      }
     }
     // if a task is selected, add all supported metrics to the options list
     if (taskFilter) {

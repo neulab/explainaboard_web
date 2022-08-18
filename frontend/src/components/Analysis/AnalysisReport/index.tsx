@@ -4,16 +4,16 @@ import {
   ResultFineGrainedParsed,
   BucketIntervals,
 } from "../types";
-import { compareBucketOfSamples } from "../utils";
+import { compareBucketOfCases, getOverallMap } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
 import { Row, Col, Typography, Space, Tabs, List, Avatar } from "antd";
 import { SystemModel } from "../../../models";
 import {
-  BucketCase,
   SystemAnalysesReturn,
   Performance,
-} from "../../../clients/openapi";
+} from "../../../clients/openapi/api";
 import { BucketSlider } from "../BucketSlider";
+import { backendClient } from "../../../clients";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -21,7 +21,7 @@ const { TabPane } = Tabs;
 interface Props {
   task: string;
   systems: SystemModel[];
-  singleAnalyses: SystemAnalysesReturn["single_analyses"];
+  systemAnalyses: SystemAnalysesReturn["system_analyses"];
   significanceTestInfo: SystemAnalysesReturn["significance_test_info"];
   metricToSystemAnalysesParsed: {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
@@ -88,17 +88,14 @@ function createOverallBarChart(
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
   // The metric names that exist in overall results
-  const activeMetricNames: string[] = Object.keys(
-    systems[0].system_info.results.overall
-  );
   for (const system of systems) {
-    const overallResults = system.system_info.results.overall;
+    const overallMap = getOverallMap(system.system_info.results.overall);
     const metricPerformance = [];
     const metricConfidence = [];
     const metricNumberOfSamples = [];
-    for (const metricName of activeMetricNames) {
-      if (metricName in overallResults) {
-        const metricResults = overallResults[metricName];
+    for (const metricName of metricNames) {
+      if (metricName in overallMap) {
+        const metricResults = overallMap[metricName];
         metricPerformance.push(metricResults.value);
         metricConfidence.push(unwrapConfidence(metricResults));
       } else {
@@ -119,7 +116,7 @@ function createOverallBarChart(
       <BarChart
         title="Overall Performance"
         seriesNames={systemNames}
-        xAxisData={activeMetricNames}
+        xAxisData={metricNames}
         seriesDataList={resultsValues}
         seriesLabelsList={resultsValues}
         confidenceScoresList={resultsConfidenceScores}
@@ -191,15 +188,13 @@ function createExampleTable(
   }
 
   const { task, systems } = props;
-  const { title, barIndex, systemIndex, bucketOfSamplesList } =
+  const { title, barIndex, systemIndex, bucketOfCasesList } =
     activeSystemExamples;
 
   // Sort bucket of samples for every system
-  const sortedBucketOfSamplesList = bucketOfSamplesList.map(
-    (bucketOfSamples) => {
-      return bucketOfSamples.sort(compareBucketOfSamples);
-    }
-  );
+  const sortedBucketOfCasesList = bucketOfCasesList.map((bucketOfCases) => {
+    return bucketOfCases.sort(compareBucketOfCases);
+  });
 
   // single analysis
   if (systems.length === 1) {
@@ -207,7 +202,7 @@ function createExampleTable(
       <AnalysisTable
         systemID={systems[0].system_id}
         task={task}
-        outputIDs={sortedBucketOfSamplesList[0]}
+        cases={sortedBucketOfCasesList[0]}
         page={page}
         setPage={setPage}
       />
@@ -231,7 +226,7 @@ function createExampleTable(
                 <AnalysisTable
                   systemID={system.system_id}
                   task={task}
-                  outputIDs={sortedBucketOfSamplesList[sysIndex]}
+                  cases={sortedBucketOfCasesList[sysIndex]}
                   page={page}
                   setPage={setPage}
                 />
@@ -310,10 +305,12 @@ function createFineGrainedBarChart(
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
-  const resultsBucketsOfSamples: BucketCase[][][] = [];
+  const resultsBucketsOfSamples: Array<[number, number[]]>[] = [];
   for (const result of results) {
     resultsNumbersOfSamples.push(result.numbersOfSamples);
-    resultsBucketsOfSamples.push(result.cases);
+    resultsBucketsOfSamples.push(
+      result.cases.map((myCases) => [result.levelIdx, myCases])
+    );
     resultsValues.push(result.performances.map((perf) => perf.value));
     resultsConfidenceScores.push(
       result.performances.map((perf) => unwrapConfidence(perf))
@@ -330,18 +327,31 @@ function createFineGrainedBarChart(
         seriesLabelsList={resultsValues}
         numbersOfSamplesList={resultsNumbersOfSamples}
         confidenceScoresList={resultsConfidenceScores}
-        onBarClick={(barIndex: number, systemIndex: number) => {
+        onBarClick={async (barIndex: number, systemIndex: number) => {
           // Get examples of a certain bucket from all systems
           const bucketOfSamplesList = resultsBucketsOfSamples.map(
             (bucketsOfSamples) => {
               return bucketsOfSamples[barIndex];
             }
           );
+          const bucketOfCasesPromiseList = bucketOfSamplesList.map(
+            (bucketOfSamples, i) => {
+              const caseIds = bucketOfSamples[1].join(",");
+              return backendClient.systemCasesGetById(
+                systems[i].system_id,
+                bucketOfSamples[0],
+                caseIds
+              );
+            }
+          );
+          const bucketOfCasesList = (
+            await Promise.all(bucketOfCasesPromiseList)
+          ).map((x) => x.analysis_cases);
           setActiveSystemExamples({
             title,
             barIndex,
             systemIndex,
-            bucketOfSamplesList,
+            bucketOfCasesList,
           });
           // reset page number
           setPage(0);
