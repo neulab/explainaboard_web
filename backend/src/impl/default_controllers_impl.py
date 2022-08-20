@@ -352,7 +352,7 @@ def system_cases_get_by_id(
     return analysis_case_return
 
 
-def systems_system_id_delete(system_id: str):
+def systems_delete_by_id(system_id: str):
     success = SystemDBUtils.delete_system_by_id(system_id)
     if success:
         return "Success"
