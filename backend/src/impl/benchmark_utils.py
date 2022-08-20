@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
+from explainaboard.utils.typing_utils import unwrap
 from explainaboard_web.impl.constants import ALL_LANG, LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -182,9 +183,10 @@ class BenchmarkUtils:
 
         # --- Create the actual data
         for sys_name, sys_infos in system_dataset_results.items():
-            for dataset_config, dataset_metadata, sys_info in zip(
+            for dataset_config, dataset_metadata, sys_info_tmp in zip(
                 dataset_configs, dataset_metadatas, sys_infos
             ):
+                sys_info = unwrap(sys_info_tmp)
                 column_dict = dict(dataset_config)
                 column_dict["system_name"] = sys_name
                 dataset_metrics: list[BenchmarkMetric] = dataset_config.get(
@@ -355,6 +357,16 @@ class BenchmarkUtils:
             BenchmarkUtils._col_name(elem_names, x) for _, x in input_df.iterrows()
         ]
         column_idx = sorted(list(set(row_col_names)))
+        # Terminate on empty data
+        if len(system_idx) == 0 or len(column_idx) == 0:
+            return BenchmarkTableData(
+                name=view_name,
+                system_names=[],
+                column_names=[],
+                scores=[[]],
+                plot_y_values=[],
+                plot_x_values=[],
+            )
         scores = pd.DataFrame(
             {k: [0.0 for _ in system_idx] for k in column_idx}, index=system_idx
         )
