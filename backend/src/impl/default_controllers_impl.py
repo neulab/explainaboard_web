@@ -128,7 +128,7 @@ def datasets_get(
 """ /benchmarks """
 
 
-def benchmarkconfigs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
+def benchmark_configs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
     scriptpath = os.path.dirname(__file__)
     config_folder = os.path.join(scriptpath, "./benchmark_configs/")
     # Add benchmarks to here if they should be displayed on the page.
@@ -156,9 +156,7 @@ def benchmarkconfigs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
     return benchmark_configs
 
 
-def benchmark_benchmark_idby_creator_get(
-    benchmark_id: str, by_creator: bool
-) -> Benchmark:
+def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
     config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
     if config.type == "abstract":
         return Benchmark(config, None, None)
