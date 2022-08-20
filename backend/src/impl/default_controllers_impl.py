@@ -207,7 +207,7 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
 """ /systems """
 
 
-def systems_system_id_get(system_id: str) -> System:
+def systems_get_by_id(system_id: str) -> System:
     return SystemDBUtils.find_system_by_id(system_id)
 
 
