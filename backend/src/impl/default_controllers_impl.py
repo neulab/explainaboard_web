@@ -18,7 +18,9 @@ from explainaboard.processors.processor_registry import get_metric_list_for_proc
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard.utils.typing_utils import narrow
-from explainaboard_web.impl.analyses.significance_analysis import significance_test
+from explainaboard_web.impl.analyses.significance_analysis import (
+    pairwise_significance_test,
+)
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -393,7 +395,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         return SystemAnalysesReturn(system_analyses)
 
     # performance significance test if there are two systems
-    sig_info = {}
+    sig_info = []
     if len(systems) == 2:
 
         system1_info: SystemInfo = systems[0].system_info
@@ -411,7 +413,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             MetricStats(stat) for stat in systems[1].metric_stats[0]
         ]
 
-        sig_info = significance_test(
+        sig_info = pairwise_significance_test(
             system1_output_info,
             system2_output_info,
             system1_metric_stats,

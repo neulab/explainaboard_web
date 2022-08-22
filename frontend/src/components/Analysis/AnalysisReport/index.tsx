@@ -135,22 +135,14 @@ function createOverallBarChart(
 function getSignificanceTestScore(props: Props) {
   const { significanceTestInfo } = props;
 
-  const sig_infos = [];
-  for (const value in significanceTestInfo) {
-    sig_infos.push({
-      metric_name: value,
-      description: significanceTestInfo[value]["description"],
-    });
-  }
-
-  if (sig_infos.length !== 0) {
+  if (significanceTestInfo !== undefined && significanceTestInfo?.length > 0) {
     return (
       <Typography.Title level={4}>
         <Typography.Title level={4}>Significance Test </Typography.Title>
         <Typography.Title level={4}> </Typography.Title>
         <List
           itemLayout="horizontal"
-          dataSource={sig_infos}
+          dataSource={significanceTestInfo}
           renderItem={(item) => (
             <List.Item>
               <List.Item.Meta
@@ -159,7 +151,7 @@ function getSignificanceTestScore(props: Props) {
                 }
                 title={
                   <a href="https://github.com/neulab/ExplainaBoard/tree/main/explainaboard/metrics">
-                    {item.metric_name}
+                    {item.metric_name} ({item.method})
                   </a>
                 }
                 description={item.description}

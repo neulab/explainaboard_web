@@ -9,6 +9,7 @@ import {
   SingleAnalysis,
   SystemAnalysesReturn,
   SystemsAnalysesBody,
+  SignificanceTestInfo,
 } from "../../../clients/openapi";
 import { parseFineGrainedResults, valuesToIntervals } from "../utils";
 import { ResultFineGrainedParsed, BucketIntervals } from "../types";
@@ -35,9 +36,9 @@ export function AnalysisDrawer({
   const [systemAnalyses, setSystemAnalyses] = useState<
     SystemAnalysesReturn["system_analyses"]
   >(Array<SingleAnalysis>());
-  const [significanceTestInfo, setSignificanceTestInfo] = useState<
+  const [significanceTestInfos, setSignificanceTestInfos] = useState<
     SystemAnalysesReturn["significance_test_info"]
-  >({});
+  >(Array<SignificanceTestInfo>());
   const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
     [key: string]: BucketIntervals;
   }>({});
@@ -84,7 +85,7 @@ export function AnalysisDrawer({
       }
       const {
         system_analyses: systemAnalyses,
-        significance_test_info: significanceTestInfo,
+        significance_test_info: significanceTestInfos,
       } = systemAnalysesReturn;
       /*
       Take from the first element as the task and type/number of metrics should be 
@@ -129,7 +130,7 @@ export function AnalysisDrawer({
 
         setTask(task);
         setSystemAnalyses(systemAnalyses);
-        setSignificanceTestInfo(significanceTestInfo);
+        setSignificanceTestInfos(significanceTestInfos);
         setMetricToAnalyses(metricToAnalyses);
         setFeatureNameToBucketInfo(featureNameToBucketInfo);
         setPageState(PageState.success);
@@ -207,7 +208,7 @@ export function AnalysisDrawer({
     setActiveSystemIDs([]);
     setPageState(PageState.loading);
     setSystemAnalyses(Array<SingleAnalysis>());
-    setSignificanceTestInfo({});
+    setSignificanceTestInfos(Array<SignificanceTestInfo>());
 
     setFeatureNameToBucketInfo({});
     setBucketInfoUpdated(false);
@@ -291,7 +292,7 @@ export function AnalysisDrawer({
               task={task}
               systems={activeSystems}
               systemAnalyses={systemAnalyses}
-              significanceTestInfo={significanceTestInfo}
+              significanceTestInfo={significanceTestInfos}
               metricToSystemAnalysesParsed={metricToAnalyses}
               featureNameToBucketInfo={featureNameToBucketInfo}
               updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
