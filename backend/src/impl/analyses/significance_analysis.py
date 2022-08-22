@@ -40,10 +40,10 @@ def significance_test(
     metric_funcs = []
     sig_info = {}
 
-    for config in unwrap(sys1_info.metric_configs):
+    for config in unwrap(sys1_info.analysis_levels[0].metric_configs):
         sys1_metric_names.append(config.name)
         metric_funcs.append(config.to_metric())
-    for config in unwrap(sys2_info.metric_configs):
+    for config in unwrap(sys2_info.analysis_levels[0].metric_configs):
         sys2_metric_names.append(config.name)
 
     # metric validation
@@ -98,13 +98,16 @@ def significance_test(
         for i in range(len(wins)):
             wins[i] = wins[i] * 1.0 / n_samples
         description = (
-            f"{sys1_name} is superior to {sys2_name} with p-value: "
-            f"{format(1 - wins[0],'.4f')}"
-            if wins[0] > wins[1]
-            else f"{sys2_name} is superior to {sys1_name}  with "
-            f"p-value: {format(1 - wins[1],'.4f')}"
-        ) + " (Note that p < 0.05 represents statistical significance)"
-
+            (
+                f"{sys1_name} is superior to {sys2_name} with p-value: "
+                f"{format(1 - wins[0],'.4f')}"
+                if wins[0] > wins[1]
+                else f"{sys2_name} is superior to {sys1_name}  with "
+                f"p-value: {format(1 - wins[1],'.4f')}"
+            )
+            + " (Note that p < 0.05 represents statistical significance."
+            " Here we use the bootstrapped resampling method, where n_samples = 1000)"
+        )
         # Save relevant information
         sig_info[metric_name] = {
             "win_ratio": {sys1_name: wins[0], sys2_name: wins[1]},

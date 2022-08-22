@@ -35,7 +35,7 @@ export function AnalysisDrawer({
   const [systemAnalyses, setSystemAnalyses] = useState<
     SystemAnalysesReturn["system_analyses"]
   >(Array<SingleAnalysis>());
-    const [significanceTestInfo, setSignificanceTestInfo] = useState<
+  const [significanceTestInfo, setSignificanceTestInfo] = useState<
     SystemAnalysesReturn["significance_test_info"]
   >({});
   const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
