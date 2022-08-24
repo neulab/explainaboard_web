@@ -6,7 +6,7 @@ import {
 } from "../types";
 import { compareBucketOfCases, getOverallMap } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
-import { Row, Col, Typography, Space, Tabs } from "antd";
+import { Row, Col, Typography, Space, Tabs, List, Avatar } from "antd";
 import { SystemModel } from "../../../models";
 import {
   SystemAnalysesReturn,
@@ -22,6 +22,7 @@ interface Props {
   task: string;
   systems: SystemModel[];
   systemAnalyses: SystemAnalysesReturn["system_analyses"];
+  significanceTestInfo: SystemAnalysesReturn["significance_test_info"];
   metricToSystemAnalysesParsed: {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
@@ -129,6 +130,38 @@ function createOverallBarChart(
       />
     </Col>
   );
+}
+
+function getSignificanceTestScore(props: Props) {
+  const { significanceTestInfo } = props;
+
+  if (significanceTestInfo !== undefined && significanceTestInfo?.length > 0) {
+    return (
+      <Typography.Title level={4}>
+        <Typography.Title level={4}>Significance Test </Typography.Title>
+        <Typography.Title level={4}> </Typography.Title>
+        <List
+          itemLayout="horizontal"
+          dataSource={significanceTestInfo}
+          renderItem={(item) => (
+            <List.Item>
+              <List.Item.Meta
+                avatar={
+                  <Avatar src="https://explainaboard.s3.amazonaws.com/logo/task.png" />
+                }
+                title={
+                  <a href="https://github.com/neulab/ExplainaBoard/tree/main/explainaboard/metrics">
+                    {item.metric_name} ({item.method_description})
+                  </a>
+                }
+                description={item.result_description}
+              />
+            </List.Item>
+          )}
+        />
+      </Typography.Title>
+    );
+  }
 }
 
 function createExampleTable(
@@ -380,7 +413,6 @@ export function AnalysisReport(props: Props) {
 
   // Get column span, must be a factor of 24 since Ant divides a design area into 24 sections
   const colSpan = getColSpan(props);
-
   const overallBarChart = createOverallBarChart(
     props,
     colSpan,
@@ -388,10 +420,12 @@ export function AnalysisReport(props: Props) {
     setActiveSystemExamples,
     setPage
   );
-
+  const significanceInfo = getSignificanceTestScore(props);
   return (
     <div>
       {overallBarChart}
+
+      {significanceInfo}
 
       <Typography.Title level={4}>Fine-grained Performance</Typography.Title>
 

@@ -18,6 +18,9 @@ from explainaboard.processors.processor_registry import get_metric_list_for_proc
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard.utils.typing_utils import narrow
+from explainaboard_web.impl.analyses.significance_analysis import (
+    pairwise_significance_test,
+)
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -391,6 +394,32 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     if systems_len == 0:
         return SystemAnalysesReturn(system_analyses)
 
+    # performance significance test if there are two systems
+    sig_info = []
+    if len(systems) == 2:
+
+        system1_info: SystemInfo = systems[0].system_info
+        system1_info_dict = general_to_dict(system1_info)
+        system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
+
+        system1_metric_stats: MetricStats = [
+            MetricStats(stat) for stat in systems[0].metric_stats[0]
+        ]
+
+        system2_info: SystemInfo = systems[1].system_info
+        system2_info_dict = general_to_dict(system2_info)
+        system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
+        system2_metric_stats: MetricStats = [
+            MetricStats(stat) for stat in systems[1].metric_stats[0]
+        ]
+
+        sig_info = pairwise_significance_test(
+            system1_output_info,
+            system2_output_info,
+            system1_metric_stats,
+            system2_metric_stats,
+        )
+
     for system in systems:
         system_info: SystemInfo = system.system_info
         system_info_dict = general_to_dict(system_info)
@@ -423,4 +452,4 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         single_analysis = SingleAnalysis(analysis_results=processor_result)
         system_analyses.append(single_analysis)
 
-    return SystemAnalysesReturn(system_analyses)
+    return SystemAnalysesReturn(system_analyses, sig_info)

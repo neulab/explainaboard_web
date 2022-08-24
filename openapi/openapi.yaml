@@ -1084,6 +1084,8 @@ components:
             $ref: "#/components/schemas/AnalysisResult"
       required: [analysis_results]
 
+
+
     SystemAnalysesReturn:
       type: object
       properties:
@@ -1091,7 +1093,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SingleAnalysis"
+        significance_test_info:
+          type: array
+          items:
+            $ref: "#/components/schemas/SignificanceTestInfo"
       required: [system_analyses]
+
 
     Performance:
       type: object
@@ -1205,6 +1212,24 @@ components:
           items:
             type: string
       required: [name, views]
+
+    SignificanceTestInfo:
+      type: object
+      properties:
+        metric_name:
+          type: string
+          description: the name of evaluation metric
+        result_description:
+          type: string
+        method_description:
+          type: string
+        test_name:
+          type: string
+          description: the name of the test
+        test_data:
+          type: object
+          description: fine-grained data regarding the test
+
 
     BenchmarkTableData:
       type: object
