@@ -1218,10 +1218,18 @@ components:
       properties:
         metric_name:
           type: string
-        description:
+          description: the name of evaluation metric
+        result_description:
           type: string
-        method:
+        method_description:
           type: string
+        test_name:
+          type: string
+          description: the name of the test
+        test_data:
+          type: object
+          description: fine-grained data regarding the test
+
 
     BenchmarkTableData:
       type: object

@@ -151,10 +151,10 @@ function getSignificanceTestScore(props: Props) {
                 }
                 title={
                   <a href="https://github.com/neulab/ExplainaBoard/tree/main/explainaboard/metrics">
-                    {item.metric_name} ({item.method})
+                    {item.metric_name} ({item.method_description})
                   </a>
                 }
-                description={item.description}
+                description={item.result_description}
               />
             </List.Item>
           )}

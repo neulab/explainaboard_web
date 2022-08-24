@@ -2,6 +2,7 @@ import numpy as np
 from explainaboard.info import SysOutputInfo
 from explainaboard.metrics.metric import MetricStats
 from explainaboard.utils.typing_utils import unwrap
+from explainaboard_web.models import SignificanceTestInfo
 
 
 def pairwise_significance_test(
@@ -92,17 +93,28 @@ def pairwise_significance_test(
             + " (Note that p < 0.05 is often used as a threshold for "
             "statistical significance.)"
         )
+        test_name = "pairwise_bootstrap"
+        test_data = {
+            "system1_name": sys1_name,
+            "system2_name": sys2_name,
+            "system1_win_count": wins[0],
+            "system2_win_count": wins[1],
+            "tie_count": wins[2],
+            "n_samples": n_samples,
+            "prop_samples": prop_samples,
+        }
 
         sig_info.append(
-            {
-                "metric_name": metric_name,
-                "win_ratio": {sys1_name: wins[0], sys2_name: wins[1]},
-                "description": description,
-                "method": "Bootstrapping method with sampling rate: "
+            SignificanceTestInfo(
+                metric_name=metric_name,
+                result_description=description,
+                method_description="Bootstrapping method with sampling rate: "
                 + str(prop_samples)
                 + ", and sample size: "
                 + str(n_samples),
-            }
+                test_name=test_name,
+                test_data=test_data,
+            )
         )
 
     return sig_info
