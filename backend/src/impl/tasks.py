@@ -170,6 +170,19 @@ https://github.com/neulab/ExplainaBoard/blob/main/docs/task_text_pair_classifica
         ],
     ),
     TaskCategory(
+        "information-extraction",
+        "extracting structured knowledge from unstructured text",
+        [
+            Task(
+                name=TaskType.argument_pair_extraction,
+                description="""
+This task aim to detect the argument pairs from each passage pair
+of review and rebuttal.
+""",
+            ),
+        ],
+    ),
+    TaskCategory(
         "kg-prediction",
         "predicting the tail entity of missing links in knowledge graphs",
         [
