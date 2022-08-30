@@ -3,6 +3,7 @@ import os
 from explainaboard_web.impl.config import ProductionConfig, StagingConfig, LocalDevelopmentConfig
 from {{packageName}} import encoder
 
+
 # Custom Middleware for CORS headers
 # reference: https://github.com/zalando/connexion/issues/357
 class CorsHeaderMiddleware(object):
@@ -16,13 +17,14 @@ class CorsHeaderMiddleware(object):
 
         return self.app(environ, custom_start_response)
 
-def main():
+
+def create_app():
     app = connexion.App(__name__, specification_dir='./swagger/')
     app.app.json_encoder = encoder.JSONEncoder
     app.add_api('swagger.yaml', arguments={'title': '{{appName}}'},
                     pythonic_params=True, validate_responses=True)
     app.app.wsgi_app = CorsHeaderMiddleware(app.app.wsgi_app)
-   
+
     FLASK_ENV = os.getenv('FLASK_ENV')
     if FLASK_ENV == 'production':
         app.app.config.from_object(ProductionConfig())
@@ -30,9 +32,9 @@ def main():
         app.app.config.from_object(LocalDevelopmentConfig())
     elif FLASK_ENV == 'staging':
         app.app.config.from_object(StagingConfig())
-    
-    app.run(port={{serverPort}})
+
+    return app
 
 
 if __name__ == '__main__':
-    main()
+    create_app().run(port={{serverPort}})
