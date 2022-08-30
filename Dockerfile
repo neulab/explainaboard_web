@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y default-jre wget
 RUN mkdir ./frontend
 COPY ./frontend/package.json ./frontend/package-lock.json ./frontend/
 WORKDIR /app/frontend
-RUN npm install -g npm@latest
+RUN npm install -g npm@8.5.4
 RUN npm install
 
 WORKDIR /app
