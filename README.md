@@ -8,7 +8,8 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
 ## Quick Start
 
-> This step-by-step guide assumes a Linux environment. A MacOS environment will likely work similarly.
+> This step-by-step guide assumes a Linux environment. A MacOS environment will likely work similarly. For Windows users, the easiest way is to 
+> use a subsystem, for example [WSL](https://docs.microsoft.com/en-us/windows/wsl/about) (pre-installed since Windows 10).
 1. Install `node` and `npm`
     - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use nvm to manage node versions.
     Run `nvm install-latest-npm` to get the latest version of npm.
@@ -20,22 +21,24 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
     >> npm --version
     >> 7.24.1
     ```
+
+2. Make sure `java` is installed correctly in your environment. Verify this by running `java --version`.
        
-2. Generate code for API layer
+3. Generate code for API layer
    - Run `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever open API definition changes.
 
-3.  Setup dev environment for the frontend
+4.  Setup dev environment for the frontend
     1. Install project dependencies `npm install`
     2. Install frontend dependencies `npm --prefix frontend install`
         - Check the FAQ section if `npm` said there are vulnerabilities to verify if they are false alarms.
-4.  Setup dev environment for the backend
+5.  Setup dev environment for the backend
     1. Install `python` version >= 3.9.7 and create a venv or conda environment for this project
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
     2. `pip install -r backend/src/gen/requirements.txt`
-    3. Create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`.
-5. Install pre-commit hooks
+    3. Create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`. Contact the dev team to get the credentials for dev and prod environments.
+6. Install pre-commit hooks
    - Run `npm run prepare` to install the pre-commit hook via husky. The hook auto-checks both frontend and backend code before commits. Please do not skip it.
-6. Launch explainaboard
+7. Launch explainaboard
     1. Run `npm run start` to start the frontend and backend server concurrently.
         - Both frontend and backend can be started independently as well. Check out "More details on frontend and backend".
 
