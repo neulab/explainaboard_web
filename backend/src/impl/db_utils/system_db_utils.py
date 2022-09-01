@@ -356,12 +356,13 @@ class SystemDBUtils:
 
         try:
             # -- find the dataset and grab custom features if they exist
-            dataset_info = DatasetDBUtils.find_dataset_by_id(system.dataset.dataset_id)
-            dataset_custom_features: dict = (
-                dict(dataset_info.custom_features)
-                if dataset_info and dataset_info.custom_features
-                else {}
-            )
+            dataset_custom_features = {}
+            if system.dataset:
+                dataset_info = DatasetDBUtils.find_dataset_by_id(
+                    system.dataset.dataset_id
+                )
+                if dataset_info and dataset_info.custom_features:
+                    dataset_custom_features = dict(dataset_info.custom_features)
 
             # -- load the system output into memory from the uploaded file(s)
             system_output_data = SystemDBUtils._load_sys_output(
