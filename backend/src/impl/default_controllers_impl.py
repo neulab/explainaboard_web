@@ -14,7 +14,6 @@ from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import MetricStats
-from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard.utils.typing_utils import narrow
@@ -90,7 +89,7 @@ def tasks_get() -> list[TaskCategory]:
             loader_class = get_loader_class(_task.name)
             supported_formats = loader_class.supported_file_types()
             supported_metrics = [
-                metric.name for metric in get_metric_list_for_processor(_task.name)
+                metric.name for metric in get_processor(_task.name).full_metric_list()
             ]
             tasks.append(
                 Task(
