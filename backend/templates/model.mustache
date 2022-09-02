@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from __future__ import absolute_import
+from __future__ import absolute_import, annotations
 from datetime import date, datetime  # noqa: F401
 
 from typing import List, Dict  # noqa: F401
@@ -64,7 +64,7 @@ class {{classname}}(Model):
 
 {{/@first}}
     @property
-    def {{name}}(self){{^supportPython2}} -> {{datatype}}{{/supportPython2}}:
+    def {{name}}(self){{^supportPython2}} -> {{datatype}}{{^required}} | None{{/required}}{{/supportPython2}}:
         """Gets the {{name}} of this {{classname}}.
 
         {{#description}}
@@ -77,7 +77,7 @@ class {{classname}}(Model):
         return self._{{name}}
 
     @{{name}}.setter
-    def {{name}}(self, {{name}}{{^supportPython2}}: {{datatype}}{{/supportPython2}}):
+    def {{name}}(self, {{name}}{{^supportPython2}}: {{datatype}}{{^required}} | None{{/required}}{{/supportPython2}}):
         """Sets the {{name}} of this {{classname}}.
 
         {{#description}}
