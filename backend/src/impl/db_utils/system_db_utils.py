@@ -9,10 +9,9 @@ from types import FunctionType
 from typing import Any, Optional
 
 from bson import ObjectId
-from explainaboard import DatalabLoaderOption, FileType, Source, TaskType, get_processor
+from explainaboard import DatalabLoaderOption, FileType, Source, get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.loaders.loader_registry import get_loader_class
-from explainaboard.processors.processor_registry import get_metric_list_for_processor
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -289,7 +288,7 @@ class SystemDBUtils:
         processor = get_processor(metadata.task)
         metrics_lookup = {
             metric.name: metric
-            for metric in get_metric_list_for_processor(TaskType(metadata.task))
+            for metric in get_processor(metadata.task).full_metric_list()
         }
         metric_configs = []
         for metric_name in metadata.metric_names:
