@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 import json
-import os
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -73,16 +72,6 @@ class DatasetDBUtils:
             datetime.now() - unwrap(DatasetDBUtils._cached_time)
             > DatasetDBUtils._cached_lifetime
         ):
-            # Load the custom features
-            scriptpath = os.path.dirname(__file__)
-            json_path = os.path.join(
-                scriptpath,
-                os.path.pardir,
-                "general_configs",
-                "dataset_custom_features.json",
-            )
-            with open(json_path, "r") as fin:
-                custom_features = json.load(fin)
             # Load the dataset db
             local_path = cache_online_file(
                 DatasetDBUtils.online_path,
@@ -96,9 +85,6 @@ class DatasetDBUtils:
                     for k, v in data.items():
                         # skip 'ERROR' or 'SKIPPED' entries
                         if isinstance(v, dict) and len(v) > 0:
-                            v["custom_features"] = custom_features.get(
-                                v["dataset_name"]
-                            )
                             datasets[k] = v
             # Create the DB
             DatasetDBUtils._cached_db = DatasetDB(data=datasets)
