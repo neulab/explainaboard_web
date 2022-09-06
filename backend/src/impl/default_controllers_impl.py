@@ -408,7 +408,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system2_info: SystemInfo = systems[1].system_info
         system2_info_dict = general_to_dict(system2_info)
         system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
-        system2_metric_stats: SimpleMetricStats = [
+        system2_metric_stats: list[SimpleMetricStats] = [
             SimpleMetricStats(stat) for stat in systems[1].metric_stats[0]
         ]
 
