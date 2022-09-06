@@ -13,7 +13,7 @@ from explainaboard import DatalabLoaderOption, TaskType, get_processor
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
-from explainaboard.metrics.metric import MetricStats
+from explainaboard.metrics.metric import SimpleMetricStats
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard.utils.typing_utils import narrow
@@ -401,15 +401,15 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system1_info_dict = general_to_dict(system1_info)
         system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
 
-        system1_metric_stats: MetricStats = [
-            MetricStats(stat) for stat in systems[0].metric_stats[0]
+        system1_metric_stats: list[SimpleMetricStats] = [
+            SimpleMetricStats(stat) for stat in systems[0].metric_stats[0]
         ]
 
         system2_info: SystemInfo = systems[1].system_info
         system2_info_dict = general_to_dict(system2_info)
         system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
-        system2_metric_stats: MetricStats = [
-            MetricStats(stat) for stat in systems[1].metric_stats[0]
+        system2_metric_stats: list[SimpleMetricStats] = [
+            SimpleMetricStats(stat) for stat in systems[1].metric_stats[0]
         ]
 
         sig_info = pairwise_significance_test(
@@ -429,7 +429,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
         processor = get_processor(TaskType(system_output_info.task_name))
-        metric_stats = [[MetricStats(y) for y in x] for x in system.metric_stats]
+        metric_stats = [[SimpleMetricStats(y) for y in x] for x in system.metric_stats]
 
         # Get analysis cases
         analysis_cases = []

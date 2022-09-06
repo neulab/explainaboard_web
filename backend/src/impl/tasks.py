@@ -25,25 +25,27 @@ _task_categories: list[TaskCategory] = [
         [
             Task(
                 name=TaskType.machine_translation,
-                description=(
-                    "The process of using AI to automatically translate text from one "
-                    "language to another."
-                ),
+                description="""
+The process of using AI to automatically translate text from one language to another.
+See more details about the format of upload files:
+https://github.com/neulab/ExplainaBoard/blob/main/docs/task_conditional_generation.md
+""",
             ),
             Task(
                 name=TaskType.summarization,
                 description="""
 Summarize long documents into short texts.
 See more details about the format of upload files:
-https://github.com/neulab/ExplainaBoard/blob/main/docs/task_summarization.md
+https://github.com/neulab/ExplainaBoard/blob/main/docs/task_conditional_generation.md
 """,
             ),
             Task(
                 name=TaskType.conditional_generation,
-                description=(
-                    "Generic conditional text generation tasks, e.g., machine "
-                    "translation, text summarization"
-                ),
+                description="""
+Generic conditional text generation tasks, e.g., machine translation, summarization.
+See more details about the format of upload files:
+https://github.com/neulab/ExplainaBoard/blob/main/docs/task_conditional_generation.md
+""",
             ),
         ],
     ),

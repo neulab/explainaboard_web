@@ -652,17 +652,9 @@ components:
           items:
             $ref: "#/components/schemas/Analysis"
         source_tokenizer:
-          type: object
-          properties:
-            cls_name:
-              type: string
-              example: "SingleSpaceTokenizer"
+          $ref: "#/components/schemas/Tokenizer"
         target_tokenizer:
-          type: object
-          properties:
-            cls_name:
-              type: string
-              example: "SingleSpaceTokenizer"
+          $ref: "#/components/schemas/Tokenizer"
         results:
           type: object
           properties:
@@ -690,6 +682,16 @@ components:
           analyses,
           results,
         ]
+
+    Tokenizer:
+      type: object
+      properties:
+        cls_name:
+          type: string
+          example: "SingleSpaceTokenizer"
+        variety:
+          type: string
+          example: "intl"
 
     APIError:
       type: object
