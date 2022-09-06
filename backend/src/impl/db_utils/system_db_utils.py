@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 import re
 import traceback
+import zlib
+from collections.abc import Iterator
 from datetime import datetime
 from inspect import getsource
 from types import FunctionType
@@ -312,6 +314,43 @@ class SystemDBUtils:
         )
 
     @staticmethod
+    def _compress_data(data: list) -> bytes:
+        return zlib.compress(json.dumps(data).encode())
+
+    @staticmethod
+    def _decompress_data(compressed_rep: bytes) -> list:
+        return json.loads(zlib.decompress(compressed_rep).decode())
+
+    @staticmethod
+    def _decompress_from_cursor(cursor: Iterator[dict]) -> list:
+        my_dict = next(cursor)
+        return SystemDBUtils._decompress_data(my_dict["data"])
+
+    @staticmethod
+    def _find_output_or_case_raw(
+        system_id: str, output_ids: str | None, page: int = 0, page_size: int = 10
+    ) -> tuple[list[dict], int]:
+        filt: dict[str, Any] = {"data_id": system_id}
+        output_collection = DBCollection(
+            db_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.db_name,
+            collection_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.collection_name,
+        )
+        cursor, total = DBUtils.find(
+            collection=output_collection,
+            filt=filt,
+        )
+        if total != 1:
+            abort_with_error_message(400, f"Could not find a single system {system_id}")
+        sys_data = SystemDBUtils._decompress_from_cursor(cursor)
+        if output_ids:
+            all_ids = set(output_ids.split())
+            sys_data = [x for x in sys_data if x["id"] in all_ids]
+        total = len(sys_data)
+        if page_size:
+            sys_data = sys_data[page * page_size : (page + 1) * page_size]
+        return sys_data, total
+
+    @staticmethod
     def create_system(
         metadata: SystemMetadata,
         system_output: SystemOutputProps,
@@ -399,28 +438,26 @@ class SystemDBUtils:
                 )
                 document.pop("dataset")
                 system_db_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
-                # Insert system output
                 str_db_id = str(system_db_id)
-                output_collection = DBCollection(
-                    db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str_db_id
-                )
-                DBUtils.drop(output_collection)
+                # Compress the system output
+                insert_list = []
                 sample_list = [general_to_dict(v) for v in system_output_data.samples]
-                DBUtils.insert_many(output_collection, sample_list, False, session)
-                # Insert analysis cases
+                sample_compressed = SystemDBUtils._compress_data(sample_list)
+                insert_list.append({"data_id": str_db_id, "data": sample_compressed})
+                # Compress analysis cases
                 for i, analysis_cases in enumerate(overall_statistics.analysis_cases):
-                    analysis_collection = DBCollection(
-                        db_name=DBUtils.SYSTEM_OUTPUT_DB,
-                        collection_name=f"{str_db_id}_cases{i}",
+                    str_case_id = f"{str_db_id}_cases{i}"
+                    case_list = [general_to_dict(v) for v in analysis_cases]
+                    case_compressed = SystemDBUtils._compress_data(case_list)
+                    insert_list.append(
+                        {"data_id": str_case_id, "data": case_compressed}
                     )
-                    DBUtils.drop(analysis_collection)
-                    sample_list = [general_to_dict(v) for v in analysis_cases]
-                    # Add IDs for search using mongodb
-                    for i, sample in enumerate(sample_list):
-                        sample["id"] = str(i)
-                    DBUtils.insert_many(
-                        analysis_collection, sample_list, False, session
-                    )
+                # Insert system output and analysis cases
+                output_collection = DBCollection(
+                    db_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.db_name,
+                    collection_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.collection_name,
+                )
+                DBUtils.insert_many(output_collection, insert_list, False, session)
                 return system_db_id
 
             # -- perform upload to the DB
@@ -474,22 +511,12 @@ class SystemDBUtils:
     ) -> SystemOutputsReturn:
         """
         find multiple system outputs whose ids are in output_ids
-        TODO: raise error if system doesn't exist
         """
-        filt: dict[str, Any] = {}
-        if output_ids:
-            filt["id"] = {"$in": [str(id) for id in output_ids.split(",")]}
-        output_collection = DBCollection(
-            db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str(system_id)
-        )
-        cursor, total = DBUtils.find(
-            collection=output_collection,
-            filt=filt,
-            skip=page * page_size,
-            limit=page_size,
+        sys_data, total = SystemDBUtils._find_output_or_case_raw(
+            str(system_id), output_ids, page, page_size
         )
         return SystemOutputsReturn(
-            [SystemDBUtils.system_output_from_dict(doc) for doc in cursor], total
+            [SystemDBUtils.system_output_from_dict(doc) for doc in sys_data], total
         )
 
     @staticmethod
@@ -505,21 +532,12 @@ class SystemDBUtils:
         TODO: raise error if system doesn't exist
         """
         level = int(level)
-        filt: dict[str, Any] = {}
-        if case_ids:
-            filt["id"] = {"$in": [str(id) for id in case_ids.split(",")]}
-        case_collection = DBCollection(
-            db_name=DBUtils.SYSTEM_OUTPUT_DB,
-            collection_name=f"{str(system_id)}_cases{level}",
-        )
-        cursor, total = DBUtils.find(
-            collection=case_collection,
-            filt=filt,
-            skip=page * page_size,
-            limit=page_size,
+        str_id = f"{str(system_id)}_cases{level}"
+        sys_data, total = SystemDBUtils._find_output_or_case_raw(
+            str_id, case_ids, page, page_size
         )
         return AnalysisCasesReturn(
-            [SystemDBUtils.analysis_case_from_dict(doc) for doc in cursor], total
+            [SystemDBUtils.analysis_case_from_dict(doc) for doc in sys_data], total
         )
 
     @staticmethod
@@ -538,13 +556,14 @@ class SystemDBUtils:
             )
             if not result:
                 abort_with_error_message(400, f"failed to delete system {system_id}")
-            # drop cannot be added to a multi-document transaction, this seems
-            # fine because drop is the last operation. If drop fails, delete
-            # gets rolled back which is our only requirement here.
-            output_collection = DBCollection(
-                db_name=DBUtils.SYSTEM_OUTPUT_DB, collection_name=str(system_id)
+            DBUtils.delete_one_by_id(
+                DBUtils.SYSTEM_OUTPUT_COLLECTION, system_id, session=session
             )
-            DBUtils.drop(output_collection)
+            for i, analysis_lev in enumerate(sys.system_info.analysis_levels):
+                case_id = f"{system_id}_cases{i}"
+                DBUtils.delete_one_by_id(
+                    DBUtils.SYSTEM_OUTPUT_COLLECTION, case_id, session=session
+                )
             return True
 
         return DBUtils.execute_transaction(db_operations)

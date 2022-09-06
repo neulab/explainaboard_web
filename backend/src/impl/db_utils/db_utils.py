@@ -19,7 +19,10 @@ class DBCollection:
 class DBUtils:
 
     # Names of DBs or collections
-    SYSTEM_OUTPUT_DB = "system_outputs_v011"
+    # SYSTEM_OUTPUT_DB = "system_outputs_v011"
+    SYSTEM_OUTPUT_COLLECTION = DBCollection(
+        db_name="system_output_collections_v011", collection_name="system_outputs_000"
+    )
     # DATASET_METADATA = DBCollection(
     #     db_name="metadata", collection_name="dataset_metadata"
     # )
