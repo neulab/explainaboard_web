@@ -1,5 +1,6 @@
 import base64
 import pickle
+import zlib
 from typing import Any
 
 from bson.binary import Binary
@@ -28,9 +29,10 @@ def decode_base64(encoded: str) -> str:
 
 # TODO(chihhao) consider moving to SDK?
 def binarize_bson(data: Any) -> Binary:
-    """convert data to BSON binary data"""
-    return Binary(pickle.dumps(data, protocol=2))
+    """convert and compress data to BSON binary data"""
+    return Binary(zlib.compress(pickle.dumps(data, protocol=2)))
 
 
 def unbinarize_bson(data: Binary) -> Any:
-    return pickle.loads(data)
+    """decompress and convert BSON binary data to Python objects"""
+    return pickle.loads(zlib.decompress(data))
