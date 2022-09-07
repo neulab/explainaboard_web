@@ -140,7 +140,7 @@ https://github.com/neulab/ExplainaBoard/blob/main/docs/task_extractive_qa_squad.
                 description="""
 Predict the sentiment of a text based on a specific aspect.
 See more details about the format of upload files:
-https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/absa/test-aspect.tsv
+https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/absa/absa-example-output.txt
 """,
             ),
         ],
