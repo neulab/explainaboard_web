@@ -343,8 +343,7 @@ class SystemDBUtils:
             abort_with_error_message(400, f"Could not find a single system {system_id}")
         sys_data = SystemDBUtils._decompress_from_cursor(cursor)
         if output_ids:
-            all_ids = set(output_ids.split())
-            sys_data = [x for x in sys_data if x["id"] in all_ids]
+            sys_data = [sys_data[int(x)] for x in output_ids.split(",")]
         total = len(sys_data)
         if page_size:
             sys_data = sys_data[page * page_size : (page + 1) * page_size]
