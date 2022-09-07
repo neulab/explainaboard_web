@@ -35,8 +35,11 @@ export class BackendError implements APIError {
     public detail: string
   ) {}
   getErrorMsg() {
-    const errorCodeMsg = this.error_code === -1 ? "" : `: ${this.error_code}`;
-    return `[${this.response.statusText}${errorCodeMsg}] ${this.detail}`;
+    const errorCodeMsg =
+      this.error_code == null || this.error_code === -1
+        ? ""
+        : `: ${this.error_code}`;
+    return `[${this.response.status}${errorCodeMsg}] ${this.detail}`;
   }
 }
 /** Parse fetch error response into a `BackendError` */
