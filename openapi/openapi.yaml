@@ -1061,9 +1061,9 @@ components:
         bucket_interval:
           type: array
           items:
-            oneOf:
-              - type: string
-              - type: number
+            type: number
+        bucket_name:
+          type: string
         n_samples:
           type: number
         bucket_samples:
@@ -1074,7 +1074,7 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Performance"
-      required: [bucket_interval, n_samples, bucket_samples, performances]
+      required: [n_samples, bucket_samples, performances]
 
     SingleAnalysis:
       type: object
