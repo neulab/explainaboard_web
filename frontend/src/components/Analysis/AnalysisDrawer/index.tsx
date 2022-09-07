@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { SystemModel } from "../../../models";
 import { ErrorBoundary, AnalysisReport } from "../../../components";
 import { PageState } from "../../../utils";
-import { backendClient } from "../../../clients";
+import { backendClient, parseBackendError } from "../../../clients";
 import {
   SingleAnalysis,
   SystemAnalysesReturn,
@@ -32,6 +32,7 @@ export function AnalysisDrawer({
   const [shouldUpdateAnalysis, setShouldUpdateAnalysis] =
     useState<boolean>(true);
   const [pageState, setPageState] = useState(PageState.loading);
+  const [errorMessage, setErrorMessage] = useState("");
   const [task, setTask] = useState<string>("");
   const [systemAnalyses, setSystemAnalyses] = useState<
     SystemAnalysesReturn["system_analyses"]
@@ -56,75 +57,62 @@ export function AnalysisDrawer({
       featureNameToBucketInfoToPost: SystemsAnalysesBody["feature_to_bucket_info"]
     ) {
       setPageState(PageState.loading);
-      const systemAnalysesReturn: SystemAnalysesReturn | null =
-        await new Promise<SystemAnalysesReturn>((resolve, reject) => {
-          const timeoutID = setTimeout(() => {
-            reject(new Error("timeout"));
-          }, 40000); // 40 seconds
-          backendClient
-            .systemsAnalysesPost({
-              system_ids: activeSystemIDs.join(","),
-              feature_to_bucket_info: featureNameToBucketInfoToPost,
-            })
-            .then(
-              (
-                singleAnalysis:
-                  | SystemAnalysesReturn
-                  | PromiseLike<SystemAnalysesReturn>
-              ) => {
-                clearTimeout(timeoutID);
-                resolve(singleAnalysis);
-              }
-            );
-        }).catch(() => {
-          return null;
-        });
-      if (systemAnalysesReturn === null) {
-        setPageState(PageState.error);
-        return;
-      }
-      const {
-        system_analyses: systemAnalyses,
-        significance_test_info: significanceTestInfos,
-      } = systemAnalysesReturn;
-      /*
-      Take from the first element as the task and type/number of metrics should be 
-      invariant across sytems in pairwise analysis
-      */
-      const firstSystemInfo = activeSystems[0].system_info;
-      const task = firstSystemInfo.task_name;
 
-      const metricToAnalyses = parseFineGrainedResults(
-        task,
-        activeSystems,
-        systemAnalyses
-      );
+      // request times out in 40s
+      const timeoutController = new AbortController();
+      const timeoutID = setTimeout(() => timeoutController.abort(), 40000);
+      try {
+        const systemAnalysesReturn = await backendClient.systemsAnalysesPost(
+          {
+            system_ids: activeSystemIDs.join(","),
+            feature_to_bucket_info: featureNameToBucketInfoToPost,
+          },
+          { signal: timeoutController.signal }
+        );
+        clearTimeout(timeoutID);
+        const {
+          system_analyses: systemAnalyses,
+          significance_test_info: significanceTestInfos,
+        } = systemAnalysesReturn;
+        /*
+        Take from the first element as the task and type/number of metrics should be 
+        invariant across sytems in pairwise analysis
+        */
+        const firstSystemInfo = activeSystems[0].system_info;
+        const task = firstSystemInfo.task_name;
 
-      const featureNameToBucketInfo: { [key: string]: BucketIntervals } = {};
-      for (const systemAnalysesParsed of Object.values(metricToAnalyses)) {
-        for (const feature of Object.keys(systemAnalysesParsed)) {
-          // No need to repeat the process for multiple metrics if it's already found
-          if (feature in featureNameToBucketInfo) {
-            continue;
-          }
-          // Take from the first element as the bucket interval is system-invariant
-          const resultFineGrainedParsed = systemAnalysesParsed[feature][0];
-          const { featureName, bucketIntervals, bucketType } =
-            resultFineGrainedParsed;
-          /* Hardcode for now as SDK doesn't export the string.
-          bucket_attribute_discrete_value seems to be used for categorical features,
-          which do not support custom bucket range.
-          */
-          if (bucketType !== "discrete") {
-            featureNameToBucketInfo[featureName] = {
-              min: bucketIntervals.min,
-              max: bucketIntervals.max,
-              bounds: bucketIntervals.bounds.slice(
-                0,
-                bucketIntervals.bounds.length - 1
-              ),
-              updated: featureNameToBucketInfo[featureName]?.updated || false,
-            };
+        const metricToAnalyses = parseFineGrainedResults(
+          task,
+          activeSystems,
+          systemAnalyses
+        );
+
+        const featureNameToBucketInfo: { [key: string]: BucketIntervals } = {};
+        for (const systemAnalysesParsed of Object.values(metricToAnalyses)) {
+          for (const feature of Object.keys(systemAnalysesParsed)) {
+            // No need to repeat the process for multiple metrics if it's already found
+            if (feature in featureNameToBucketInfo) {
+              continue;
+            }
+            // Take from the first element as the bucket interval is system-invariant
+            const resultFineGrainedParsed = systemAnalysesParsed[feature][0];
+            const { featureName, bucketIntervals, bucketType } =
+              resultFineGrainedParsed;
+            /* Hardcode for now as SDK doesn't export the string.
+            bucket_attribute_discrete_value seems to be used for categorical features,
+            which do not support custom bucket range.
+            */
+            if (bucketType !== "discrete") {
+              featureNameToBucketInfo[featureName] = {
+                min: bucketIntervals.min,
+                max: bucketIntervals.max,
+                bounds: bucketIntervals.bounds.slice(
+                  0,
+                  bucketIntervals.bounds.length - 1
+                ),
+                updated: featureNameToBucketInfo[featureName]?.updated || false,
+              };
+            }
           }
         }
 
@@ -134,6 +122,7 @@ export function AnalysisDrawer({
         setMetricToAnalyses(metricToAnalyses);
         setFeatureNameToBucketInfo(featureNameToBucketInfo);
         setPageState(PageState.success);
+        setErrorMessage("");
         setBucketInfoUpdated(false);
 
         if (activeSystems.length === 1) {
@@ -148,6 +137,16 @@ export function AnalysisDrawer({
             action: `analysis_multi`,
             label: task,
           });
+        }
+      } catch (e) {
+        setPageState(PageState.error);
+        if (timeoutController.signal.aborted) {
+          setErrorMessage(
+            "Analysis takes too long to complete. Please try again later or report a bug."
+          );
+        } else if (e instanceof Response) {
+          const backendError = await parseBackendError(e);
+          setErrorMessage(backendError.getErrorMsg());
         }
       }
     }
@@ -251,12 +250,17 @@ export function AnalysisDrawer({
     </Tooltip>
   );
 
-  function fallbackUI(errorType: string) {
+  function fallbackUI(errorMessage?: string) {
     return (
       <Text>
-        An error (type: {errorType}) occured in the analysis. If you are doing a
-        pair-wise analysis, double check if the selected systems use the same
-        dataset. If you found a bug, kindly open an issue on{" "}
+        <Typography.Paragraph>
+          An error occurred in the analysis.
+        </Typography.Paragraph>
+        <Typography.Paragraph>
+          {errorMessage ||
+            "If you are doing a pair-wise analysis, double check if the selected systems use the same dataset."}
+        </Typography.Paragraph>
+        If you found a bug, kindly open an issue on{" "}
         <Link
           href="https://github.com/neulab/explainaboard_web"
           target="_blank"
@@ -282,10 +286,10 @@ export function AnalysisDrawer({
       maskClosable={pageState !== PageState.loading}
       extra={analysisButton}
     >
-      {/* The analysis report is expected to fail if a user selects systems with different datsets.
+      {/* The analysis report is expected to fail if a user selects systems with different datasets.
         We use an error boundary component and provide a fall back UI if an error is caught.
   */}
-      <ErrorBoundary fallbackUI={fallbackUI("unknown")}>
+      <ErrorBoundary fallbackUI={fallbackUI(errorMessage)}>
         <Spin spinning={pageState === PageState.loading} tip="Analyzing...">
           {visible && Object.keys(systemAnalyses).length > 0 && (
             <AnalysisReport
@@ -298,7 +302,7 @@ export function AnalysisDrawer({
               updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
             />
           )}
-          {pageState === PageState.error && fallbackUI("timeout")}
+          {pageState === PageState.error && fallbackUI(errorMessage)}
         </Spin>
       </ErrorBoundary>
     </Drawer>
