@@ -17,7 +17,7 @@ from explainaboard.loaders.loader_registry import get_loader_class
 from explainaboard.utils.serialization import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
-from explainaboard_web.impl.db_utils.db_utils import DBCollection, DBUtils
+from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.utils import (
     abort_with_error_message,
     binarize_bson,
@@ -331,10 +331,7 @@ class SystemDBUtils:
         system_id: str, output_ids: str | None, page: int = 0, page_size: int = 10
     ) -> tuple[list[dict], int]:
         filt: dict[str, Any] = {"data_id": system_id}
-        output_collection = DBCollection(
-            db_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.db_name,
-            collection_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.collection_name,
-        )
+        output_collection = DBUtils.get_system_output_collection(system_id)
         cursor, total = DBUtils.find(
             collection=output_collection,
             filt=filt,
@@ -454,10 +451,7 @@ class SystemDBUtils:
                         {"data_id": str_case_id, "data": case_compressed}
                     )
                 # Insert system output and analysis cases
-                output_collection = DBCollection(
-                    db_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.db_name,
-                    collection_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.collection_name,
-                )
+                output_collection = DBUtils.get_system_output_collection(str_db_id)
                 result = DBUtils.insert_many(
                     output_collection, insert_list, False, session
                 )
@@ -563,20 +557,11 @@ class SystemDBUtils:
             )
             if not result:
                 abort_with_error_message(400, f"failed to delete system {system_id}")
-            result = DBUtils.delete_one_by_id(
-                DBUtils.SYSTEM_OUTPUT_COLLECTION, system_id, session=session
-            )
-            if not result:
-                abort_with_error_message(400, f"failed to delete system {system_id}")
+            output_collection = DBUtils.get_system_output_collection(system_id)
+            DBUtils.delete_one_by_id(output_collection, system_id, session=session)
             for i, analysis_lev in enumerate(sys.system_info.analysis_levels):
                 case_id = f"{system_id}_cases{i}"
-                result = DBUtils.delete_one_by_id(
-                    DBUtils.SYSTEM_OUTPUT_COLLECTION, case_id, session=session
-                )
-                if not result:
-                    abort_with_error_message(
-                        400, f"failed to delete system {system_id}"
-                    )
+                DBUtils.delete_one_by_id(output_collection, case_id, session=session)
             return True
 
         return DBUtils.execute_transaction(db_operations)

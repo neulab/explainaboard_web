@@ -20,15 +20,25 @@ class DBUtils:
 
     # Names of DBs or collections
     # SYSTEM_OUTPUT_DB = "system_outputs_v011"
-    SYSTEM_OUTPUT_COLLECTION = DBCollection(
-        db_name="system_output_collections_v011", collection_name="system_outputs_000"
-    )
+    SYSTEM_OUTPUT_COLLECTION_DB = "system_output_collections_v011"
+    SYSTEM_OUTPUT_COLLECTION_PREFIX = "system_outputs"
+    # DBCollection(
+    #     db_name="system_output_collections_v011", collection_name="system_outputs_000"
+    # )
     # DATASET_METADATA = DBCollection(
     #     db_name="metadata", collection_name="dataset_metadata"
     # )
     DEV_SYSTEM_METADATA = DBCollection(
         db_name="metadata", collection_name="system_metadata_v011"
     )
+
+    @staticmethod
+    def get_system_output_collection(system_id: str) -> DBCollection:
+        return DBCollection(
+            db_name=DBUtils.SYSTEM_OUTPUT_COLLECTION_DB,
+            collection_name=f"{DBUtils.SYSTEM_OUTPUT_COLLECTION_PREFIX}"
+            f"_{system_id[0:3]}",
+        )
 
     @staticmethod
     def get_database(db_name: str):
