@@ -8,8 +8,8 @@ from explainaboard_web.models import SignificanceTestInfo
 def pairwise_significance_test(
     sys1_info: SysOutputInfo,
     sys2_info: SysOutputInfo,
-    sys1_metric_stats: MetricStats,
-    sys2_metric_stats: MetricStats,
+    sys1_metric_stats: list[MetricStats],
+    sys2_metric_stats: list[MetricStats],
     n_samples: int = 1000,
     prop_samples: float = 0.5,
 ) -> list:

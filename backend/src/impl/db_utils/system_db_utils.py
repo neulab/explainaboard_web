@@ -432,12 +432,14 @@ class SystemDBUtils:
                 # Insert system
                 system.created_at = system.last_modified = datetime.utcnow()
                 document = general_to_dict(system)
-                document.pop("system_id")
+                system_id = document.pop("system_id")
                 document["dataset_metadata_id"] = (
                     system.dataset.dataset_id if system.dataset else None
                 )
                 document.pop("dataset")
                 system_db_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
+                if not system_db_id:
+                    abort_with_error_message(400, f"failed to insert {system_id}")
                 str_db_id = str(system_db_id)
                 # Compress the system output
                 insert_list = []
@@ -457,7 +459,13 @@ class SystemDBUtils:
                     db_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.db_name,
                     collection_name=DBUtils.SYSTEM_OUTPUT_COLLECTION.collection_name,
                 )
-                DBUtils.insert_many(output_collection, insert_list, False, session)
+                result = DBUtils.insert_many(
+                    output_collection, insert_list, False, session
+                )
+                if not result:
+                    abort_with_error_message(
+                        400, f"failed to insert outputs for {system_id}"
+                    )
                 return system_db_id
 
             # -- perform upload to the DB
@@ -556,14 +564,20 @@ class SystemDBUtils:
             )
             if not result:
                 abort_with_error_message(400, f"failed to delete system {system_id}")
-            DBUtils.delete_one_by_id(
+            result = DBUtils.delete_one_by_id(
                 DBUtils.SYSTEM_OUTPUT_COLLECTION, system_id, session=session
             )
+            if not result:
+                abort_with_error_message(400, f"failed to delete system {system_id}")
             for i, analysis_lev in enumerate(sys.system_info.analysis_levels):
                 case_id = f"{system_id}_cases{i}"
-                DBUtils.delete_one_by_id(
+                result = DBUtils.delete_one_by_id(
                     DBUtils.SYSTEM_OUTPUT_COLLECTION, case_id, session=session
                 )
+                if not result:
+                    abort_with_error_message(
+                        400, f"failed to delete system {system_id}"
+                    )
             return True
 
         return DBUtils.execute_transaction(db_operations)
