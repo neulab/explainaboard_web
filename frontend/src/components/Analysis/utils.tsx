@@ -39,19 +39,15 @@ export function initParsedResult(
   };
 }
 
-function formatName(name: number | string): string {
-  if (typeof name === "string") {
-    return name;
-  } else if (Number.isNaN(Number(name)) || Number.isInteger(Number(name))) {
+function formatName(name: number): string {
+  if (Number.isNaN(Number(name)) || Number.isInteger(Number(name))) {
     return name.toString();
   } else {
     return name.toFixed(2);
   }
 }
 
-export function formatBucketName(
-  unformattedName: Array<number | string>
-): string {
+export function formatBucketName(unformattedName: Array<number>): string {
   const bucketInterval = unformattedName.map((name) => formatName(name));
   if (bucketInterval.length === 1) {
     return `${bucketInterval[0]}\n\n`;
@@ -76,12 +72,22 @@ export function parse(
 
   // Sort by the correct bucket interval order
   bucketPerformances.sort((a, b) => {
-    if (a.bucket_interval[0] > b.bucket_interval[0]) {
-      return 1;
-    } else if (a.bucket_interval[0] < b.bucket_interval[0]) {
-      return -1;
+    if (a.bucket_name !== undefined) {
+      if (a.bucket_name > b.bucket_name) {
+        return 1;
+      } else if (a.bucket_name < b.bucket_name) {
+        return -1;
+      } else {
+        return 0;
+      }
     } else {
-      return 0;
+      if (a.bucket_interval[0] > b.bucket_interval[0]) {
+        return 1;
+      } else if (a.bucket_interval[0] < b.bucket_interval[0]) {
+        return -1;
+      } else {
+        return 0;
+      }
     }
   });
 
@@ -91,7 +97,9 @@ export function parse(
     */
 
     // Convert the string representation of the bucket interval to numbers
-    const bucketName = formatBucketName(bucketPerformance.bucket_interval);
+    const bucketName =
+      bucketPerformance.bucket_name ||
+      formatBucketName(bucketPerformance.bucket_interval);
 
     for (const performance of bucketPerformance["performances"]) {
       const nSamples = bucketPerformance.n_samples;
@@ -110,8 +118,8 @@ export function parse(
       result.bucketNames.push(bucketName);
       result.numbersOfSamples.push(nSamples);
       result.bucketType = bucketType;
-      if (!(typeof bucketPerformance.bucket_interval[0] === typeof "")) {
-        const numInterval = bucketPerformance.bucket_interval as number[];
+      if (bucketPerformance.bucket_interval != null) {
+        const numInterval = bucketPerformance.bucket_interval;
         result.bucketIntervals.min = Math.min(
           result.bucketIntervals.min,
           ...numInterval
