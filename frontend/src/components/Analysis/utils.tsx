@@ -72,7 +72,7 @@ export function parse(
 
   // Sort by the correct bucket interval order
   bucketPerformances.sort((a, b) => {
-    if (a.bucket_name !== undefined) {
+    if (a.bucket_name != null) {
       if (a.bucket_name > b.bucket_name) {
         return 1;
       } else if (a.bucket_name < b.bucket_name) {
