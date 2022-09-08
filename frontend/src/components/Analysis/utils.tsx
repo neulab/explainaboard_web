@@ -12,7 +12,7 @@ export function initParsedResult(
   metricName: string,
   featureName: string,
   featureDescription: string,
-  levelIdx: number
+  levelName: string
 ): ResultFineGrainedParsed {
   const bucketIntervals: BucketIntervals = {
     min: Number.POSITIVE_INFINITY,
@@ -29,7 +29,7 @@ export function initParsedResult(
     metricName,
     featureName,
     featureDescription,
-    levelIdx,
+    levelName,
     bucketType,
     bucketNames,
     bucketIntervals,
@@ -64,7 +64,7 @@ export function parse(
   task: string,
   bucketPerformances: AnalysisResult[],
   bucketType: string,
-  levelIdx: number,
+  levelName: string,
   featureName: string,
   featureDescription: string
 ) {
@@ -109,7 +109,7 @@ export function parse(
           metricName,
           featureName,
           featureDescription,
-          levelIdx
+          levelName
         );
       }
       const result = parsedResult[metricName];
@@ -180,12 +180,6 @@ export function parseFineGrainedResults(
     const system = systems[systemIdx];
     const singleAnalysis: SingleAnalysis = singleAnalyses[systemIdx];
 
-    const levelMap: { [key: string]: number } = {};
-    for (let lid = 0; lid < system.system_info.analysis_levels.length; lid++) {
-      const level = system.system_info.analysis_levels[lid];
-      levelMap[level.name] = lid;
-    }
-
     for (
       let analysisIdx = 0;
       analysisIdx < singleAnalysis.analysis_results.length;
@@ -193,7 +187,6 @@ export function parseFineGrainedResults(
     ) {
       const myAnalysis = system.system_info.analyses[analysisIdx];
       const myResult = singleAnalysis.analysis_results[analysisIdx];
-      const levelIdx = levelMap[myResult.level];
 
       // Skip non-bucketing analyses for now
       if (myResult.cls_name !== "BucketAnalysisResult") {
@@ -211,7 +204,7 @@ export function parseFineGrainedResults(
           task,
           analysisBuckets,
           bucketType,
-          levelIdx,
+          myResult.level,
           analysisName,
           analysisDescription
         );

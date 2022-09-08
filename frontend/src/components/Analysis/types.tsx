@@ -22,8 +22,8 @@ export interface ResultFineGrainedParsed {
   numbersOfSamples: number[];
   // performances[i]: performance (value/confidence) for bucket i
   performances: Performance[];
-  // levelIdx: is the analysis level that this result belongs to
-  levelIdx: number;
+  // levelName: is the level that this result belongs to
+  levelName: string;
   // cases[i][j]: is the index of the ith bucket's jth example
   cases: number[][];
 }
