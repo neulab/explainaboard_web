@@ -1,45 +1,33 @@
-import { Button, Drawer, Spin, Tooltip, Typography } from "antd";
-import { RedoOutlined } from "@ant-design/icons";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { Drawer, Spin } from "antd";
 import { SystemModel } from "../../../models";
 import { ErrorBoundary, AnalysisReport } from "../../../components";
 import { PageState } from "../../../utils";
 import { backendClient, parseBackendError } from "../../../clients";
 import {
-  SingleAnalysis,
   SystemAnalysesReturn,
   SystemsAnalysesBody,
-  SignificanceTestInfo,
 } from "../../../clients/openapi";
 import { parseFineGrainedResults, valuesToIntervals } from "../utils";
 import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 import ReactGA from "react-ga4";
-const { Text, Link } = Typography;
+import { AnalysisButton } from "./AnalysisButton";
+import { FallbackUI } from "./FallbackUI";
 
 interface Props {
-  visible: boolean;
+  /** systems to display */
   systems: SystemModel[];
-  activeSystemIDs: string[];
-  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  closeDrawer: () => void;
 }
 
-export function AnalysisDrawer({
-  visible,
-  systems,
-  activeSystemIDs,
-  setActiveSystemIDs,
-}: Props) {
-  const [shouldUpdateAnalysis, setShouldUpdateAnalysis] =
-    useState<boolean>(true);
+export function AnalysisDrawer({ systems, closeDrawer }: Props) {
+  const visible = systems.length > 0;
+  const [shouldUpdateAnalysis, setShouldUpdateAnalysis] = useState(true);
   const [pageState, setPageState] = useState(PageState.loading);
   const [errorMessage, setErrorMessage] = useState("");
-  const [task, setTask] = useState<string>("");
-  const [systemAnalyses, setSystemAnalyses] = useState<
-    SystemAnalysesReturn["system_analyses"]
-  >(Array<SingleAnalysis>());
-  const [significanceTestInfos, setSignificanceTestInfos] = useState<
-    SystemAnalysesReturn["significance_test_info"]
-  >(Array<SignificanceTestInfo>());
+  const [systemAnalysesReturn, setSystemAnalysesReturn] =
+    useState<SystemAnalysesReturn>();
+
   const [featureNameToBucketInfo, setFeatureNameToBucketInfo] = useState<{
     [key: string]: BucketIntervals;
   }>({});
@@ -48,9 +36,16 @@ export function AnalysisDrawer({
   }>({});
   const [bucketInfoUpdated, setBucketInfoUpdated] = useState<boolean>(false);
 
-  const activeSystems = systems.filter((sys) =>
-    activeSystemIDs.includes(sys.system_id)
-  );
+  /**
+   * Derive task from the first system. If multiple systems are selected,
+   * they are assumed to be of the same task type.
+   * @throws if systems is an empty list
+   */
+  const getTask = useCallback(() => {
+    if (systems.length === 0)
+      throw new Error("systems is empty. cannot determine task.");
+    return systems[0].system_info.task_name;
+  }, [systems]);
 
   useEffect(() => {
     async function refreshAnalyses(
@@ -62,36 +57,27 @@ export function AnalysisDrawer({
       const timeoutController = new AbortController();
       const timeoutID = setTimeout(() => timeoutController.abort(), 40000);
       try {
-        const systemAnalysesReturn = await backendClient.systemsAnalysesPost(
+        const newSystemAnalysesReturn = await backendClient.systemsAnalysesPost(
           {
-            system_ids: activeSystemIDs.join(","),
+            system_ids: systems.map((sys) => sys.system_id).join(","),
             feature_to_bucket_info: featureNameToBucketInfoToPost,
           },
           { signal: timeoutController.signal }
         );
         clearTimeout(timeoutID);
-        const {
-          system_analyses: systemAnalyses,
-          significance_test_info: significanceTestInfos,
-        } = systemAnalysesReturn;
-        /*
-        Take from the first element as the task and type/number of metrics should be 
-        invariant across sytems in pairwise analysis
-        */
-        const firstSystemInfo = activeSystems[0].system_info;
-        const task = firstSystemInfo.task_name;
+        const { system_analyses: systemAnalyses } = newSystemAnalysesReturn;
 
-        const metricToAnalyses = parseFineGrainedResults(
-          task,
-          activeSystems,
+        const newMetricToAnalyses = parseFineGrainedResults(
+          systems,
           systemAnalyses
         );
 
-        const featureNameToBucketInfo: { [key: string]: BucketIntervals } = {};
-        for (const systemAnalysesParsed of Object.values(metricToAnalyses)) {
+        const newFeatureNameToBucketInfo: { [key: string]: BucketIntervals } =
+          {};
+        for (const systemAnalysesParsed of Object.values(newMetricToAnalyses)) {
           for (const feature of Object.keys(systemAnalysesParsed)) {
             // No need to repeat the process for multiple metrics if it's already found
-            if (feature in featureNameToBucketInfo) {
+            if (feature in newFeatureNameToBucketInfo) {
               continue;
             }
             // Take from the first element as the bucket interval is system-invariant
@@ -103,41 +89,25 @@ export function AnalysisDrawer({
             which do not support custom bucket range.
             */
             if (bucketType !== "discrete") {
-              featureNameToBucketInfo[featureName] = {
+              newFeatureNameToBucketInfo[featureName] = {
                 min: bucketIntervals.min,
                 max: bucketIntervals.max,
                 bounds: bucketIntervals.bounds.slice(
                   0,
                   bucketIntervals.bounds.length - 1
                 ),
-                updated: featureNameToBucketInfo[featureName]?.updated || false,
+                updated:
+                  newFeatureNameToBucketInfo[featureName]?.updated || false,
               };
             }
           }
         }
-
-        setTask(task);
-        setSystemAnalyses(systemAnalyses);
-        setSignificanceTestInfos(significanceTestInfos);
-        setMetricToAnalyses(metricToAnalyses);
-        setFeatureNameToBucketInfo(featureNameToBucketInfo);
+        setSystemAnalysesReturn(newSystemAnalysesReturn);
+        setMetricToAnalyses(newMetricToAnalyses);
+        setFeatureNameToBucketInfo(newFeatureNameToBucketInfo);
         setPageState(PageState.success);
         setErrorMessage("");
         setBucketInfoUpdated(false);
-
-        if (activeSystems.length === 1) {
-          ReactGA.event({
-            category: "Analysis",
-            action: `analysis_single`,
-            label: task,
-          });
-        } else {
-          ReactGA.event({
-            category: "Analysis",
-            action: `analysis_multi`,
-            label: task,
-          });
-        }
       } catch (e) {
         setPageState(PageState.error);
         if (timeoutController.signal.aborted) {
@@ -148,6 +118,22 @@ export function AnalysisDrawer({
           const backendError = await parseBackendError(e);
           setErrorMessage(backendError.getErrorMsg());
         }
+      }
+    }
+
+    function sendGA() {
+      if (systems.length === 1) {
+        ReactGA.event({
+          category: "Analysis",
+          action: `analysis_single`,
+          label: getTask(),
+        });
+      } else {
+        ReactGA.event({
+          category: "Analysis",
+          action: `analysis_multi`,
+          label: getTask(),
+        });
       }
     }
 
@@ -173,13 +159,14 @@ export function AnalysisDrawer({
         }
       }
       refreshAnalyses(featureNameToBucketInfoToPost);
+      sendGA();
     }
   }, [
     visible,
     shouldUpdateAnalysis,
-    activeSystemIDs,
-    activeSystems,
+    systems,
     featureNameToBucketInfo,
+    getTask,
   ]);
 
   function updateFeatureNameToBucketInfo(
@@ -200,83 +187,50 @@ export function AnalysisDrawer({
   }
 
   function closeSystemAnalysis() {
-    /* set to true so analysis is performed next time
-     when drawer is opened
-    */
+    // set to true so analysis is performed next time when drawer is opened
     setShouldUpdateAnalysis(true);
-    setActiveSystemIDs([]);
+    closeDrawer();
     setPageState(PageState.loading);
-    setSystemAnalyses(Array<SingleAnalysis>());
-    setSignificanceTestInfos(Array<SignificanceTestInfo>());
-
     setFeatureNameToBucketInfo({});
     setBucketInfoUpdated(false);
   }
 
-  let drawerTitle;
-  if (activeSystems.length === 1) {
-    drawerTitle = `Single Analysis of ${
-      activeSystems[0].system_info.system_name
-    }, Detailed Info: ${JSON.stringify(
-      activeSystems[0].system_info.system_details
-    )}`;
-  } else if (activeSystems.length === 2) {
-    const systemNames = activeSystems
-      .map((sys) => sys.system_info.system_name)
-      .join(" and ");
-    drawerTitle = `Pairwise Analysis of ${systemNames}`;
+  function getDrawerTitle(): string {
+    if (systems.length === 1) {
+      return `Single Analysis of ${systems[0].system_info.system_name}`;
+    } else if (systems.length === 2) {
+      const systemNames = systems
+        .map((sys) => sys.system_info.system_name)
+        .join(" and ");
+      return `Pairwise Analysis of ${systemNames}`;
+    }
+    return "Analysis";
   }
 
-  const analysisButton = (
-    <Tooltip
-      title={
-        <div>
-          Adding, removing, or changing the right bounds of any graph enables
-          this button. Click it to update the analysis results.
-        </div>
-      }
-      placement="bottom"
-      color="white"
-      overlayInnerStyle={{ color: "black" }}
-    >
-      <Button
-        icon={<RedoOutlined />}
-        type="primary"
-        disabled={!bucketInfoUpdated}
-        onClick={() => setShouldUpdateAnalysis(true)}
-      >
-        Update analysis
-      </Button>
-    </Tooltip>
-  );
-
-  function fallbackUI(errorMessage?: string) {
-    return (
-      <Text>
-        <Typography.Paragraph>
-          An error occurred in the analysis.
-        </Typography.Paragraph>
-        <Typography.Paragraph>
-          {errorMessage ||
-            "If you are doing a pair-wise analysis, double check if the selected systems use the same dataset."}
-        </Typography.Paragraph>
-        If you found a bug, kindly open an issue on{" "}
-        <Link
-          href="https://github.com/neulab/explainaboard_web"
-          target="_blank"
-        >
-          our GitHub repo
-        </Link>
-        . Thanks!
-      </Text>
-    );
+  function renderDrawerContent(): React.ReactElement {
+    if (visible && systemAnalysesReturn) {
+      return (
+        <AnalysisReport
+          task={getTask()}
+          systems={systems}
+          systemAnalyses={systemAnalysesReturn.system_analyses}
+          significanceTestInfo={systemAnalysesReturn.significance_test_info}
+          metricToSystemAnalysesParsed={metricToAnalyses}
+          featureNameToBucketInfo={featureNameToBucketInfo}
+          updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
+        />
+      );
+    }
+    if (pageState === PageState.error)
+      return <FallbackUI errorMessage={errorMessage} />;
+    return <div style={{ height: "50vh" }} />;
   }
 
   return (
     <Drawer
       visible={visible}
       onClose={() => closeSystemAnalysis()}
-      title={drawerTitle}
+      title={getDrawerTitle()}
       width="90%"
       bodyStyle={{ minWidth: "800px" }}
       /*Mark the drawer unclosable when the page is still loading to prevent 
@@ -284,25 +238,19 @@ export function AnalysisDrawer({
       */
       closable={pageState !== PageState.loading}
       maskClosable={pageState !== PageState.loading}
-      extra={analysisButton}
+      extra={
+        <AnalysisButton
+          disabled={!bucketInfoUpdated}
+          onClick={() => setShouldUpdateAnalysis(true)}
+        />
+      }
     >
       {/* The analysis report is expected to fail if a user selects systems with different datasets.
         We use an error boundary component and provide a fall back UI if an error is caught.
-  */}
-      <ErrorBoundary fallbackUI={fallbackUI(errorMessage)}>
+      */}
+      <ErrorBoundary fallbackUI={<FallbackUI errorMessage={errorMessage} />}>
         <Spin spinning={pageState === PageState.loading} tip="Analyzing...">
-          {visible && Object.keys(systemAnalyses).length > 0 && (
-            <AnalysisReport
-              task={task}
-              systems={activeSystems}
-              systemAnalyses={systemAnalyses}
-              significanceTestInfo={significanceTestInfos}
-              metricToSystemAnalysesParsed={metricToAnalyses}
-              featureNameToBucketInfo={featureNameToBucketInfo}
-              updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
-            />
-          )}
-          {pageState === PageState.error && fallbackUI(errorMessage)}
+          {renderDrawerContent()}
         </Spin>
       </ErrorBoundary>
     </Drawer>
