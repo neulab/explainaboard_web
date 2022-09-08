@@ -19,15 +19,8 @@ class DBCollection:
 class DBUtils:
 
     # Names of DBs or collections
-    # SYSTEM_OUTPUT_DB = "system_outputs_v011"
     SYSTEM_OUTPUT_COLLECTION_DB = "system_output_collections_v011"
     SYSTEM_OUTPUT_COLLECTION_PREFIX = "system_outputs"
-    # DBCollection(
-    #     db_name="system_output_collections_v011", collection_name="system_outputs_000"
-    # )
-    # DATASET_METADATA = DBCollection(
-    #     db_name="metadata", collection_name="dataset_metadata"
-    # )
     DEV_SYSTEM_METADATA = DBCollection(
         db_name="metadata", collection_name="system_metadata_v011"
     )
@@ -126,7 +119,7 @@ class DBUtils:
     @staticmethod
     def delete_one_by_id(
         collection: DBCollection, docid: str, session: ClientSession = None
-    ):
+    ) -> bool:
         """
         Delete one document with the given ID
         Returns: `True` if a single document has been deleted
@@ -137,10 +130,22 @@ class DBUtils:
             )
             if int(result.deleted_count) == 1:
                 return True
-            return False
-
         except InvalidId:
             abort_with_error_message(400, f"id: {docid} is not a valid mongodb ID")
+        return False
+
+    @staticmethod
+    def delete_many(
+        collection: DBCollection, filt: dict, session: ClientSession = None
+    ) -> int:
+        """
+        Delete one document with the given ID
+        Returns: Number of deleted entries
+        """
+        result: DeleteResult = DBUtils.get_collection(collection).delete_many(
+            filt, session=session
+        )
+        return int(result.deleted_count)
 
     @staticmethod
     def count(collection: DBCollection, filt: dict = None) -> int:

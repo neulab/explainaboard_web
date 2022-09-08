@@ -42,6 +42,7 @@ class SystemDBUtils:
 
     _EMAIL_RE = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
     _COLON_RE = r"^([A-Za-z0-9_-]+): (.+)$"
+    _SYSTEM_OUTPUT_CONST = "__SYSOUT__"
 
     @staticmethod
     def _parse_colon_line(line) -> tuple[str, str]:
@@ -328,9 +329,16 @@ class SystemDBUtils:
 
     @staticmethod
     def _find_output_or_case_raw(
-        system_id: str, output_ids: str | None, page: int = 0, page_size: int = 10
+        system_id: str,
+        analysis_level: str,
+        output_ids: str | None,
+        page: int = 0,
+        page_size: int = 10,
     ) -> tuple[list[dict], int]:
-        filt: dict[str, Any] = {"data_id": system_id}
+        filt: dict[str, Any] = {
+            "system_id": system_id,
+            "analysis_level": analysis_level,
+        }
         output_collection = DBUtils.get_system_output_collection(system_id)
         cursor, total = DBUtils.find(
             collection=output_collection,
@@ -428,7 +436,7 @@ class SystemDBUtils:
                 # Insert system
                 system.created_at = system.last_modified = datetime.utcnow()
                 document = general_to_dict(system)
-                system_id = document.pop("system_id")
+                document.pop("system_id")
                 document["dataset_metadata_id"] = (
                     system.dataset.dataset_id if system.dataset else None
                 )
@@ -441,14 +449,28 @@ class SystemDBUtils:
                 insert_list = []
                 sample_list = [general_to_dict(v) for v in system_output_data.samples]
                 sample_compressed = SystemDBUtils._compress_data(sample_list)
-                insert_list.append({"data_id": str_db_id, "data": sample_compressed})
+                insert_list.append(
+                    {
+                        "system_id": str_db_id,
+                        "analysis_level": SystemDBUtils._SYSTEM_OUTPUT_CONST,
+                        "data": sample_compressed,
+                    }
+                )
                 # Compress analysis cases
-                for i, analysis_cases in enumerate(overall_statistics.analysis_cases):
-                    str_case_id = f"{str_db_id}_cases{i}"
+                for i, (analysis_level, analysis_cases) in enumerate(
+                    zip(
+                        overall_statistics.sys_info.analysis_levels,
+                        overall_statistics.analysis_cases,
+                    )
+                ):
                     case_list = [general_to_dict(v) for v in analysis_cases]
                     case_compressed = SystemDBUtils._compress_data(case_list)
                     insert_list.append(
-                        {"data_id": str_case_id, "data": case_compressed}
+                        {
+                            "system_id": str_db_id,
+                            "analysis_level": analysis_level.name,
+                            "data": case_compressed,
+                        }
                     )
                 # Insert system output and analysis cases
                 output_collection = DBUtils.get_system_output_collection(str_db_id)
@@ -514,7 +536,11 @@ class SystemDBUtils:
         find multiple system outputs whose ids are in output_ids
         """
         sys_data, total = SystemDBUtils._find_output_or_case_raw(
-            str(system_id), output_ids, page, page_size
+            str(system_id),
+            SystemDBUtils._SYSTEM_OUTPUT_CONST,
+            output_ids,
+            page,
+            page_size,
         )
         return SystemOutputsReturn(
             [SystemDBUtils.system_output_from_dict(doc) for doc in sys_data], total
@@ -523,8 +549,8 @@ class SystemDBUtils:
     @staticmethod
     def find_analysis_cases(
         system_id: str,
+        level: str,
         case_ids: str | None,
-        level: int | float,
         page: int = 0,
         page_size: int = 10,
     ) -> AnalysisCasesReturn:
@@ -532,10 +558,8 @@ class SystemDBUtils:
         find multiple system outputs whose ids are in case_ids
         TODO: raise error if system doesn't exist
         """
-        level = int(level)
-        str_id = f"{str(system_id)}_cases{level}"
         sys_data, total = SystemDBUtils._find_output_or_case_raw(
-            str_id, case_ids, page, page_size
+            str(system_id), level, case_ids, page, page_size
         )
         return AnalysisCasesReturn(
             [SystemDBUtils.analysis_case_from_dict(doc) for doc in sys_data], total
@@ -558,10 +582,8 @@ class SystemDBUtils:
             if not result:
                 abort_with_error_message(400, f"failed to delete system {system_id}")
             output_collection = DBUtils.get_system_output_collection(system_id)
-            DBUtils.delete_one_by_id(output_collection, system_id, session=session)
-            for i, analysis_lev in enumerate(sys.system_info.analysis_levels):
-                case_id = f"{system_id}_cases{i}"
-                DBUtils.delete_one_by_id(output_collection, case_id, session=session)
+            filt = {"system_id": system_id}
+            DBUtils.delete_many(output_collection, filt, session=session)
             return True
 
         return DBUtils.execute_transaction(db_operations)
