@@ -297,11 +297,11 @@ function createFineGrainedBarChart(
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
-  const resultsBucketsOfSamples: Array<[number, number[]]>[] = [];
+  const resultsBucketsOfSamples: Array<[string, number[]]>[] = [];
   for (const result of results) {
     resultsNumbersOfSamples.push(result.numbersOfSamples);
     resultsBucketsOfSamples.push(
-      result.cases.map((myCases) => [result.levelIdx, myCases])
+      result.cases.map((myCases) => [result.levelName, myCases])
     );
     resultsValues.push(result.performances.map((perf) => perf.value));
     resultsConfidenceScores.push(

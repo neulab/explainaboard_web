@@ -434,9 +434,12 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         # Get analysis cases
         analysis_cases = []
         case_ids = None
-        for i, _ in enumerate(system.system_info.analysis_levels):
+        for i, analysis_level in enumerate(system.system_info.analysis_levels):
             level_cases = SystemDBUtils.find_analysis_cases(
-                system.system_id, case_ids, level=i, page_size=0
+                system_id=system.system_id,
+                level=analysis_level.name,
+                case_ids=case_ids,
+                page_size=0,
             ).analysis_cases
             # Note we are casting here, as SystemOutput.from_dict() actually just
             # returns a dict

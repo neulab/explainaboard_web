@@ -368,9 +368,9 @@ paths:
           name: level
           description: analysis level
           schema:
-            type: number
+            type: string
           required: true
-          example: "0"
+          example: "example"
         - in: query
           name: case_ids
           description: multiple output_ids, comma-separated
