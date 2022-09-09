@@ -450,6 +450,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             system_output_info,
             analysis_cases,
             metric_stats,
+            skip_failed_analyses=True,
         )
         single_analysis = SingleAnalysis(analysis_results=processor_result)
         system_analyses.append(single_analysis)
