@@ -209,11 +209,17 @@ class BenchmarkUtils:
                     if len(sys_info) != 1:
 
                         column_dict["creator"] = sys_info["creator"]
-                        performance = sys_info["results"]["overall"].get(
-                            dataset_metric["name"]
-                        )
+                        matching_results = [
+                            x
+                            for x in sys_info["results"]["overall"][0]
+                            if x.metric_name == dataset_metric["name"]
+                        ]
+                        if len(matching_results) != 1:
+                            performance = None
+                        else:
+                            performance = matching_results[0]
                         column_dict["score"] = (
-                            performance["value"]
+                            performance.value
                             if performance
                             else (dataset_metric.get("default") or 0.0)
                         )
