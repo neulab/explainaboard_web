@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.1"
+  version: "0.2.2"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -603,12 +603,8 @@ components:
           type: string
         func:
           type: string
-        is_custom:
-          type: boolean
         require_training_set:
           type: boolean
-        id:
-          type: string
       required: [dtype, cls_name]
 
     SystemInfo:
