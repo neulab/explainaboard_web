@@ -1,6 +1,9 @@
 # Generates API layer code for backend and frontend based on openapi.yaml
 # reference: https://stackoverflow.com/a/47554626
 
+# abort the script if any errors occur
+set -e
+
 # three modes: generate frontend only, backend only and both
 mode=$1
 script_dir=`dirname "$(realpath $0)"`
