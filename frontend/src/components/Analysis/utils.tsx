@@ -58,10 +58,10 @@ export function formatBucketName(unformattedName: Array<number>): string {
   }
 }
 
-// Parses features according to task type.
+/**
+ * Parses features according to task type.
+ */
 export function parse(
-  systemID: string,
-  task: string,
   bucketPerformances: AnalysisResult[],
   bucketType: string,
   levelName: string,
@@ -135,40 +135,15 @@ export function parse(
   return parsedResult;
 }
 
-// TODO(gneubig): can probably be deleted
-// export function findFeature(
-//   features: { [key: string]: unknown },
-//   name: string
-// ): SystemInfoFeature | undefined {
-//   if (name in features) {
-//     return features[name] as SystemInfoFeature;
-//   } else {
-//     for (const key in features) {
-//       if (typeof features[key] === "object" && features[key] !== null) {
-//         const val = findFeature(
-//           features[key] as { [key: string]: unknown },
-//           name
-//         );
-//         if (val !== undefined) {
-//           return val;
-//         }
-//       }
-//     }
-//   }
-//   return undefined;
-// }
-
+/**
+ * Takes in a task, metric names, and systems, and returns fine-grained evaluation
+ * results that can be accessed in the format:
+ * > value[metric_name : string][analysis_name : int][system_id : int]
+ */
 export function parseFineGrainedResults(
-  task: string,
   systems: SystemModel[],
   singleAnalyses: SingleAnalysis[]
 ): { [metric: string]: { [feature: string]: ResultFineGrainedParsed[] } } {
-  /**
-   * Takes in a task, metric names, and systems, and returns fine-grained evaluation
-   * results that can be accessed in the format:
-   * > value[metric_name : string][analysis_name : int][system_id : int]
-   */
-
   const parsedResults: {
     [metric: string]: {
       [analysis: string]: ResultFineGrainedParsed[];
@@ -200,8 +175,6 @@ export function parseFineGrainedResults(
 
       const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
         parse(
-          system.system_id,
-          task,
           analysisBuckets,
           bucketType,
           myResult.level,

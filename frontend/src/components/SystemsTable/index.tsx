@@ -187,10 +187,10 @@ export function SystemsTable({
         setActiveSystemIDs={setActiveSystemIDs}
       />
       <AnalysisDrawer
-        visible={activeSystemIDs.length !== 0}
-        systems={systems}
-        activeSystemIDs={activeSystemIDs}
-        setActiveSystemIDs={setActiveSystemIDs}
+        systems={systems.filter((sys) =>
+          activeSystemIDs.includes(sys.system_id)
+        )}
+        closeDrawer={() => setActiveSystemIDs([])}
       />
       <SystemSubmitDrawer
         visible={submitDrawerVisible}
