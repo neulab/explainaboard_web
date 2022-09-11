@@ -26,5 +26,8 @@
   "devDependencies": {
     "concurrently": "^6.3.0",
     "husky": "^7.0.4"
+  },
+  "dependencies": {
+    "iso-639-1": "^2.1.15"
   }
 }

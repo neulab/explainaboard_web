@@ -22,6 +22,7 @@ import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
 import ReactGA from "react-ga4";
+import ISO6391 from "iso-639-1";
 
 const { TextArea } = Input;
 
@@ -65,6 +66,9 @@ export function SystemSubmitDrawer(props: Props) {
     system_output: [],
     custom_dataset: [],
   };
+
+  const languageOptions = ISO6391.getAllNames();
+  languageOptions.push("Others");
 
   /**
    * Fetch datasets that match the selected task (max: 30)
@@ -208,6 +212,14 @@ export function SystemSubmitDrawer(props: Props) {
     return datasetOptions.find((d) => d.dataset_id === datasetID);
   }
 
+  function getLanguageCode(lang: string) {
+    if (lang === "Others") {
+      return "unk";
+    } else {
+      return ISO6391.getCode(lang);
+    }
+  }
+
   function onValuesChange(changedFields: Partial<FormData>) {
     if (changedFields.task != null) {
       searchDatasets("", changedFields.task);
@@ -236,6 +248,16 @@ export function SystemSubmitDrawer(props: Props) {
           });
         }
       }
+    }
+    if (changedFields.source_language != null) {
+      form.setFieldsValue({
+        source_language: getLanguageCode(changedFields.source_language),
+      });
+    }
+    if (changedFields.target_language != null) {
+      form.setFieldsValue({
+        target_language: getLanguageCode(changedFields.target_language),
+      });
     }
   }
 
@@ -443,7 +465,11 @@ export function SystemSubmitDrawer(props: Props) {
                 label="Input Lang"
                 rules={[{ required: true }]}
               >
-                <Input />
+                <Select
+                  showSearch
+                  options={languageOptions.map((opt) => ({ value: opt }))}
+                  placeholder="Search language"
+                />
               </Form.Item>
             </Col>
             <Col span={1}>&nbsp;</Col>
@@ -453,7 +479,11 @@ export function SystemSubmitDrawer(props: Props) {
                 label="Output Lang"
                 rules={[{ required: true }]}
               >
-                <Input />
+                <Select
+                  showSearch
+                  options={languageOptions.map((opt) => ({ value: opt }))}
+                  placeholder="Search language"
+                />
               </Form.Item>
             </Col>
           </Row>
