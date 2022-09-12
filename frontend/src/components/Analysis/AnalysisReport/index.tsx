@@ -5,7 +5,7 @@ import {
   BucketIntervals,
 } from "../types";
 import { compareBucketOfCases, getOverallMap } from "../utils";
-import { BarChart, AnalysisTable } from "../../../components";
+import { BarChart, AnalysisTable, ConfusionMatrix } from "../../../components";
 import { Row, Col, Typography, Space, Tabs, List, Avatar } from "antd";
 import { SystemModel } from "../../../models";
 import {
@@ -123,13 +123,89 @@ function createOverallBarChart(
         numbersOfSamplesList={resultsNumbersOfSamples}
         onBarClick={(barIndex: number, _: number) => {
           // Get examples of a certain bucket from all systems
-          setActiveMetric(metricNames[barIndex]);
+          setActiveMetric(metricNames[0]);
           // reset page number
           setPage(0);
         }}
       />
     </Col>
   );
+}
+
+function createConfusionMatrix(
+  props: Props,
+  colSpan: number,
+  setActiveMetric: React.Dispatch<React.SetStateAction<string>>,
+  setActiveSystemExamples: React.Dispatch<
+    React.SetStateAction<ActiveSystemExamples | undefined>
+  >,
+  setPage: React.Dispatch<React.SetStateAction<number>>
+) {
+  // const { systems, metricToSystemAnalysesParsed } = props;
+  const { systemAnalyses, metricToSystemAnalysesParsed } = props;
+  const metricNames = Object.keys(metricToSystemAnalysesParsed);
+
+  // TODO: For now we only support confusion matrix for single-system analysis
+  // Do we need to display one confusion matrix for each system in multi-system analysis?
+  if (systemAnalyses.length !== 1) {
+    return <></>;
+  }
+
+  const analysis = systemAnalyses[0];
+  for (const result of analysis.analysis_results) {
+    if (result.cls_name === "ComboCountAnalysisResult") {
+      const counts = result.combo_counts;
+
+      // Gather all categories and assign index to each of them
+      const cateMap = new Map<string, number>();
+      const categories = [];
+      let idx = 0;
+      for (const c of counts) {
+        for (const cateString of c[0]) {
+          if (!cateMap.has(cateString)) {
+            cateMap.set(cateString, idx);
+            categories.push(cateString);
+            idx++;
+          }
+        }
+      }
+
+      // Parse analysis results to confusion matrix entry data
+      const data = [];
+      let min = Infinity;
+      let max = 0;
+      for (const count of counts) {
+        // count[0] is a string array of results, i.e., [true label, predicted label]
+        const trueLabel = count[0][0];
+        const predicted = count[0][1];
+        // count[1] is the number of samples
+        const nSamples = count[1];
+        data.push([cateMap.get(trueLabel), cateMap.get(predicted), nSamples]);
+        min = Math.min(min, nSamples);
+        max = Math.max(max, nSamples);
+      }
+
+      return (
+        <Col span={colSpan}>
+          <ConfusionMatrix
+            title="Confusion Matrix"
+            axesTitles={result.features}
+            categories={categories}
+            entryData={data}
+            min={min}
+            max={max}
+            onEntryClick={(barIndex: number, _: number) => {
+              // Get examples of a certain bucket from all systems
+              setActiveMetric(metricNames[barIndex]);
+              // reset page number
+              setPage(0);
+            }}
+          />
+        </Col>
+      );
+    }
+  }
+  return <></>;
 }
 
 function getSignificanceTestScore(props: Props) {
@@ -420,10 +496,23 @@ export function AnalysisReport(props: Props) {
     setActiveSystemExamples,
     setPage
   );
+
+  const confusionMatrix = createConfusionMatrix(
+    props,
+    colSpan,
+    setActiveMetric,
+    setActiveSystemExamples,
+    setPage
+  );
+
   const significanceInfo = getSignificanceTestScore(props);
   return (
     <div>
-      {overallBarChart}
+      <Row>
+        {overallBarChart}
+
+        {confusionMatrix}
+      </Row>
 
       {significanceInfo}
 
