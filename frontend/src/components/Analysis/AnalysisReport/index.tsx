@@ -123,7 +123,7 @@ function createOverallBarChart(
         numbersOfSamplesList={resultsNumbersOfSamples}
         onBarClick={(barIndex: number, _: number) => {
           // Get examples of a certain bucket from all systems
-          setActiveMetric(metricNames[0]);
+          setActiveMetric(metricNames[barIndex]);
           // reset page number
           setPage(0);
         }}
@@ -142,7 +142,7 @@ function createConfusionMatrix(
   setPage: React.Dispatch<React.SetStateAction<number>>
 ) {
   // const { systems, metricToSystemAnalysesParsed } = props;
-  const { systemAnalyses, metricToSystemAnalysesParsed } = props;
+  const { systems, systemAnalyses, metricToSystemAnalysesParsed } = props;
   const metricNames = Object.keys(metricToSystemAnalysesParsed);
 
   // TODO: For now we only support confusion matrix for single-system analysis
@@ -151,6 +151,7 @@ function createConfusionMatrix(
     return <></>;
   }
 
+  const system = systems[0];
   const analysis = systemAnalyses[0];
   for (const result of analysis.analysis_results) {
     if (result.cls_name === "ComboCountAnalysisResult") {
@@ -171,18 +172,23 @@ function createConfusionMatrix(
       }
 
       // Parse analysis results to confusion matrix entry data
-      const data = [];
+      const samples: number[][] = [];
+      const data: number[][] = [];
       let min = Infinity;
       let max = 0;
       for (const count of counts) {
         // count[0] is a string array of results, i.e., [true label, predicted label]
-        const trueLabel = count[0][0];
-        const predicted = count[0][1];
+        const trueLabel: string = count[0][0];
+        const predicted: string = count[0][1];
         // count[1] is the number of samples
         const nSamples = count[1];
         data.push([cateMap.get(trueLabel), cateMap.get(predicted), nSamples]);
         min = Math.min(min, nSamples);
         max = Math.max(max, nSamples);
+        // count[2] is a list of samples
+        if (count.length > 2) {
+          samples.push(count[2]);
+        }
       }
 
       return (
@@ -194,9 +200,29 @@ function createConfusionMatrix(
             entryData={data}
             min={min}
             max={max}
-            onEntryClick={(barIndex: number, _: number) => {
-              // Get examples of a certain bucket from all systems
-              setActiveMetric(metricNames[barIndex]);
+            onEntryClick={async (barIndex: number, systemIndex: number) => {
+              if (barIndex < samples.length) {
+                // We have a list of samples for this combo
+
+                const bucketOfCasesList = (
+                  await backendClient.systemCasesGetById(
+                    system.system_id,
+                    "example",
+                    samples[barIndex].join(",")
+                  )
+                ).analysis_cases;
+
+                setActiveSystemExamples({
+                  title: `Samples for trueLabel=${data[barIndex][0]} and predicted=${data[barIndex][1]}`,
+                  barIndex,
+                  systemIndex,
+                  bucketOfCasesList: [bucketOfCasesList],
+                });
+              } else {
+                // We don't have samples for this combo. Simply show overall error cases
+                setActiveMetric(metricNames[0]);
+              }
+
               // reset page number
               setPage(0);
             }}
