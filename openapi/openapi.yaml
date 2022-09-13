@@ -335,10 +335,12 @@ paths:
           example: "61b02e0baadd2f674845b1c2"
         - in: query
           name: output_ids
-          description: multiple output_ids, comma-separated
+          description: multiple output_ids
           schema:
-            type: string
-          example: "1,5,6"
+            type: array
+            items:
+              type: integer
+          example: [1, 5, 6]
       responses:
         "200":
           description: OK
@@ -375,10 +377,12 @@ paths:
           example: "example"
         - in: query
           name: case_ids
-          description: multiple output_ids, comma-separated
+          description: multiple output_ids
           schema:
-            type: string
-          example: "1,5,6"
+            type: array
+            items:
+              type: integer
+          example: [1, 5, 6]
       responses:
         "200":
           description: OK

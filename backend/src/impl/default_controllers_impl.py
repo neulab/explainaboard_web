@@ -285,7 +285,7 @@ def systems_post(body: SystemCreateProps) -> System:
 
 
 def system_outputs_get_by_id(
-    system_id: str, output_ids: Optional[str]
+    system_id: str, output_ids: list[int] | None
 ) -> list[SystemOutput]:
     """
     TODO: return special error/warning if some ids cannot be found
@@ -315,7 +315,7 @@ def system_outputs_get_by_id(
 def system_cases_get_by_id(
     system_id: str,
     level: int,
-    case_ids: Optional[str],
+    case_ids: list[int] | None,
 ) -> list[AnalysisCase]:
     """
     TODO: return special error/warning if some ids cannot be found

@@ -328,11 +328,10 @@ function createFineGrainedBarChart(
           );
           const bucketOfCasesPromiseList = bucketOfSamplesList.map(
             (bucketOfSamples, i) => {
-              const caseIds = bucketOfSamples[1].join(",");
               return backendClient.systemCasesGetById(
                 systems[i].system_id,
                 bucketOfSamples[0],
-                caseIds
+                bucketOfSamples[1]
               );
             }
           );

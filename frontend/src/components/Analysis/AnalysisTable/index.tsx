@@ -161,23 +161,18 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
   const total = cases.length;
-  const offset = page * pageSize;
-  const end = Math.min(offset + pageSize, cases.length);
-  const outputIDString = cases
-    .slice(offset, end)
-    .map(function (x) {
-      return x["sample_id"];
-    })
-    .join(",");
   const tableRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
     async function refreshSystemOutputs() {
       setPageState(PageState.loading);
       try {
+        const offset = page * pageSize;
+        const end = Math.min(offset + pageSize, cases.length);
+        const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
         const result = await backendClient.systemOutputsGetById(
           systemID,
-          outputIDString
+          outputIDs
         );
         setSystemOutputs(result);
       } catch (e) {
@@ -207,7 +202,7 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [systemID, outputIDString, page, pageSize]);
+  }, [systemID, page, pageSize, cases]);
 
   // other fields
   if (systemOutputs.length === 0) {
