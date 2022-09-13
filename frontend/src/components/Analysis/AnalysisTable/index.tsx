@@ -179,7 +179,7 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
           systemID,
           outputIDString
         );
-        setSystemOutputs(result.system_outputs);
+        setSystemOutputs(result);
       } catch (e) {
         if (e instanceof Response) {
           const error = await parseBackendError(e);
