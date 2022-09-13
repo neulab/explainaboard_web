@@ -37,6 +37,7 @@ export function SystemsTable({
   // filters
   const [nameFilter, setNameFilter] = useState(name);
   const [taskFilter, setTaskFilter] = useState(initialTaskFilter);
+  const [showMine, setShowMine] = useState(false);
   const [sortField, setSortField] = useState("created_at");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [split, setSplit] = useState<string | undefined>(datasetSplit);
@@ -54,7 +55,8 @@ export function SystemsTable({
   // systems to be analyzed
   const [activeSystemIDs, setActiveSystemIDs] = useState<string[]>([]);
 
-  const { state: loginState } = useUser();
+  const { state: loginState, userInfo } = useUser();
+  const userEmail = userInfo?.email;
 
   /** generate metrics options list */
   function getMetricsNames() {
@@ -95,6 +97,8 @@ export function SystemsTable({
     async function refreshSystems() {
       setPageState(PageState.loading);
       const datasetSplit = split === "all" ? undefined : split;
+      // FIXME: this is hardcoded
+      const creator = showMine === true ? userEmail : "";
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
@@ -106,7 +110,8 @@ export function SystemsTable({
             page,
             pageSize,
             sortField,
-            sortDir
+            sortDir,
+            creator
           );
         setSystems(newSystems.map((sys) => newSystemModel(sys)));
         setTotal(newTotal);
@@ -124,6 +129,7 @@ export function SystemsTable({
   }, [
     nameFilter,
     taskFilter,
+    showMine,
     dataset,
     subdataset,
     split,
@@ -139,12 +145,14 @@ export function SystemsTable({
   function onFilterChange({
     name,
     task,
+    showMine,
     sortField: newSortField,
     sortDir: newSortDir,
     split: newSplit,
   }: Partial<Filter>) {
     if (name != null) setNameFilter(name);
     if (task != null) setTaskFilter(task || undefined);
+    if (showMine != null) setShowMine(showMine);
     if (newSortField != null) setSortField(newSortField);
     if (newSortDir != null) setSortDir(newSortDir);
     if (newSplit != null) setSplit(newSplit);
@@ -161,6 +169,7 @@ export function SystemsTable({
         value={{
           task: taskFilter,
           name: nameFilter,
+          showMine: showMine,
           sortField,
           sortDir,
           split,

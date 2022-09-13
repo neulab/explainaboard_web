@@ -8,6 +8,7 @@ import {
   Tooltip,
   message,
   Popconfirm,
+  Radio,
 } from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
@@ -22,6 +23,7 @@ import { backendClient, parseBackendError } from "../../clients";
 export interface Filter {
   name?: string;
   task?: string;
+  showMine: boolean;
   sortField: string;
   sortDir: "asc" | "desc";
   split: string | undefined;
@@ -188,6 +190,12 @@ export function SystemTableTools({
     }
   }
 
+  // showMine radio button options
+  const showMineOptions = [
+    { label: "My Systems", value: true },
+    { label: "All Systems", value: false },
+  ];
+
   return (
     <div style={{ width: "100%" }}>
       <Space style={{ width: "fit-content", float: "left" }}>
@@ -197,6 +205,13 @@ export function SystemTableTools({
         {deleteButton}
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
+        <Radio.Group
+          options={showMineOptions}
+          onChange={({ target: { value } }) => onChange({ showMine: value })}
+          value={value.showMine}
+          optionType="button"
+          buttonStyle="solid"
+        />
         <Select
           options={["test", "validation", "train", "all"].map((opt) => ({
             value: opt,
