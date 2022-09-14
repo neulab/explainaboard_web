@@ -10,6 +10,7 @@ from typing import Optional
 
 import pandas as pd
 from explainaboard import DatalabLoaderOption, TaskType, get_processor
+from explainaboard.analysis.analyses import BucketAnalysis
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
@@ -361,7 +362,7 @@ def systems_delete_by_id(system_id: str):
 
 def systems_analyses_post(body: SystemsAnalysesBody):
     system_ids_str = body.system_ids
-    # custom_feature_to_bucket_info = body.feature_to_bucket_info
+    feature_to_bucket_info = body.feature_to_bucket_info
 
     system_analyses: list[SingleAnalysis] = []
     system_ids: list = system_ids_str.split(",")
@@ -423,6 +424,22 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_info: SystemInfo = system.system_info
         system_info_dict = general_to_dict(system_info)
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
+
+        for analysis in system_output_info.analyses:
+            if (
+                isinstance(analysis, BucketAnalysis)
+                and analysis.feature in feature_to_bucket_info
+            ):
+                # The "fixed" method is required for SDK to perform
+                # custom-interval analysis
+                analysis.method = "fixed"
+                analysis.number = feature_to_bucket_info[analysis.feature].number
+                # Convert interval to type tuple so it becomes hashable,
+                # as required by SDK
+                analysis.setting = [
+                    (interval[0], interval[1])
+                    for interval in feature_to_bucket_info[analysis.feature].setting
+                ]
 
         logging.getLogger().warning(
             "user-defined bucket analyses are not " "re-implemented"
