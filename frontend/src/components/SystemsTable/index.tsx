@@ -137,6 +137,7 @@ export function SystemsTable({
     sortField,
     sortDir,
     refreshTrigger,
+    userEmail,
     loginState, // refresh when login state changes
   ]);
 
