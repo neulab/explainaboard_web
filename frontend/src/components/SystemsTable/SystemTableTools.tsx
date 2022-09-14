@@ -190,11 +190,40 @@ export function SystemTableTools({
     }
   }
 
+  let loggedIn = false;
+  const { state } = useUser();
+  if (state === LoginState.yes) {
+    loggedIn = true;
+  }
+
   // showMine radio button options
   const showMineOptions = [
-    { label: "My Systems", value: true },
+    { label: "My Systems", value: true, disabled: !loggedIn },
     { label: "All Systems", value: false },
   ];
+
+  let mineVsAllSystemsToggle = (
+    <Radio.Group
+      options={showMineOptions}
+      onChange={({ target: { value } }) => onChange({ showMine: value })}
+      value={value.showMine}
+      optionType="button"
+      buttonStyle="solid"
+    />
+  );
+
+  // add "remind log in pop up" if not logged in
+  if (!loggedIn) {
+    const remindLogInMessage = (
+      <div>
+        <p>Please log in to see your own systems.</p>
+      </div>
+    );
+
+    mineVsAllSystemsToggle = (
+      <Tooltip title={remindLogInMessage}>{mineVsAllSystemsToggle}</Tooltip>
+    );
+  }
 
   return (
     <div style={{ width: "100%" }}>
@@ -205,13 +234,16 @@ export function SystemTableTools({
         {deleteButton}
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
-        <Radio.Group
-          options={showMineOptions}
-          onChange={({ target: { value } }) => onChange({ showMine: value })}
-          value={value.showMine}
-          optionType="button"
-          buttonStyle="solid"
-        />
+        {mineVsAllSystemsToggle}
+        {/* <Tooltip title={remindLogInMessage}>
+          <Radio.Group
+            options={showMineOptions}
+            onChange={({ target: { value } }) => onChange({ showMine: value })}
+            value={value.showMine}
+            optionType="button"
+            buttonStyle="solid"
+          />
+        </Tooltip> */}
         <Select
           options={["test", "validation", "train", "all"].map((opt) => ({
             value: opt,
