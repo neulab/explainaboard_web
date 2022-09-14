@@ -97,7 +97,6 @@ export function SystemsTable({
     async function refreshSystems() {
       setPageState(PageState.loading);
       const datasetSplit = split === "all" ? undefined : split;
-      // FIXME: this is hardcoded
       const creator = showMine === true ? userEmail : "";
       try {
         const { systems: newSystems, total: newTotal } =
