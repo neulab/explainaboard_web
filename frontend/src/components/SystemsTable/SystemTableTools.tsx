@@ -190,11 +190,8 @@ export function SystemTableTools({
     }
   }
 
-  let loggedIn = false;
   const { state } = useUser();
-  if (state === LoginState.yes) {
-    loggedIn = true;
-  }
+  const loggedIn = state === LoginState.yes;
 
   // showMine radio button options
   const showMineOptions = [
@@ -235,15 +232,6 @@ export function SystemTableTools({
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
         {mineVsAllSystemsToggle}
-        {/* <Tooltip title={remindLogInMessage}>
-          <Radio.Group
-            options={showMineOptions}
-            onChange={({ target: { value } }) => onChange({ showMine: value })}
-            value={value.showMine}
-            optionType="button"
-            buttonStyle="solid"
-          />
-        </Tooltip> */}
         <Select
           options={["test", "validation", "train", "all"].map((opt) => ({
             value: opt,
