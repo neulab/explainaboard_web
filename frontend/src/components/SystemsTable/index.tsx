@@ -97,7 +97,7 @@ export function SystemsTable({
     async function refreshSystems() {
       setPageState(PageState.loading);
       const datasetSplit = split === "all" ? undefined : split;
-      const creator = showMine === true ? userEmail : "";
+      const creator = showMine === true ? userEmail : undefined;
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
