@@ -193,7 +193,13 @@ export function SystemTableTools({
   const { state } = useUser();
   const loggedIn = state === LoginState.yes;
 
-  // showMine radio button options
+  /**
+   * showMine radio buttion options.
+   * There are two labels, `My systems` and `All systems`. If `My systems` 
+   * is clicked, value is set to `true` for `showMine`. Otherwise, false.
+   * 
+   * If the user is not logged in, `My Systems` option would be disabled.
+   */
   const showMineOptions = [
     { label: "My Systems", value: true, disabled: !loggedIn },
     { label: "All Systems", value: false },
