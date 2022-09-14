@@ -327,7 +327,7 @@ class SystemDBUtils:
 
     @staticmethod
     def _find_output_or_case_raw(
-        system_id: str, analysis_level: str, output_ids: str | None
+        system_id: str, analysis_level: str, output_ids: list[int] | None
     ) -> list[dict]:
         filt: dict[str, Any] = {
             "system_id": system_id,
@@ -341,8 +341,8 @@ class SystemDBUtils:
         if total != 1:
             abort_with_error_message(400, f"Could not find a single system {system_id}")
         sys_data = SystemDBUtils._decompress_from_cursor(cursor)
-        if output_ids:
-            sys_data = [sys_data[int(x)] for x in output_ids.split(",")]
+        if output_ids is not None:
+            sys_data = [sys_data[x] for x in output_ids]
         return sys_data
 
     @staticmethod
@@ -518,7 +518,7 @@ class SystemDBUtils:
 
     @staticmethod
     def find_system_outputs(
-        system_id: str, output_ids: str | None
+        system_id: str, output_ids: list[int] | None
     ) -> list[SystemOutput]:
         """
         find multiple system outputs whose ids are in output_ids
@@ -530,7 +530,7 @@ class SystemDBUtils:
 
     @staticmethod
     def find_analysis_cases(
-        system_id: str, level: str, case_ids: str | None
+        system_id: str, level: str, case_ids: list[int] | None
     ) -> list[AnalysisCase]:
         """
         find multiple system outputs whose ids are in case_ids
