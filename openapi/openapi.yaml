@@ -345,7 +345,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SystemOutputsReturn"
+                type: array
+                items:
+                  $ref: "#/components/schemas/SystemOutput"
 
   /systems/{system_id}/cases:
     get:
@@ -383,7 +385,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AnalysisCasesReturn"
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnalysisCase"
 
   /systems/analyses:
     post:
@@ -995,36 +999,6 @@ components:
           example: 20
       required:
         - datasets
-        - total
-
-    SystemOutputsReturn:
-      type: object
-      properties:
-        system_outputs:
-          type: array
-          items:
-            $ref: "#/components/schemas/SystemOutput"
-        total:
-          type: integer
-          description: total number of matching system outputs
-          example: 20
-      required:
-        - system_outputs
-        - total
-
-    AnalysisCasesReturn:
-      type: object
-      properties:
-        analysis_cases:
-          type: array
-          items:
-            $ref: "#/components/schemas/AnalysisCase"
-        total:
-          type: integer
-          description: total number of matching analysis cases
-          example: 20
-      required:
-        - analysis_cases
         - total
 
     SystemsReturn:

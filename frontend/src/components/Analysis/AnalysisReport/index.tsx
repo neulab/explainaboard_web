@@ -336,9 +336,7 @@ function createFineGrainedBarChart(
               );
             }
           );
-          const bucketOfCasesList = (
-            await Promise.all(bucketOfCasesPromiseList)
-          ).map((x) => x.analysis_cases);
+          const bucketOfCasesList = await Promise.all(bucketOfCasesPromiseList);
           setActiveSystemExamples({
             title,
             barIndex,

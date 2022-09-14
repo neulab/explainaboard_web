@@ -25,14 +25,12 @@ from explainaboard_web.impl.utils import (
 )
 from explainaboard_web.models import (
     AnalysisCase,
-    AnalysisCasesReturn,
     DatasetMetadata,
     System,
     SystemInfo,
     SystemMetadata,
     SystemOutput,
     SystemOutputProps,
-    SystemOutputsReturn,
     SystemsReturn,
 )
 from pymongo.client_session import ClientSession
@@ -329,12 +327,8 @@ class SystemDBUtils:
 
     @staticmethod
     def _find_output_or_case_raw(
-        system_id: str,
-        analysis_level: str,
-        output_ids: str | None,
-        page: int = 0,
-        page_size: int = 10,
-    ) -> tuple[list[dict], int]:
+        system_id: str, analysis_level: str, output_ids: str | None
+    ) -> list[dict]:
         filt: dict[str, Any] = {
             "system_id": system_id,
             "analysis_level": analysis_level,
@@ -349,10 +343,7 @@ class SystemDBUtils:
         sys_data = SystemDBUtils._decompress_from_cursor(cursor)
         if output_ids:
             sys_data = [sys_data[int(x)] for x in output_ids.split(",")]
-        total = len(sys_data)
-        if page_size:
-            sys_data = sys_data[page * page_size : (page + 1) * page_size]
-        return sys_data, total
+        return sys_data
 
     @staticmethod
     def create_system(
@@ -527,43 +518,27 @@ class SystemDBUtils:
 
     @staticmethod
     def find_system_outputs(
-        system_id: str,
-        output_ids: str | None,
-        page=0,
-        page_size=10,
-    ) -> SystemOutputsReturn:
+        system_id: str, output_ids: str | None
+    ) -> list[SystemOutput]:
         """
         find multiple system outputs whose ids are in output_ids
         """
-        sys_data, total = SystemDBUtils._find_output_or_case_raw(
-            str(system_id),
-            SystemDBUtils._SYSTEM_OUTPUT_CONST,
-            output_ids,
-            page,
-            page_size,
+        sys_data = SystemDBUtils._find_output_or_case_raw(
+            str(system_id), SystemDBUtils._SYSTEM_OUTPUT_CONST, output_ids
         )
-        return SystemOutputsReturn(
-            [SystemDBUtils.system_output_from_dict(doc) for doc in sys_data], total
-        )
+        return [SystemDBUtils.system_output_from_dict(doc) for doc in sys_data]
 
     @staticmethod
     def find_analysis_cases(
-        system_id: str,
-        level: str,
-        case_ids: str | None,
-        page: int = 0,
-        page_size: int = 10,
-    ) -> AnalysisCasesReturn:
+        system_id: str, level: str, case_ids: str | None
+    ) -> list[AnalysisCase]:
         """
         find multiple system outputs whose ids are in case_ids
-        TODO: raise error if system doesn't exist
         """
-        sys_data, total = SystemDBUtils._find_output_or_case_raw(
-            str(system_id), level, case_ids, page, page_size
+        sys_data = SystemDBUtils._find_output_or_case_raw(
+            str(system_id), level, case_ids
         )
-        return AnalysisCasesReturn(
-            [SystemDBUtils.analysis_case_from_dict(doc) for doc in sys_data], total
-        )
+        return [SystemDBUtils.analysis_case_from_dict(doc) for doc in sys_data]
 
     @staticmethod
     def delete_system_by_id(system_id: str):
