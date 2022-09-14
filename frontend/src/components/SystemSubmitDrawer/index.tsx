@@ -14,7 +14,12 @@ import {
   Row,
   Col,
 } from "antd";
-import { DatasetMetadata, System, TaskCategory } from "../../clients/openapi";
+import {
+  DatasetMetadata,
+  System,
+  TaskCategory,
+  LanguageCode,
+} from "../../clients/openapi";
 import { backendClient, parseBackendError } from "../../clients";
 import { findTask, toBase64, unwrap } from "../../utils";
 import { useForm } from "antd/lib/form/Form";
@@ -22,7 +27,6 @@ import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
 import ReactGA from "react-ga4";
-import ISO6391 from "iso-639-1";
 
 const { TextArea } = Input;
 
@@ -46,8 +50,11 @@ enum State {
 export function SystemSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.loading);
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
+  const [languageCodes, setLanguageCodes] = useState<LanguageCode[]>([]);
   const [datasetOptions, setDatasetOptions] = useState<DatasetMetadata[]>([]);
   const [useCustomDataset, setUseCustomDataset] = useState(false);
+  const [otherSourceLang, setOtherSourceLang] = useState(false);
+  const [otherTargetLang, setOtherTargetLang] = useState(false);
 
   const [form] = useForm<FormData>();
   const { onClose } = props;
@@ -55,6 +62,7 @@ export function SystemSubmitDrawer(props: Props) {
   useEffect(() => {
     async function fetchTasks() {
       setTaskCategories(await backendClient.tasksGet());
+      setLanguageCodes(await backendClient.languageCodesGet());
       setState(State.other);
     }
     fetchTasks();
@@ -66,9 +74,6 @@ export function SystemSubmitDrawer(props: Props) {
     system_output: [],
     custom_dataset: [],
   };
-
-  const languageOptions = ISO6391.getAllNames();
-  languageOptions.push("Others");
 
   /**
    * Fetch datasets that match the selected task (max: 30)
@@ -111,6 +116,8 @@ export function SystemSubmitDrawer(props: Props) {
     metric_names,
     source_language,
     target_language,
+    other_source_language,
+    other_target_language,
     sys_out_file,
     custom_dataset_file,
     shared_users,
@@ -125,6 +132,14 @@ export function SystemSubmitDrawer(props: Props) {
         shared_users === undefined
           ? undefined
           : shared_users.map((user) => user.trim());
+      source_language =
+        source_language === "other"
+          ? "other-" + other_source_language
+          : source_language;
+      target_language =
+        target_language === "other"
+          ? "other-" + other_target_language
+          : target_language;
       if (useCustomDataset) {
         const customDatasetBase64 = await extractAndEncodeFile(
           custom_dataset_file
@@ -187,6 +202,8 @@ export function SystemSubmitDrawer(props: Props) {
         "metric_names",
         "source_language",
         "target_language",
+        "other_source_language",
+        "other_target_language",
         "shared_users",
         "system_details",
       ]);
@@ -212,12 +229,24 @@ export function SystemSubmitDrawer(props: Props) {
     return datasetOptions.find((d) => d.dataset_id === datasetID);
   }
 
-  function getLanguageCode(lang: string) {
-    if (lang === "Others") {
-      return "unk";
-    } else {
-      return ISO6391.getCode(lang);
+  function onSourceLangChange(lang: string | undefined) {
+    setOtherSourceLang(lang === "other");
+  }
+
+  function onTargetLangChange(lang: string | undefined) {
+    setOtherTargetLang(lang === "other");
+  }
+
+  function getLangCode(code: string) {
+    if (code.length === 2) {
+      const match = languageCodes.find((lang: LanguageCode) =>
+        lang.iso1_code ? lang.iso1_code === code : false
+      );
+      if (match !== undefined) {
+        return match.iso3_code;
+      }
     }
+    return code;
   }
 
   function onValuesChange(changedFields: Partial<FormData>) {
@@ -238,26 +267,24 @@ export function SystemSubmitDrawer(props: Props) {
         if (langs != null && langs.length > 0) {
           const target_idx = langs.length === 2 ? 1 : 0;
           form.setFieldsValue({
-            source_language: langs[0],
-            target_language: langs[target_idx],
+            source_language: getLangCode(langs[0]),
+            other_source_language: undefined,
+            target_language: getLangCode(langs[target_idx]),
+            other_target_language: undefined,
           });
+          onSourceLangChange(langs[0]);
+          onTargetLangChange(langs[target_idx]);
         } else {
           form.setFieldsValue({
             source_language: undefined,
+            other_source_language: undefined,
             target_language: undefined,
+            other_target_language: undefined,
           });
+          onSourceLangChange(undefined);
+          onTargetLangChange(undefined);
         }
       }
-    }
-    if (changedFields.source_language != null) {
-      form.setFieldsValue({
-        source_language: getLanguageCode(changedFields.source_language),
-      });
-    }
-    if (changedFields.target_language != null) {
-      form.setFieldsValue({
-        target_language: getLanguageCode(changedFields.target_language),
-      });
     }
   }
 
@@ -467,10 +494,31 @@ export function SystemSubmitDrawer(props: Props) {
               >
                 <Select
                   showSearch
-                  options={languageOptions.map((opt) => ({ value: opt }))}
+                  options={languageCodes.map((opt) => ({
+                    label: opt.name + "(" + opt.iso3_code + ")",
+                    value: opt.iso3_code,
+                  }))}
                   placeholder="Search language"
+                  filterOption={(input, option) =>
+                    option === undefined
+                      ? false
+                      : option.label
+                          .toLowerCase()
+                          .includes(input.toLowerCase()) ||
+                        option.value.toLowerCase().includes(input.toLowerCase())
+                  }
+                  onChange={onSourceLangChange}
                 />
               </Form.Item>
+              {otherSourceLang && (
+                <Form.Item
+                  name="other_source_language"
+                  label="Other Lang"
+                  rules={[{ required: true }]}
+                >
+                  <Input />
+                </Form.Item>
+              )}
             </Col>
             <Col span={1}>&nbsp;</Col>
             <Col span={9}>
@@ -481,12 +529,34 @@ export function SystemSubmitDrawer(props: Props) {
               >
                 <Select
                   showSearch
-                  options={languageOptions.map((opt) => ({ value: opt }))}
+                  options={languageCodes.map((opt) => ({
+                    label: opt.name + "(" + opt.iso3_code + ")",
+                    value: opt.iso3_code,
+                  }))}
                   placeholder="Search language"
+                  filterOption={(input, option) =>
+                    option === undefined
+                      ? false
+                      : option.label
+                          .toLowerCase()
+                          .includes(input.toLowerCase()) ||
+                        option.value.toLowerCase().includes(input.toLowerCase())
+                  }
+                  onChange={onTargetLangChange}
                 />
               </Form.Item>
+              {otherTargetLang && (
+                <Form.Item
+                  name="other_target_language"
+                  label="Other Lang"
+                  rules={[{ required: true }]}
+                >
+                  <Input />
+                </Form.Item>
+              )}
             </Col>
           </Row>
+
           <Form.Item
             name="system_details"
             label="System Details"
@@ -539,6 +609,8 @@ interface FormData {
   metric_names: string[];
   source_language: string;
   target_language: string;
+  other_source_language: string;
+  other_target_language: string;
   is_private: boolean;
   system_details: string;
   shared_users: string[];
