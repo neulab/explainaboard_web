@@ -231,7 +231,7 @@ function createExampleTable(
   }
 
   const barText = systems.length === 1 ? "bar" : "bars";
-  const exampleText = task === "summarization" ? "Examples" : "Error cases";
+  const exampleText = "Examples";
   exampleTable = (
     <div>
       <Title level={4}>{`${exampleText} from ${barText} #${
