@@ -432,7 +432,9 @@ class SystemDBUtils:
                     system.dataset.dataset_id if system.dataset else None
                 )
                 document.pop("dataset")
-                system_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
+                system_id = DBUtils.insert_one(
+                    DBUtils.DEV_SYSTEM_METADATA, document, session=session
+                )
                 # Compress the system output
                 insert_list = []
                 sample_list = [general_to_dict(v) for v in system_output_data.samples]
