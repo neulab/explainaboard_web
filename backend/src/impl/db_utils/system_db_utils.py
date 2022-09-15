@@ -432,17 +432,14 @@ class SystemDBUtils:
                     system.dataset.dataset_id if system.dataset else None
                 )
                 document.pop("dataset")
-                system_db_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
-                if not system_db_id:
-                    abort_with_error_message(400, f"failed to insert {system_id}")
-                str_db_id = str(system_db_id)
+                system_id = DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document)
                 # Compress the system output
                 insert_list = []
                 sample_list = [general_to_dict(v) for v in system_output_data.samples]
                 sample_compressed = SystemDBUtils._compress_data(sample_list)
                 insert_list.append(
                     {
-                        "system_id": str_db_id,
+                        "system_id": system_id,
                         "analysis_level": SystemDBUtils._SYSTEM_OUTPUT_CONST,
                         "data": sample_compressed,
                     }
@@ -458,13 +455,13 @@ class SystemDBUtils:
                     case_compressed = SystemDBUtils._compress_data(case_list)
                     insert_list.append(
                         {
-                            "system_id": str_db_id,
+                            "system_id": system_id,
                             "analysis_level": analysis_level.name,
                             "data": case_compressed,
                         }
                     )
                 # Insert system output and analysis cases
-                output_collection = DBUtils.get_system_output_collection(str_db_id)
+                output_collection = DBUtils.get_system_output_collection(system_id)
                 result = DBUtils.insert_many(
                     output_collection, insert_list, False, session
                 )
@@ -472,7 +469,7 @@ class SystemDBUtils:
                     abort_with_error_message(
                         400, f"failed to insert outputs for {system_id}"
                     )
-                return system_db_id
+                return system_id
 
             # -- perform upload to the DB
             system_id = DBUtils.execute_transaction(db_operations)
