@@ -14,7 +14,7 @@ from bson import ObjectId
 from explainaboard import DatalabLoaderOption, FileType, Source, get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.loaders.loader_registry import get_loader_class
-from explainaboard.utils.serialization import general_to_dict
+from explainaboard.serialization.legacy import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
