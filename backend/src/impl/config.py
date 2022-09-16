@@ -28,6 +28,8 @@ class LocalDevelopmentConfig(Config):
         self.USER_POOL_AUDIENCE = os.environ["USER_POOL_AUDIENCE_DEV"]
         self.AUTH_URL = f"https://explainaboard-dev-user.auth.{self.AWS_DEFAULT_REGION}.amazoncognito.com/oauth2/authorize?client_id={self.USER_POOL_AUDIENCE}&response_type=token&scope=email+openid+phone&redirect_uri="  # noqa
 
+        self.STORAGE_BUCKET_NAME = os.environ["STORAGE_BUCKET_NAME"]
+
 
 class StagingConfig(LocalDevelopmentConfig):
     """Used for an online staging/test environment. It has exactly the same

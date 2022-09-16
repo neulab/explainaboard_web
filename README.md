@@ -6,7 +6,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
 [Schema Design](https://docs.google.com/document/d/1my-zuIYosrXuoqOk1SvqZDsC2tdMgs_A7HTAtPYXKLI/edit?usp=sharing)
 
-## Quick Start
+## Quick Start for Developers
 
 > This step-by-step guide assumes a Linux environment. A MacOS environment will likely work similarly. For Windows users, the easiest way is to 
 > use a subsystem, for example [WSL](https://docs.microsoft.com/en-us/windows/wsl/about) (pre-installed since Windows 10).
@@ -43,6 +43,9 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
     2. `pip install -r backend/src/gen/requirements.txt`
     3. Create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`. Contact the dev team to get the credentials for dev and prod environments.
+    4. Set up a GCP account and authenticate locally:
+       - Contact the dev team to setup a GCP account with access to the dev bucket of Cloud Storage.
+       - Install gcloud and then run `gcloud auth login` to login to the user account locally. (for more information, see this [guide](https://cloud.google.com/sdk/docs/authorizing#run_gcloud_auth_login))
 6. Install pre-commit hooks
    - Run `npm run prepare` to install the pre-commit hook via husky. The hook auto-checks both frontend and backend code before commits. Please do not skip it.
 7. Launch explainaboard
