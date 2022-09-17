@@ -485,12 +485,13 @@ export function SystemSubmitDrawer(props: Props) {
           </Form.Item>
 
           <Row>
-            <Col span={5}>&nbsp;</Col>
-            <Col span={9}>
+            <Col span={4}>&nbsp;</Col>
+            <Col span={10}>
               <Form.Item
                 name="source_language"
-                label="Input Lang"
+                label="Input Language"
                 rules={[{ required: true }]}
+                tooltip="Choose the input/output languages of the dataset. Select 'Other(other)' if the dataset uses custom languages. Select 'None(none)' if the dataset contains other modalities like images. "
               >
                 <Select
                   showSearch
@@ -513,18 +514,17 @@ export function SystemSubmitDrawer(props: Props) {
               {otherSourceLang && (
                 <Form.Item
                   name="other_source_language"
-                  label="Other Lang"
+                  label="Other Language"
                   rules={[{ required: true }]}
                 >
-                  <Input />
+                  <Input placeholder="Enter custom language" />
                 </Form.Item>
               )}
             </Col>
-            <Col span={1}>&nbsp;</Col>
-            <Col span={9}>
+            <Col span={10}>
               <Form.Item
                 name="target_language"
-                label="Output Lang"
+                label="Output Language"
                 rules={[{ required: true }]}
               >
                 <Select
@@ -548,10 +548,10 @@ export function SystemSubmitDrawer(props: Props) {
               {otherTargetLang && (
                 <Form.Item
                   name="other_target_language"
-                  label="Other Lang"
+                  label="Other Language"
                   rules={[{ required: true }]}
                 >
-                  <Input />
+                  <Input placeholder="Enter custom language" />
                 </Form.Item>
               )}
             </Col>
