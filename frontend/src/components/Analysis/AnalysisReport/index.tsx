@@ -135,15 +135,13 @@ function createOverallBarChart(
 function createConfusionMatrix(
   props: Props,
   colSpan: number,
-  setActiveMetric: React.Dispatch<React.SetStateAction<string>>,
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
   >,
   setPage: React.Dispatch<React.SetStateAction<number>>
 ) {
   // const { systems, metricToSystemAnalysesParsed } = props;
-  const { systems, systemAnalyses, metricToSystemAnalysesParsed } = props;
-  const metricNames = Object.keys(metricToSystemAnalysesParsed);
+  const { systems, systemAnalyses } = props;
 
   // TODO: For now we only support confusion matrix for single-system analysis
   // Do we need to display one confusion matrix for each system in multi-system analysis?
@@ -174,8 +172,6 @@ function createConfusionMatrix(
       // Parse analysis results to confusion matrix entry data
       const samples: number[][] = [];
       const data: number[][] = [];
-      let min = Infinity;
-      let max = 0;
       for (const count of counts) {
         // count[0] is a string array of results, i.e., [true label, predicted label]
         const trueLabel: string = count[0][0];
@@ -183,8 +179,6 @@ function createConfusionMatrix(
         // count[1] is the number of samples
         const nSamples = count[1];
         data.push([cateMap.get(trueLabel), cateMap.get(predicted), nSamples]);
-        min = Math.min(min, nSamples);
-        max = Math.max(max, nSamples);
         // count[2] is a list of samples
         if (count.length > 2) {
           samples.push(count[2]);
@@ -198,8 +192,6 @@ function createConfusionMatrix(
             axesTitles={result.features}
             categories={categories}
             entryData={data}
-            min={min}
-            max={max}
             onEntryClick={async (barIndex: number, systemIndex: number) => {
               if (barIndex < samples.length) {
                 // We have a list of samples for this combo
@@ -218,9 +210,6 @@ function createConfusionMatrix(
                   systemIndex,
                   bucketOfCasesList: [bucketOfCasesList],
                 });
-              } else {
-                // We don't have samples for this combo. Simply show overall error cases
-                setActiveMetric(metricNames[0]);
               }
 
               // reset page number
@@ -476,9 +465,22 @@ function createMetricPane(
       <Row>
         {
           // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
-          // into columns. One column contains a single BarChart.
-          Object.keys(systemAnalysesParsed).map((feature) =>
-            createFineGrainedBarChart(
+          // into columns. One column contains a single fine grained chart.
+          Object.keys(systemAnalysesParsed).map((feature) => {
+            if (feature.toLowerCase().startsWith("combo")) {
+              if (
+                systemAnalysesParsed[feature][0].featureDescription ===
+                "confusion matrix"
+              ) {
+                return createConfusionMatrix(
+                  props,
+                  colSpan,
+                  setActiveSystemExamples,
+                  setPage
+                );
+              }
+            }
+            return createFineGrainedBarChart(
               props,
               metric,
               feature,
@@ -486,8 +488,8 @@ function createMetricPane(
               colSpan,
               setActiveSystemExamples,
               setPage
-            )
-          )
+            );
+          })
         }
       </Row>
       {exampleTable}
@@ -523,22 +525,10 @@ export function AnalysisReport(props: Props) {
     setPage
   );
 
-  const confusionMatrix = createConfusionMatrix(
-    props,
-    colSpan,
-    setActiveMetric,
-    setActiveSystemExamples,
-    setPage
-  );
-
   const significanceInfo = getSignificanceTestScore(props);
   return (
     <div>
-      <Row>
-        {overallBarChart}
-
-        {confusionMatrix}
-      </Row>
+      <Row>{overallBarChart}</Row>
 
       {significanceInfo}
 

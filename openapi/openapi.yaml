@@ -1113,6 +1113,18 @@ components:
           nullable: true
       required: [metric_name, value]
 
+    ComboCount:
+      type: object
+      properties:
+        bucket:
+          type: array
+        count:
+          type: number
+        samples:
+          type: array
+      required: [bucket, count, samples]
+
+
     AnalysisCase:
       type: object
       properties:

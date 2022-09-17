@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { AnalysisCase, Performance } from "../../clients/openapi";
+import { AnalysisCase, Performance, ComboCount } from "../../clients/openapi";
 
 export interface ResultFineGrainedParsed {
   /**
@@ -22,6 +22,8 @@ export interface ResultFineGrainedParsed {
   numbersOfSamples: number[];
   // performances[i]: performance (value/confidence) for bucket i
   performances: Performance[];
+  // Used by combo count analyses
+  comboCounts: ComboCount[];
   // levelName: is the level that this result belongs to
   levelName: string;
   // cases[i][j]: is the index of the ith bucket's jth example

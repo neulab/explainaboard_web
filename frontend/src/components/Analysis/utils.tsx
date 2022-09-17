@@ -3,8 +3,8 @@ import {
   AnalysisCase,
   SingleAnalysis,
   AnalysisResult,
-  BucketPerformance,
   Performance,
+  ComboCount,
 } from "../../clients/openapi";
 import { SystemModel } from "../../models";
 
@@ -23,6 +23,7 @@ export function initParsedResult(
   const bucketNames: string[] = [];
   const bucketType = "";
   const performances: ResultFineGrainedParsed["performances"] = [];
+  const comboCounts: ResultFineGrainedParsed["comboCounts"] = [];
   const cases: ResultFineGrainedParsed["cases"] = [];
   const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
   return {
@@ -35,6 +36,7 @@ export function initParsedResult(
     bucketIntervals,
     numbersOfSamples,
     performances,
+    comboCounts,
     cases,
   };
 }
@@ -58,10 +60,32 @@ export function formatBucketName(unformattedName: Array<number>): string {
   }
 }
 
+export function parseComboCountFeatures(
+  comboCounts: ComboCount[],
+  levelName: string,
+  analysisName: string,
+  featureDescription: string
+) {
+  const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
+  // TODO (Chonghan) should not hardcode here.
+  // But currently no metric is accessible here
+  const metricName = "Accuracy";
+  parsedResult[metricName] = initParsedResult(
+    metricName,
+    analysisName, // use feature description instead of feature name
+    // for combo count analysis
+    featureDescription,
+    levelName
+  );
+  parsedResult[metricName].comboCounts = comboCounts;
+
+  return parsedResult;
+}
+
 /**
  * Parses features according to task type.
  */
-export function parse(
+export function parseBucketAnalysisFeatures(
   bucketPerformances: AnalysisResult[],
   bucketType: string,
   levelName: string,
@@ -163,24 +187,30 @@ export function parseFineGrainedResults(
       const myAnalysis = system.system_info.analyses[analysisIdx];
       const myResult = singleAnalysis.analysis_results[analysisIdx];
 
-      // Skip non-bucketing analyses for now
-      if (myResult.cls_name !== "BucketAnalysisResult") {
-        continue;
-      }
       const analysisName = myResult.name;
-      const analysisBuckets: BucketPerformance[] =
-        myResult["bucket_performances"];
       const analysisDescription = myAnalysis.description;
       const bucketType = myAnalysis["method"];
 
-      const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
-        parse(
-          analysisBuckets,
+      let metricToParsed: { [metric: string]: ResultFineGrainedParsed };
+      if (myResult.cls_name === "BucketAnalysisResult") {
+        metricToParsed = parseBucketAnalysisFeatures(
+          myResult["bucket_performances"],
           bucketType,
           myResult.level,
           analysisName,
           analysisDescription
         );
+      } else if (myResult.cls_name === "ComboCountAnalysisResult") {
+        metricToParsed = parseComboCountFeatures(
+          myResult["combo_counts"],
+          myResult.level,
+          analysisName,
+          analysisDescription
+        );
+      } else {
+        continue; // Ignore other types of fine-grained results for now
+      }
+
       for (const [metric, singleResult] of Object.entries(metricToParsed)) {
         if (!(metric in parsedResults)) {
           parsedResults[metric] = {};
