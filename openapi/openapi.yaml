@@ -191,6 +191,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/APIError"
+    patch:
+      summary: Updates a system by id
+      operationId: systemsPatchById
+      description: Updates a system by id. See requestBody for supported fields.
+      parameters:
+        - in: path
+          name: system_id
+          schema:
+            type: string
+          required: true
+          example: "619f8ef56e638da17b06b38a"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemUpdateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
+      
     delete:
       summary: Deletes a system by id
       operationId: systemsDeleteById
@@ -783,6 +809,13 @@ components:
           type: object
       required: [task_metadata_id, task_name]
 
+    SystemUpdateProps:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/SystemMetadataUpdatable"
+      required: [metadata]
+
     SystemCreateProps:
       type: object
       properties:
@@ -794,12 +827,8 @@ components:
           $ref: "#/components/schemas/SystemOutputProps"
       required: [metadata, system_output]
 
-    SystemMetadata:
-      type: object
+    SystemMetadataUpdatable:
       properties:
-        task:
-          type: string
-          example: "text_classification"
         is_private:
           type: boolean
           default: True
@@ -809,37 +838,51 @@ components:
             type: string
           description: space-separated list of emails with which system is shared
           example: ["hello@gmail.com", "world@gmail.com"]
-        dataset_metadata_id:
-          type: string
-        dataset_split:
-          type: string
-          description: required if dataset_metadata_id specified
-          example: test
         system_name:
           type: string
-        metric_names:
-          type: array
-          items:
-            type: string
-          example: [Accuracy]
-        source_language:
-          type: string
-          example: en
-        target_language:
-          type: string
-          example: en
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
       required:
         [
-          task,
           is_private,
           system_name,
-          metric_names,
-          source_language,
-          target_language,
         ]
+
+    SystemMetadata:
+      allOf:
+        - $ref: "#/components/schemas/SystemMetadataUpdatable"
+        - type: object
+          properties:
+            task:
+              type: string
+              example: "text_classification"
+            dataset_metadata_id:
+              type: string
+            dataset_split:
+              type: string
+              description: required if dataset_metadata_id specified
+              example: test
+            metric_names:
+              type: array
+              items:
+                type: string
+              example: [Accuracy]
+            source_language:
+              type: string
+              example: en
+            target_language:
+              type: string
+              example: en
+          required:
+            [
+              task,
+              is_private,
+              system_name,
+              metric_names,
+              source_language,
+              target_language,
+            ]
 
     SystemOutputProps:
       type: object
