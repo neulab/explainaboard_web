@@ -36,7 +36,22 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TaskCategory"
-
+  
+  /languagecodes:
+    get:
+      summary: Return all language codes
+      operationId: languageCodesGet
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LanguageCode"
+  
   /benchmarkconfigs:
     get:
       summary: Returns all benchmark configs matching the specification
@@ -757,6 +772,17 @@ components:
                 type: string
           required: [custom_dataset, system_output]
       required: [name, description, supported_metrics, supported_formats]
+
+    LanguageCode:
+      type: object
+      properties:
+        name:
+          type: string
+        iso1_code:
+          type: string
+        iso3_code:
+          type: string
+      required: [name, iso3_code]
 
     SystemOutput:
       type: object

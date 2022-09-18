@@ -25,6 +25,7 @@ from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
+from explainaboard_web.impl.language_code import get_language_codes
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
@@ -35,6 +36,7 @@ from explainaboard_web.models import (
     SingleAnalysis,
 )
 from explainaboard_web.models.datasets_return import DatasetsReturn
+from explainaboard_web.models.language_code import LanguageCode
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_create_props import SystemCreateProps
@@ -98,6 +100,14 @@ def tasks_get() -> list[TaskCategory]:
             )
         categories.append(TaskCategory(_category.name, _category.description, tasks))
     return categories
+
+
+""" /languagecodes """
+
+
+def language_codes_get() -> list[LanguageCode]:
+    language_codes = get_language_codes()
+    return language_codes
 
 
 """ /datasets """
