@@ -12,7 +12,7 @@ import {
 import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
-import { DeleteOutlined } from "@ant-design/icons";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { PrivateIcon } from "..";
 import { generateLeaderboardURL } from "../../utils";
 import { getOverallMap } from "../Analysis/utils";
@@ -30,6 +30,7 @@ interface Props {
   selectedSystemIDs: string[];
   setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
   setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  showEditDrawer: (systemIDToEdit: string) => void;
 }
 
 export function SystemTableContent({
@@ -43,6 +44,7 @@ export function SystemTableContent({
   selectedSystemIDs,
   setSelectedSystemIDs,
   setActiveSystemIDs,
+  showEditDrawer,
 }: Props) {
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
@@ -169,21 +171,32 @@ export function SystemTableContent({
       dataIndex: "action",
       title: "",
       fixed: "right",
-      width: 110,
+      width: 90,
       render: (_, record) => (
-        <Space size="small">
-          <Button
-            size="small"
-            onClick={() => showSystemAnalysis(record.system_id)}
-          >
-            Analysis
-          </Button>
-          <Popconfirm
-            title="Are you sure?"
-            onConfirm={() => deleteSystem(record.system_id)}
-          >
-            <Button danger size="small" icon={<DeleteOutlined />} />
-          </Popconfirm>
+        <Space size="small" direction="vertical">
+          <Space size="small">
+            <Button
+              size="small"
+              onClick={() => showSystemAnalysis(record.system_id)}
+            >
+              Analysis
+            </Button>
+          </Space>
+          <Space size="small">
+            <Button
+              size="small"
+              icon={<EditOutlined />}
+              onClick={() => {
+                showEditDrawer(record.system_id);
+              }}
+            />
+            <Popconfirm
+              title="Are you sure?"
+              onConfirm={() => deleteSystem(record.system_id)}
+            >
+              <Button danger size="small" icon={<DeleteOutlined />} />
+            </Popconfirm>
+          </Space>
         </Space>
       ),
     },

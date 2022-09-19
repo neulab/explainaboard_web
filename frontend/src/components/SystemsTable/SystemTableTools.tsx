@@ -32,7 +32,7 @@ export interface Filter {
 interface Props {
   systems: SystemModel[];
   /** show/hide submit drawer */
-  toggleSubmitDrawer: () => void;
+  showSubmitDrawer: () => void;
   taskCategories: TaskCategory[];
   value: Filter;
   onChange: (value: Partial<Filter>) => void;
@@ -42,7 +42,7 @@ interface Props {
 }
 export function SystemTableTools({
   systems,
-  toggleSubmitDrawer,
+  showSubmitDrawer,
   taskCategories,
   value,
   onChange,
@@ -195,9 +195,9 @@ export function SystemTableTools({
 
   /**
    * showMine radio buttion options.
-   * There are two labels, `My systems` and `All systems`. If `My systems` 
+   * There are two labels, `My systems` and `All systems`. If `My systems`
    * is clicked, value is set to `true` for `showMine`. Otherwise, false.
-   * 
+   *
    * If the user is not logged in, `My Systems` option would be disabled.
    */
   const showMineOptions = [
@@ -288,7 +288,7 @@ export function SystemTableTools({
           onChange={(e) => onChange({ name: e.target.value })}
         />
 
-        <NewSystemButton onClick={toggleSubmitDrawer} />
+        <NewSystemButton onClick={showSubmitDrawer} />
       </Space>
     </div>
   );

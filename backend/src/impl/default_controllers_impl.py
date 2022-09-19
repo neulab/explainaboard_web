@@ -21,7 +21,7 @@ from explainaboard.utils.typing_utils import narrow
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
-from explainaboard_web.impl.auth import get_user
+from explainaboard_web.impl.auth import User, get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -46,6 +46,17 @@ from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
+
+
+def _is_creator(system: System, user: User) -> bool:
+    """check if a user is the creator of a system"""
+    return system.creator == user.email
+
+
+def _is_shared_user(system: System, user: User) -> bool:
+    """check if a user is a shared user of a system"""
+    return system.shared_users and user.email in system.shared_users
+
 
 """ /info """
 
@@ -209,8 +220,24 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
 """ /systems """
 
 
-def systems_get_by_id(system_id: str) -> System:
-    return SystemDBUtils.find_system_by_id(system_id)
+def systems_get_by_id(system_id: str, with_user_info: bool = None) -> System:
+    system = SystemDBUtils.find_system_by_id(system_id)
+    user = get_user()
+    # must be creator to see user info
+    if with_user_info:
+        has_access = user.is_authenticated and _is_creator(system, user)
+        if not has_access:
+            abort_with_error_message(403, "system access denied", 40302)
+        else:
+            return system
+    else:
+        has_access = user.is_authenticated and (
+            _is_creator(system, user) or _is_shared_user(system, user)
+        )
+        if system.is_private and not has_access:
+            abort_with_error_message(403, "system access denied", 40302)
+        system.shared_users = None
+        return system
 
 
 def systems_get(
@@ -293,8 +320,7 @@ def system_outputs_get_by_id(
     system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
     has_access = user.is_authenticated and (
-        system.creator == user.email
-        or (system.shared_users and user.email in system.shared_users)
+        _is_creator(system, user) or _is_shared_user(system, user)
     )
     if system.is_private and not has_access:
         abort_with_error_message(403, "system access denied", 40302)
@@ -323,8 +349,7 @@ def system_cases_get_by_id(
     system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
     has_access = user.is_authenticated and (
-        system.creator == user.email
-        or (system.shared_users and user.email in system.shared_users)
+        _is_creator(system, user) or _is_shared_user(system, user)
     )
     if system.is_private and not has_access:
         abort_with_error_message(403, "system access denied", 40302)

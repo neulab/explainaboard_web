@@ -170,7 +170,13 @@ paths:
     get:
       summary: Returns system metadata info by id
       operationId: systemsGetById
-      description: Returns a system_metadata by id. id is the DB id so it is mostly used internally.
+      description: "Returns a system_metadata by id. id is the DB id so it is mostly used internally.
+      If with_user_info is set to true and the user has permssion, the returned system_metadata will 
+      contain user information such as shared users."
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       parameters:
         - in: path
           name: system_id
@@ -178,6 +184,11 @@ paths:
             type: string
           required: true
           example: "619f8ef56e638da17b06b38a"
+        - in: query
+          name: with_user_info
+          schema:
+            type: boolean
+          example: True
       responses:
         "200":
           description: OK

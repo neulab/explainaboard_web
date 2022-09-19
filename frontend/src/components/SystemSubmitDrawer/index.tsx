@@ -26,6 +26,7 @@ import ReactGA from "react-ga4";
 const { TextArea } = Input;
 
 interface Props extends DrawerProps {
+  systemIDToEdit: string;
   onClose: () => void;
   visible: boolean;
 }
@@ -47,17 +48,40 @@ export function SystemSubmitDrawer(props: Props) {
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
   const [datasetOptions, setDatasetOptions] = useState<DatasetMetadata[]>([]);
   const [useCustomDataset, setUseCustomDataset] = useState(false);
+  const [systemToEdit, setSystemToEdit] = useState<System | undefined>(
+    undefined
+  );
 
   const [form] = useForm<FormData>();
-  const { onClose } = props;
+  const { systemIDToEdit, ...rest } = props;
+  const { onClose } = rest;
+  const editMode = systemIDToEdit !== "";
 
   useEffect(() => {
     async function fetchTasks() {
       setTaskCategories(await backendClient.tasksGet());
       setState(State.other);
     }
-    fetchTasks();
-  }, []);
+    async function getSystemWithUserInfoByID(systemID: string) {
+      setState(State.loading);
+      try {
+        const system = await backendClient.systemsGetById(systemID, true);
+        setSystemToEdit(system);
+        form.resetFields();
+        setState(State.other);
+      } catch (e) {
+        if (e instanceof Response) {
+          message.error((await parseBackendError(e)).getErrorMsg());
+        }
+        onClose();
+      }
+    }
+    if (!editMode) {
+      fetchTasks();
+    } else {
+      getSystemWithUserInfoByID(systemIDToEdit);
+    }
+  }, [systemIDToEdit]);
 
   const selectedTaskName = form.getFieldValue("task");
   const selectedTask = findTask(taskCategories, selectedTaskName);
@@ -117,54 +141,72 @@ export function SystemSubmitDrawer(props: Props) {
       setState(State.loading);
       const systemOutBase64 = await extractAndEncodeFile(sys_out_file);
       let system: System;
+      let systemName: string;
       const trimmedUsers =
         shared_users === undefined
           ? undefined
           : shared_users.map((user) => user.trim());
-      if (useCustomDataset) {
-        const customDatasetBase64 = await extractAndEncodeFile(
-          custom_dataset_file
+      if (editMode) {
+        await backendClient.systemsPatchById(
+          {
+            metadata: {
+              system_name: name,
+              is_private,
+              shared_users: trimmedUsers,
+              system_details: { __TO_PARSE__: system_details },
+            },
+          },
+          systemIDToEdit
         );
-        system = await backendClient.systemsPost({
-          metadata: {
-            metric_names,
-            system_name: name,
-            task: task,
-            source_language,
-            target_language,
-            is_private,
-            shared_users: trimmedUsers,
-            system_details: { __TO_PARSE__: system_details },
-          },
-          system_output: {
-            data: systemOutBase64,
-            file_type: unwrap(sys_out_file.fileType),
-          },
-          custom_dataset: {
-            data: customDatasetBase64,
-            file_type: unwrap(custom_dataset_file.fileType),
-          },
-        });
+        systemName = name;
       } else {
-        const { datasetID, split } = dataset;
-        system = await backendClient.systemsPost({
-          metadata: {
-            dataset_metadata_id: datasetID,
-            dataset_split: split,
-            metric_names,
-            system_name: name,
-            task: task,
-            source_language,
-            target_language,
-            is_private,
-            shared_users: trimmedUsers,
-            system_details: { __TO_PARSE__: system_details },
-          },
-          system_output: {
-            data: systemOutBase64,
-            file_type: unwrap(sys_out_file.fileType),
-          },
-        });
+        if (useCustomDataset) {
+          const customDatasetBase64 = await extractAndEncodeFile(
+            custom_dataset_file
+          );
+          system = await backendClient.systemsPost({
+            metadata: {
+              metric_names,
+              system_name: name,
+              task: task,
+              source_language,
+              target_language,
+              is_private,
+              shared_users: trimmedUsers,
+              system_details: { __TO_PARSE__: system_details },
+            },
+            system_output: {
+              data: systemOutBase64,
+              file_type: unwrap(sys_out_file.fileType),
+            },
+            custom_dataset: {
+              data: customDatasetBase64,
+              file_type: unwrap(custom_dataset_file.fileType),
+            },
+          });
+          systemName = system.system_info.system_name;
+        } else {
+          const { datasetID, split } = dataset;
+          system = await backendClient.systemsPost({
+            metadata: {
+              dataset_metadata_id: datasetID,
+              dataset_split: split,
+              metric_names,
+              system_name: name,
+              task: task,
+              source_language,
+              target_language,
+              is_private,
+              shared_users: trimmedUsers,
+              system_details: { __TO_PARSE__: system_details },
+            },
+            system_output: {
+              data: systemOutBase64,
+              file_type: unwrap(sys_out_file.fileType),
+            },
+          });
+          systemName = system.system_info.system_name;
+        }
       }
 
       ReactGA.event({
@@ -172,7 +214,7 @@ export function SystemSubmitDrawer(props: Props) {
         action: `system_submit_success`,
         label: task,
       });
-      message.success(`Successfully submitted system (${system.system_id}).`);
+      message.success(`Successfully submitted system (${systemName}).`);
       onClose();
       form.resetFields([
         "name",
@@ -300,10 +342,10 @@ export function SystemSubmitDrawer(props: Props) {
   return (
     <Drawer
       width="60%"
-      title="New System"
+      title={editMode ? "Edit System" : "New System"}
       footer={footer}
       destroyOnClose
-      {...props}
+      {...rest}
     >
       <Spin spinning={state === State.loading} tip="processing...">
         <Form
@@ -312,6 +354,11 @@ export function SystemSubmitDrawer(props: Props) {
           form={form}
           scrollToFirstError
           onValuesChange={onValuesChange}
+          initialValues={{
+            name: systemToEdit?.system_info.system_name,
+            is_private: systemToEdit?.is_private || true,
+            shared_user: systemToEdit?.shared_users,
+          }}
         >
           <Form.Item
             name="name"
@@ -344,6 +391,7 @@ export function SystemSubmitDrawer(props: Props) {
                 </Tooltip>
               )
             }
+            hidden={editMode}
           >
             <TaskSelect taskCategories={taskCategories} />
           </Form.Item>
@@ -351,10 +399,12 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             label="Use custom dataset?"
             tooltip="Custom dataset will not be shown on the leaderboard"
+            hidden={editMode}
           >
             <Checkbox
               checked={useCustomDataset}
               onChange={(e) => onUseCustomDatasetChange(e.target.checked)}
+              disabled={editMode}
             />
           </Form.Item>
 
@@ -372,6 +422,7 @@ export function SystemSubmitDrawer(props: Props) {
                     ),
                   },
                 ]}
+                hidden={editMode}
               >
                 <DataFileUpload
                   allowedFileTypes={allowedFileType.custom_dataset}
@@ -384,6 +435,7 @@ export function SystemSubmitDrawer(props: Props) {
               label="Dataset"
               required
               rules={[{ validator: validateDataset }]}
+              hidden={editMode}
             >
               <DatasetSelect
                 options={datasetOptions}
@@ -398,6 +450,7 @@ export function SystemSubmitDrawer(props: Props) {
             label="System Output"
             required
             rules={[{ validator: getDataFileValidator(true, "System Output") }]}
+            hidden={editMode}
           >
             <DataFileUpload allowedFileTypes={allowedFileType.system_output} />
           </Form.Item>
@@ -406,6 +459,7 @@ export function SystemSubmitDrawer(props: Props) {
             name="metric_names"
             label="Metrics"
             rules={[{ required: true }]}
+            hidden={editMode}
           >
             <Select
               mode="multiple"
@@ -418,7 +472,6 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="is_private"
             label="Make it private?"
-            initialValue={true}
             rules={[{ required: true }]}
             valuePropName="checked"
             tooltip="Check this box if you don't want other users to see your system (We will add support to change the visibility of systems in the future)"
@@ -442,6 +495,7 @@ export function SystemSubmitDrawer(props: Props) {
                 name="source_language"
                 label="Input Lang"
                 rules={[{ required: true }]}
+                hidden={editMode}
               >
                 <Input />
               </Form.Item>
@@ -452,6 +506,7 @@ export function SystemSubmitDrawer(props: Props) {
                 name="target_language"
                 label="Output Lang"
                 rules={[{ required: true }]}
+                hidden={editMode}
               >
                 <Input />
               </Form.Item>
