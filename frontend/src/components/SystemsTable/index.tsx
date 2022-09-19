@@ -17,6 +17,7 @@ interface Props {
   dataset?: string;
   subdataset?: string;
   datasetSplit?: string;
+  systemId?: string;
 }
 
 /** A table that lists all systems */
@@ -26,6 +27,7 @@ export function SystemsTable({
   dataset,
   subdataset,
   datasetSplit,
+  systemId,
 }: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [page, setPage] = useState(0);
@@ -92,6 +94,12 @@ export function SystemsTable({
     }
     fetchTasks();
   }, [initialTaskFilter]);
+
+  useEffect(() => {
+    if (systemId) {
+      setActiveSystemIDs([systemId]);
+    }
+  }, [systemId]);
 
   useEffect(() => {
     async function refreshSystems() {

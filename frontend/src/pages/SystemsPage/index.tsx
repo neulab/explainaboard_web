@@ -19,6 +19,7 @@ export function SystemsPage() {
   const history = useHistory();
   const query = useQuery();
   const system = query.get("system") || undefined;
+  const system_id = query.get("system_id") || undefined;
 
   if (system) {
     return (
@@ -32,7 +33,7 @@ export function SystemsPage() {
           subTitle="All systems submitted by users"
           className="header"
         />
-        <SystemsTable name={system} />
+        <SystemsTable name={system} systemId={system_id} />
       </div>
     );
   } else {
@@ -47,7 +48,7 @@ export function SystemsPage() {
           subTitle="All systems submitted by users"
           className="header"
         />
-        <SystemsTable />
+        <SystemsTable systemId={system_id} />
       </div>
     );
   }
