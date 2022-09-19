@@ -62,8 +62,9 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 - We use docker and gunicorn to deploy both frontend and backend. Frontend is built and copied into the static file folder of Flask. Please see Dockerfile for details.
 - To build: `docker build --pull --rm -f "Dockerfile" -t explainaboard-web:0.2.0 "."`
 - To run: `docker run --rm -p 5000:5000/tcp explainaboard-web:0.2.0`
-- The frontend is served with the flask server at the root url so 5000 is the used to access the UI here.
-- connexion is used by swagger/openapi code generation tool and it does not support gunicorn natively. So, currently we use flask server in production. Another option that connexion supports natively is tornado.
+- GCP:
+   - For local development, developers should use their own user accounts to authenticate (please refer to quick start for details)
+   - For staging and production environments, the service account credentials are passed into the containers as environment variables. The credentials are stored on AWS Secrets Manager.
 
 ## More details on frontend and backend
 1. Frontend:
