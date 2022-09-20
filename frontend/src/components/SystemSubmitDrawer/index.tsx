@@ -51,13 +51,27 @@ export function SystemSubmitDrawer(props: Props) {
   const [systemToEdit, setSystemToEdit] = useState<System | undefined>(
     undefined
   );
+  const [resetForm, setResetForm] = useState<boolean>();
 
   const [form] = useForm<FormData>();
-  const { systemIDToEdit, ...rest } = props;
-  const { onClose } = rest;
+  const { systemIDToEdit, onClose, ...rest } = props;
   const editMode = systemIDToEdit !== "";
 
   useEffect(() => {
+    function resetAllFormFields() {
+      form.resetFields([
+        "name",
+        "task",
+        "dataset",
+        "sys_out_file",
+        "custom_dataset_file",
+        "metric_names",
+        "source_language",
+        "target_language",
+        "shared_users",
+        "system_details",
+      ]);
+    }
     async function fetchTasks() {
       setTaskCategories(await backendClient.tasksGet());
       setState(State.other);
@@ -67,21 +81,25 @@ export function SystemSubmitDrawer(props: Props) {
       try {
         const system = await backendClient.systemsGetById(systemID, true);
         setSystemToEdit(system);
-        form.resetFields();
         setState(State.other);
+        resetAllFormFields();
       } catch (e) {
         if (e instanceof Response) {
           message.error((await parseBackendError(e)).getErrorMsg());
+          onClose();
         }
-        onClose();
       }
+    }
+    if (resetForm) {
+      resetAllFormFields();
+      setResetForm(false);
     }
     if (!editMode) {
       fetchTasks();
     } else {
       getSystemWithUserInfoByID(systemIDToEdit);
     }
-  }, [systemIDToEdit]);
+  }, [systemIDToEdit, editMode, resetForm, form, onClose]);
 
   const selectedTaskName = form.getFieldValue("task");
   const selectedTask = findTask(taskCategories, selectedTaskName);
@@ -139,9 +157,7 @@ export function SystemSubmitDrawer(props: Props) {
   }: FormData) {
     try {
       setState(State.loading);
-      const systemOutBase64 = await extractAndEncodeFile(sys_out_file);
       let system: System;
-      let systemName: string;
       const trimmedUsers =
         shared_users === undefined
           ? undefined
@@ -158,8 +174,13 @@ export function SystemSubmitDrawer(props: Props) {
           },
           systemIDToEdit
         );
-        systemName = name;
+        ReactGA.event({
+          category: "System",
+          action: `system_update_success`,
+        });
+        message.success(`Successfully updated system (${systemIDToEdit}).`);
       } else {
+        const systemOutBase64 = await extractAndEncodeFile(sys_out_file);
         if (useCustomDataset) {
           const customDatasetBase64 = await extractAndEncodeFile(
             custom_dataset_file
@@ -184,7 +205,6 @@ export function SystemSubmitDrawer(props: Props) {
               file_type: unwrap(custom_dataset_file.fileType),
             },
           });
-          systemName = system.system_info.system_name;
         } else {
           const { datasetID, split } = dataset;
           system = await backendClient.systemsPost({
@@ -205,35 +225,29 @@ export function SystemSubmitDrawer(props: Props) {
               file_type: unwrap(sys_out_file.fileType),
             },
           });
-          systemName = system.system_info.system_name;
         }
+        ReactGA.event({
+          category: "System",
+          action: `system_submit_success`,
+          label: task,
+        });
+        message.success(`Successfully submitted system (${system.system_id}).`);
       }
-
-      ReactGA.event({
-        category: "System",
-        action: `system_submit_success`,
-        label: task,
-      });
-      message.success(`Successfully submitted system (${systemName}).`);
+      setResetForm(true);
       onClose();
-      form.resetFields([
-        "name",
-        "task",
-        "dataset",
-        "sys_out_file",
-        "custom_dataset_file",
-        "metric_names",
-        "source_language",
-        "target_language",
-        "shared_users",
-        "system_details",
-      ]);
     } catch (e) {
-      ReactGA.event({
-        category: "System",
-        action: `system_submit_failure`,
-        label: task,
-      });
+      if (editMode) {
+        ReactGA.event({
+          category: "System",
+          action: `system_update_failure`,
+        });
+      } else {
+        ReactGA.event({
+          category: "System",
+          action: `system_submit_failure`,
+          label: task,
+        });
+      }
       if (e instanceof Response) {
         const err = await parseBackendError(e);
         message.error(err.getErrorMsg());
@@ -243,6 +257,7 @@ export function SystemSubmitDrawer(props: Props) {
       }
     } finally {
       setState(State.other);
+      setSystemToEdit(undefined);
     }
   }
 
@@ -344,6 +359,12 @@ export function SystemSubmitDrawer(props: Props) {
       width="60%"
       title={editMode ? "Edit System" : "New System"}
       footer={footer}
+      onClose={() => {
+        if (editMode) {
+          setResetForm(true);
+        }
+        onClose();
+      }}
       destroyOnClose
       {...rest}
     >
@@ -354,11 +375,15 @@ export function SystemSubmitDrawer(props: Props) {
           form={form}
           scrollToFirstError
           onValuesChange={onValuesChange}
-          initialValues={{
-            name: systemToEdit?.system_info.system_name,
-            is_private: systemToEdit?.is_private || true,
-            shared_user: systemToEdit?.shared_users,
-          }}
+          initialValues={
+            editMode
+              ? {
+                  name: systemToEdit?.system_info.system_name,
+                  is_private: systemToEdit?.is_private,
+                  shared_users: systemToEdit?.shared_users,
+                }
+              : { is_private: true }
+          }
         >
           <Form.Item
             name="name"
@@ -371,7 +396,7 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="task"
             label="Task"
-            rules={[{ required: true }]}
+            rules={editMode ? [] : [{ required: true }]}
             help={
               selectedTask && (
                 <Tooltip
@@ -413,15 +438,19 @@ export function SystemSubmitDrawer(props: Props) {
               <Form.Item
                 name="custom_dataset_file"
                 label="Custom Dataset"
-                required
-                rules={[
-                  {
-                    validator: getDataFileValidator(
-                      useCustomDataset,
-                      "Custom Dataset"
-                    ),
-                  },
-                ]}
+                rules={
+                  editMode
+                    ? []
+                    : [
+                        { required: true },
+                        {
+                          validator: getDataFileValidator(
+                            useCustomDataset,
+                            "Custom Dataset"
+                          ),
+                        },
+                      ]
+                }
                 hidden={editMode}
               >
                 <DataFileUpload
@@ -433,8 +462,9 @@ export function SystemSubmitDrawer(props: Props) {
             <Form.Item
               name="dataset"
               label="Dataset"
-              required
-              rules={[{ validator: validateDataset }]}
+              rules={
+                editMode ? [] : [{ required: true, validator: validateDataset }]
+              }
               hidden={editMode}
             >
               <DatasetSelect
@@ -448,8 +478,14 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="sys_out_file"
             label="System Output"
-            required
-            rules={[{ validator: getDataFileValidator(true, "System Output") }]}
+            rules={
+              editMode
+                ? []
+                : [
+                    { required: true },
+                    { validator: getDataFileValidator(true, "System Output") },
+                  ]
+            }
             hidden={editMode}
           >
             <DataFileUpload allowedFileTypes={allowedFileType.system_output} />
@@ -458,7 +494,7 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="metric_names"
             label="Metrics"
-            rules={[{ required: true }]}
+            rules={editMode ? [] : [{ required: true }]}
             hidden={editMode}
           >
             <Select
@@ -494,7 +530,7 @@ export function SystemSubmitDrawer(props: Props) {
               <Form.Item
                 name="source_language"
                 label="Input Lang"
-                rules={[{ required: true }]}
+                rules={editMode ? [] : [{ required: true }]}
                 hidden={editMode}
               >
                 <Input />
@@ -505,7 +541,7 @@ export function SystemSubmitDrawer(props: Props) {
               <Form.Item
                 name="target_language"
                 label="Output Lang"
-                rules={[{ required: true }]}
+                rules={editMode ? [] : [{ required: true }]}
                 hidden={editMode}
               >
                 <Input />
@@ -545,6 +581,7 @@ export function SystemSubmitDrawer(props: Props) {
                 </p>
               </>
             }
+            hidden={editMode}
           >
             <TextArea rows={3} />
           </Form.Item>

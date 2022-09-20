@@ -33,13 +33,14 @@ from explainaboard_web.models import (
     BenchmarkConfig,
     DatasetMetadata,
     SingleAnalysis,
+    SystemOutput,
 )
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system_info import SystemInfo
-from explainaboard_web.models.system_output import SystemOutput
+from explainaboard_web.models.system_update_props import SystemUpdateProps
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
@@ -309,6 +310,19 @@ def systems_post(body: SystemCreateProps) -> System:
         abort_with_error_message(
             400, f"file should be sent in plain text base64. ({e})"
         )
+
+
+def systems_patch_by_id(body: SystemUpdateProps, system_id: str):
+    system = SystemDBUtils.find_system_by_id(system_id)
+    user = get_user()
+    has_access = user.is_authenticated and _is_creator(system, user)
+    if not has_access:
+        abort_with_error_message(403, "system update denied", 40303)
+
+    success = SystemDBUtils.update_system_by_id(system_id, body.metadata)
+    if success:
+        return "Success"
+    abort_with_error_message(400, f"failed to update system {system_id}")
 
 
 def system_outputs_get_by_id(

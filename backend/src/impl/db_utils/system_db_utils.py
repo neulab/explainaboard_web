@@ -29,6 +29,7 @@ from explainaboard_web.models import (
     System,
     SystemInfo,
     SystemMetadata,
+    SystemMetadataUpdatable,
     SystemOutput,
     SystemOutputProps,
     SystemsReturn,
@@ -67,6 +68,20 @@ class SystemDBUtils:
                 ]
                 ret = {k: v for k, v in ret_list}
         return ret
+
+    @staticmethod
+    def _parse_system_details_in_doc(
+        document: dict, metadata: SystemMetadata | SystemMetadataUpdatable
+    ):
+        if (
+            document.get("system_details")
+            and "__TO_PARSE__" in document["system_details"]
+        ):
+            parsed = SystemDBUtils._parse_system_details(
+                document["system_details"]["__TO_PARSE__"]
+            )
+            metadata.system_details = parsed
+            document["system_details"] = parsed
 
     @staticmethod
     def system_from_dict(
@@ -354,18 +369,10 @@ class SystemDBUtils:
         """
         Create a system given metadata and outputs, etc.
         """
+        document = metadata.to_dict()
 
         # -- parse the system details if getting a string from the frontend
-        document = metadata.to_dict()
-        if (
-            document.get("system_details")
-            and "__TO_PARSE__" in document["system_details"]
-        ):
-            parsed = SystemDBUtils._parse_system_details(
-                document["system_details"]["__TO_PARSE__"]
-            )
-            metadata.system_details = parsed
-            document["system_details"] = parsed
+        SystemDBUtils._parse_system_details_in_doc(document, metadata)
 
         # -- create the object defined in openapi.yaml from only uploaded metadata
         system: System = SystemDBUtils.system_from_dict(document)
@@ -494,6 +501,25 @@ class SystemDBUtils:
             # mypy doesn't seem to understand the NoReturn type in an except block.
             # It's a noop to fix it
             raise e
+
+    @staticmethod
+    def update_system_by_id(system_id: str, metadata: SystemMetadataUpdatable) -> bool:
+        document = metadata.to_dict()
+
+        # -- parse the system details if getting a string from the frontend
+        SystemDBUtils._parse_system_details_in_doc(document, metadata)
+
+        # TODO a more general, flexible solution instead of hard coding
+        field_to_value = {
+            "system_info.system_name": metadata.system_name,
+            "is_private": metadata.is_private,
+            "shared_users": metadata.shared_users,
+            "system_details": metadata.system_details,
+        }
+
+        return DBUtils.update_one_by_id(
+            DBUtils.DEV_SYSTEM_METADATA, system_id, field_to_value
+        )
 
     @staticmethod
     def find_system_by_id(system_id: str):
