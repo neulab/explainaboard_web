@@ -4,7 +4,6 @@ import json
 import re
 import traceback
 import zlib
-from collections.abc import Iterator
 from datetime import datetime
 from inspect import getsource
 from types import FunctionType
@@ -18,6 +17,7 @@ from explainaboard.utils.serialization import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
+from explainaboard_web.impl.storage import get_storage
 from explainaboard_web.impl.utils import (
     abort_with_error_message,
     binarize_bson,
@@ -313,19 +313,6 @@ class SystemDBUtils:
         )
 
     @staticmethod
-    def _compress_data(data: list) -> bytes:
-        return zlib.compress(json.dumps(data).encode())
-
-    @staticmethod
-    def _decompress_data(compressed_rep: bytes) -> list:
-        return json.loads(zlib.decompress(compressed_rep).decode())
-
-    @staticmethod
-    def _decompress_from_cursor(cursor: Iterator[dict]) -> list:
-        my_dict = next(cursor)
-        return SystemDBUtils._decompress_data(my_dict["data"])
-
-    @staticmethod
     def _find_output_or_case_raw(
         system_id: str, analysis_level: str, output_ids: list[int] | None
     ) -> list[dict]:
@@ -339,8 +326,21 @@ class SystemDBUtils:
             filt=filt,
         )
         if total != 1:
-            abort_with_error_message(400, f"Could not find a single system {system_id}")
-        sys_data = SystemDBUtils._decompress_from_cursor(cursor)
+            abort_with_error_message(
+                400, f"Could not find system outputs for {system_id}"
+            )
+        data = next(cursor)["data"]
+
+        # NOTE: (backward compatibility) Previously, we store data in MongoDB
+        # so the following if else statement is added to handle data created
+        # with the old version of the code. Once we regenerate DB next time,
+        # we can remove the if block.
+        if isinstance(data, bytes):
+            sys_data_str = zlib.decompress(data).decode()
+        else:
+            sys_data_str = get_storage().download_and_decompress(data)
+        sys_data: list = json.loads(sys_data_str)
+
         if output_ids is not None:
             sys_data = [sys_data[x] for x in output_ids]
         return sys_data
@@ -435,15 +435,20 @@ class SystemDBUtils:
                 system_id = DBUtils.insert_one(
                     DBUtils.DEV_SYSTEM_METADATA, document, session=session
                 )
-                # Compress the system output
+                # Compress the system output and upload to Cloud Storage
                 insert_list = []
                 sample_list = [general_to_dict(v) for v in system_output_data.samples]
-                sample_compressed = SystemDBUtils._compress_data(sample_list)
+
+                blob_name = f"{system_id}/{SystemDBUtils._SYSTEM_OUTPUT_CONST}"
+                get_storage().compress_and_upload(
+                    blob_name,
+                    json.dumps(sample_list),
+                )
                 insert_list.append(
                     {
                         "system_id": system_id,
                         "analysis_level": SystemDBUtils._SYSTEM_OUTPUT_CONST,
-                        "data": sample_compressed,
+                        "data": blob_name,
                     }
                 )
                 # Compress analysis cases
@@ -454,12 +459,14 @@ class SystemDBUtils:
                     )
                 ):
                     case_list = [general_to_dict(v) for v in analysis_cases]
-                    case_compressed = SystemDBUtils._compress_data(case_list)
+
+                    blob_name = f"{system_id}/{analysis_level.name}"
+                    get_storage().compress_and_upload(blob_name, json.dumps(case_list))
                     insert_list.append(
                         {
                             "system_id": system_id,
                             "analysis_level": analysis_level.name,
-                            "data": case_compressed,
+                            "data": blob_name,
                         }
                     )
                 # Insert system output and analysis cases
@@ -555,9 +562,21 @@ class SystemDBUtils:
             )
             if not result:
                 abort_with_error_message(400, f"failed to delete system {system_id}")
+
+            # remove system outputs
             output_collection = DBUtils.get_system_output_collection(system_id)
             filt = {"system_id": system_id}
+            outputs, _ = DBUtils.find(output_collection, filt)
+            data = (output["data"] for output in outputs)
+            # NOTE: (backward compatibility) data was stored in MongoDB previously,
+            # the isinstance filtering can be removed after we regenerate DB next time.
+            data_blob_names = [name for name in data if isinstance(name, str)]
             DBUtils.delete_many(output_collection, filt, session=session)
+
+            # Delete system output objects from Storage. This needs to be the last step
+            # because we are using transaction support from MongoDB and we cannot roll
+            # back an operation on Cloud Storage.
+            get_storage().delete(data_blob_names)
             return True
 
         return DBUtils.execute_transaction(db_operations)
