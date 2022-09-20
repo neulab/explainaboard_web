@@ -77,7 +77,7 @@ function createOverallBarChart(
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
   >,
-  setPage: React.Dispatch<React.SetStateAction<number>>
+  resetPage: () => void
 ) {
   const { systems, metricToSystemAnalysesParsed } = props;
   // TODO(gneubig): make this setting global somewhere
@@ -124,8 +124,7 @@ function createOverallBarChart(
         onBarClick={(barIndex: number, _: number) => {
           // Get examples of a certain bucket from all systems
           setActiveMetric(metricNames[barIndex]);
-          // reset page number
-          setPage(0);
+          resetPage();
         }}
       />
     </Col>
@@ -196,7 +195,7 @@ function createExampleTable(
         task={task}
         cases={sortedBucketOfCasesList[0]}
         page={page}
-        setPage={setPage}
+        onPageChange={setPage}
       />
     );
     // multi-system analysis
@@ -220,7 +219,7 @@ function createExampleTable(
                   task={task}
                   cases={sortedBucketOfCasesList[sysIndex]}
                   page={page}
-                  setPage={setPage}
+                  onPageChange={setPage}
                 />
               </TabPane>
             );
@@ -252,7 +251,7 @@ function createFineGrainedBarChart(
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
   >,
-  setPage: React.Dispatch<React.SetStateAction<number>>
+  resetPage: () => void
 ) {
   const { systems, featureNameToBucketInfo, updateFeatureNameToBucketInfo } =
     props;
@@ -342,8 +341,7 @@ function createFineGrainedBarChart(
             systemIndex,
             bucketOfCasesList,
           });
-          // reset page number
-          setPage(0);
+          resetPage();
         }}
       />
       {bucketSlider}
@@ -359,7 +357,7 @@ function createMetricPane(
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
   >,
-  setPage: React.Dispatch<React.SetStateAction<number>>
+  resetPage: () => void
 ) {
   const systemAnalysesParsed = props.metricToSystemAnalysesParsed[metric];
 
@@ -380,7 +378,7 @@ function createMetricPane(
               systemAnalysesParsed[feature],
               colSpan,
               setActiveSystemExamples,
-              setPage
+              resetPage
             )
           )
         }
@@ -396,8 +394,14 @@ export function AnalysisReport(props: Props) {
   const [activeMetric, setActiveMetric] = useState<string>(metricNames[0]);
   const [activeSystemExamples, setActiveSystemExamples] =
     useState<ActiveSystemExamples>();
-  // page number of the analysis table
+
+  // page number of the analysis table, 0 indexed
   const [page, setPage] = useState(0);
+
+  /** sets page of AnalysisTable to the first page */
+  function resetPage() {
+    setPage(0);
+  }
 
   // Create the example table if a bar is selected, empty element if not
   const exampleTable = createExampleTable(
@@ -415,7 +419,7 @@ export function AnalysisReport(props: Props) {
     colSpan,
     setActiveMetric,
     setActiveSystemExamples,
-    setPage
+    resetPage
   );
   const significanceInfo = getSignificanceTestScore(props);
   return (
@@ -445,7 +449,7 @@ export function AnalysisReport(props: Props) {
             colSpan,
             exampleTable,
             setActiveSystemExamples,
-            setPage
+            resetPage
           );
         })}
       </Tabs>

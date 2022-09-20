@@ -10,7 +10,8 @@ interface Props {
   task: string;
   cases: AnalysisCase[];
   page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  /** newPage is 0 indexed */
+  onPageChange: (newPage: number) => void;
 }
 
 function renderColInfo(
@@ -156,7 +157,13 @@ function specifyDataSeqLab(
   return dataSource;
 }
 
-export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
+export function AnalysisTable({
+  systemID,
+  task,
+  cases,
+  page,
+  onPageChange,
+}: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
@@ -267,9 +274,7 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
         pageSize,
         // conversion between 0-based and 1-based index
         current: page + 1,
-        onChange: (newPage, newPageSize) => {
-          setPage(newPage - 1);
-        },
+        onChange: (newPage) => onPageChange(newPage - 1),
       }}
       scroll={{ y: 550, x: "max-content", scrollToFirstRowOnChange: true }}
     />
