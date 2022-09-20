@@ -34,7 +34,7 @@ class Storage:
     def download_and_decompress(self, blob_name: str) -> str:
         return zlib.decompress(self.download(blob_name)).decode()
 
-    def delete(self, blob_names: list[str]):
+    def delete(self, blob_names: list[str]) -> None:
         self._bucket.delete_blobs([self._bucket.blob(name) for name in blob_names])
 
 
@@ -43,7 +43,6 @@ def get_storage() -> Storage:
     Returns the global Storage instance. A Storage object is created if not present
     in g.
     """
-    if "_storage" in g:
-        return g._storage
-    g._storage = Storage()
+    if "_storage" not in g:
+        g._storage = Storage()
     return g._storage
