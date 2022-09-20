@@ -14,6 +14,11 @@ class Config:
         self.AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
         self.AWS_DEFAULT_REGION = os.environ["AWS_DEFAULT_REGION"]
 
+        self.STORAGE_BUCKET_NAME = os.environ["STORAGE_BUCKET_NAME"]
+
+        # used for ECS environment only
+        self.GCP_SERVICE_CREDENTIALS = os.environ.get("GCP_SERVICE_CREDENTIALS")
+
 
 class LocalDevelopmentConfig(Config):
     def __init__(self) -> None:
@@ -27,8 +32,6 @@ class LocalDevelopmentConfig(Config):
         # client id for frontend because the token is generated for the frontend
         self.USER_POOL_AUDIENCE = os.environ["USER_POOL_AUDIENCE_DEV"]
         self.AUTH_URL = f"https://explainaboard-dev-user.auth.{self.AWS_DEFAULT_REGION}.amazoncognito.com/oauth2/authorize?client_id={self.USER_POOL_AUDIENCE}&response_type=token&scope=email+openid+phone&redirect_uri="  # noqa
-
-        self.STORAGE_BUCKET_NAME = os.environ["STORAGE_BUCKET_NAME"]
 
 
 class StagingConfig(LocalDevelopmentConfig):
