@@ -111,7 +111,6 @@ class SystemDBUtils:
             system.metric_stats = [
                 [unbinarize_bson(y) for y in x] for x in metric_stats
             ]
-        print("system metric_stats: ", type(system))
         return system
 
     @staticmethod
@@ -175,6 +174,7 @@ class SystemDBUtils:
                 doc, include_metric_stats=include_metric_stats
             )
             systems.append(system)
+
         if sort:
 
             def sort_metric_func(x):
