@@ -90,8 +90,8 @@ export function SystemSubmitDrawer(props: Props) {
       try {
         const system = await backendClient.systemsGetById(systemID, true);
         setSystemToEdit(system);
-        setState(State.other);
         resetAllFormFields();
+        setState(State.other);
       } catch (e) {
         if (e instanceof Response) {
           message.error((await parseBackendError(e)).getErrorMsg());
@@ -252,7 +252,6 @@ export function SystemSubmitDrawer(props: Props) {
         });
         message.success(`Successfully submitted system (${system.system_id}).`);
       }
-      setResetForm(true);
       onClose();
     } catch (e) {
       if (editMode) {
@@ -276,6 +275,7 @@ export function SystemSubmitDrawer(props: Props) {
       }
     } finally {
       setState(State.other);
+      setResetForm(true);
       setSystemToEdit(undefined);
     }
   }
@@ -409,6 +409,7 @@ export function SystemSubmitDrawer(props: Props) {
       onClose={() => {
         if (editMode) {
           setResetForm(true);
+          setSystemToEdit(undefined);
         }
         onClose();
       }}
