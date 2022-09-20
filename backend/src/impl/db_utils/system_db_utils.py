@@ -330,8 +330,11 @@ class SystemDBUtils:
                 400, f"Could not find system outputs for {system_id}"
             )
         data = next(cursor)["data"]
-        # NOTE: (backward compatibility) data was stored in MongoDB previously,
-        # this can be removed after we regenerate DB next time.
+
+        # NOTE: (backward compatibility) Previously, we store data in MongoDB
+        # so the following if else statement is added to handle data created
+        # with the old version of the code. Once we regenerate DB next time,
+        # we can remove the if block.
         if isinstance(data, bytes):
             sys_data_str = zlib.decompress(data).decode()
         else:
