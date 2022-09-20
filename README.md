@@ -52,6 +52,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 ## Important notes on local development
 - As mentioned in quick start step 2, whenever the open API definition (openapi.yaml) changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
 - The frontend and backend dependencies must be reinstalled whenever the associated dependency files are changed, including `package.json`, `frontend/package.json`, `backend/src/gen/requirements.txt` (generated from `backend/templates/requirements.mustache`).
+- ExplainaBoard API client release depends on the API defined in `openapi.yaml`. If `openapi.yaml` is changed, remember to bump up the openapi version `0.2.x` as well. 
 
 ## Deployment
 
