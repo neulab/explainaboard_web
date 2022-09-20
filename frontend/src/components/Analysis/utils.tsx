@@ -242,3 +242,13 @@ export function getOverallMap(overallResults: Performance[][]): {
   }
   return overallMap;
 }
+
+export function unwrapConfidence(perf: Performance): [number, number] {
+  if (
+    perf.confidence_score_low !== undefined &&
+    perf.confidence_score_high !== undefined
+  ) {
+    return [perf.confidence_score_low, perf.confidence_score_high];
+  }
+  return [-1, -1];
+}
