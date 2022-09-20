@@ -195,9 +195,9 @@ export function SystemTableTools({
 
   /**
    * showMine radio buttion options.
-   * There are two labels, `My systems` and `All systems`. If `My systems` 
+   * There are two labels, `My systems` and `All systems`. If `My systems`
    * is clicked, value is set to `true` for `showMine`. Otherwise, false.
-   * 
+   *
    * If the user is not logged in, `My Systems` option would be disabled.
    */
   const showMineOptions = [
@@ -260,13 +260,13 @@ export function SystemTableTools({
           <Select
             options={[
               ...metricOptions.map((opt) => ({ value: opt, label: opt })),
-              { value: "created_at", label: "Created At" },
+              { value: "created_at", label: "Sorted By" },
             ]}
             value={value.sortField}
             onChange={(value) => onChange({ sortField: value })}
             style={{ minWidth: "120px" }}
           />
-          <Tooltip title="Click to change sort direction">
+          <Tooltip title="Click to change sort direction. Sorted by creation time by default.">
             <Button
               icon={
                 value.sortDir === "asc" ? (

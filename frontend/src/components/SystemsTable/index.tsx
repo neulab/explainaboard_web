@@ -151,7 +151,13 @@ export function SystemsTable({
     split: newSplit,
   }: Partial<Filter>) {
     if (name != null) setNameFilter(name);
-    if (task != null) setTaskFilter(task || undefined);
+    if (task != null) {
+      if (task !== taskFilter) {
+        setSortField("created_at");
+        setSortDir("desc");
+      }
+      setTaskFilter(task || undefined);
+    }
     if (showMine != null) setShowMine(showMine);
     if (newSortField != null) setSortField(newSortField);
     if (newSortDir != null) setSortDir(newSortDir);

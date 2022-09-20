@@ -157,7 +157,6 @@ class DBUtils:
     def find(
         collection: DBCollection,
         filt: Optional[dict] = None,
-        sort: Optional[list] = None,
         skip=0,
         limit: int = 10,
         projection: Optional[dict] = None,
@@ -167,7 +166,6 @@ class DBUtils:
         TODO: error handling for find
         Parameters:
           - filter: filter parameters for find
-          - sort: a list of sort parameters e.g. [('field1', pymongo.ASCENDING)]
           - skip: offset
           - limit: limit, pass in 0 to retrieve all documents (this is consistent with
                    the pyMongo API)
@@ -181,8 +179,6 @@ class DBUtils:
         if not filt:
             filt = {}
         cursor = DBUtils.get_collection(collection).find(filt, projection)
-        if sort:
-            cursor = cursor.sort(sort)
 
         cursor = cursor.skip(skip).limit(limit)
         total = DBUtils.count(collection, filt)

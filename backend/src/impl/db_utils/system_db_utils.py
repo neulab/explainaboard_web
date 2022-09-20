@@ -104,12 +104,14 @@ class SystemDBUtils:
         if "metric_stats" in document:
             metric_stats = document["metric_stats"]
             document["metric_stats"] = []
+
         system = System.from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
             system.metric_stats = [
                 [unbinarize_bson(y) for y in x] for x in metric_stats
             ]
+        print("system metric_stats: ", type(system))
         return system
 
     @staticmethod
@@ -134,7 +136,7 @@ class SystemDBUtils:
         query = {"$and": query + [permission_query]}
 
         cursor, total = DBUtils.find(
-            DBUtils.DEV_SYSTEM_METADATA, query, sort, page * page_size, page_size
+            DBUtils.DEV_SYSTEM_METADATA, query, page * page_size, page_size
         )
         documents = list(cursor)
 
@@ -173,7 +175,19 @@ class SystemDBUtils:
                 doc, include_metric_stats=include_metric_stats
             )
             systems.append(system)
+        if sort:
 
+            def sort_metric_func(x):
+                if sort[0] == "created_at":
+                    return x.created_at
+                min_val = -float("inf")
+                for metrics in x.system_info.results.overall:
+                    for single_metric in metrics:
+                        if single_metric.metric_name == sort[0]:
+                            return single_metric.value if single_metric else min_val
+                return min_val
+
+            systems.sort(key=sort_metric_func, reverse=(sort[1] == -1))
         return SystemsReturn(systems, total)
 
     @staticmethod
