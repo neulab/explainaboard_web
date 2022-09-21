@@ -4,16 +4,14 @@ import {
   ResultFineGrainedParsed,
   BucketIntervals,
 } from "../types";
-import { compareBucketOfCases, getOverallMap } from "../utils";
+import { compareBucketOfCases, unwrapConfidence } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
 import { Row, Col, Typography, Space, Tabs, List, Avatar } from "antd";
 import { SystemModel } from "../../../models";
-import {
-  SystemAnalysesReturn,
-  Performance,
-} from "../../../clients/openapi/api";
+import { SystemAnalysesReturn } from "../../../clients/openapi/api";
 import { BucketSlider } from "../BucketSlider";
 import { backendClient } from "../../../clients";
+import { OverallMetricsBarChart } from "./OverallMetricsBarChart";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -57,78 +55,6 @@ function getColSpan(props: Props) {
   } else {
     return 8;
   }
-}
-
-function unwrapConfidence(perf: Performance) {
-  let conf: [number, number] = [-1, -1];
-  if (
-    perf.confidence_score_low !== undefined &&
-    perf.confidence_score_high !== undefined
-  ) {
-    conf = [perf.confidence_score_low, perf.confidence_score_high];
-  }
-  return conf;
-}
-
-function createOverallBarChart(
-  props: Props,
-  colSpan: number,
-  setActiveMetric: React.Dispatch<React.SetStateAction<string>>,
-  setActiveSystemExamples: React.Dispatch<
-    React.SetStateAction<ActiveSystemExamples | undefined>
-  >,
-  resetPage: () => void
-) {
-  const { systems, metricToSystemAnalysesParsed } = props;
-  // TODO(gneubig): make this setting global somewhere
-  const systemNames = systems.map((system) => system.system_info.system_name);
-  const metricNames = Object.keys(metricToSystemAnalysesParsed);
-
-  const resultsValues: number[][] = [];
-  const resultsNumbersOfSamples: number[][] = [];
-  const resultsConfidenceScores: Array<[number, number]>[] = [];
-  // The metric names that exist in overall results
-  for (const system of systems) {
-    const overallMap = getOverallMap(system.system_info.results.overall);
-    const metricPerformance = [];
-    const metricConfidence = [];
-    const metricNumberOfSamples = [];
-    for (const metricName of metricNames) {
-      if (metricName in overallMap) {
-        const metricResults = overallMap[metricName];
-        metricPerformance.push(metricResults.value);
-        metricConfidence.push(unwrapConfidence(metricResults));
-      } else {
-        metricPerformance.push(0);
-        const noConfidence: [number, number] = [-1, -1];
-        metricConfidence.push(noConfidence);
-      }
-      // TODO(gneubig): How can we get the dataset size?
-      metricNumberOfSamples.push(-1);
-    }
-    resultsValues.push(metricPerformance);
-    resultsConfidenceScores.push(metricConfidence);
-    resultsNumbersOfSamples.push(metricNumberOfSamples);
-  }
-
-  return (
-    <Col span={colSpan}>
-      <BarChart
-        title="Overall Performance"
-        seriesNames={systemNames}
-        xAxisData={metricNames}
-        seriesDataList={resultsValues}
-        seriesLabelsList={resultsValues}
-        confidenceScoresList={resultsConfidenceScores}
-        numbersOfSamplesList={resultsNumbersOfSamples}
-        onBarClick={(barIndex: number, _: number) => {
-          // Get examples of a certain bucket from all systems
-          setActiveMetric(metricNames[barIndex]);
-          resetPage();
-        }}
-      />
-    </Col>
-  );
 }
 
 function getSignificanceTestScore(props: Props) {
@@ -412,19 +338,16 @@ export function AnalysisReport(props: Props) {
     setPage
   );
 
-  // Get column span, must be a factor of 24 since Ant divides a design area into 24 sections
   const colSpan = getColSpan(props);
-  const overallBarChart = createOverallBarChart(
-    props,
-    colSpan,
-    setActiveMetric,
-    setActiveSystemExamples,
-    resetPage
-  );
+
   const significanceInfo = getSignificanceTestScore(props);
   return (
     <div>
-      {overallBarChart}
+      <OverallMetricsBarChart
+        systems={props.systems}
+        metricNames={Object.keys(metricToSystemAnalysesParsed)}
+        onBarClick={(metricName) => setActiveMetric(metricName)}
+      />
 
       {significanceInfo}
 
