@@ -6,12 +6,14 @@ import {
 } from "../types";
 import { compareBucketOfCases, unwrapConfidence } from "../utils";
 import { BarChart, AnalysisTable } from "../../../components";
-import { Row, Col, Typography, Space, Tabs, List, Avatar } from "antd";
+import { Row, Col, Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
 import { SystemAnalysesReturn } from "../../../clients/openapi/api";
 import { BucketSlider } from "../BucketSlider";
 import { backendClient } from "../../../clients";
 import { OverallMetricsBarChart } from "./OverallMetricsBarChart";
+import { SignificanceTestList } from "./SignificanceTestList";
+import { AnalysisPanel } from "./AnalysisPanel";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -54,38 +56,6 @@ function getColSpan(props: Props) {
     return 12;
   } else {
     return 8;
-  }
-}
-
-function getSignificanceTestScore(props: Props) {
-  const { significanceTestInfo } = props;
-
-  if (significanceTestInfo !== undefined && significanceTestInfo?.length > 0) {
-    return (
-      <Typography.Title level={4}>
-        <Typography.Title level={4}>Significance Test </Typography.Title>
-        <Typography.Title level={4}> </Typography.Title>
-        <List
-          itemLayout="horizontal"
-          dataSource={significanceTestInfo}
-          renderItem={(item) => (
-            <List.Item>
-              <List.Item.Meta
-                avatar={
-                  <Avatar src="https://explainaboard.s3.amazonaws.com/logo/task.png" />
-                }
-                title={
-                  <a href="https://github.com/neulab/ExplainaBoard/tree/main/explainaboard/metrics">
-                    {item.metric_name} ({item.method_description})
-                  </a>
-                }
-                description={item.result_description}
-              />
-            </List.Item>
-          )}
-        />
-      </Typography.Title>
-    );
   }
 }
 
@@ -339,8 +309,6 @@ export function AnalysisReport(props: Props) {
   );
 
   const colSpan = getColSpan(props);
-
-  const significanceInfo = getSignificanceTestScore(props);
   return (
     <div>
       <OverallMetricsBarChart
@@ -349,33 +317,37 @@ export function AnalysisReport(props: Props) {
         onBarClick={(metricName) => setActiveMetric(metricName)}
       />
 
-      {significanceInfo}
+      {props.significanceTestInfo && (
+        <SignificanceTestList
+          significanceTestInfo={props.significanceTestInfo}
+        />
+      )}
 
-      <Typography.Title level={4}>Fine-grained Performance</Typography.Title>
+      <AnalysisPanel title="Fine-grained Performance">
+        <Typography.Paragraph>
+          Click a bar to see detailed cases of the system output at the bottom
+          of the page.
+        </Typography.Paragraph>
 
-      <Typography.Paragraph>
-        Click a bar to see detailed cases of the system output at the bottom of
-        the page.
-      </Typography.Paragraph>
-
-      <Tabs
-        activeKey={activeMetric}
-        onChange={(activeKey) => {
-          setActiveMetric(activeKey);
-          setActiveSystemExamples(undefined);
-        }}
-      >
-        {metricNames.map((metric, _) => {
-          return createMetricPane(
-            props,
-            metric,
-            colSpan,
-            exampleTable,
-            setActiveSystemExamples,
-            resetPage
-          );
-        })}
-      </Tabs>
+        <Tabs
+          activeKey={activeMetric}
+          onChange={(activeKey) => {
+            setActiveMetric(activeKey);
+            setActiveSystemExamples(undefined);
+          }}
+        >
+          {metricNames.map((metric, _) => {
+            return createMetricPane(
+              props,
+              metric,
+              colSpan,
+              exampleTable,
+              setActiveSystemExamples,
+              resetPage
+            );
+          })}
+        </Tabs>
+      </AnalysisPanel>
     </div>
   );
 }
