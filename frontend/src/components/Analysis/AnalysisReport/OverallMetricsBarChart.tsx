@@ -2,6 +2,7 @@ import React from "react";
 import { BarChart } from "../..";
 import { SystemModel } from "../../../models";
 import { getOverallMap, unwrapConfidence } from "../utils";
+import { AnalysisPanel } from "./AnalysisPanel";
 interface Props {
   systems: SystemModel[];
   metricNames: string[];
@@ -43,15 +44,17 @@ export function OverallMetricsBarChart({
     resultsNumbersOfSamples.push(metricNumberOfSamples);
   }
   return (
-    <BarChart
-      title="Overall Performance"
-      seriesNames={systemNames}
-      xAxisData={metricNames}
-      seriesDataList={resultsValues}
-      seriesLabelsList={resultsValues}
-      confidenceScoresList={resultsConfidenceScores}
-      numbersOfSamplesList={resultsNumbersOfSamples}
-      onBarClick={(barIndex: number) => onBarClick(metricNames[barIndex])}
-    />
+    <AnalysisPanel title="Overall Performance">
+      <BarChart
+        title="Overall Performance"
+        seriesNames={systemNames}
+        xAxisData={metricNames}
+        seriesDataList={resultsValues}
+        seriesLabelsList={resultsValues}
+        confidenceScoresList={resultsConfidenceScores}
+        numbersOfSamplesList={resultsNumbersOfSamples}
+        onBarClick={(barIndex: number) => onBarClick(metricNames[barIndex])}
+      />
+    </AnalysisPanel>
   );
 }
