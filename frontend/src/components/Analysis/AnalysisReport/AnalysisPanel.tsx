@@ -9,7 +9,7 @@ interface Props extends Partial<CollapsePanelProps> {
 /** A panel of the AnalysisReport. This component implements the elements that
  * are shared among all the panel.
  * - Each Collapse only has one Panel because it's easier to control it's behavior
- * thi way.
+ * this way.
  *  */
 export function AnalysisPanel({
   title,
