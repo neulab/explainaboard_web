@@ -2,11 +2,11 @@
   "id": "summverse",
   "name": "Summverse",
   "visibility": "hidden",
-  "contact": "xx@gmail.com",
-  "homepage": "https://github.com/xx",
+  "contact": null,
+  "homepage": null,
   "paper": {
       "title": "Summverse",
-      "url": "www.xxx.com"
+      "url": null
   },
   "description": "Benchmark Summarization Task",
   "logo": "https://explainaboard.s3.amazonaws.com/benchmarks/figures/sumverse.png",
