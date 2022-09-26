@@ -22,7 +22,6 @@ interface Props {
   metricToSystemAnalysesParsed: {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
-  colSpan: number;
   exampleTable: JSX.Element;
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
@@ -38,7 +37,6 @@ export function FineGrainedAnalysis({
   featureNameToBucketInfo,
   updateFeatureNameToBucketInfo,
   metricToSystemAnalysesParsed,
-  colSpan,
   exampleTable,
   setActiveSystemExamples,
   resetPage,
@@ -58,7 +56,6 @@ export function FineGrainedAnalysis({
               updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
               metricToSystemAnalysesParsed={metricToSystemAnalysesParsed}
               metric={metric}
-              colSpan={colSpan}
               exampleTable={exampleTable}
               setActiveSystemExamples={setActiveSystemExamples}
               resetPage={resetPage}

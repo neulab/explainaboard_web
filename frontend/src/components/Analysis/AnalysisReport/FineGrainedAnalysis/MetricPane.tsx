@@ -19,7 +19,6 @@ interface Props {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
   metric: string;
-  colSpan: number;
   exampleTable: JSX.Element;
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
@@ -30,7 +29,6 @@ export function MetricPane(props: Props) {
   const {
     metricToSystemAnalysesParsed,
     metric,
-    colSpan,
     setActiveSystemExamples,
     resetPage,
     exampleTable,
@@ -55,7 +53,6 @@ export function MetricPane(props: Props) {
               }
               metric={metric}
               results={systemAnalysesParsed[feature]}
-              colSpan={colSpan}
               setActiveSystemExamples={setActiveSystemExamples}
               resetPage={resetPage}
               key={feature}
