@@ -74,6 +74,7 @@ export function SystemSubmitDrawer(props: Props) {
         "sys_out_file",
         "custom_dataset_file",
         "metric_names",
+        "is_private",
         "source_language",
         "target_language",
         "shared_users",
@@ -90,13 +91,14 @@ export function SystemSubmitDrawer(props: Props) {
       try {
         const system = await backendClient.systemsGetById(systemID, true);
         setSystemToEdit(system);
-        resetAllFormFields();
-        setState(State.other);
       } catch (e) {
         if (e instanceof Response) {
           message.error((await parseBackendError(e)).getErrorMsg());
           onClose();
         }
+      } finally {
+        resetAllFormFields();
+        setState(State.other);
       }
     }
     if (resetForm) {
@@ -413,7 +415,6 @@ export function SystemSubmitDrawer(props: Props) {
         }
         onClose();
       }}
-      destroyOnClose
       {...rest}
     >
       <Spin spinning={state === State.loading} tip="processing...">
@@ -427,7 +428,8 @@ export function SystemSubmitDrawer(props: Props) {
             editMode
               ? {
                   name: systemToEdit?.system_info.system_name,
-                  is_private: systemToEdit?.is_private,
+                  // Must be boolean
+                  is_private: systemToEdit?.is_private || false,
                   shared_users: systemToEdit?.shared_users,
                 }
               : { is_private: true }
