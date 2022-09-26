@@ -4,16 +4,16 @@ import {
   ResultFineGrainedParsed,
   BucketIntervals,
 } from "../types";
-import { compareBucketOfCases, getOverallMap } from "../utils";
-import { BarChart, AnalysisTable, ConfusionMatrix } from "../../../components";
-import { Row, Col, Typography, Space, Tabs, List, Avatar } from "antd";
+import { compareBucketOfCases, unwrapConfidence } from "../utils";
+import { Row, Col, Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
-import {
-  SystemAnalysesReturn,
-  Performance,
-} from "../../../clients/openapi/api";
+import { SystemAnalysesReturn } from "../../../clients/openapi/api";
 import { BucketSlider } from "../BucketSlider";
 import { backendClient } from "../../../clients";
+import { OverallMetricsBarChart } from "./OverallMetricsBarChart";
+import { SignificanceTestList } from "./SignificanceTestList";
+import { AnalysisPanel } from "./AnalysisPanel";
+import { ConfusionMatrix, AnalysisTable, BarChart } from "../../../components";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -59,92 +59,17 @@ function getColSpan(props: Props) {
   }
 }
 
-function unwrapConfidence(perf: Performance) {
-  let conf: [number, number] = [-1, -1];
-  if (
-    perf.confidence_score_low !== undefined &&
-    perf.confidence_score_high !== undefined
-  ) {
-    conf = [perf.confidence_score_low, perf.confidence_score_high];
-  }
-  return conf;
-}
-
-function createOverallBarChart(
-  props: Props,
-  colSpan: number,
-  setActiveMetric: React.Dispatch<React.SetStateAction<string>>,
-  setActiveSystemExamples: React.Dispatch<
-    React.SetStateAction<ActiveSystemExamples | undefined>
-  >,
-  setPage: React.Dispatch<React.SetStateAction<number>>
-) {
-  const { systems, metricToSystemAnalysesParsed } = props;
-  // TODO(gneubig): make this setting global somewhere
-  const systemNames = systems.map((system) => system.system_info.system_name);
-  const metricNames = Object.keys(metricToSystemAnalysesParsed);
-
-  const resultsValues: number[][] = [];
-  const resultsNumbersOfSamples: number[][] = [];
-  const resultsConfidenceScores: Array<[number, number]>[] = [];
-  // The metric names that exist in overall results
-  for (const system of systems) {
-    const overallMap = getOverallMap(system.system_info.results.overall);
-    const metricPerformance = [];
-    const metricConfidence = [];
-    const metricNumberOfSamples = [];
-    for (const metricName of metricNames) {
-      if (metricName in overallMap) {
-        const metricResults = overallMap[metricName];
-        metricPerformance.push(metricResults.value);
-        metricConfidence.push(unwrapConfidence(metricResults));
-      } else {
-        metricPerformance.push(0);
-        const noConfidence: [number, number] = [-1, -1];
-        metricConfidence.push(noConfidence);
-      }
-      // TODO(gneubig): How can we get the dataset size?
-      metricNumberOfSamples.push(-1);
-    }
-    resultsValues.push(metricPerformance);
-    resultsConfidenceScores.push(metricConfidence);
-    resultsNumbersOfSamples.push(metricNumberOfSamples);
-  }
-
-  return (
-    <Col span={colSpan}>
-      <BarChart
-        title="Overall Performance"
-        seriesNames={systemNames}
-        xAxisData={metricNames}
-        seriesDataList={resultsValues}
-        seriesLabelsList={resultsValues}
-        confidenceScoresList={resultsConfidenceScores}
-        numbersOfSamplesList={resultsNumbersOfSamples}
-        onBarClick={(barIndex: number, _: number) => {
-          // Get examples of a certain bucket from all systems
-          setActiveMetric(metricNames[barIndex]);
-          // reset page number
-          setPage(0);
-        }}
-      />
-    </Col>
-  );
-}
-
 function createConfusionMatrix(
   props: Props,
   colSpan: number,
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
   >,
-  setPage: React.Dispatch<React.SetStateAction<number>>
+  resetPage: () => void
 ) {
-  // const { systems, metricToSystemAnalysesParsed } = props;
   const { systems, systemAnalyses } = props;
 
-  // TODO: For now we only support confusion matrix for single-system analysis
-  // Do we need to display one confusion matrix for each system in multi-system analysis?
+  // For now we only support combo analysis for single-system analysis.
   if (systemAnalyses.length !== 1) {
     return <></>;
   }
@@ -195,14 +120,12 @@ function createConfusionMatrix(
             onEntryClick={async (barIndex: number, systemIndex: number) => {
               if (barIndex < samples.length) {
                 // We have a list of samples for this combo
-
-                const bucketOfCasesList = (
+                const bucketOfCasesList =
                   await backendClient.systemCasesGetById(
                     system.system_id,
                     "example",
-                    samples[barIndex].join(",")
-                  )
-                ).analysis_cases;
+                    samples[barIndex]
+                  );
 
                 setActiveSystemExamples({
                   title: `Samples for trueLabel=${data[barIndex][0]} and predicted=${data[barIndex][1]}`,
@@ -213,7 +136,7 @@ function createConfusionMatrix(
               }
 
               // reset page number
-              setPage(0);
+              resetPage();
             }}
           />
         </Col>
@@ -221,38 +144,6 @@ function createConfusionMatrix(
     }
   }
   return <></>;
-}
-
-function getSignificanceTestScore(props: Props) {
-  const { significanceTestInfo } = props;
-
-  if (significanceTestInfo !== undefined && significanceTestInfo?.length > 0) {
-    return (
-      <Typography.Title level={4}>
-        <Typography.Title level={4}>Significance Test </Typography.Title>
-        <Typography.Title level={4}> </Typography.Title>
-        <List
-          itemLayout="horizontal"
-          dataSource={significanceTestInfo}
-          renderItem={(item) => (
-            <List.Item>
-              <List.Item.Meta
-                avatar={
-                  <Avatar src="https://explainaboard.s3.amazonaws.com/logo/task.png" />
-                }
-                title={
-                  <a href="https://github.com/neulab/ExplainaBoard/tree/main/explainaboard/metrics">
-                    {item.metric_name} ({item.method_description})
-                  </a>
-                }
-                description={item.result_description}
-              />
-            </List.Item>
-          )}
-        />
-      </Typography.Title>
-    );
-  }
 }
 
 function createExampleTable(
@@ -287,7 +178,7 @@ function createExampleTable(
         task={task}
         cases={sortedBucketOfCasesList[0]}
         page={page}
-        setPage={setPage}
+        onPageChange={setPage}
       />
     );
     // multi-system analysis
@@ -311,7 +202,7 @@ function createExampleTable(
                   task={task}
                   cases={sortedBucketOfCasesList[sysIndex]}
                   page={page}
-                  setPage={setPage}
+                  onPageChange={setPage}
                 />
               </TabPane>
             );
@@ -322,7 +213,7 @@ function createExampleTable(
   }
 
   const barText = systems.length === 1 ? "bar" : "bars";
-  const exampleText = task === "summarization" ? "Examples" : "Error cases";
+  const exampleText = "Examples";
   exampleTable = (
     <div>
       <Title level={4}>{`${exampleText} from ${barText} #${
@@ -343,7 +234,7 @@ function createFineGrainedBarChart(
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
   >,
-  setPage: React.Dispatch<React.SetStateAction<number>>
+  resetPage: () => void
 ) {
   const { systems, featureNameToBucketInfo, updateFeatureNameToBucketInfo } =
     props;
@@ -419,25 +310,21 @@ function createFineGrainedBarChart(
           );
           const bucketOfCasesPromiseList = bucketOfSamplesList.map(
             (bucketOfSamples, i) => {
-              const caseIds = bucketOfSamples[1].join(",");
               return backendClient.systemCasesGetById(
                 systems[i].system_id,
                 bucketOfSamples[0],
-                caseIds
+                bucketOfSamples[1]
               );
             }
           );
-          const bucketOfCasesList = (
-            await Promise.all(bucketOfCasesPromiseList)
-          ).map((x) => x.analysis_cases);
+          const bucketOfCasesList = await Promise.all(bucketOfCasesPromiseList);
           setActiveSystemExamples({
             title,
             barIndex,
             systemIndex,
             bucketOfCasesList,
           });
-          // reset page number
-          setPage(0);
+          resetPage();
         }}
       />
       {bucketSlider}
@@ -453,7 +340,7 @@ function createMetricPane(
   setActiveSystemExamples: React.Dispatch<
     React.SetStateAction<ActiveSystemExamples | undefined>
   >,
-  setPage: React.Dispatch<React.SetStateAction<number>>
+  resetPage: () => void
 ) {
   const systemAnalysesParsed = props.metricToSystemAnalysesParsed[metric];
 
@@ -476,7 +363,7 @@ function createMetricPane(
                   props,
                   colSpan,
                   setActiveSystemExamples,
-                  setPage
+                  resetPage
                 );
               }
             }
@@ -487,7 +374,7 @@ function createMetricPane(
               systemAnalysesParsed[feature],
               colSpan,
               setActiveSystemExamples,
-              setPage
+              resetPage
             );
           })
         }
@@ -503,8 +390,14 @@ export function AnalysisReport(props: Props) {
   const [activeMetric, setActiveMetric] = useState<string>(metricNames[0]);
   const [activeSystemExamples, setActiveSystemExamples] =
     useState<ActiveSystemExamples>();
-  // page number of the analysis table
+
+  // page number of the analysis table, 0 indexed
   const [page, setPage] = useState(0);
+
+  /** sets page of AnalysisTable to the first page */
+  function resetPage() {
+    setPage(0);
+  }
 
   // Create the example table if a bar is selected, empty element if not
   const exampleTable = createExampleTable(
@@ -515,48 +408,46 @@ export function AnalysisReport(props: Props) {
     setPage
   );
 
-  // Get column span, must be a factor of 24 since Ant divides a design area into 24 sections
   const colSpan = getColSpan(props);
-  const overallBarChart = createOverallBarChart(
-    props,
-    colSpan,
-    setActiveMetric,
-    setActiveSystemExamples,
-    setPage
-  );
-
-  const significanceInfo = getSignificanceTestScore(props);
   return (
     <div>
-      <Row>{overallBarChart}</Row>
+      <OverallMetricsBarChart
+        systems={props.systems}
+        metricNames={Object.keys(metricToSystemAnalysesParsed)}
+        onBarClick={(metricName) => setActiveMetric(metricName)}
+      />
 
-      {significanceInfo}
+      {props.significanceTestInfo && (
+        <SignificanceTestList
+          significanceTestInfo={props.significanceTestInfo}
+        />
+      )}
 
-      <Typography.Title level={4}>Fine-grained Performance</Typography.Title>
+      <AnalysisPanel title="Fine-grained Performance">
+        <Typography.Paragraph>
+          Click a bar to see detailed cases of the system output at the bottom
+          of the page.
+        </Typography.Paragraph>
 
-      <Typography.Paragraph>
-        Click a bar to see detailed cases of the system output at the bottom of
-        the page.
-      </Typography.Paragraph>
-
-      <Tabs
-        activeKey={activeMetric}
-        onChange={(activeKey) => {
-          setActiveMetric(activeKey);
-          setActiveSystemExamples(undefined);
-        }}
-      >
-        {metricNames.map((metric, _) => {
-          return createMetricPane(
-            props,
-            metric,
-            colSpan,
-            exampleTable,
-            setActiveSystemExamples,
-            setPage
-          );
-        })}
-      </Tabs>
+        <Tabs
+          activeKey={activeMetric}
+          onChange={(activeKey) => {
+            setActiveMetric(activeKey);
+            setActiveSystemExamples(undefined);
+          }}
+        >
+          {metricNames.map((metric, _) => {
+            return createMetricPane(
+              props,
+              metric,
+              colSpan,
+              exampleTable,
+              setActiveSystemExamples,
+              resetPage
+            );
+          })}
+        </Tabs>
+      </AnalysisPanel>
     </div>
   );
 }

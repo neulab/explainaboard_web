@@ -8,6 +8,7 @@ import {
   Tooltip,
   message,
   Popconfirm,
+  Radio,
 } from "antd";
 import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
@@ -22,6 +23,7 @@ import { backendClient, parseBackendError } from "../../clients";
 export interface Filter {
   name?: string;
   task?: string;
+  showMine: boolean;
   sortField: string;
   sortDir: "asc" | "desc";
   split: string | undefined;
@@ -188,6 +190,44 @@ export function SystemTableTools({
     }
   }
 
+  const { state } = useUser();
+  const loggedIn = state === LoginState.yes;
+
+  /**
+   * showMine radio buttion options.
+   * There are two labels, `My systems` and `All systems`. If `My systems`
+   * is clicked, value is set to `true` for `showMine`. Otherwise, false.
+   *
+   * If the user is not logged in, `My Systems` option would be disabled.
+   */
+  const showMineOptions = [
+    { label: "My Systems", value: true, disabled: !loggedIn },
+    { label: "All Systems", value: false },
+  ];
+
+  let mineVsAllSystemsToggle = (
+    <Radio.Group
+      options={showMineOptions}
+      onChange={({ target: { value } }) => onChange({ showMine: value })}
+      value={value.showMine}
+      optionType="button"
+      buttonStyle="solid"
+    />
+  );
+
+  // add "remind log in pop up" if not logged in
+  if (!loggedIn) {
+    const remindLogInMessage = (
+      <div>
+        <p>Please log in to see your own systems.</p>
+      </div>
+    );
+
+    mineVsAllSystemsToggle = (
+      <Tooltip title={remindLogInMessage}>{mineVsAllSystemsToggle}</Tooltip>
+    );
+  }
+
   return (
     <div style={{ width: "100%" }}>
       <Space style={{ width: "fit-content", float: "left" }}>
@@ -197,6 +237,7 @@ export function SystemTableTools({
         {deleteButton}
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
+        {mineVsAllSystemsToggle}
         <Select
           options={["test", "validation", "train", "all"].map((opt) => ({
             value: opt,

@@ -10,6 +10,7 @@ from typing import Optional
 
 import pandas as pd
 from explainaboard import DatalabLoaderOption, TaskType, get_processor
+from explainaboard.analysis.analyses import BucketAnalysis
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
@@ -24,22 +25,23 @@ from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
+from explainaboard_web.impl.language_code import get_language_codes
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
 from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
 from explainaboard_web.models import (
-    AnalysisCasesReturn,
     Benchmark,
     BenchmarkConfig,
     DatasetMetadata,
     SingleAnalysis,
 )
 from explainaboard_web.models.datasets_return import DatasetsReturn
+from explainaboard_web.models.language_code import LanguageCode
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system_info import SystemInfo
-from explainaboard_web.models.system_outputs_return import SystemOutputsReturn
+from explainaboard_web.models.system_output import SystemOutput
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
@@ -98,6 +100,14 @@ def tasks_get() -> list[TaskCategory]:
             )
         categories.append(TaskCategory(_category.name, _category.description, tasks))
     return categories
+
+
+""" /languagecodes """
+
+
+def language_codes_get() -> list[LanguageCode]:
+    language_codes = get_language_codes()
+    return language_codes
 
 
 """ /datasets """
@@ -285,11 +295,8 @@ def systems_post(body: SystemCreateProps) -> System:
 
 
 def system_outputs_get_by_id(
-    system_id: str,
-    output_ids: Optional[str],
-    page: int = 0,
-    page_size: int = 10,
-) -> SystemOutputsReturn:
+    system_id: str, output_ids: list[int] | None
+) -> list[SystemOutput]:
     """
     TODO: return special error/warning if some ids cannot be found
     """
@@ -312,18 +319,14 @@ def system_outputs_get_by_id(
             403, f"{system.system_info.dataset_name} is a private dataset", 40301
         )
 
-    return SystemDBUtils.find_system_outputs(
-        system_id, output_ids, page=page, page_size=page_size
-    )
+    return SystemDBUtils.find_system_outputs(system_id, output_ids)
 
 
 def system_cases_get_by_id(
     system_id: str,
     level: int,
-    case_ids: Optional[str],
-    page: int = 0,
-    page_size: int = 10,
-) -> AnalysisCasesReturn:
+    case_ids: list[int] | None,
+) -> list[AnalysisCase]:
     """
     TODO: return special error/warning if some ids cannot be found
     """
@@ -346,10 +349,7 @@ def system_cases_get_by_id(
             403, f"{system.system_info.dataset_name} is a private dataset", 40301
         )
 
-    analysis_case_return = SystemDBUtils.find_analysis_cases(
-        system_id, level=level, case_ids=case_ids, page=page, page_size=page_size
-    )
-    return analysis_case_return
+    return SystemDBUtils.find_analysis_cases(system_id, level=level, case_ids=case_ids)
 
 
 def systems_delete_by_id(system_id: str):
@@ -361,7 +361,7 @@ def systems_delete_by_id(system_id: str):
 
 def systems_analyses_post(body: SystemsAnalysesBody):
     system_ids_str = body.system_ids
-    # custom_feature_to_bucket_info = body.feature_to_bucket_info
+    feature_to_bucket_info = body.feature_to_bucket_info
 
     system_analyses: list[SingleAnalysis] = []
     system_ids: list = system_ids_str.split(",")
@@ -424,6 +424,22 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         system_info_dict = general_to_dict(system_info)
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
+        for analysis in system_output_info.analyses:
+            if (
+                isinstance(analysis, BucketAnalysis)
+                and analysis.feature in feature_to_bucket_info
+            ):
+                # The "fixed" method is required for SDK to perform
+                # custom-interval analysis
+                analysis.method = "fixed"
+                analysis.number = feature_to_bucket_info[analysis.feature].number
+                # Convert interval to type tuple so it becomes hashable,
+                # as required by SDK
+                analysis.setting = [
+                    (interval[0], interval[1])
+                    for interval in feature_to_bucket_info[analysis.feature].setting
+                ]
+
         logging.getLogger().warning(
             "user-defined bucket analyses are not " "re-implemented"
         )
@@ -439,8 +455,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
                 system_id=system.system_id,
                 level=analysis_level.name,
                 case_ids=case_ids,
-                page_size=0,
-            ).analysis_cases
+            )
             # Note we are casting here, as SystemOutput.from_dict() actually just
             # returns a dict
             level_cases = [AnalysisCase.from_dict(narrow(dict, x)) for x in level_cases]

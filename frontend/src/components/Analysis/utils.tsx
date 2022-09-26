@@ -66,18 +66,13 @@ export function parseComboCountFeatures(
   analysisName: string,
   featureDescription: string
 ) {
-  const parsedResult: { [metricName: string]: ResultFineGrainedParsed } = {};
-  // TODO (Chonghan) should not hardcode here.
-  // But currently no metric is accessible here
-  const metricName = "Accuracy";
-  parsedResult[metricName] = initParsedResult(
-    metricName,
-    analysisName, // use feature description instead of feature name
-    // for combo count analysis
-    featureDescription,
+  const parsedResult: ResultFineGrainedParsed = initParsedResult(
+    "", // we don't need a metric name for combo count analyses
+    analysisName,
+    featureDescription, // we use feature description instead of feature name here
     levelName
   );
-  parsedResult[metricName].comboCounts = comboCounts;
+  parsedResult.comboCounts = comboCounts;
 
   return parsedResult;
 }
@@ -173,6 +168,7 @@ export function parseFineGrainedResults(
       [analysis: string]: ResultFineGrainedParsed[];
     };
   } = {};
+  const parsedComboAnalyses: ResultFineGrainedParsed[] = [];
 
   // Loop through each system analysis and parse
   for (let systemIdx = 0; systemIdx < systems.length; systemIdx++) {
@@ -191,37 +187,45 @@ export function parseFineGrainedResults(
       const analysisDescription = myAnalysis.description;
       const bucketType = myAnalysis["method"];
 
-      let metricToParsed: { [metric: string]: ResultFineGrainedParsed };
       if (myResult.cls_name === "BucketAnalysisResult") {
-        metricToParsed = parseBucketAnalysisFeatures(
+        const metricToParsed = parseBucketAnalysisFeatures(
           myResult["bucket_performances"],
           bucketType,
           myResult.level,
           analysisName,
           analysisDescription
         );
+
+        for (const [metric, singleResult] of Object.entries(metricToParsed)) {
+          if (!(metric in parsedResults)) {
+            parsedResults[metric] = {};
+          }
+          if (!(analysisName in parsedResults[metric])) {
+            parsedResults[metric][analysisName] = [];
+          }
+          parsedResults[metric][analysisName].push(singleResult);
+        }
       } else if (myResult.cls_name === "ComboCountAnalysisResult") {
-        metricToParsed = parseComboCountFeatures(
+        const parsedComboAnalysis = parseComboCountFeatures(
           myResult["combo_counts"],
           myResult.level,
           analysisName,
           analysisDescription
         );
+        parsedComboAnalyses.push(parsedComboAnalysis);
       } else {
         continue; // Ignore other types of fine-grained results for now
       }
-
-      for (const [metric, singleResult] of Object.entries(metricToParsed)) {
-        if (!(metric in parsedResults)) {
-          parsedResults[metric] = {};
-        }
-        if (!(analysisName in parsedResults[metric])) {
-          parsedResults[metric][analysisName] = [];
-        }
-        parsedResults[metric][analysisName].push(singleResult);
-      }
     }
   }
+
+  // Add combo count analysis to all metrics
+  for (const metric of Object.keys(parsedResults)) {
+    for (const comboAnalysis of parsedComboAnalyses) {
+      parsedResults[metric][comboAnalysis.featureName] = [comboAnalysis];
+    }
+  }
+
   // Sanity check to make sure that whatever features were found were found for all systems
   for (const [metric, metricResults] of Object.entries(parsedResults)) {
     for (const [feature, metricFeatureResults] of Object.entries(
@@ -271,4 +275,14 @@ export function getOverallMap(overallResults: Performance[][]): {
     }
   }
   return overallMap;
+}
+
+export function unwrapConfidence(perf: Performance): [number, number] {
+  if (
+    perf.confidence_score_low !== undefined &&
+    perf.confidence_score_high !== undefined
+  ) {
+    return [perf.confidence_score_low, perf.confidence_score_high];
+  }
+  return [-1, -1];
 }

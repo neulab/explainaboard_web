@@ -10,7 +10,8 @@ interface Props {
   task: string;
   cases: AnalysisCase[];
   page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  /** newPage is 0 indexed */
+  onPageChange: (newPage: number) => void;
 }
 
 function renderColInfo(
@@ -156,30 +157,31 @@ function specifyDataSeqLab(
   return dataSource;
 }
 
-export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
+export function AnalysisTable({
+  systemID,
+  task,
+  cases,
+  page,
+  onPageChange,
+}: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
   const total = cases.length;
-  const offset = page * pageSize;
-  const end = Math.min(offset + pageSize, cases.length);
-  const outputIDString = cases
-    .slice(offset, end)
-    .map(function (x) {
-      return x["sample_id"];
-    })
-    .join(",");
   const tableRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
     async function refreshSystemOutputs() {
       setPageState(PageState.loading);
       try {
+        const offset = page * pageSize;
+        const end = Math.min(offset + pageSize, cases.length);
+        const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
         const result = await backendClient.systemOutputsGetById(
           systemID,
-          outputIDString
+          outputIDs
         );
-        setSystemOutputs(result.system_outputs);
+        setSystemOutputs(result);
       } catch (e) {
         if (e instanceof Response) {
           const error = await parseBackendError(e);
@@ -207,7 +209,7 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [systemID, outputIDString, page, pageSize]);
+  }, [systemID, page, pageSize, cases]);
 
   // other fields
   if (systemOutputs.length === 0) {
@@ -272,9 +274,7 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
         pageSize,
         // conversion between 0-based and 1-based index
         current: page + 1,
-        onChange: (newPage, newPageSize) => {
-          setPage(newPage - 1);
-        },
+        onChange: (newPage) => onPageChange(newPage - 1),
       }}
       scroll={{ y: 550, x: "max-content", scrollToFirstRowOnChange: true }}
     />
