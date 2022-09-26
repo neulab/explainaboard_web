@@ -6,13 +6,13 @@ import {
 } from "../types";
 import { compareBucketOfCases } from "../utils";
 import { AnalysisTable } from "../../../components";
-import { Row, Typography, Space, Tabs } from "antd";
+import { Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
 import { SystemAnalysesReturn } from "../../../clients/openapi/api";
 import { OverallMetricsBarChart } from "./OverallMetricsBarChart";
 import { SignificanceTestList } from "./SignificanceTestList";
 import { AnalysisPanel } from "./AnalysisPanel";
-import { FineGrainedBarChart } from "./FineGrainedAnalysis/FineGrainedBarChart";
+import { MetricPane } from "./FineGrainedAnalysis/MetricPane";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -137,49 +137,6 @@ function createExampleTable(
   return exampleTable;
 }
 
-function createMetricPane(
-  props: Props,
-  metric: string,
-  colSpan: number,
-  exampleTable: JSX.Element,
-  setActiveSystemExamples: React.Dispatch<
-    React.SetStateAction<ActiveSystemExamples | undefined>
-  >,
-  resetPage: () => void
-) {
-  const systemAnalysesParsed = props.metricToSystemAnalysesParsed[metric];
-
-  /*Get the parsed result from the first system for mapping.
-  FeatureNames and descriptions are invariant information
-  */
-  return (
-    <TabPane tab={metric} key={metric}>
-      <Row>
-        {
-          // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
-          // into columns. One column contains a single BarChart.
-          Object.keys(systemAnalysesParsed).map((feature) => (
-            <FineGrainedBarChart
-              systems={props.systems}
-              featureNameToBucketInfo={props.featureNameToBucketInfo}
-              updateFeatureNameToBucketInfo={
-                props.updateFeatureNameToBucketInfo
-              }
-              metric={metric}
-              results={systemAnalysesParsed[feature]}
-              colSpan={colSpan}
-              setActiveSystemExamples={setActiveSystemExamples}
-              resetPage={resetPage}
-              key={feature}
-            />
-          ))
-        }
-      </Row>
-      {exampleTable}
-    </TabPane>
-  );
-}
-
 export function AnalysisReport(props: Props) {
   const { metricToSystemAnalysesParsed } = props;
   const metricNames = Object.keys(metricToSystemAnalysesParsed);
@@ -232,16 +189,25 @@ export function AnalysisReport(props: Props) {
             setActiveSystemExamples(undefined);
           }}
         >
-          {metricNames.map((metric, _) => {
-            return createMetricPane(
-              props,
-              metric,
-              colSpan,
-              exampleTable,
-              setActiveSystemExamples,
-              resetPage
-            );
-          })}
+          {metricNames.map((metric) => (
+            <Tabs.TabPane tab={metric} key={metric}>
+              <MetricPane
+                systems={props.systems}
+                featureNameToBucketInfo={props.featureNameToBucketInfo}
+                updateFeatureNameToBucketInfo={
+                  props.updateFeatureNameToBucketInfo
+                }
+                metricToSystemAnalysesParsed={
+                  props.metricToSystemAnalysesParsed
+                }
+                metric={metric}
+                colSpan={colSpan}
+                exampleTable={exampleTable}
+                setActiveSystemExamples={setActiveSystemExamples}
+                resetPage={resetPage}
+              />
+            </Tabs.TabPane>
+          ))}
         </Tabs>
       </AnalysisPanel>
     </div>
