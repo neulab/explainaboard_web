@@ -4,16 +4,15 @@ import {
   ResultFineGrainedParsed,
   BucketIntervals,
 } from "../types";
-import { compareBucketOfCases, unwrapConfidence } from "../utils";
-import { BarChart, AnalysisTable } from "../../../components";
-import { Row, Col, Typography, Space, Tabs } from "antd";
+import { compareBucketOfCases } from "../utils";
+import { AnalysisTable } from "../../../components";
+import { Row, Typography, Space, Tabs } from "antd";
 import { SystemModel } from "../../../models";
 import { SystemAnalysesReturn } from "../../../clients/openapi/api";
-import { BucketSlider } from "../BucketSlider";
-import { backendClient } from "../../../clients";
 import { OverallMetricsBarChart } from "./OverallMetricsBarChart";
 import { SignificanceTestList } from "./SignificanceTestList";
 import { AnalysisPanel } from "./AnalysisPanel";
+import { FineGrainedBarChart } from "./FineGrainedAnalysis/FineGrainedBarChart";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -138,113 +137,6 @@ function createExampleTable(
   return exampleTable;
 }
 
-function createFineGrainedBarChart(
-  props: Props,
-  metric: string,
-  feature: string,
-  results: ResultFineGrainedParsed[],
-  colSpan: number,
-  setActiveSystemExamples: React.Dispatch<
-    React.SetStateAction<ActiveSystemExamples | undefined>
-  >,
-  resetPage: () => void
-) {
-  const { systems, featureNameToBucketInfo, updateFeatureNameToBucketInfo } =
-    props;
-  // For invariant variables across all systems, we can simply take from the first result
-  const systemNames = systems.map((system) => system.system_info.system_name);
-  const resultFirst = results[0];
-  const title = `${metric} by ${resultFirst.featureDescription}`;
-  const bucketNames = resultFirst.bucketNames;
-  const featureName = resultFirst.featureName;
-  let bucketSlider = null;
-  if (featureName in featureNameToBucketInfo) {
-    const bucketInfo = featureNameToBucketInfo[featureName];
-    const bucketRightBounds = bucketInfo.bounds;
-    if (bucketRightBounds !== undefined) {
-      const bucketMin = bucketInfo.min;
-      const bucketMax = bucketInfo.max;
-      const bucketStep = bucketMax - bucketMin <= 1.0 ? 0.01 : 1;
-      bucketSlider = (
-        <BucketSlider
-          min={bucketMin}
-          max={bucketMax}
-          marks={{
-            [bucketMin]: bucketMin.toFixed(2),
-            [bucketMax]: bucketMax.toFixed(2),
-          }}
-          step={bucketStep}
-          inputValues={bucketRightBounds}
-          onChange={(bounds) => {
-            updateFeatureNameToBucketInfo(featureName, {
-              min: bucketMin,
-              max: bucketMax,
-              bounds: bounds,
-              updated: true,
-            });
-          }}
-        />
-      );
-    }
-  }
-
-  // System-dependent variables must be taken from all systems
-  const resultsValues: number[][] = [];
-  const resultsNumbersOfSamples: number[][] = [];
-  const resultsConfidenceScores: Array<[number, number]>[] = [];
-  const resultsBucketsOfSamples: Array<[string, number[]]>[] = [];
-  for (const result of results) {
-    resultsNumbersOfSamples.push(result.numbersOfSamples);
-    resultsBucketsOfSamples.push(
-      result.cases.map((myCases) => [result.levelName, myCases])
-    );
-    resultsValues.push(result.performances.map((perf) => perf.value));
-    resultsConfidenceScores.push(
-      result.performances.map((perf) => unwrapConfidence(perf))
-    );
-  }
-
-  return (
-    <Col span={colSpan} key={resultFirst.featureDescription}>
-      <BarChart
-        title={title}
-        seriesNames={systemNames}
-        xAxisData={bucketNames}
-        seriesDataList={resultsValues}
-        seriesLabelsList={resultsValues}
-        numbersOfSamplesList={resultsNumbersOfSamples}
-        confidenceScoresList={resultsConfidenceScores}
-        onBarClick={async (barIndex: number, systemIndex: number) => {
-          // Get examples of a certain bucket from all systems
-          const bucketOfSamplesList = resultsBucketsOfSamples.map(
-            (bucketsOfSamples) => {
-              return bucketsOfSamples[barIndex];
-            }
-          );
-          const bucketOfCasesPromiseList = bucketOfSamplesList.map(
-            (bucketOfSamples, i) => {
-              return backendClient.systemCasesGetById(
-                systems[i].system_id,
-                bucketOfSamples[0],
-                bucketOfSamples[1]
-              );
-            }
-          );
-          const bucketOfCasesList = await Promise.all(bucketOfCasesPromiseList);
-          setActiveSystemExamples({
-            title,
-            barIndex,
-            systemIndex,
-            bucketOfCasesList,
-          });
-          resetPage();
-        }}
-      />
-      {bucketSlider}
-    </Col>
-  );
-}
-
 function createMetricPane(
   props: Props,
   metric: string,
@@ -266,17 +158,21 @@ function createMetricPane(
         {
           // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
           // into columns. One column contains a single BarChart.
-          Object.keys(systemAnalysesParsed).map((feature) =>
-            createFineGrainedBarChart(
-              props,
-              metric,
-              feature,
-              systemAnalysesParsed[feature],
-              colSpan,
-              setActiveSystemExamples,
-              resetPage
-            )
-          )
+          Object.keys(systemAnalysesParsed).map((feature) => (
+            <FineGrainedBarChart
+              systems={props.systems}
+              featureNameToBucketInfo={props.featureNameToBucketInfo}
+              updateFeatureNameToBucketInfo={
+                props.updateFeatureNameToBucketInfo
+              }
+              metric={metric}
+              results={systemAnalysesParsed[feature]}
+              colSpan={colSpan}
+              setActiveSystemExamples={setActiveSystemExamples}
+              resetPage={resetPage}
+              key={feature}
+            />
+          ))
         }
       </Row>
       {exampleTable}
