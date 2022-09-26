@@ -11,8 +11,7 @@ import { SystemModel } from "../../../models";
 import { SystemAnalysesReturn } from "../../../clients/openapi/api";
 import { OverallMetricsBarChart } from "./OverallMetricsBarChart";
 import { SignificanceTestList } from "./SignificanceTestList";
-import { AnalysisPanel } from "./AnalysisPanel";
-import { MetricPane } from "./FineGrainedAnalysis/MetricPane";
+import { FineGrainedAnalysis } from "./FineGrainedAnalysis";
 
 const { Title } = Typography;
 const { TabPane } = Tabs;
@@ -176,40 +175,22 @@ export function AnalysisReport(props: Props) {
         />
       )}
 
-      <AnalysisPanel title="Fine-grained Performance">
-        <Typography.Paragraph>
-          Click a bar to see detailed cases of the system output at the bottom
-          of the page.
-        </Typography.Paragraph>
-
-        <Tabs
-          activeKey={activeMetric}
-          onChange={(activeKey) => {
-            setActiveMetric(activeKey);
-            setActiveSystemExamples(undefined);
-          }}
-        >
-          {metricNames.map((metric) => (
-            <Tabs.TabPane tab={metric} key={metric}>
-              <MetricPane
-                systems={props.systems}
-                featureNameToBucketInfo={props.featureNameToBucketInfo}
-                updateFeatureNameToBucketInfo={
-                  props.updateFeatureNameToBucketInfo
-                }
-                metricToSystemAnalysesParsed={
-                  props.metricToSystemAnalysesParsed
-                }
-                metric={metric}
-                colSpan={colSpan}
-                exampleTable={exampleTable}
-                setActiveSystemExamples={setActiveSystemExamples}
-                resetPage={resetPage}
-              />
-            </Tabs.TabPane>
-          ))}
-        </Tabs>
-      </AnalysisPanel>
+      <FineGrainedAnalysis
+        systems={props.systems}
+        featureNameToBucketInfo={props.featureNameToBucketInfo}
+        updateFeatureNameToBucketInfo={props.updateFeatureNameToBucketInfo}
+        metricToSystemAnalysesParsed={props.metricToSystemAnalysesParsed}
+        colSpan={colSpan}
+        exampleTable={exampleTable}
+        setActiveSystemExamples={setActiveSystemExamples}
+        resetPage={resetPage}
+        activeMetric={activeMetric}
+        onActiveMetricChange={(newMetricName) => {
+          setActiveMetric(newMetricName);
+          setActiveSystemExamples(undefined);
+        }}
+        metricNames={metricNames}
+      />
     </div>
   );
 }
