@@ -1,14 +1,9 @@
-import { Col } from "antd";
 import React from "react";
-import { backendClient } from "../../../../clients";
+import { Col } from "antd";
 import { SystemModel } from "../../../../models";
 import { BarChart } from "../../BarChart";
 import { BucketSlider } from "../../BucketSlider";
-import {
-  ActiveSystemExamples,
-  BucketIntervals,
-  ResultFineGrainedParsed,
-} from "../../types";
+import { BucketIntervals, ResultFineGrainedParsed } from "../../types";
 import { unwrapConfidence } from "../../utils";
 
 interface Props {
@@ -18,28 +13,23 @@ interface Props {
     featureName: string,
     bucketInfo: BucketIntervals
   ) => void;
-  metric: string;
+  title: string;
   results: ResultFineGrainedParsed[];
-  setActiveSystemExamples: React.Dispatch<
-    React.SetStateAction<ActiveSystemExamples | undefined>
-  >;
-  resetPage: () => void;
+  onBarClick: (barIndex: number, systemIndex: number) => void;
 }
 
 export function FineGrainedBarChart(props: Props) {
   const {
+    title,
     systems,
     featureNameToBucketInfo,
     updateFeatureNameToBucketInfo,
     results,
-    setActiveSystemExamples,
-    resetPage,
-    metric,
+    onBarClick,
   } = props;
   // For invariant variables across all systems, we can simply take from the first result
   const systemNames = systems.map((system) => system.system_info.system_name);
   const resultFirst = results[0];
-  const title = `${metric} by ${resultFirst.featureDescription}`;
   const bucketNames = resultFirst.bucketNames;
   const featureName = resultFirst.featureName;
   let bucketSlider = null;
@@ -77,12 +67,8 @@ export function FineGrainedBarChart(props: Props) {
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
-  const resultsBucketsOfSamples: Array<[string, number[]]>[] = [];
   for (const result of results) {
     resultsNumbersOfSamples.push(result.numbersOfSamples);
-    resultsBucketsOfSamples.push(
-      result.cases.map((myCases) => [result.levelName, myCases])
-    );
     resultsValues.push(result.performances.map((perf) => perf.value));
     resultsConfidenceScores.push(
       result.performances.map((perf) => unwrapConfidence(perf))
@@ -122,31 +108,7 @@ export function FineGrainedBarChart(props: Props) {
         seriesLabelsList={resultsValues}
         numbersOfSamplesList={resultsNumbersOfSamples}
         confidenceScoresList={resultsConfidenceScores}
-        onBarClick={async (barIndex: number, systemIndex: number) => {
-          // Get examples of a certain bucket from all systems
-          const bucketOfSamplesList = resultsBucketsOfSamples.map(
-            (bucketsOfSamples) => {
-              return bucketsOfSamples[barIndex];
-            }
-          );
-          const bucketOfCasesPromiseList = bucketOfSamplesList.map(
-            (bucketOfSamples, i) => {
-              return backendClient.systemCasesGetById(
-                systems[i].system_id,
-                bucketOfSamples[0],
-                bucketOfSamples[1]
-              );
-            }
-          );
-          const bucketOfCasesList = await Promise.all(bucketOfCasesPromiseList);
-          setActiveSystemExamples({
-            title,
-            barIndex,
-            systemIndex,
-            bucketOfCasesList,
-          });
-          resetPage();
-        }}
+        onBarClick={onBarClick}
       />
       {bucketSlider}
     </Col>
