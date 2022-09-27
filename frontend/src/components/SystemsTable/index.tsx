@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import "./index.css";
 import { message, Space } from "antd";
 import { SystemSubmitDrawer, AnalysisDrawer } from "../../components";
@@ -9,40 +9,44 @@ import { SystemTableContent } from "./SystemTableContent";
 import { findTask, PageState } from "../../utils";
 import { TaskCategory } from "../../clients/openapi";
 import { LoginState, useUser } from "../useUser";
+import { useHistory } from "react-router-dom";
+
+const filterKeyMap = {
+  nameFilter: "name",
+  taskFilter: "task",
+  showMine: "show_mine",
+  sortField: "sort_field",
+  sortDir: "sort_dir",
+  dataset: "dataset",
+  datasetSplit: "dataset_split",
+  subdataset: "sub_dataset",
+  systemId: "system_id",
+};
 
 interface Props {
-  /**initial value for task filter */
-  name?: string;
-  initialTaskFilter?: string;
-  dataset?: string;
-  subdataset?: string;
-  datasetSplit?: string;
-  systemId?: string;
+  filters: URLSearchParams;
 }
 
 /** A table that lists all systems */
-export function SystemsTable({
-  name,
-  initialTaskFilter,
-  dataset,
-  subdataset,
-  datasetSplit,
-  systemId,
-}: Props) {
+export function SystemsTable({ filters }: Props) {
   const [pageState, setPageState] = useState(PageState.loading);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const history = useHistory();
 
   const [systems, setSystems] = useState<SystemModel[]>([]);
   const [total, setTotal] = useState(0);
 
   // filters
-  const [nameFilter, setNameFilter] = useState(name);
-  const [taskFilter, setTaskFilter] = useState(initialTaskFilter);
-  const [showMine, setShowMine] = useState(false);
-  const [sortField, setSortField] = useState("created_at");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [split, setSplit] = useState<string | undefined>(datasetSplit);
+  const nameFilter = filters.get(filterKeyMap.nameFilter) || undefined;
+  const taskFilter = filters.get(filterKeyMap.taskFilter) || undefined;
+  const showMine = filters.get(filterKeyMap.showMine) === "true" ? true : false;
+  const sortDir = filters.get(filterKeyMap.sortDir) === "asc" ? "asc" : "desc";
+  const sortField = filters.get(filterKeyMap.sortField) || "created_at";
+  const split = filters.get(filterKeyMap.datasetSplit) || undefined;
+  const systemId = filters.get(filterKeyMap.systemId) || undefined;
+  const dataset = filters.get(filterKeyMap.dataset) || undefined;
+  const subdataset = filters.get(filterKeyMap.subdataset) || undefined;
 
   // submit
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);
@@ -78,10 +82,48 @@ export function SystemsTable({
   }
   const metricNames = getMetricsNames();
 
+  const _setFilter = useCallback(
+    function (filterName: string, value: string | undefined) {
+      if (value) {
+        filters.set(filterName, value);
+      } else {
+        filters.delete(filterName);
+      }
+    },
+    [filters]
+  );
+
+  /** TODO: add debounce */
+  const onFilterChange = useCallback(
+    function ({
+      name,
+      task,
+      showMine,
+      sortField: newSortField,
+      sortDir: newSortDir,
+      split: newSplit,
+    }: Partial<Filter>) {
+      if (name != null) _setFilter(filterKeyMap.nameFilter, name);
+      if (task != null) _setFilter(filterKeyMap.taskFilter, task || undefined);
+      if (showMine != null)
+        _setFilter(filterKeyMap.showMine, showMine ? "true" : "false");
+      if (newSortField != null)
+        _setFilter(filterKeyMap.sortField, newSortField || undefined);
+      if (newSortDir != null)
+        _setFilter(filterKeyMap.sortDir, newSortDir || undefined);
+      if (newSplit != null)
+        _setFilter(filterKeyMap.datasetSplit, newSplit || undefined);
+      history.push({ search: filters.toString() });
+      setPage(0);
+      setSelectedSystemIDs([]);
+    },
+    [history, _setFilter, filters]
+  );
+
   useEffect(() => {
     function getInitialSortField(taskCategories: TaskCategory[]) {
-      if (initialTaskFilter) {
-        const initialTask = findTask(taskCategories, initialTaskFilter);
+      if (taskFilter) {
+        const initialTask = findTask(taskCategories, taskFilter);
         if (initialTask && initialTask.supported_metrics.length > 0)
           return initialTask.supported_metrics[0];
       }
@@ -90,14 +132,17 @@ export function SystemsTable({
     async function fetchTasks() {
       const taskCategoriesData = await backendClient.tasksGet();
       setTaskCategories(taskCategoriesData);
-      setSortField(getInitialSortField(taskCategoriesData));
+      _setFilter(
+        filterKeyMap.sortField,
+        getInitialSortField(taskCategoriesData)
+      );
     }
     fetchTasks();
-  }, [initialTaskFilter]);
+  }, [taskFilter, _setFilter]);
 
   useEffect(() => {
     if (systemId) {
-      setActiveSystemIDs([systemId]);
+      setActiveSystemIDs(systemId.split(","));
     }
   }, [systemId]);
 
@@ -105,7 +150,7 @@ export function SystemsTable({
     async function refreshSystems() {
       setPageState(PageState.loading);
       const datasetSplit = split === "all" ? undefined : split;
-      const creator = showMine === true ? userEmail : undefined;
+      const creator = showMine ? userEmail : undefined;
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
@@ -134,39 +179,20 @@ export function SystemsTable({
     }
     if (loginState !== LoginState.loading) refreshSystems();
   }, [
-    nameFilter,
-    taskFilter,
-    showMine,
     dataset,
-    subdataset,
+    nameFilter,
+    showMine,
+    sortDir,
+    sortField,
     split,
+    subdataset,
+    taskFilter,
     page,
     pageSize,
-    sortField,
-    sortDir,
     refreshTrigger,
     userEmail,
     loginState, // refresh when login state changes
   ]);
-
-  /** TODO: add debounce */
-  function onFilterChange({
-    name,
-    task,
-    showMine,
-    sortField: newSortField,
-    sortDir: newSortDir,
-    split: newSplit,
-  }: Partial<Filter>) {
-    if (name != null) setNameFilter(name);
-    if (task != null) setTaskFilter(task || undefined);
-    if (showMine != null) setShowMine(showMine);
-    if (newSortField != null) setSortField(newSortField);
-    if (newSortDir != null) setSortDir(newSortDir);
-    if (newSplit != null) setSplit(newSplit);
-    setPage(0);
-    setSelectedSystemIDs([]);
-  }
 
   return (
     <Space direction="vertical" style={{ width: "100%" }}>

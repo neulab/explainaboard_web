@@ -23,7 +23,6 @@ export function LeaderboardPage() {
   const task = query.get("task") || undefined;
   const dataset = query.get("dataset") || undefined;
   const subdataset = query.get("subdataset") || undefined;
-  const split = query.get("split") || undefined;
 
   if (task || dataset || subdataset) {
     let title = "";
@@ -52,12 +51,7 @@ export function LeaderboardPage() {
           subTitle={`Leaderboard for ${subTitle}`}
         />
         <div style={{ padding: "0 10px" }}>
-          <SystemsTable
-            initialTaskFilter={task}
-            dataset={dataset}
-            subdataset={subdataset}
-            datasetSplit={split}
-          />
+          <SystemsTable filters={query} />
         </div>
       </div>
     );

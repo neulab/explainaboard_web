@@ -18,38 +18,19 @@ export function SystemsPage() {
   useGoogleAnalytics();
   const history = useHistory();
   const query = useQuery();
-  const system = query.get("system") || undefined;
-  const system_id = query.get("system_id") || undefined;
 
-  if (system) {
-    return (
-      <div className="page">
-        <Helmet>
-          <title>ExplainaBoard - Systems</title>
-        </Helmet>
-        <PageHeader
-          onBack={() => history.goBack()}
-          title="Systems"
-          subTitle="All systems submitted by users"
-          className="header"
-        />
-        <SystemsTable name={system} systemId={system_id} />
-      </div>
-    );
-  } else {
-    return (
-      <div className="page">
-        <Helmet>
-          <title>ExplainaBoard - Systems</title>
-        </Helmet>
-        <PageHeader
-          onBack={() => history.goBack()}
-          title="Systems"
-          subTitle="All systems submitted by users"
-          className="header"
-        />
-        <SystemsTable systemId={system_id} />
-      </div>
-    );
-  }
+  return (
+    <div className="page">
+      <Helmet>
+        <title>ExplainaBoard - Systems</title>
+      </Helmet>
+      <PageHeader
+        onBack={() => history.goBack()}
+        title="Systems"
+        subTitle="All systems submitted by users"
+        className="header"
+      />
+      <SystemsTable filters={query} />
+    </div>
+  );
 }
