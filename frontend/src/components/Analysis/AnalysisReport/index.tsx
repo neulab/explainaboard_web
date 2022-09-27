@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 import { SystemModel } from "../../../models";
 import { SystemAnalysesReturn } from "../../../clients/openapi/api";
@@ -30,8 +30,15 @@ export function AnalysisReport(props: Props) {
     updateFeatureNameToBucketInfo,
     featureNameToBucketInfo,
   } = props;
-  const metricNames = Object.keys(metricToSystemAnalysesParsed);
+  const metricNames = useMemo(
+    () => Object.keys(metricToSystemAnalysesParsed),
+    [metricToSystemAnalysesParsed]
+  );
   const [activeMetric, setActiveMetric] = useState<string>(metricNames[0]);
+
+  useEffect(() => {
+    setActiveMetric(metricNames[0]);
+  }, [metricNames]);
 
   function onActiveMetricChange(newMetricName: string) {
     setActiveMetric(newMetricName);
