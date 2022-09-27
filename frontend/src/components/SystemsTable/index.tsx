@@ -23,6 +23,18 @@ const filterKeyMap = {
   systemId: "system_id",
 };
 
+function _setFilter(
+  filters: URLSearchParams,
+  filterName: string,
+  value: string | undefined
+) {
+  if (value) {
+    filters.set(filterName, value);
+  } else {
+    filters.delete(filterName);
+  }
+}
+
 interface Props {
   filters: URLSearchParams;
 }
@@ -82,20 +94,39 @@ export function SystemsTable({ filters }: Props) {
   }
   const metricNames = getMetricsNames();
 
-  const _setFilter = useCallback(
-    function (filterName: string, value: string | undefined) {
-      if (value) {
-        filters.set(filterName, value);
-      } else {
-        filters.delete(filterName);
+  /* Fetch all tasks from backend during page initialization */
+  useEffect(() => {
+    async function fetchTasks() {
+      const taskCategoriesData = await backendClient.tasksGet();
+      setTaskCategories(taskCategoriesData);
+    }
+    fetchTasks();
+  }, []);
+
+  /* When task filter changes, also reset the ordering */
+  const handleTaskChange = useCallback(
+    function (taskFilter: string | undefined) {
+      function getInitialSortField(taskCategories: TaskCategory[]) {
+        if (taskFilter) {
+          const initialTask = findTask(taskCategories, taskFilter);
+          if (initialTask && initialTask.supported_metrics.length > 0)
+            return initialTask.supported_metrics[0];
+        }
+        return "created_at";
       }
+      _setFilter(
+        filters,
+        filterKeyMap.sortField,
+        getInitialSortField(taskCategories)
+      );
+      _setFilter(filters, filterKeyMap.taskFilter, taskFilter || undefined);
     },
-    [filters]
+    [taskCategories, filters]
   );
 
   /** TODO: add debounce */
   const onFilterChange = useCallback(
-    function ({
+    async function ({
       name,
       task,
       showMine,
@@ -103,42 +134,24 @@ export function SystemsTable({ filters }: Props) {
       sortDir: newSortDir,
       split: newSplit,
     }: Partial<Filter>) {
-      if (name != null) _setFilter(filterKeyMap.nameFilter, name);
-      if (task != null) _setFilter(filterKeyMap.taskFilter, task || undefined);
+      if (name != null) _setFilter(filters, filterKeyMap.nameFilter, name);
+      if (task != null) {
+        handleTaskChange(task);
+      }
       if (showMine != null)
-        _setFilter(filterKeyMap.showMine, showMine ? "true" : "false");
+        _setFilter(filters, filterKeyMap.showMine, showMine ? "true" : "false");
       if (newSortField != null)
-        _setFilter(filterKeyMap.sortField, newSortField || undefined);
+        _setFilter(filters, filterKeyMap.sortField, newSortField || undefined);
       if (newSortDir != null)
-        _setFilter(filterKeyMap.sortDir, newSortDir || undefined);
+        _setFilter(filters, filterKeyMap.sortDir, newSortDir || undefined);
       if (newSplit != null)
-        _setFilter(filterKeyMap.datasetSplit, newSplit || undefined);
+        _setFilter(filters, filterKeyMap.datasetSplit, newSplit || undefined);
       history.push({ search: filters.toString() });
       setPage(0);
       setSelectedSystemIDs([]);
     },
-    [history, _setFilter, filters]
+    [history, filters, handleTaskChange]
   );
-
-  useEffect(() => {
-    function getInitialSortField(taskCategories: TaskCategory[]) {
-      if (taskFilter) {
-        const initialTask = findTask(taskCategories, taskFilter);
-        if (initialTask && initialTask.supported_metrics.length > 0)
-          return initialTask.supported_metrics[0];
-      }
-      return "created_at";
-    }
-    async function fetchTasks() {
-      const taskCategoriesData = await backendClient.tasksGet();
-      setTaskCategories(taskCategoriesData);
-      _setFilter(
-        filterKeyMap.sortField,
-        getInitialSortField(taskCategoriesData)
-      );
-    }
-    fetchTasks();
-  }, [taskFilter, _setFilter]);
 
   useEffect(() => {
     if (systemId) {
