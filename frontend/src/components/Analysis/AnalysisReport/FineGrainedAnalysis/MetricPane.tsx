@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { message, Row } from "antd";
+import { message, Row, Spin } from "antd";
 import { SystemModel } from "../../../../models";
 import { BucketIntervals, ResultFineGrainedParsed } from "../../types";
 import { ExampleTable } from "../ExampleTable";
@@ -7,6 +7,7 @@ import { FineGrainedBarChart } from "./FineGrainedBarChart";
 import { AnalysisCase } from "../../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../../clients";
 import { compareBucketOfCases } from "../../utils";
+import { PageState } from "../../../../utils";
 
 interface Props {
   task: string;
@@ -40,6 +41,7 @@ export function MetricPane(props: Props) {
   } = props;
   const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
 
+  const [pageState, setPageState] = useState(PageState.success);
   const [selectedBar, setSelectedBar] = useState<BarInfo>();
 
   // ExampleTable
@@ -63,6 +65,7 @@ export function MetricPane(props: Props) {
     barIndex: number,
     systemIndex: number
   ) {
+    setPageState(PageState.loading);
     setSelectedBar({ feature, barIndex, systemIndex });
 
     /** select the cases of the chosen bar for all systems*/
@@ -92,44 +95,51 @@ export function MetricPane(props: Props) {
         const error = await parseBackendError(e);
         message.error(error.getErrorMsg());
       }
+    } finally {
+      setPageState(PageState.success);
     }
   }
 
+  const isLoading = pageState === PageState.loading;
+
   return (
-    <div>
-      <Row>
-        {
-          // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
-          // into columns. One column contains a single BarChart.
-          Object.keys(systemAnalysesParsed).map((feature) => (
-            <FineGrainedBarChart
-              systems={systems}
-              featureNameToBucketInfo={featureNameToBucketInfo}
-              updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
-              title={generateBarChartTitle(feature)}
-              results={systemAnalysesParsed[feature]}
-              onBarClick={(barIndex, systemIndex) =>
-                onBarClick(feature, barIndex, systemIndex)
-              }
-              key={feature}
-            />
-          ))
-        }
-      </Row>
-      {selectedBar && selectedCases.length > 0 && (
-        <ExampleTable
-          title={`Examples from bar # ${
-            selectedBar.barIndex + 1
-          } in ${generateBarChartTitle(selectedBar.feature)}`}
-          task={task}
-          systems={systems}
-          cases={selectedCases}
-          activeSystemIndex={selectedBar.systemIndex}
-          onActiveSystemIndexChange={(newSystemIndex) =>
-            setSelectedBar({ ...selectedBar, systemIndex: newSystemIndex })
+    <div style={{ cursor: isLoading ? "wait" : "auto" }}>
+      <Spin spinning={isLoading}>
+        <Row>
+          {
+            // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
+            // into columns. One column contains a single BarChart.
+            Object.keys(systemAnalysesParsed).map((feature) => (
+              <FineGrainedBarChart
+                systems={systems}
+                featureNameToBucketInfo={featureNameToBucketInfo}
+                updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
+                title={generateBarChartTitle(feature)}
+                results={systemAnalysesParsed[feature]}
+                onBarClick={(barIndex, systemIndex) =>
+                  onBarClick(feature, barIndex, systemIndex)
+                }
+                key={feature}
+              />
+            ))
           }
-        />
-      )}
+        </Row>
+        {selectedBar && selectedCases.length > 0 && (
+          <ExampleTable
+            title={`Examples from bar # ${
+              selectedBar.barIndex + 1
+            } in ${generateBarChartTitle(selectedBar.feature)}`}
+            task={task}
+            systems={systems}
+            cases={selectedCases}
+            activeSystemIndex={selectedBar.systemIndex}
+            onActiveSystemIndexChange={(newSystemIndex) =>
+              setSelectedBar({ ...selectedBar, systemIndex: newSystemIndex })
+            }
+            changeState={setPageState}
+          />
+        )}
+      </Spin>
     </div>
   );
 }

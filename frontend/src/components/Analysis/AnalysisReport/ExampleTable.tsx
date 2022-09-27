@@ -3,6 +3,7 @@ import { Result, Space, Tabs, Typography } from "antd";
 import { SystemModel } from "../../../models";
 import { AnalysisTable } from "../AnalysisTable";
 import { AnalysisCase } from "../../../clients/openapi";
+import { PageState } from "../../../utils";
 
 interface Props {
   /** title of the table */
@@ -13,6 +14,7 @@ interface Props {
   cases: AnalysisCase[][];
   activeSystemIndex: number;
   onActiveSystemIndexChange: (newSystemIndex: number) => void;
+  changeState: (newState: PageState) => void;
 }
 export function ExampleTable({
   title,
@@ -21,6 +23,7 @@ export function ExampleTable({
   cases,
   activeSystemIndex,
   onActiveSystemIndexChange,
+  changeState,
 }: Props) {
   let exampleTable: React.ReactNode;
   if (systems.length !== cases.length) {
@@ -35,6 +38,7 @@ export function ExampleTable({
         systemID={systems[0].system_id}
         task={task}
         cases={cases[0]}
+        changeState={changeState}
       />
     );
   } else {
@@ -55,6 +59,7 @@ export function ExampleTable({
                   systemID={system.system_id}
                   task={task}
                   cases={cases[sysIndex]}
+                  changeState={changeState}
                 />
               </Tabs.TabPane>
             );

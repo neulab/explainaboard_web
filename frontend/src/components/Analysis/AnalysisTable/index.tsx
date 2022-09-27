@@ -9,6 +9,7 @@ interface Props {
   systemID: string;
   task: string;
   cases: AnalysisCase[];
+  changeState: (newState: PageState) => void;
 }
 
 function renderColInfo(
@@ -154,9 +155,9 @@ function specifyDataSeqLab(
   return dataSource;
 }
 
-export function AnalysisTable({ systemID, task, cases }: Props) {
+export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
   const [page, setPage] = useState(0);
-  const [pageState, setPageState] = useState(PageState.loading);
+
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
   const total = cases.length;
@@ -168,7 +169,7 @@ export function AnalysisTable({ systemID, task, cases }: Props) {
 
   useEffect(() => {
     async function refreshSystemOutputs() {
-      setPageState(PageState.loading);
+      changeState(PageState.loading);
       try {
         const offset = page * pageSize;
         const end = Math.min(offset + pageSize, cases.length);
@@ -188,7 +189,7 @@ export function AnalysisTable({ systemID, task, cases }: Props) {
           }
         }
       } finally {
-        setPageState(PageState.success);
+        changeState(PageState.success);
         /* 
         The table after the 1st scroll may be incomplete as the async API call
         is not finished. If we stop there, the bottom portion of the examples will
@@ -205,7 +206,7 @@ export function AnalysisTable({ systemID, task, cases }: Props) {
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [systemID, page, pageSize, cases]);
+  }, [systemID, page, pageSize, cases, changeState]);
 
   // other fields
   if (systemOutputs.length === 0) {
@@ -260,7 +261,6 @@ export function AnalysisTable({ systemID, task, cases }: Props) {
       ref={tableRef}
       columns={columns}
       dataSource={dataSource}
-      loading={pageState === PageState.loading}
       rowKey="id"
       size="small"
       pagination={{
