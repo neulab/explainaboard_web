@@ -35,7 +35,7 @@ COPY ./openapi ./openapi
 RUN chmod a+x ./openapi/gen_api_layer.sh
 RUN /bin/bash ./openapi/gen_api_layer.sh backend
 
-RUN pip install -r ./backend/src/gen/requirements.txt
+RUN pip install -r ./backend/requirements.txt
 
 # Step #3: configure nginx and flask
 WORKDIR /app/backend/src/gen

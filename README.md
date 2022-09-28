@@ -41,7 +41,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 5.  Setup dev environment for the backend
     1. Install `python` version >= 3.9.7 and create a venv or conda environment for this project
        - Official documents of connexion says `3.6` but tested on `3.9.7` seems to work fine.
-    2. `pip install -r backend/src/gen/requirements.txt`
+    2. `pip install -r backend/requirements.txt`
     3. Create `backend/src/impl/.env` to store all environment variables. An example has been provided in `.env.example`. Contact the dev team to get the credentials for dev and prod environments.
     4. Set up a GCP account and authenticate locally:
        - Contact the dev team to setup a GCP account with access to the dev bucket of Cloud Storage.
@@ -54,8 +54,8 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
 ## Important notes on local development
 - As mentioned in quick start step 2, whenever the open API definition (openapi.yaml) changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
-- The frontend and backend dependencies must be reinstalled whenever the associated dependency files are changed, including `package.json`, `frontend/package.json`, `backend/src/gen/requirements.txt` (generated from `backend/templates/requirements.mustache`).
-- ExplainaBoard API client release depends on the API defined in `openapi.yaml`. If `openapi.yaml` is changed, remember to bump up the openapi version `0.2.x` as well. 
+- The frontend and backend dependencies must be reinstalled whenever the associated dependency files are changed, including `package.json`, `frontend/package.json`, `backend/requirements.txt`.
+- ExplainaBoard API client release depends on the API defined in `openapi.yaml`. If `openapi.yaml` is changed, remember to bump up the openapi version `0.2.x` as well.
 
 ## Deployment
 
@@ -129,7 +129,6 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
    - templates # mustache templates to generate template code
    - src
       - gen # template code generated with openapi, code in this folder should not be modified manually
-         - requirements.txt
          - explainaboard
             - __main__.py
             - controllers
