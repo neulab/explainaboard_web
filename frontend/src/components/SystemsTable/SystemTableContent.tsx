@@ -29,7 +29,7 @@ interface Props {
   metricNames: string[];
   selectedSystemIDs: string[];
   setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
-  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  setActiveSystemIDs: (ids: string[]) => void;
 }
 
 export function SystemTableContent({

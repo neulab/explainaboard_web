@@ -56,7 +56,7 @@ export function SystemsTable({ filters }: Props) {
   const sortDir = filters.get(filterKeyMap.sortDir) === "asc" ? "asc" : "desc";
   const sortField = filters.get(filterKeyMap.sortField) || "created_at";
   const split = filters.get(filterKeyMap.datasetSplit) || undefined;
-  const systemId = filters.get(filterKeyMap.systemId) || undefined;
+  const activeSystemIDs = filters.get(filterKeyMap.systemId) || undefined;
   const dataset = filters.get(filterKeyMap.dataset) || undefined;
   const subdataset = filters.get(filterKeyMap.subdataset) || undefined;
 
@@ -70,8 +70,12 @@ export function SystemsTable({ filters }: Props) {
   // systems selected in the table
   const [selectedSystemIDs, setSelectedSystemIDs] = useState<string[]>([]);
 
-  // systems to be analyzed
-  const [activeSystemIDs, setActiveSystemIDs] = useState<string[]>([]);
+  // set systems to be analyzed
+  const activeSystemIDArray = activeSystemIDs ? activeSystemIDs.split(",") : [];
+  const setActiveSystemIDs = (ids: string[]) => {
+    _setFilter(filters, filterKeyMap.systemId, ids.join(","));
+    history.push({ search: filters.toString() });
+  };
 
   const { state: loginState, userInfo } = useUser();
   const userEmail = userInfo?.email;
@@ -152,12 +156,6 @@ export function SystemsTable({ filters }: Props) {
     },
     [history, filters, handleTaskChange]
   );
-
-  useEffect(() => {
-    if (systemId) {
-      setActiveSystemIDs(systemId.split(","));
-    }
-  }, [systemId]);
 
   useEffect(() => {
     async function refreshSystems() {
@@ -244,7 +242,7 @@ export function SystemsTable({ filters }: Props) {
       />
       <AnalysisDrawer
         systems={systems.filter((sys) =>
-          activeSystemIDs.includes(sys.system_id)
+          activeSystemIDArray.includes(sys.system_id)
         )}
         closeDrawer={() => setActiveSystemIDs([])}
       />

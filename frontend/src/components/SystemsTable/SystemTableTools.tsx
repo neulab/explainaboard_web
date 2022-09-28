@@ -38,7 +38,7 @@ interface Props {
   onChange: (value: Partial<Filter>) => void;
   metricOptions: string[];
   selectedSystemIDs: string[];
-  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  setActiveSystemIDs: (ids: string[]) => void;
 }
 export function SystemTableTools({
   systems,
