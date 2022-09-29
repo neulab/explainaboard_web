@@ -1,63 +1,53 @@
-import { Space, Tabs, Typography } from "antd";
 import React from "react";
+import { Result, Space, Tabs, Typography } from "antd";
 import { SystemModel } from "../../../models";
 import { AnalysisTable } from "../AnalysisTable";
-import { ActiveSystemExamples } from "../types";
-import { compareBucketOfCases } from "../utils";
+import { AnalysisCase } from "../../../clients/openapi";
+import { PageState } from "../../../utils";
+
 interface Props {
+  /** title of the table */
+  title: string;
   task: string;
   systems: SystemModel[];
-  activeSystemExamples: ActiveSystemExamples | undefined;
-  setActiveSystemExamples: React.Dispatch<
-    React.SetStateAction<ActiveSystemExamples | undefined>
-  >;
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  /** sampleIDs to show for each system; numSystems x numSamples */
+  cases: AnalysisCase[][];
+  activeSystemIndex: number;
+  onActiveSystemIndexChange: (newSystemIndex: number) => void;
+  changeState: (newState: PageState) => void;
 }
 export function ExampleTable({
+  title,
   task,
   systems,
-  activeSystemExamples,
-  setActiveSystemExamples,
-  page,
-  setPage,
+  cases,
+  activeSystemIndex,
+  onActiveSystemIndexChange,
+  changeState,
 }: Props) {
-  let exampleTable = <div>&nbsp;</div>;
-  if (activeSystemExamples === undefined) {
-    return exampleTable;
-  }
-
-  const { title, barIndex, systemIndex, bucketOfCasesList } =
-    activeSystemExamples;
-
-  // Sort bucket of samples for every system
-  const sortedBucketOfCasesList = bucketOfCasesList.map((bucketOfCases) => {
-    return bucketOfCases.sort(compareBucketOfCases);
-  });
-
-  // single analysis
-  if (systems.length === 1) {
+  let exampleTable: React.ReactNode;
+  if (systems.length !== cases.length) {
+    console.error(
+      `ExampleTable input error: systems=${systems}, cases=${cases} doesn't match`
+    );
+    exampleTable = <Result status="error" title="Failed to show examples." />;
+  } else if (systems.length === 1) {
+    // single analysis
     exampleTable = (
       <AnalysisTable
         systemID={systems[0].system_id}
         task={task}
-        cases={sortedBucketOfCasesList[0]}
-        page={page}
-        onPageChange={setPage}
+        cases={cases[0]}
+        changeState={changeState}
       />
     );
-    // multi-system analysis
   } else {
+    // multi-system analysis
     exampleTable = (
       <Space style={{ width: "fit-content" }}>
         <Tabs
-          activeKey={`${systemIndex}`}
-          onChange={(activeKey) =>
-            setActiveSystemExamples({
-              ...activeSystemExamples,
-              systemIndex: Number(activeKey),
-            })
-          }
+          activeKey={`${activeSystemIndex}`}
+          onChange={(activeKey) => onActiveSystemIndexChange(Number(activeKey))}
         >
           {systems.map((system, sysIndex) => {
             return (
@@ -68,9 +58,8 @@ export function ExampleTable({
                 <AnalysisTable
                   systemID={system.system_id}
                   task={task}
-                  cases={sortedBucketOfCasesList[sysIndex]}
-                  page={page}
-                  onPageChange={setPage}
+                  cases={cases[sysIndex]}
+                  changeState={changeState}
                 />
               </Tabs.TabPane>
             );
@@ -80,15 +69,10 @@ export function ExampleTable({
     );
   }
 
-  const barText = systems.length === 1 ? "bar" : "bars";
-  const exampleText = "Examples";
-  exampleTable = (
+  return (
     <div>
-      <Typography.Title level={4}>{`${exampleText} from ${barText} #${
-        barIndex + 1
-      } in ${title}`}</Typography.Title>
+      <Typography.Title level={4}>{title}</Typography.Title>
       {exampleTable}
     </div>
   );
-  return exampleTable;
 }
