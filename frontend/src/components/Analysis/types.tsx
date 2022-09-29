@@ -30,19 +30,6 @@ export interface ResultFineGrainedParsed {
   cases: number[][];
 }
 
-/** Examples to be shown in the analysis table when a bar is clicked */
-export interface ActiveSystemExamples {
-  // invariant information across systems
-  // but depends on which bar or graph is clicked.
-  title: string;
-  barIndex: number;
-
-  // system-dependent information across systems
-  systemIndex: number;
-  /** bucket of analysis cases */
-  bucketOfCasesList: AnalysisCase[][];
-}
-
 export interface SystemInfoFeatureBucketInfo {
   method: string;
   number: number;

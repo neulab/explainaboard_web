@@ -4,7 +4,6 @@ import {
   SingleAnalysis,
   AnalysisResult,
   Performance,
-  ComboCount,
 } from "../../clients/openapi";
 import { SystemModel } from "../../models";
 
@@ -61,7 +60,7 @@ export function formatBucketName(unformattedName: Array<number>): string {
 }
 
 export function parseComboCountFeatures(
-  comboCounts: ComboCount[],
+  comboCounts: AnalysisResult[],
   levelName: string,
   analysisName: string,
   featureDescription: string
@@ -72,7 +71,14 @@ export function parseComboCountFeatures(
     featureDescription, // we use feature description instead of feature name here
     levelName
   );
-  parsedResult.comboCounts = comboCounts;
+
+  parsedResult.comboCounts = comboCounts.map((countArr) => {
+    return {
+      bucket: countArr[0],
+      count: countArr[1],
+      samples: countArr[2],
+    };
+  });
 
   return parsedResult;
 }
