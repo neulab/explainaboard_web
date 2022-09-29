@@ -1,14 +1,16 @@
+import React, { useState } from "react";
 import { Row } from "antd";
-import React from "react";
 import { SystemModel } from "../../../../models";
 import {
   ActiveSystemExamples,
   BucketIntervals,
   ResultFineGrainedParsed,
 } from "../../types";
+import { ExampleTable } from "../ExampleTable";
 import { FineGrainedBarChart } from "./FineGrainedBarChart";
 
 interface Props {
+  task: string;
   systems: SystemModel[];
   featureNameToBucketInfo: { [feature: string]: BucketIntervals };
   updateFeatureNameToBucketInfo: (
@@ -19,25 +21,16 @@ interface Props {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
   metric: string;
-  exampleTable: JSX.Element;
-  setActiveSystemExamples: React.Dispatch<
-    React.SetStateAction<ActiveSystemExamples | undefined>
-  >;
-  resetPage: () => void;
 }
 export function MetricPane(props: Props) {
-  const {
-    metricToSystemAnalysesParsed,
-    metric,
-    setActiveSystemExamples,
-    resetPage,
-    exampleTable,
-  } = props;
+  const { task, systems, metricToSystemAnalysesParsed, metric } = props;
   const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
 
-  /*Get the parsed result from the first system for mapping.
-    FeatureNames and descriptions are invariant information
-    */
+  const [activeSystemExamples, setActiveSystemExamples] =
+    useState<ActiveSystemExamples>();
+  // page number of the analysis table, 0 indexed
+  const [page, setPage] = useState(0);
+
   return (
     <div>
       <Row>
@@ -54,13 +47,20 @@ export function MetricPane(props: Props) {
               metric={metric}
               results={systemAnalysesParsed[feature]}
               setActiveSystemExamples={setActiveSystemExamples}
-              resetPage={resetPage}
+              resetPage={() => setPage(0)}
               key={feature}
             />
           ))
         }
       </Row>
-      {exampleTable}
+      <ExampleTable
+        task={task}
+        systems={systems}
+        activeSystemExamples={activeSystemExamples}
+        setActiveSystemExamples={setActiveSystemExamples}
+        page={page}
+        setPage={setPage}
+      />
     </div>
   );
 }

@@ -1,15 +1,10 @@
 import React, { useState } from "react";
-import {
-  ActiveSystemExamples,
-  ResultFineGrainedParsed,
-  BucketIntervals,
-} from "../types";
+import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 import { SystemModel } from "../../../models";
 import { SystemAnalysesReturn } from "../../../clients/openapi/api";
 import { OverallMetricsBarChart } from "./OverallMetricsBarChart";
 import { SignificanceTestList } from "./SignificanceTestList";
 import { FineGrainedAnalysis } from "./FineGrainedAnalysis";
-import { ExampleTable } from "./ExampleTable";
 
 interface Props {
   task: string;
@@ -27,59 +22,41 @@ interface Props {
 }
 
 export function AnalysisReport(props: Props) {
-  const { metricToSystemAnalysesParsed } = props;
+  const {
+    task,
+    systems,
+    metricToSystemAnalysesParsed,
+    significanceTestInfo,
+    updateFeatureNameToBucketInfo,
+    featureNameToBucketInfo,
+  } = props;
   const metricNames = Object.keys(metricToSystemAnalysesParsed);
   const [activeMetric, setActiveMetric] = useState<string>(metricNames[0]);
-  const [activeSystemExamples, setActiveSystemExamples] =
-    useState<ActiveSystemExamples>();
 
-  // page number of the analysis table, 0 indexed
-  const [page, setPage] = useState(0);
-
-  /** sets page of AnalysisTable to the first page */
-  function resetPage() {
-    setPage(0);
+  function onActiveMetricChange(newMetricName: string) {
+    setActiveMetric(newMetricName);
   }
-
-  /** Create the example table if a bar is selected, empty element if not */
-  const exampleTable = (
-    <ExampleTable
-      task={props.task}
-      systems={props.systems}
-      activeSystemExamples={activeSystemExamples}
-      setActiveSystemExamples={setActiveSystemExamples}
-      page={page}
-      setPage={setPage}
-    />
-  );
 
   return (
     <div>
       <OverallMetricsBarChart
-        systems={props.systems}
+        systems={systems}
         metricNames={Object.keys(metricToSystemAnalysesParsed)}
-        onBarClick={(metricName) => setActiveMetric(metricName)}
+        onBarClick={onActiveMetricChange}
       />
 
-      {props.significanceTestInfo && (
-        <SignificanceTestList
-          significanceTestInfo={props.significanceTestInfo}
-        />
+      {significanceTestInfo && (
+        <SignificanceTestList significanceTestInfo={significanceTestInfo} />
       )}
 
       <FineGrainedAnalysis
-        systems={props.systems}
-        featureNameToBucketInfo={props.featureNameToBucketInfo}
-        updateFeatureNameToBucketInfo={props.updateFeatureNameToBucketInfo}
-        metricToSystemAnalysesParsed={props.metricToSystemAnalysesParsed}
-        exampleTable={exampleTable}
-        setActiveSystemExamples={setActiveSystemExamples}
-        resetPage={resetPage}
+        task={task}
+        systems={systems}
+        featureNameToBucketInfo={featureNameToBucketInfo}
+        updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
+        metricToSystemAnalysesParsed={metricToSystemAnalysesParsed}
         activeMetric={activeMetric}
-        onActiveMetricChange={(newMetricName) => {
-          setActiveMetric(newMetricName);
-          setActiveSystemExamples(undefined);
-        }}
+        onActiveMetricChange={onActiveMetricChange}
         metricNames={metricNames}
       />
     </div>
