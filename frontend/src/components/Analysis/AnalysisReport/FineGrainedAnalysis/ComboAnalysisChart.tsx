@@ -30,6 +30,9 @@ export function ComboAnalysisChart(props: Props) {
   const system = systems[0];
   const analysis = analyses[0];
   const counts = analysis.comboCounts;
+  if (counts.length < 1) {
+    return <></>;
+  }
 
   // Gather all categories and assign index to each of them
   const cateMap = new Map<string, number>();
@@ -45,22 +48,26 @@ export function ComboAnalysisChart(props: Props) {
     }
   }
 
-  // Parse analysis results to confusion matrix entry data
+  // Parse analysis results to entry data
   const samples: number[][] = [];
   const entryData: number[][] = [];
   for (const count of counts) {
-    // count.bucket is a string array of results, i.e., [true label, predicted label]
-    const trueLabel: string = count.bucket[0];
-    const predicted: string = count.bucket[1];
+    // count.bucket is a string array of bucket values
+    // e.g., [true, false] (true label, predicted label)
+    const featA: string = count.bucket[0];
+    const featB: string = count.bucket[1];
     // count.count is the number of samples
     const nSamples = count.count;
     entryData.push([
-      cateMap.get(trueLabel) || 0,
-      cateMap.get(predicted) || 0,
+      cateMap.get(featA) || 0,
+      cateMap.get(featB) || 0,
       nSamples,
     ]);
-    // count[2] is a list of samples
-    samples.push(count.samples);
+
+    // Count.samples is a list of numbers, or undefined for legacy SDK
+    if (count.samples) {
+      samples.push(count.samples);
+    }
   }
 
   let entryDataSum = 0;
@@ -131,7 +138,7 @@ export function ComboAnalysisChart(props: Props) {
     },
     series: [
       {
-        name: "True Label: ",
+        name: analysis.featureName,
         type: "heatmap",
         data: entryRatioData,
         label: {

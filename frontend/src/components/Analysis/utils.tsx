@@ -68,7 +68,7 @@ export function parseComboCountFeatures(
   const parsedResult: ResultFineGrainedParsed = initParsedResult(
     "", // we don't need a metric name for combo count analyses
     analysisName,
-    featureDescription, // we use feature description instead of feature name here
+    featureDescription,
     levelName
   );
 
