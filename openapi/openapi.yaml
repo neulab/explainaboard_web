@@ -219,7 +219,7 @@ paths:
                 $ref: "#/components/schemas/APIError"
     patch:
       summary: Updates a system by id
-      operationId: systemsPatchById
+      operationId: systemsUpdateById
       description: Updates a system by id. See requestBody for supported fields.
       parameters:
         - in: path

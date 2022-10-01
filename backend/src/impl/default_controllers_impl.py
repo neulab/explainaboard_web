@@ -61,6 +61,11 @@ def _is_shared_user(system: System, user: User) -> bool:
     return system.shared_users and user.email in system.shared_users
 
 
+def _has_read_access(system: System, user: User) -> bool:
+    """check if a user has read access of a system"""
+    return _is_creator(system, user) or _is_shared_user(system, user)
+
+
 """ /info """
 
 
@@ -242,9 +247,7 @@ def systems_get_by_id(system_id: str, with_user_info: bool = None) -> System:
         else:
             return system
     else:
-        has_access = user.is_authenticated and (
-            _is_creator(system, user) or _is_shared_user(system, user)
-        )
+        has_access = user.is_authenticated and _has_read_access(system, user)
         if system.is_private and not has_access:
             abort_with_error_message(403, "system access denied", 40302)
         system.shared_users = None
@@ -343,9 +346,7 @@ def system_outputs_get_by_id(
     """
     system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
-    has_access = user.is_authenticated and (
-        _is_creator(system, user) or _is_shared_user(system, user)
-    )
+    has_access = user.is_authenticated and _has_read_access(system, user)
     if system.is_private and not has_access:
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
@@ -372,9 +373,7 @@ def system_cases_get_by_id(
     """
     system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
-    has_access = user.is_authenticated and (
-        _is_creator(system, user) or _is_shared_user(system, user)
-    )
+    has_access = user.is_authenticated and _has_read_access(system, user)
     if system.is_private and not has_access:
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
