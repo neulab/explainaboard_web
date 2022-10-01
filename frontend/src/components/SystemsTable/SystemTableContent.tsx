@@ -19,6 +19,7 @@ import { getOverallMap } from "../Analysis/utils";
 const { Text } = Typography;
 
 interface Props {
+  /* creator is the current user's creator name */
   creator: string | undefined;
   systems: SystemModel[];
   total: number;
