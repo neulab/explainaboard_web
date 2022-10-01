@@ -236,22 +236,28 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
 """ /systems """
 
 
-def systems_get_by_id(system_id: str, with_user_info: bool = None) -> System:
+def systems_get_by_id(system_id: str) -> System:
     system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
-    # must be creator to see user info
-    if with_user_info:
-        has_access = user.is_authenticated and _is_creator(system, user)
-        if not has_access:
-            abort_with_error_message(403, "system access denied", 40302)
+    if system.is_private:
+        if user.is_authenticated:
+            if _is_creator(system, user):
+                return system
+            elif _is_shared_user(system, user):
+                # must be creator to see shared_users
+                system.shared_users = None
+                return system
+            else:
+                abort_with_error_message(403, "system access denied", 40302)
         else:
-            return system
-    else:
-        has_access = user.is_authenticated and _has_read_access(system, user)
-        if system.is_private and not has_access:
             abort_with_error_message(403, "system access denied", 40302)
-        system.shared_users = None
-        return system
+    else:
+        if user.is_authenticated and _is_creator(system, user):
+            return system
+        else:
+            # must be creator to see shared_users
+            system.shared_users = None
+            return system
 
 
 def systems_get(
@@ -325,7 +331,7 @@ def systems_post(body: SystemCreateProps) -> System:
         )
 
 
-def systems_patch_by_id(body: SystemUpdateProps, system_id: str):
+def systems_update_by_id(body: SystemUpdateProps, system_id: str):
     system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
     has_access = user.is_authenticated and _is_creator(system, user)

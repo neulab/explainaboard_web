@@ -86,10 +86,10 @@ export function SystemSubmitDrawer(props: Props) {
       setLanguageCodes(await backendClient.languageCodesGet());
       setState(State.other);
     }
-    async function getSystemWithUserInfoByID(systemID: string) {
+    async function getSystemToEditByID(systemID: string) {
       setState(State.loading);
       try {
-        const system = await backendClient.systemsGetById(systemID, true);
+        const system = await backendClient.systemsGetById(systemID);
         setSystemToEdit(system);
       } catch (e) {
         if (e instanceof Response) {
@@ -108,7 +108,7 @@ export function SystemSubmitDrawer(props: Props) {
     if (!editMode) {
       fetchTasks();
     } else {
-      getSystemWithUserInfoByID(systemIDToEdit);
+      getSystemToEditByID(systemIDToEdit);
     }
   }, [systemIDToEdit, editMode, resetForm, form, onClose]);
 
@@ -176,7 +176,7 @@ export function SystemSubmitDrawer(props: Props) {
           ? undefined
           : shared_users.map((user) => user.trim());
       if (editMode) {
-        await backendClient.systemsPatchById(
+        await backendClient.systemsUpdateById(
           {
             metadata: {
               system_name: name,

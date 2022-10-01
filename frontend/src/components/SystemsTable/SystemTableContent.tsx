@@ -19,6 +19,7 @@ import { getOverallMap } from "../Analysis/utils";
 const { Text } = Typography;
 
 interface Props {
+  creator: string | undefined;
   systems: SystemModel[];
   total: number;
   pageSize: number;
@@ -34,6 +35,7 @@ interface Props {
 }
 
 export function SystemTableContent({
+  creator,
   systems,
   page,
   total,
@@ -172,33 +174,43 @@ export function SystemTableContent({
       title: "",
       fixed: "right",
       width: 90,
-      render: (_, record) => (
-        <Space size="small" direction="vertical">
-          <Space size="small">
-            <Button
-              size="small"
-              onClick={() => showSystemAnalysis(record.system_id)}
-            >
-              Analysis
-            </Button>
+      render: (_, record) => {
+        const notCreator = record.creator !== creator;
+        return (
+          <Space size="small" direction="vertical">
+            <Space size="small">
+              <Button
+                size="small"
+                onClick={() => showSystemAnalysis(record.system_id)}
+              >
+                Analysis
+              </Button>
+            </Space>
+            <Space size="small">
+              <Button
+                size="small"
+                disabled={notCreator}
+                icon={<EditOutlined />}
+                onClick={() => {
+                  showEditDrawer(record.system_id);
+                }}
+              />
+              <Popconfirm
+                disabled={notCreator}
+                title="Are you sure?"
+                onConfirm={() => deleteSystem(record.system_id)}
+              >
+                <Button
+                  danger
+                  disabled={notCreator}
+                  size="small"
+                  icon={<DeleteOutlined />}
+                />
+              </Popconfirm>
+            </Space>
           </Space>
-          <Space size="small">
-            <Button
-              size="small"
-              icon={<EditOutlined />}
-              onClick={() => {
-                showEditDrawer(record.system_id);
-              }}
-            />
-            <Popconfirm
-              title="Are you sure?"
-              onConfirm={() => deleteSystem(record.system_id)}
-            >
-              <Button danger size="small" icon={<DeleteOutlined />} />
-            </Popconfirm>
-          </Space>
-        </Space>
-      ),
+        );
+      },
     },
   ];
 

@@ -199,11 +199,6 @@ paths:
             type: string
           required: true
           example: "619f8ef56e638da17b06b38a"
-        - in: query
-          name: with_user_info
-          schema:
-            type: boolean
-          example: True
       responses:
         "200":
           description: OK

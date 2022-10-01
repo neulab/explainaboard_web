@@ -192,6 +192,7 @@ export function SystemsTable({
         setActiveSystemIDs={setActiveSystemIDs}
       />
       <SystemTableContent
+        creator={userEmail}
         systems={systems}
         page={page}
         total={total}
