@@ -303,7 +303,7 @@ def system_outputs_get_by_id(
     system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
     has_access = user.is_authenticated and (
-        system.creator == user.email
+        system.creator == user.username
         or (system.shared_users and user.email in system.shared_users)
     )
     if system.is_private and not has_access:
@@ -333,7 +333,7 @@ def system_cases_get_by_id(
     system = SystemDBUtils.find_system_by_id(system_id)
     user = get_user()
     has_access = user.is_authenticated and (
-        system.creator == user.email
+        system.creator == user.username
         or (system.shared_users and user.email in system.shared_users)
     )
     if system.is_private and not has_access:

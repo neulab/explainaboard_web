@@ -124,9 +124,9 @@ class SystemDBUtils:
 
         permissions_list = [{"is_private": False}]
         if get_user().is_authenticated:
-            email = get_user().email
-            permissions_list.append({"creator": email})
-            permissions_list.append({"shared_users": email})
+            user = get_user()
+            permissions_list.append({"creator": user.username})
+            permissions_list.append({"shared_users": user.email})
         permission_query = {"$or": permissions_list}
 
         if isinstance(query, dict):
@@ -372,7 +372,7 @@ class SystemDBUtils:
 
         # -- set the creator
         user = get_user()
-        system.creator = user.email
+        system.creator = user.username
 
         # -- validate the dataset metadata
         if metadata.dataset_metadata_id:
@@ -555,7 +555,7 @@ class SystemDBUtils:
         def db_operations(session: ClientSession) -> bool:
             """TODO: add logging if error"""
             sys = SystemDBUtils.find_system_by_id(system_id)
-            if sys.creator != user.email:
+            if sys.creator != user.username:
                 abort_with_error_message(403, "you can only delete your own systems")
             result = DBUtils.delete_one_by_id(
                 DBUtils.DEV_SYSTEM_METADATA, system_id, session=session
