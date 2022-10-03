@@ -152,10 +152,9 @@ export function SystemTableContent({
     },
     ...metricColumns,
     {
-      dataIndex: "creator",
+      dataIndex: "preferred_username",
       title: "Creator",
       align: "center",
-      render: (value) => value.split("@")[0],
       width: 95,
     },
     {
