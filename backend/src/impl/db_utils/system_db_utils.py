@@ -111,13 +111,15 @@ class SystemDBUtils:
         # to migrate to a better cache system that ignores fields we don't use in
         # this codebase. By the time we finish the migration, the following
         # transformation can be removed.
-        document["system_info"]["confidence_alpha"] = document["system_info"][
-            "conf_value"
-        ]
-        for level in document["system_info"]["analysis_levels"]:
-            for feature in level["features"].values():
-                if feature["dtype"] in ("float32", "float64"):
-                    feature["dtype"] = "float"
+        if document.get("system_info", {}).get("conf_value") is not None:
+            document["system_info"]["confidence_alpha"] = document["system_info"][
+                "conf_value"
+            ]
+        if document.get("system_info", {}).get("analysis_levels") is not None:
+            for level in document["system_info"]["analysis_levels"]:
+                for feature in level["features"].values():
+                    if feature["dtype"] in ("float32", "float64"):
+                        feature["dtype"] = "float"
 
         system = System.from_dict(document)
         if include_metric_stats:
