@@ -97,11 +97,12 @@ class DBUtils:
           - projection: include or exclude fields in the document
         """
         try:
-            return DBUtils.get_collection(collection).find_one(
-                {"_id": ObjectId(docid)}, projection
-            )
+            _id = ObjectId(docid)
         except InvalidId:
-            abort_with_error_message(400, f"id: {docid} is not a valid ID")
+            """Mongo accepts custom ID"""
+            _id = docid
+        finally:
+            return DBUtils.get_collection(collection).find_one({"_id": _id}, projection)
 
     @staticmethod
     def replace_one_by_id(collection: DBCollection, doc: dict):
@@ -184,7 +185,6 @@ class DBUtils:
         cursor = DBUtils.get_collection(collection).find(filt, projection)
         if sort:
             cursor = cursor.sort(sort)
-
         cursor = cursor.skip(skip).limit(limit)
         total = DBUtils.count(collection, filt)
         return cursor, total

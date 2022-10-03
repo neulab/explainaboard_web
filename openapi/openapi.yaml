@@ -290,7 +290,7 @@ paths:
           name: creator
           schema:
             type: string
-            description: email of the creator
+            description: username of the creator
         - in: query
           name: shared_users
           schema:
@@ -887,6 +887,9 @@ components:
             creator:
               type: string
               description: identical to the username field in Cognito
+            preferred_username:
+              type: string
+              description: identical to the preferred_username field in Cognito
             shared_users:
               type: array
               items:
@@ -926,6 +929,8 @@ components:
           required:
             [
               system_id,
+              creator,
+              preferred_username,
               is_private,
               system_info,
               metric_stats,

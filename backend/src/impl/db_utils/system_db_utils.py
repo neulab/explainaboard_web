@@ -17,6 +17,7 @@ from explainaboard.utils.serialization import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
+from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils
 from explainaboard_web.impl.storage import get_storage
 from explainaboard_web.impl.utils import (
     abort_with_error_message,
@@ -155,6 +156,17 @@ class SystemDBUtils:
             for dataset in datasets:
                 dataset_dict[dataset.dataset_id] = dataset
 
+        # query preferred_usernames in batch to make it more efficient
+        usernames = set(doc["creator"] for doc in documents)
+        users = UserDBUtils.find_users(list(usernames))
+        if len(users) < len(usernames):
+            abort_with_error_message(
+                500, "system creator not found in DB, please contact the system admins"
+            )
+        username_to_preferred = {
+            user.username: user.preferred_username for user in users
+        }
+
         for doc in documents:
             if not include_datasets or "dataset_metadata_id" not in doc:
                 doc.pop("dataset_metadata_id", None)
@@ -169,6 +181,7 @@ class SystemDBUtils:
                     }
                 doc.pop("dataset_metadata_id")
             doc["system_id"] = doc.pop("_id")
+            doc["preferred_username"] = username_to_preferred[doc["creator"]]
             system = SystemDBUtils.system_from_dict(
                 doc, include_metric_stats=include_metric_stats
             )
@@ -374,6 +387,9 @@ class SystemDBUtils:
         user = get_user()
         system.creator = user.username
 
+        # -- set the preferred_username to conform with the return schema
+        system.preferred_username = user.preferred_username
+
         # -- validate the dataset metadata
         if metadata.dataset_metadata_id:
             if not system.dataset:
@@ -507,6 +523,14 @@ class SystemDBUtils:
         sys_doc = DBUtils.find_one_by_id(DBUtils.DEV_SYSTEM_METADATA, system_id)
         if not sys_doc:
             abort_with_error_message(404, f"system id: {system_id} not found")
+
+        username = sys_doc["creator"]
+        user = UserDBUtils.find_user(username)
+        if user is None:
+            abort_with_error_message(
+                500, "system creator not found in DB, please contact the system admins"
+            )
+        sys_doc["preferred_username"] = user.preferred_username
         system = SystemDBUtils.system_from_dict(sys_doc)
         return system
 

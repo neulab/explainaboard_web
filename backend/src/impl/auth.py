@@ -49,6 +49,7 @@ class User:
     _USERNAME_KEY = "username"
     _EMAIL_KEY = "email"
     _API_KEY_KEY = "api_key"
+    _PREFERRED_USERNAME_KEY = "preferred_username"
 
     def __init__(
         self,
@@ -91,6 +92,10 @@ class User:
     @property
     def username(self) -> str:
         return self._info[self._USERNAME_KEY]
+
+    @property
+    def preferred_username(self) -> str:
+        return self.get_user_info()[self._PREFERRED_USERNAME_KEY]
 
 
 def get_user() -> User:
