@@ -219,8 +219,6 @@ export function parseFineGrainedResults(
           analysisDescription
         );
         parsedComboAnalyses.push(parsedComboAnalysis);
-      } else {
-        continue; // Ignore other types of fine-grained results for now
       }
     }
   }

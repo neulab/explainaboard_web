@@ -44,7 +44,6 @@ export function MetricPane(props: Props) {
 
   const [pageState, setPageState] = useState(PageState.success);
   const [selectedBar, setSelectedBar] = useState<BarInfo>();
-  const [chartColSpan, setChartColSpan] = useState<8 | 12 | 24>(8);
 
   // ExampleTable
   // cases to show for each system; numSystem x numCases
@@ -55,6 +54,25 @@ export function MetricPane(props: Props) {
       systemAnalysesParsed[feature][0].featureDescription;
     return `${metric} by ${featureDescription}`;
   }
+
+  function getColSpan(): 8 | 12 | 24 {
+    const maxRightBoundsLength = Math.max(
+      ...Object.values(featureNameToBucketInfo).map(
+        (bucketInfo) => bucketInfo.bounds.length
+      )
+    );
+    if (
+      maxRightBoundsLength > 5 ||
+      (systems.length > 1 && maxRightBoundsLength > 3)
+    ) {
+      return 24;
+    } else if (maxRightBoundsLength > 3 || systems.length > 1) {
+      return 12;
+    } else {
+      return 8;
+    }
+  }
+  const chartColSpan = getColSpan();
 
   /** Handles bar click
    * 1. updates selectedBar
@@ -135,21 +153,6 @@ export function MetricPane(props: Props) {
 
   useEffect(() => {
     // Get the maximum right bound length
-    const maxRightBoundsLength = Math.max(
-      ...Object.values(featureNameToBucketInfo).map(
-        (bucketInfo) => bucketInfo.bounds.length
-      )
-    );
-    if (
-      maxRightBoundsLength > 5 ||
-      (systems.length > 1 && maxRightBoundsLength > 3)
-    ) {
-      setChartColSpan(24);
-    } else if (maxRightBoundsLength > 3 || systems.length > 1) {
-      setChartColSpan(12);
-    } else {
-      setChartColSpan(8);
-    }
   }, [featureNameToBucketInfo, systems]);
 
   const isLoading = pageState === PageState.loading;
