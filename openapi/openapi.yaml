@@ -657,7 +657,7 @@ components:
           example: en
         reload_stat:
           type: boolean
-        conf_value:
+        confidence_alpha:
           type: number
         system_details:
           type: object
@@ -694,7 +694,7 @@ components:
           source_language,
           target_language,
           reload_stat,
-          conf_value,
+          confidence_alpha,
           source_tokenizer,
           target_tokenizer,
           analysis_levels,

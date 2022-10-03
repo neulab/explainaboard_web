@@ -104,6 +104,21 @@ class SystemDBUtils:
         if "metric_stats" in document:
             metric_stats = document["metric_stats"]
             document["metric_stats"] = []
+
+        # NOTE (backward compatibility) confidence_alpha was called conf_value in
+        # an old version of the SDK. conf_value is not used by this codebase but
+        # it is part of the system_info object we cache for each system. We plan
+        # to migrate to a better cache system that ignores fields we don't use in
+        # this codebase. By the time we finish the migration, the following
+        # transformation can be removed.
+        document["system_info"]["confidence_alpha"] = document["system_info"][
+            "conf_value"
+        ]
+        for level in document["system_info"]["analysis_levels"]:
+            for feature in level["features"].values():
+                if feature["dtype"] in ("float32", "float64"):
+                    feature["dtype"] = "float"
+
         system = System.from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
