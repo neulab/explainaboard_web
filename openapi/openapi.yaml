@@ -620,14 +620,19 @@ components:
       properties:
         dtype:
           type: string
+          nullable: true
         cls_name:
           type: string
         description:
           type: string
+          nullable: true
         func:
           type: string
+          nullable: true
         require_training_set:
           type: boolean
+          nullable: true
+      additionalProperties: true
       required: [cls_name]
 
     SystemInfo:

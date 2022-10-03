@@ -5,8 +5,6 @@ import re
 import traceback
 import zlib
 from datetime import datetime
-from inspect import getsource
-from types import FunctionType
 from typing import Any, Optional
 
 from bson import ObjectId
@@ -118,7 +116,7 @@ class SystemDBUtils:
         if document.get("system_info", {}).get("analysis_levels") is not None:
             for level in document["system_info"]["analysis_levels"]:
                 for feature in level["features"].values():
-                    if feature["dtype"] in ("float32", "float64"):
+                    if feature.get("dtype") in ("float32", "float64"):
                         feature["dtype"] = "float"
 
         system = System.from_dict(document)
@@ -503,12 +501,6 @@ class SystemDBUtils:
 
             # -- replace things that can't be returned through JSON for now
             system.metric_stats = []
-            for analysis_level in system.system_info.analysis_levels:
-                for feature_name, feature in analysis_level.features.items():
-                    if isinstance(feature.func, FunctionType):
-                        # Convert the function to a string, this is noqa to prevent a
-                        # typing error
-                        feature.func = getsource(feature.func)  # noqa
 
             # -- return the system
             return system
