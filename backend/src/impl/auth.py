@@ -5,7 +5,9 @@ from typing import Optional
 
 import boto3
 import jwt
+from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils
 from explainaboard_web.impl.utils import abort_with_error_message
+from explainaboard_web.models.user_metadata_in_db import UserMetadataInDB
 from flask import current_app, g
 
 
@@ -68,17 +70,27 @@ class User:
 
     def get_user_info(self) -> dict:
         if not self._info.get(self._API_KEY_KEY) or not self._info.get(
-            "preferred_username"
+            self._PREFERRED_USERNAME_KEY
         ):
             user = CognitoClient().fetch_user_info(username=self.username)
             if not user:
                 raise Exception("user info not found")
+            preferred_username = user[CognitoClient.PREFERRED_USERNAME_KEY]
             self._info.update(
                 {
                     self._API_KEY_KEY: user[CognitoClient.API_KEY_KEY],
-                    "preferred_username": user["preferred_username"],
+                    self._PREFERRED_USERNAME_KEY: preferred_username,
                 }
             )
+
+            """create a new user entry if not exists in DB"""
+            db_user = UserDBUtils.find_user(self.username)
+            if db_user is None:
+                db_user = UserMetadataInDB(
+                    username=self.username, preferred_username=preferred_username
+                )
+                UserDBUtils.create_user(db_user)
+
         return self._info
 
     @property
@@ -110,6 +122,7 @@ class CognitoClient:
     # keys for fields in returned user_info
     USERNAME_KEY = "cognito:username"
     API_KEY_KEY = "custom:api_key"
+    PREFERRED_USERNAME_KEY = "preferred_username"
 
     def __init__(self) -> None:
         self._client = boto3.client(
