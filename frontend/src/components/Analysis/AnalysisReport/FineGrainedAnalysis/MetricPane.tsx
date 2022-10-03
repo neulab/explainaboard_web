@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { message, Row, Spin } from "antd";
 import { SystemModel } from "../../../../models";
 import { BucketIntervals, ResultFineGrainedParsed } from "../../types";
@@ -8,6 +8,7 @@ import { AnalysisCase } from "../../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../../clients";
 import { compareBucketOfCases } from "../../utils";
 import { PageState } from "../../../../utils";
+import { ComboAnalysisChart } from "./ComboAnalysisChart";
 
 interface Props {
   task: string;
@@ -53,6 +54,25 @@ export function MetricPane(props: Props) {
       systemAnalysesParsed[feature][0].featureDescription;
     return `${metric} by ${featureDescription}`;
   }
+
+  function getColSpan(): 8 | 12 | 24 {
+    const maxRightBoundsLength = Math.max(
+      ...Object.values(featureNameToBucketInfo).map(
+        (bucketInfo) => bucketInfo.bounds.length
+      )
+    );
+    if (
+      maxRightBoundsLength > 5 ||
+      (systems.length > 1 && maxRightBoundsLength > 3)
+    ) {
+      return 24;
+    } else if (maxRightBoundsLength > 3 || systems.length > 1) {
+      return 12;
+    } else {
+      return 8;
+    }
+  }
+  const chartColSpan = getColSpan();
 
   /** Handles bar click
    * 1. updates selectedBar
@@ -100,6 +120,41 @@ export function MetricPane(props: Props) {
     }
   }
 
+  async function onEntryClick(
+    samples: number[][],
+    feature: string,
+    systemID: string,
+    barIndex: number,
+    systemIndex: number
+  ) {
+    if (barIndex < samples.length) {
+      setPageState(PageState.loading);
+      setSelectedBar({ feature, barIndex, systemIndex });
+
+      // We have a list of samples for this combo
+      try {
+        const bucketOfCasesList = await backendClient.systemCasesGetById(
+          systemID,
+          "example",
+          samples[barIndex]
+        );
+        setSelectedCases([bucketOfCasesList]);
+      } catch (e) {
+        console.error(e);
+        if (e instanceof Response) {
+          const error = await parseBackendError(e);
+          message.error(error.getErrorMsg());
+        }
+      } finally {
+        setPageState(PageState.success);
+      }
+    }
+  }
+
+  useEffect(() => {
+    // Get the maximum right bound length
+  }, [featureNameToBucketInfo, systems]);
+
   const isLoading = pageState === PageState.loading;
 
   return (
@@ -109,19 +164,47 @@ export function MetricPane(props: Props) {
           {
             // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
             // into columns. One column contains a single BarChart.
-            Object.keys(systemAnalysesParsed).map((feature) => (
-              <FineGrainedBarChart
-                systems={systems}
-                featureNameToBucketInfo={featureNameToBucketInfo}
-                updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
-                title={generateBarChartTitle(feature)}
-                results={systemAnalysesParsed[feature]}
-                onBarClick={(barIndex, systemIndex) =>
-                  onBarClick(feature, barIndex, systemIndex)
-                }
-                key={feature}
-              />
-            ))
+            Object.keys(systemAnalysesParsed).map((feature) => {
+              if (feature.toLowerCase().startsWith("combo")) {
+                return (
+                  <ComboAnalysisChart
+                    title={generateBarChartTitle(feature)}
+                    colSpan={chartColSpan}
+                    systems={systems}
+                    analyses={systemAnalysesParsed[feature]}
+                    onEntryClick={(
+                      samples,
+                      systemID,
+                      barIndex,
+                      systemIndex
+                    ) => {
+                      onEntryClick(
+                        samples,
+                        feature,
+                        systemID,
+                        barIndex,
+                        systemIndex
+                      );
+                    }}
+                    key={feature}
+                  />
+                );
+              }
+              return (
+                <FineGrainedBarChart
+                  systems={systems}
+                  featureNameToBucketInfo={featureNameToBucketInfo}
+                  updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
+                  colSpan={chartColSpan}
+                  title={generateBarChartTitle(feature)}
+                  results={systemAnalysesParsed[feature]}
+                  onBarClick={(barIndex, systemIndex) =>
+                    onBarClick(feature, barIndex, systemIndex)
+                  }
+                  key={feature}
+                />
+              );
+            })
           }
         </Row>
         {selectedBar && selectedCases.length > 0 && (
