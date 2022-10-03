@@ -1122,10 +1122,14 @@ components:
       properties:
         bucket:
           type: array
+          items:
+            type: string
         count:
           type: number
         samples:
           type: array
+          items:
+            type: integer
       required: [bucket, count, samples]
 
 
