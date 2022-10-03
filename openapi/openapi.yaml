@@ -628,7 +628,7 @@ components:
           type: string
         require_training_set:
           type: boolean
-      required: [dtype, cls_name]
+      required: [cls_name]
 
     SystemInfo:
       description: Information about a system output, used in SDK's fine-grained analysis

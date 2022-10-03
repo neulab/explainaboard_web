@@ -30,24 +30,6 @@ export interface ResultFineGrainedParsed {
   cases: number[][];
 }
 
-export interface SystemInfoFeatureBucketInfo {
-  method: string;
-  number: number;
-  setting: number | number[];
-}
-
-export interface SystemInfoFeature {
-  /**
-   * A single feature in the system info class.
-   */
-  bucket_info: SystemInfoFeatureBucketInfo | null;
-  description: string | null;
-  dtype?: string;
-  is_bucket: boolean;
-  require_training_set: boolean;
-  _type: string;
-}
-
 export interface BucketIntervals {
   /**
    * Intervals over which to perform bucketing
