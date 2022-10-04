@@ -25,7 +25,8 @@ if [[ $mode == "backend" || $mode == "project" ]]; then
     # remove src/gen if exists and generate code
     # we also create a link to src/impl in src/gen which contains our own implementation 
     cd $project_root && rm -rf $BACKEND_GEN_PATH && \
-    mkdir -p $BACKEND_GEN_PATH/explainaboard_web && \
+    mkdir -p $BACKEND_GEN_PATH/explainaboard_web
+    cp -f $OPENAPI_PATH/.swagger-codegen-ignore $BACKEND_GEN_PATH
     cd $BACKEND_GEN_PATH/explainaboard_web/ && \
     ln -sf ../../impl/ && \
     cd ../../../.. && \

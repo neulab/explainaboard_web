@@ -1,0 +1,5 @@
+# Swagger Codegen Ignore
+# Note that this file must be copied to the root of the output directory before
+# code generation with swagger-codegen.
+
+requirements.txt
