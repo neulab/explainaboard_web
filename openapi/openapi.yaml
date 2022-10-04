@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.4"
+  version: "0.2.5"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -1116,6 +1116,22 @@ components:
           type: number
           nullable: true
       required: [metric_name, value]
+
+    ComboCount:
+      type: object
+      properties:
+        bucket:
+          type: array
+          items:
+            type: string
+        count:
+          type: number
+        samples:
+          type: array
+          items:
+            type: integer
+      required: [bucket, count, samples]
+
 
     AnalysisCase:
       type: object

@@ -3,13 +3,10 @@ import { Tabs, Typography } from "antd";
 import { AnalysisPanel } from "../AnalysisPanel";
 import { MetricPane } from "./MetricPane";
 import { SystemModel } from "../../../../models";
-import {
-  ActiveSystemExamples,
-  BucketIntervals,
-  ResultFineGrainedParsed,
-} from "../../types";
+import { BucketIntervals, ResultFineGrainedParsed } from "../../types";
 
 interface Props {
+  task: string;
   activeMetric: string;
   onActiveMetricChange: (newMetricName: string) => void;
   metricNames: string[];
@@ -22,14 +19,10 @@ interface Props {
   metricToSystemAnalysesParsed: {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
-  exampleTable: JSX.Element;
-  setActiveSystemExamples: React.Dispatch<
-    React.SetStateAction<ActiveSystemExamples | undefined>
-  >;
-  resetPage: () => void;
 }
 
 export function FineGrainedAnalysis({
+  task,
   activeMetric,
   onActiveMetricChange,
   metricNames,
@@ -37,9 +30,6 @@ export function FineGrainedAnalysis({
   featureNameToBucketInfo,
   updateFeatureNameToBucketInfo,
   metricToSystemAnalysesParsed,
-  exampleTable,
-  setActiveSystemExamples,
-  resetPage,
 }: Props) {
   return (
     <AnalysisPanel title="Fine-grained Performance">
@@ -51,14 +41,12 @@ export function FineGrainedAnalysis({
         {metricNames.map((metric) => (
           <Tabs.TabPane tab={metric} key={metric}>
             <MetricPane
+              task={task}
               systems={systems}
               featureNameToBucketInfo={featureNameToBucketInfo}
               updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
               metricToSystemAnalysesParsed={metricToSystemAnalysesParsed}
               metric={metric}
-              exampleTable={exampleTable}
-              setActiveSystemExamples={setActiveSystemExamples}
-              resetPage={resetPage}
             />
           </Tabs.TabPane>
         ))}
