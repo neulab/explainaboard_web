@@ -2,4 +2,6 @@
 # Note that this file must be copied to the root of the output directory before
 # code generation with swagger-codegen.
 
+# For backend
+# To manually maintain dependencies.
 requirements.txt
