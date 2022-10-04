@@ -53,6 +53,27 @@ function renderColInfo(
   }
 }
 
+function createSentenceForNER(
+  systemOutput: SystemOutput,
+  analysisCase: AnalysisCase
+) {
+  const origToks = systemOutput["tokens"];
+  let sentence = origToks;
+  const pos = analysisCase["token_span"];
+  if (Array.isArray(origToks)) {
+    const copiedToks = origToks.map((x: string) => `${x} `);
+    const prefix = copiedToks.slice(0, pos[0]).join(" ");
+    const infix = copiedToks.slice(pos[0], pos[1]).join(" ");
+    const suffix = copiedToks.slice(pos[1]).join(" ");
+    sentence = (
+      <div>
+        {prefix} <b>{infix}</b> {suffix}
+      </div>
+    );
+  }
+  return sentence;
+}
+
 function specifyDataGeneric(
   systemOutputs: SystemOutput[],
   columns: ColumnsType<SystemOutput>,
@@ -108,20 +129,8 @@ function specifyDataSeqLab(
 
     for (let i = 0; i < systemOutputs.length; i++) {
       // Get the outputs from the bucket case
-      const origToks = systemOutputs[i]["tokens"];
-      let sentence = origToks;
+      const sentence = createSentenceForNER(systemOutputs[i], cases[i]);
       const pos = cases[i]["token_span"];
-      if (Array.isArray(origToks)) {
-        const copiedToks = origToks.map((x: string) => `${x} `);
-        const prefix = copiedToks.slice(0, pos[0]).join(" ");
-        const infix = copiedToks.slice(pos[0], pos[1]).join(" ");
-        const suffix = copiedToks.slice(pos[1]).join(" ");
-        sentence = (
-          <div>
-            {prefix} <b>{infix}</b> {suffix}
-          </div>
-        );
-      }
       const spanPos =
         pos[0] === pos[1] - 1 ? `${pos[0]}` : `${pos[0]}:${pos[1]}`;
       const dataRow = {
