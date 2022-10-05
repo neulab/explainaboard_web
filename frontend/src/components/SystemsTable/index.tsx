@@ -27,6 +27,8 @@ export function SystemsTable() {
     SystemFilter.parseQueryToFilter(query)
   );
 
+  const [activeSystemIDs, setActiveSystemIds] = useState<string[]>([]);
+
   useEffect(() => {
     const prevString = query.toString();
     const newString = filters.toUrlParams().toString();
@@ -57,7 +59,7 @@ export function SystemsTable() {
 
   // set systems to be analyzed
   const onActiveSystemChange = (ids: string[]) => {
-    updateFilterAndQuery(filters, { activeSystemIDs: ids });
+    setActiveSystemIds(ids);
   };
 
   const { state: loginState, userInfo } = useUser();
@@ -191,7 +193,7 @@ export function SystemsTable() {
       />
       <AnalysisDrawer
         systems={systems.filter((sys) =>
-          filters.activeSystemIDs.includes(sys.system_id)
+          activeSystemIDs.includes(sys.system_id)
         )}
         closeDrawer={() => onActiveSystemChange([])}
       />
