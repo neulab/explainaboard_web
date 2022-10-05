@@ -27,6 +27,7 @@ import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
 import ReactGA from "react-ga4";
+import useSearch, { FilterFunc } from "./useSearch";
 
 const { TextArea } = Input;
 
@@ -40,6 +41,61 @@ enum State {
   other,
 }
 
+function biDirectionalMatch(one: string, other: string): boolean {
+  return isMatch(one, other) || isMatch(other, one);
+}
+function isMatch(query: string, string: string): boolean {
+  return string.toLowerCase().includes(query.toLocaleLowerCase());
+}
+
+type LangScore = {
+  lang: LanguageCode;
+  value: number;
+};
+
+const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
+  const added = new Set<string>();
+  const scores: LangScore[] = [];
+
+  // match iso3
+  const iso3Matches = data.filter((lang) => isMatch(query, lang.iso3_code));
+  iso3Matches.forEach((match) => {
+    added.add(match.name);
+    scores.push({ lang: match, value: 100 });
+  });
+
+  // match iso1: we only consider exact match for iso1_code
+  const iso1Matches = data.filter((lang) => {
+    if (lang.iso1_code) {
+      return query === lang.iso1_code;
+    }
+    return false;
+  });
+  iso1Matches.forEach((match) => {
+    added.add(match.name);
+    if (!added.has(match.name)) scores.push({ lang: match, value: 100 });
+  });
+
+  // match names: exact match of a name will have the highest score, decreases by distance
+  const nameMatches = data.filter((lang) =>
+    biDirectionalMatch(query, lang.name)
+  );
+  nameMatches.forEach((match) => {
+    if (!added.has(match.name))
+      scores.push({
+        lang: match,
+        value: 101 - Math.abs(match.name.length - query.length),
+      });
+  });
+
+  // Sort by score
+  const result = scores
+    .sort((score1, score2) => score2.value - score1.value)
+    .map((score) => score.lang);
+
+  return result;
+};
+
 /**
  * A drawer for system output submission
  * @param props.onClose
@@ -51,6 +107,10 @@ export function SystemSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.loading);
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
   const [languageCodes, setLanguageCodes] = useState<LanguageCode[]>([]);
+  const { filtered: inputLangFiltered, setQuery: setInputLangQuery } =
+    useSearch<LanguageCode>(languageCodes, filterFunc);
+  const { filtered: outputLangFiltered, setQuery: setOutputLangQuery } =
+    useSearch<LanguageCode>(languageCodes, filterFunc);
   const [datasetOptions, setDatasetOptions] = useState<DatasetMetadata[]>([]);
   const [useCustomDataset, setUseCustomDataset] = useState(false);
   const [otherSourceLang, setOtherSourceLang] = useState(false);
@@ -495,19 +555,13 @@ export function SystemSubmitDrawer(props: Props) {
               >
                 <Select
                   showSearch
-                  options={languageCodes.map((opt) => ({
-                    label: opt.name + "(" + opt.iso3_code + ")",
+                  options={inputLangFiltered.map((opt) => ({
+                    label: `${opt.name}(${opt.iso3_code})`,
                     value: opt.iso3_code,
                   }))}
                   placeholder="Search language"
-                  filterOption={(input, option) =>
-                    option === undefined
-                      ? false
-                      : option.label
-                          .toLowerCase()
-                          .includes(input.toLowerCase()) ||
-                        option.value.toLowerCase().includes(input.toLowerCase())
-                  }
+                  filterOption={() => true}
+                  onSearch={setInputLangQuery}
                   onChange={onSourceLangChange}
                 />
               </Form.Item>
@@ -529,19 +583,13 @@ export function SystemSubmitDrawer(props: Props) {
               >
                 <Select
                   showSearch
-                  options={languageCodes.map((opt) => ({
-                    label: opt.name + "(" + opt.iso3_code + ")",
+                  options={outputLangFiltered.map((opt) => ({
+                    label: `${opt.name}(${opt.iso3_code})`,
                     value: opt.iso3_code,
                   }))}
                   placeholder="Search language"
-                  filterOption={(input, option) =>
-                    option === undefined
-                      ? false
-                      : option.label
-                          .toLowerCase()
-                          .includes(input.toLowerCase()) ||
-                        option.value.toLowerCase().includes(input.toLowerCase())
-                  }
+                  filterOption={() => true}
+                  onSearch={setOutputLangQuery}
                   onChange={onTargetLangChange}
                 />
               </Form.Item>
