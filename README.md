@@ -14,15 +14,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 1. Install `node` and `npm`
 
    - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use nvm to manage node versions.
-     Run `nvm install-latest-npm` to get the latest version of npm.
-   - We use `node v14.17.3`, but any v14+ should probably work fine. Verify that the installation yields a recent version comparable to the ones below
-
-   ```
-   >> node --version
-   >> v14.17.3
-   >> npm --version
-   >> 7.24.1
-   ```
+     Run `nvm install` to install node and npm.
 
 2. Make sure `java` is installed correctly in your environment. Verify this by running `java --version`.
 3. Generate code for API layer
