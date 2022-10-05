@@ -13,21 +13,13 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
 1. Install `node` and `npm`
 
-   - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use nvm to manage node versions.
-     Run `nvm install-latest-npm` to get the latest version of npm.
-   - We use `node v14.17.3`, but any v14+ should probably work fine. Verify that the installation yields a recent version comparable to the ones below
-
-   ```
-   >> node --version
-   >> v14.17.3
-   >> npm --version
-   >> 7.24.1
-   ```
+   - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use `nvm` to manage node versions.
+     Run `nvm install` to install node and npm.
 
 2. Make sure `java` is installed correctly in your environment. Verify this by running `java --version`.
 3. Generate code for API layer
 
-   - Run `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever open API definition changes.
+   - Run `npm run gen-api-code` to generate code for api layer (both server and client). Please remember to run this whenever OpenAPI definition changes.
      - We assume your computer already has `wget` and `realpath` command installed. If not found, please install by:
        - for `wget`
          - MacOS Users: `brew install wget`
@@ -57,13 +49,14 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
 
 ## Important notes on local development
 
-- As mentioned in quick start step 2, whenever the open API definition (openapi.yaml) changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
+- As mentioned in quick start step 2, whenever the OpenAPI definition (`openapi.yaml`) changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
 - The frontend and backend dependencies must be reinstalled whenever the associated dependency files are changed, including `package.json`, `frontend/package.json`, `backend/requirements.txt`, `backend/src/gen/requirements.txt` (generated from `backend/templates/requirements.mustache`). `backend/requirements.txt` is the main requirements file to manage application specific dependencies.
+
 - ExplainaBoard API client release depends on the API defined in `openapi.yaml`. If `openapi.yaml` is changed, remember to bump up the openapi version `0.2.x` as well.
 
 ## Deployment
 
-- We use docker and gunicorn to deploy both frontend and backend. Frontend is built and copied into the static file folder of Flask. Please see Dockerfile for details.
+- We use docker and gunicorn to deploy both frontend and backend. Frontend is built and copied into the static file folder of Flask. Please see `Dockerfile` for details.
 - To build: `docker build --pull --rm -f "Dockerfile" -t explainaboard-web:0.2.0 "."`
 - To run: `docker run --rm -p 5000:5000/tcp explainaboard-web:0.2.0`
 - GCP:
@@ -88,7 +81,7 @@ This repository includes code for frontend and backend of the ExplainaBoard web 
       - `npm test` launches the test runner in the interactive watch mode. See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
    4. Build `npm run build`
 
-      - You do not need to run this manually. It is handled automatically by the docker file.
+      - You do not need to run this manually. It is handled automatically by the `Dockerfile`.
       - Builds the app for production to the `build` folder. It correctly bundles React in production mode and optimizes the build for the best performance.
       - See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
