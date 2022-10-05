@@ -6,7 +6,7 @@ set -e
 
 # three modes: generate frontend only, backend only and both
 mode=$1
-script_dir=`dirname "$(realpath $0)"`
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 project_root=`dirname $script_dir`
 
 OPENAPI_PATH="openapi"
