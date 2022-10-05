@@ -5,8 +5,56 @@ import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
 
+const condgenTasks = [
+  "machine-translation",
+  "summarization",
+  "conditional_generation",
+];
+const seqLabTasks = [
+  "named-entity-recognition",
+  "chunking",
+  "word-segmentation",
+];
+
+/**  Defined Column Info for partial tasks (machine-translation,
+ * summarization, conditional_generation, text-classification,
+ * text-pair-classification) */
+const colInfoForTasks = new Map();
+for (const t of condgenTasks) {
+  colInfoForTasks.set(t, [
+    { id: "source", name: "Source", maxWidth: "500px" },
+    { id: "reference", name: "Reference", maxWidth: "500px" },
+  ]);
+}
+colInfoForTasks.set("text-classification", [
+  { id: "text", name: "Text", maxWidth: "400px" },
+  { id: "true_label", name: "True Label" },
+]);
+colInfoForTasks.set("text-pair-classification", [
+  { id: "text1", name: "Text 1", maxWidth: "400px" },
+  { id: "text2", name: "Text 2", maxWidth: "400px" },
+  { id: "true_label", name: "True Label" },
+]);
+
+/** Prediction Column for partial tasks (machine-translation,
+ * summarization, conditional_generation, text-classification,
+ * text-pair-classification)*/
+const predictionColForTasks = new Map();
+for (const t of condgenTasks) {
+  colInfoForTasks.set(t, [
+    { id: "hypothesis", name: "Hypothesis", maxWidth: "500px" },
+  ]);
+}
+predictionColForTasks.set("text-classification", [
+  { id: "predicted_label", name: "Predicted Label" },
+]);
+predictionColForTasks.set("text-pair-classification", [
+  { id: "predicted_label", name: "Predicted Label" },
+]);
+
 interface Props {
-  systemID: string;
+  systemIDs: string[];
+  systemNames: string[];
   task: string;
   cases: AnalysisCase[];
   changeState: (newState: PageState) => void;
@@ -14,7 +62,7 @@ interface Props {
 
 function renderColInfo(
   columns: ColumnsType<SystemOutput>,
-  colInfo: { [key: string]: string | undefined }[]
+  col_info: { [key: string]: string | undefined }[]
 ) {
   // example ID
   columns.push({
@@ -28,7 +76,7 @@ function renderColInfo(
     ),
   });
 
-  for (const col of colInfo) {
+  for (const col of col_info) {
     if (col["name"] === "id") {
       continue;
     }
@@ -51,6 +99,103 @@ function renderColInfo(
         ),
     });
   }
+}
+function addPredictionColInfo(
+  tsk: string,
+  systemNames: string[]
+): { [key: string]: string }[] {
+  const finalColInfo = [];
+  // add dataset groundtruth columns
+  colInfoForTasks.get(tsk).forEach(function (value: [key: string]) {
+    finalColInfo.push(value);
+  });
+
+  // add system prediction columns
+  const predColInfo = predictionColForTasks.get(tsk)[0];
+  // single analysis
+  if (systemNames.length === 1) {
+    finalColInfo.push({
+      id: `${predColInfo.id}`,
+      name: `${predColInfo.name}`,
+      maxWidth: "400px",
+    });
+    return finalColInfo;
+  }
+  // multi system analysis
+  for (let i = 0; i < systemNames.length; i++) {
+    finalColInfo.push({
+      id: `${predColInfo.id}.${i}`,
+      name: `${systemNames[i]}: ${predColInfo.name}`,
+      maxWidth: "400px",
+    });
+  }
+  return finalColInfo;
+}
+
+function expandAndAddSysNameToColInfo(
+  col_info: { [key: string]: string }[],
+  colToExpand: { [key: string]: string },
+  systemNames: string[]
+): { [key: string]: string }[] {
+  const numSystems = systemNames.length;
+  /* pops the prediction col  */
+  // const col = colInfo.splice(colIdxToExpand, 1)[0];
+
+  // // first drop the original hypothesis
+  col_info.pop();
+
+  for (let i = 0; i < numSystems; i++) {
+    col_info.push({
+      id: `${colToExpand["id"]}.${i}`,
+      name: `${systemNames[i]}: ${colToExpand["name"]}`,
+      maxWidth: "400px",
+    });
+  }
+  return col_info;
+}
+
+function unnestSystemOutput(
+  systemOutputs: SystemOutput[],
+  targetProp: string
+): SystemOutput[] {
+  return systemOutputs.map(function (systemOutput: SystemOutput) {
+    let processedSystemOutput = { ...systemOutput };
+
+    processedSystemOutput = unnestElement(systemOutput, targetProp);
+    return processedSystemOutput;
+  });
+}
+
+function unnestElement(systemOutput: SystemOutput, targetProp: string) {
+  const unnestedObj: SystemOutput = {};
+  Object.keys(systemOutput).forEach((key: string) => {
+    if (key === targetProp) {
+      systemOutput[key].forEach((value: number, index: string) => {
+        unnestedObj[`${targetProp}.${index}`] = value;
+      });
+    } else {
+      unnestedObj[key] = systemOutput[key];
+    }
+  });
+
+  return unnestedObj;
+}
+
+function joinResults(results: SystemOutput[][], prop: string): SystemOutput[] {
+  // start from first result
+  const joinedResult = results[0];
+  for (let i = 0; i < results[0].length; i++) {
+    const row = results[0][i];
+    const predictions = [row[prop]];
+
+    // add other system predictions
+    for (let sysId = 1; sysId < results.length; sysId++) {
+      predictions.push(results[sysId][i][prop]);
+    }
+    /* an array that stores predictions for multi systems*/
+    row[prop] = predictions;
+  }
+  return joinedResult;
 }
 
 function createSentenceForNER(
@@ -77,17 +222,17 @@ function createSentenceForNER(
 function specifyDataGeneric(
   systemOutputs: SystemOutput[],
   columns: ColumnsType<SystemOutput>,
-  colInfo: { [key: string]: string }[] | undefined = undefined
+  col_info: { [key: string]: string }[] | undefined = undefined
 ): { [key: string]: string }[] {
   const systemOutputFirst = systemOutputs[0];
 
-  colInfo =
-    colInfo !== undefined
-      ? colInfo
+  col_info =
+    col_info !== undefined
+      ? col_info
       : Object.keys(systemOutputFirst).map((x) => {
           return { id: x, name: x };
         });
-  renderColInfo(columns, colInfo);
+  renderColInfo(columns, col_info);
 
   // clone the system output for modification
   return systemOutputs.map(function (systemOutput) {
@@ -164,13 +309,27 @@ function specifyDataSeqLab(
   return dataSource;
 }
 
-export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
+export function AnalysisTable({
+  systemIDs,
+  systemNames,
+  task,
+  cases,
+  changeState,
+}: Props) {
   const [page, setPage] = useState(0);
-
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
+  const [colInfo, setColInfo] = useState<{ [key: string]: string }[]>([]);
   const pageSize = 10;
   const total = cases.length;
   const tableRef = useRef<null | HTMLDivElement>(null);
+
+  // const predictionColForTasks = new Map<string, string>([
+  //   ["machine-translation", "hypothesis"],
+  //   ["summarization", "hypothesis"],
+  //   ["conditional_generation", "hypothesis"],
+  //   ["text-classification", "predicted_label"],
+  //   ["text-pair-classification", "predicted_label"],
+  // ]);
 
   useEffect(() => {
     setPage(0);
@@ -183,11 +342,22 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
         const offset = page * pageSize;
         const end = Math.min(offset + pageSize, cases.length);
         const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
-        const result = await backendClient.systemOutputsGetById(
-          systemID,
-          outputIDs
-        );
-        setSystemOutputs(result);
+
+        const results = [];
+        for (const systemID of systemIDs) {
+          const result = await backendClient.systemOutputsGetById(
+            systemID,
+            outputIDs
+          );
+          results.push(result);
+        }
+
+        const joinedResult =
+          results.length > 1
+            ? joinResults(results, predictionColForTasks.get(task)[0].id)
+            : results[0];
+        console.log("joinedResult", joinedResult);
+        setSystemOutputs(joinedResult);
       } catch (e) {
         if (e instanceof Response) {
           const error = await parseBackendError(e);
@@ -215,7 +385,7 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [systemID, page, pageSize, cases, changeState]);
+  }, [page, pageSize, cases, changeState, systemIDs, systemNames, task]);
 
   // other fields
   if (systemOutputs.length === 0) {
@@ -224,43 +394,33 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
 
   const columns: ColumnsType<SystemOutput> = [];
 
-  const condgenTasks = [
-    "machine-translation",
-    "summarization",
-    "conditional_generation",
-  ];
-  const seqLabTasks = [
-    "named-entity-recognition",
-    "chunking",
-    "word-segmentation",
-  ];
-
   let dataSource: { [p: string]: string }[];
-  let colInfo;
+  console.log("222");
+  // let colInfo;
+  const numSystems = systemOutputs.length;
   if (seqLabTasks.includes(task)) {
     dataSource = specifyDataSeqLab(systemOutputs, cases, columns);
-  } else if (condgenTasks.includes(task)) {
-    colInfo = [
-      { id: "source", name: "Source", maxWidth: "500px" },
-      { id: "reference", name: "Reference", maxWidth: "500px" },
-      { id: "hypothesis", name: "Hypothesis", maxWidth: "500px" },
-    ];
-    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
-  } else if (task === "text-classification") {
-    colInfo = [
-      { id: "true_label", name: "True Label" },
-      { id: "predicted_label", name: "Predicted Label" },
-      { id: "text", name: "Text", maxWidth: "800px" },
-    ];
-    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
-  } else if (task === "text-pair-classification") {
-    colInfo = [
-      { id: "true_label", name: "True Label" },
-      { id: "predicted_label", name: "Predicted Label" },
-      { id: "text1", name: "Text 1", maxWidth: "500px" },
-      { id: "text2", name: "Text 2", maxWidth: "500px" },
-    ];
-    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
+  } else if (colInfoForTasks.has(task)) {
+    setColInfo(addPredictionColInfo(task, systemNames));
+    console.log("colInfo111");
+    console.log(colInfo);
+    /* expand columns if it is multi-system analysis */
+    if (numSystems > 1) {
+      // const expandedColInfo = expandAndAddSysNameToColInfo(
+      //   colInfo,
+      //   colInfo[colInfo.length - 1],
+      //   systemNames
+      // );
+      // console.log("expandedColInfo");
+      // console.log(expandedColInfo);
+      dataSource = specifyDataGeneric(
+        unnestSystemOutput(systemOutputs, predictionColForTasks.get(task)),
+        columns,
+        colInfo
+      );
+    } else {
+      dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
+    }
   } else {
     dataSource = specifyDataGeneric(systemOutputs, columns);
   }

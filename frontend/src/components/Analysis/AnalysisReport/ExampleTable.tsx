@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Result, Space, Tabs, Typography } from "antd";
 import { SystemModel } from "../../../models";
 import { AnalysisTable } from "../AnalysisTable";
@@ -25,17 +25,46 @@ export function ExampleTable({
   onActiveSystemIndexChange,
   changeState,
 }: Props) {
+  const multiSystemExampleTableSupportedTasks = [
+    "machine-translation",
+    "summarization",
+    "conditional_generation",
+    "text-classification",
+    "text-pair-classification",
+  ];
   let exampleTable: React.ReactNode;
+  const systemIDs = useMemo(
+    () => systems.map((system) => system.system_id),
+    [systems]
+  );
+  const systemNames = useMemo(
+    () => systems.map((system) => system.system_info.system_name),
+    [systems]
+  );
+
   if (systems.length !== cases.length) {
     console.error(
       `ExampleTable input error: systems=${systems}, cases=${cases} doesn't match`
     );
     exampleTable = <Result status="error" title="Failed to show examples." />;
+  } else if (multiSystemExampleTableSupportedTasks.includes(task)) {
+    console.log("inside multiSystemExampleTableSupportedTasks");
+    // TODO(noel): need to expand for every task
+    exampleTable = (
+      <AnalysisTable
+        systemIDs={systemIDs}
+        systemNames={systemNames}
+        task={task}
+        cases={cases[0]}
+        changeState={changeState}
+      />
+    );
   } else if (systems.length === 1) {
     // single analysis
     exampleTable = (
       <AnalysisTable
-        systemID={systems[0].system_id}
+        systemIDs={systemIDs}
+        systemNames={systemNames}
         task={task}
         cases={cases[0]}
         changeState={changeState}
@@ -56,7 +85,8 @@ export function ExampleTable({
                 key={`${sysIndex}`}
               >
                 <AnalysisTable
-                  systemID={system.system_id}
+                  systemIDs={[system.system_id]}
+                  systemNames={[system.system_info.system_name]}
                   task={task}
                   cases={cases[sysIndex]}
                   changeState={changeState}
