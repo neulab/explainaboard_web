@@ -4,43 +4,17 @@ import { message, Space } from "antd";
 import { SystemSubmitDrawer, AnalysisDrawer } from "../../components";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel, newSystemModel } from "../../models";
-import { Filter, SystemTableTools } from "./SystemTableTools";
+import { SystemTableTools } from "./SystemTableTools";
 import { SystemTableContent } from "./SystemTableContent";
 import { findTask, PageState } from "../../utils";
 import { TaskCategory } from "../../clients/openapi";
 import { LoginState, useUser } from "../useUser";
 import { useHistory } from "react-router-dom";
-
-const filterKeyMap = {
-  nameFilter: "name",
-  taskFilter: "task",
-  showMine: "show_mine",
-  sortField: "sort_field",
-  sortDir: "sort_dir",
-  dataset: "dataset",
-  datasetSplit: "dataset_split",
-  subdataset: "sub_dataset",
-  systemId: "system_id",
-};
-
-function _setFilter(
-  filters: URLSearchParams,
-  filterName: string,
-  value: string | undefined
-) {
-  if (value) {
-    filters.set(filterName, value);
-  } else {
-    filters.delete(filterName);
-  }
-}
-
-interface Props {
-  filters: URLSearchParams;
-}
+import useQuery from "../useQuery";
+import { FilterUpdate, SystemFilter } from "./SystemFilter";
 
 /** A table that lists all systems */
-export function SystemsTable({ filters }: Props) {
+export function SystemsTable() {
   const [pageState, setPageState] = useState(PageState.loading);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -48,17 +22,28 @@ export function SystemsTable({ filters }: Props) {
 
   const [systems, setSystems] = useState<SystemModel[]>([]);
   const [total, setTotal] = useState(0);
+  const query = useQuery();
+  const [filters, setFilters] = useState<SystemFilter>(
+    SystemFilter.parseQueryToFilter(query)
+  );
 
-  // filters
-  const nameFilter = filters.get(filterKeyMap.nameFilter) || undefined;
-  const taskFilter = filters.get(filterKeyMap.taskFilter) || undefined;
-  const showMine = filters.get(filterKeyMap.showMine) === "true" ? true : false;
-  const sortDir = filters.get(filterKeyMap.sortDir) === "asc" ? "asc" : "desc";
-  const sortField = filters.get(filterKeyMap.sortField) || "created_at";
-  const split = filters.get(filterKeyMap.datasetSplit) || undefined;
-  const activeSystemIDs = filters.get(filterKeyMap.systemId) || undefined;
-  const dataset = filters.get(filterKeyMap.dataset) || undefined;
-  const subdataset = filters.get(filterKeyMap.subdataset) || undefined;
+  useEffect(() => {
+    const prevString = query.toString();
+    const newString = filters.toUrlParams().toString();
+    if (prevString !== newString) {
+      history.push({ search: filters.toUrlParams().toString() });
+    }
+  }, [history, filters, query]);
+
+  const updateFilterAndQuery = useCallback(
+    (currFilters: SystemFilter, updates: FilterUpdate) => {
+      const updated = currFilters.update(updates);
+      if (updated) {
+        setFilters(new SystemFilter(currFilters));
+      }
+    },
+    []
+  );
 
   // submit
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);
@@ -71,10 +56,8 @@ export function SystemsTable({ filters }: Props) {
   const [selectedSystemIDs, setSelectedSystemIDs] = useState<string[]>([]);
 
   // set systems to be analyzed
-  const activeSystemIDArray = activeSystemIDs ? activeSystemIDs.split(",") : [];
-  const setActiveSystemIDs = (ids: string[]) => {
-    _setFilter(filters, filterKeyMap.systemId, ids.join(","));
-    history.push({ search: filters.toString() });
+  const onActiveSystemChange = (ids: string[]) => {
+    updateFilterAndQuery(filters, { activeSystemIDs: ids });
   };
 
   const { state: loginState, userInfo } = useUser();
@@ -89,8 +72,8 @@ export function SystemsTable({ filters }: Props) {
       }
     }
     // if a task is selected, add all supported metrics to the options list
-    if (taskFilter) {
-      const task = findTask(taskCategories, taskFilter);
+    if (filters.task) {
+      const task = findTask(taskCategories, filters.task);
       if (task)
         task.supported_metrics.forEach((metric) => metricNames.add(metric));
     }
@@ -107,10 +90,14 @@ export function SystemsTable({ filters }: Props) {
     fetchTasks();
   }, []);
 
-  /* When task filter changes, also reset the ordering */
-  const handleTaskChange = useCallback(
-    function (taskFilter: string | undefined) {
-      function getInitialSortField(taskCategories: TaskCategory[]) {
+  /** TODO: add debounce */
+  const onFilterChange = useCallback(
+    function (updates: FilterUpdate) {
+      /* When task filter changes, also reset the ordering */
+      function getInitialSortField(
+        taskCategories: TaskCategory[],
+        taskFilter: string
+      ) {
         if (taskFilter) {
           const initialTask = findTask(taskCategories, taskFilter);
           if (initialTask && initialTask.supported_metrics.length > 0)
@@ -118,62 +105,38 @@ export function SystemsTable({ filters }: Props) {
         }
         return "created_at";
       }
-      _setFilter(
-        filters,
-        filterKeyMap.sortField,
-        getInitialSortField(taskCategories)
-      );
-      _setFilter(filters, filterKeyMap.taskFilter, taskFilter || undefined);
-    },
-    [taskCategories, filters]
-  );
 
-  /** TODO: add debounce */
-  const onFilterChange = useCallback(
-    async function ({
-      name,
-      task,
-      showMine,
-      sortField: newSortField,
-      sortDir: newSortDir,
-      split: newSplit,
-    }: Partial<Filter>) {
-      if (name != null) _setFilter(filters, filterKeyMap.nameFilter, name);
-      if (task != null) {
-        handleTaskChange(task);
+      if (updates.task) {
+        const initialSortField = getInitialSortField(
+          taskCategories,
+          updates.task
+        );
+        updates.sortField = initialSortField;
       }
-      if (showMine != null)
-        _setFilter(filters, filterKeyMap.showMine, showMine ? "true" : "false");
-      if (newSortField != null)
-        _setFilter(filters, filterKeyMap.sortField, newSortField || undefined);
-      if (newSortDir != null)
-        _setFilter(filters, filterKeyMap.sortDir, newSortDir || undefined);
-      if (newSplit != null)
-        _setFilter(filters, filterKeyMap.datasetSplit, newSplit || undefined);
-      history.push({ search: filters.toString() });
+      updateFilterAndQuery(filters, updates);
       setPage(0);
       setSelectedSystemIDs([]);
     },
-    [history, filters, handleTaskChange]
+    [taskCategories, filters, updateFilterAndQuery]
   );
 
   useEffect(() => {
     async function refreshSystems() {
       setPageState(PageState.loading);
-      const datasetSplit = split === "all" ? undefined : split;
-      const creator = showMine ? userEmail : undefined;
+      const datasetSplit = filters.split === "all" ? undefined : filters.split;
+      const creator = filters.showMine ? userEmail : undefined;
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
-            nameFilter || undefined,
-            taskFilter,
-            dataset || undefined,
-            subdataset || undefined,
+            filters.name || undefined,
+            filters.task,
+            filters.dataset || undefined,
+            filters.subdataset || undefined,
             datasetSplit || undefined,
             page,
             pageSize,
-            sortField,
-            sortDir,
+            filters.sortField,
+            filters.sortDir,
             creator
           );
         setSystems(newSystems.map((sys) => newSystemModel(sys)));
@@ -190,14 +153,7 @@ export function SystemsTable({ filters }: Props) {
     }
     if (loginState !== LoginState.loading) refreshSystems();
   }, [
-    dataset,
-    nameFilter,
-    showMine,
-    sortDir,
-    sortField,
-    split,
-    subdataset,
-    taskFilter,
+    filters,
     page,
     pageSize,
     refreshTrigger,
@@ -211,18 +167,11 @@ export function SystemsTable({ filters }: Props) {
         systems={systems}
         toggleSubmitDrawer={() => setSubmitDrawerVisible((visible) => !visible)}
         taskCategories={taskCategories}
-        value={{
-          task: taskFilter,
-          name: nameFilter,
-          showMine: showMine,
-          sortField,
-          sortDir,
-          split,
-        }}
+        value={filters}
         onChange={onFilterChange}
         metricOptions={metricNames}
         selectedSystemIDs={selectedSystemIDs}
-        setActiveSystemIDs={setActiveSystemIDs}
+        onActiveSystemChange={onActiveSystemChange}
       />
       <SystemTableContent
         systems={systems}
@@ -238,13 +187,13 @@ export function SystemsTable({ filters }: Props) {
         metricNames={metricNames}
         selectedSystemIDs={selectedSystemIDs}
         setSelectedSystemIDs={setSelectedSystemIDs}
-        setActiveSystemIDs={setActiveSystemIDs}
+        onActiveSystemChange={onActiveSystemChange}
       />
       <AnalysisDrawer
         systems={systems.filter((sys) =>
-          activeSystemIDArray.includes(sys.system_id)
+          filters.activeSystemIDs.includes(sys.system_id)
         )}
-        closeDrawer={() => setActiveSystemIDs([])}
+        closeDrawer={() => onActiveSystemChange([])}
       />
       <SystemSubmitDrawer
         visible={submitDrawerVisible}

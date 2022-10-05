@@ -1,16 +1,12 @@
 import React, { useEffect, useState } from "react";
 import "./index.css";
-import { useHistory, useLocation } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { BenchmarkTable } from "../../components";
 import { BenchmarkCards } from "../../components/BenchmarkCards";
 import { backendClient } from "../../clients";
 import { BenchmarkConfig } from "../../clients/openapi";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
-
-function useQuery() {
-  const { search } = useLocation();
-  return React.useMemo(() => new URLSearchParams(search), [search]);
-}
+import useQuery from "../../components/useQuery";
 
 export function BenchmarkPage() {
   useGoogleAnalytics();

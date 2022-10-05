@@ -1,15 +1,10 @@
 import React from "react";
 import { PageHeader } from "antd";
-import { useHistory, useLocation } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import { SystemsTable } from "../../components";
 import "./index.css";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
 import { Helmet } from "react-helmet";
-
-function useQuery() {
-  const { search } = useLocation();
-  return React.useMemo(() => new URLSearchParams(search), [search]);
-}
 
 /**
  * Systems Page
@@ -17,7 +12,6 @@ function useQuery() {
 export function SystemsPage() {
   useGoogleAnalytics();
   const history = useHistory();
-  const query = useQuery();
 
   return (
     <div className="page">
@@ -30,7 +24,7 @@ export function SystemsPage() {
         subTitle="All systems submitted by users"
         className="header"
       />
-      <SystemsTable filters={query} />
+      <SystemsTable />
     </div>
   );
 }
