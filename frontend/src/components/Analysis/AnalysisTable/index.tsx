@@ -108,7 +108,7 @@ function specifyDataSeqLab(
 
     for (let i = 0; i < systemOutputs.length; i++) {
       // Get the outputs from the bucket case
-      const origToks = systemOutputs[i][cases[i]["orig_str"]];
+      const origToks = systemOutputs[i]["tokens"];
       let sentence = origToks;
       const pos = cases[i]["token_span"];
       if (Array.isArray(origToks)) {
