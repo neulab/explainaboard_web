@@ -73,14 +73,14 @@ To separate the generated code and our own code, we follow an approach similar t
 
 ## Python Client
 
-A python client is generated based on openapi.yaml and it is released as
+A python client is generated based on `openapi.yaml` and it is released as
 `explainaboard_api_client` on PyPI. We also maintain a thin wrapper for the client
 `explainaboard_client` ([source code](https://github.com/neulab/explainaboard_client)).
 Users generally use the wrapper package because it handles low level configurations for
 them.
 
-- version: determined by `info.version` in openapi.yaml. Please remember to update the
-  version whenever you change the openapi definition. If openapi.yaml is modified but
+- version: determined by `info.version` in `openapi.yaml`. Please remember to update the
+  version whenever you change the openapi definition. If `openapi.yaml` is modified but
   the version number has been used in an old version, "Python API Client Release" will
   fail to flag that error.
 - codegen tool: [openapi generator](https://github.com/OpenAPITools/openapi-generator)

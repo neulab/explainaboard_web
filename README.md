@@ -16,8 +16,8 @@ application. The frontend is built with React and the backend uses Flask.
 
 1. Install `node` and `npm`
 
-   - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use nvm
-     to manage node versions. Run `nvm install` to install node and npm.
+   - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use
+     `nvm` to manage node versions. Run `nvm install` to install node and npm.
 
 2. Make sure `java` is installed correctly in your environment. Verify this by running
    `java --version`.
@@ -63,7 +63,7 @@ application. The frontend is built with React and the backend uses Flask.
 
 ## Important notes on local development
 
-- As mentioned in quick start step 2, whenever the open API definition (openapi.yaml)
+- As mentioned in quick start step 2, whenever the open API definition (`openapi.yaml`)
   changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
 - The frontend and backend dependencies must be reinstalled whenever the associated
   dependency files are changed, including `package.json`, `frontend/package.json`,
@@ -75,7 +75,8 @@ application. The frontend is built with React and the backend uses Flask.
 ## Deployment
 
 - We use docker and gunicorn to deploy both frontend and backend. Frontend is built and
-  copied into the static file folder of Flask. Please see Dockerfile for details.
+  copied into the static file folder of Flask. Please see `Dockerfile` for details.
+
 - To build: `docker build --pull --rm -f "Dockerfile" -t explainaboard-web:0.2.0 "."`
 - To run: `docker run --rm -p 5000:5000/tcp explainaboard-web:0.2.0`
 - GCP:
@@ -115,12 +116,11 @@ application. The frontend is built with React and the backend uses Flask.
         for more information.
    4. Build `npm run build`
 
-      - You do not need to run this manually. It is handled automatically by the docker file.
+      - You do not need to run this manually. It is handled automatically by the `Dockerfile`.
       - Builds the app for production to the `build` folder. It correctly bundles React
         in production mode and optimizes the build for the best performance.
-      - See the section about
-        [deployment](https://facebook.github.io/create-react-app/docs/deployment) for
-        more information.
+      - See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment)
+        for more information.
 
    5. Frontend is created with [Create React App](https://github.com/facebook/create-react-app).
 
@@ -147,6 +147,7 @@ application. The frontend is built with React and the backend uses Flask.
       - To learn React, check out the [React documentation](https://reactjs.org/).
 
 2. Backend
+
    1. To start backend server only, run `npm run start-backend`
       - Listens on port 5000. Frontend is configured to send all API requests to 5000
         via a proxy.
