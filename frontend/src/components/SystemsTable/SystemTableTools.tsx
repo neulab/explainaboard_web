@@ -236,7 +236,7 @@ export function SystemTableTools({
             value: opt,
             label: opt,
           }))}
-          value={value.split}
+          value={value.split || undefined}
           placeholder="Dataset split"
           onChange={(value) => onChange({ split: value })}
           style={{ minWidth: "120px" }}
@@ -244,7 +244,7 @@ export function SystemTableTools({
         <TaskSelect
           taskCategories={taskCategories}
           allowClear
-          value={value.task}
+          value={value.task || undefined}
           onChange={(value) => onChange({ task: value || "" })}
           placeholder="All Tasks"
           style={{ minWidth: "150px" }}

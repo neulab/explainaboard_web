@@ -64,7 +64,7 @@ export class SystemFilter {
   update(partial: FilterUpdate): boolean {
     let updated = false;
 
-    if (partial.name && this.name !== partial.name) {
+    if ((partial.name && this.name !== partial.name) || partial.name === "") {
       updated = true;
       this.name = partial.name;
     }
