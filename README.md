@@ -24,9 +24,9 @@ application. The frontend is built with React and the backend uses Flask.
 3. Generate code for API layer
 
    - Run `npm run gen-api-code` to generate code for api layer (both server and client).
-     Please remember to run this whenever open API definition changes.
-     - We assume your computer already has `wget` and `realpath` command installed.
-       If not found, please install by:
+     Please remember to run this whenever OpenAPI definition changes.
+     - We assume your computer already has `wget` and `realpath` command installed. If
+       not found, please install by:
        - for `wget`
          - MacOS Users: `brew install wget`
          - Ubuntu Users: `sudo apt-get install wget`
@@ -63,7 +63,7 @@ application. The frontend is built with React and the backend uses Flask.
 
 ## Important notes on local development
 
-- As mentioned in quick start step 2, whenever the open API definition (`openapi.yaml`)
+- As mentioned in quick start step 2, whenever the OpenAPI definition (`openapi.yaml`)
   changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
 - The frontend and backend dependencies must be reinstalled whenever the associated
   dependency files are changed, including `package.json`, `frontend/package.json`,

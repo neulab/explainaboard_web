@@ -45,8 +45,8 @@ code.
 
 Because the generated code under `src/gen` is only a skeleton, it does not contain
 details such as core logic, db connections, etc. This means we must add our own code.
-However, after adding our code, if we modify the openapi schema
-(e.g. add a new api path) and re-generate, we will end up overwriting our existing code.
+However, after adding our code, if we modify the OpenAPI schema (e.g. add a new api
+path) and re-generate, we will end up overwriting our existing code.
 
 **Solution:**
 
@@ -76,11 +76,10 @@ To separate the generated code and our own code, we follow an approach similar t
 A python client is generated based on `openapi.yaml` and it is released as
 `explainaboard_api_client` on PyPI. We also maintain a thin wrapper for the client
 `explainaboard_client` ([source code](https://github.com/neulab/explainaboard_client)).
-Users generally use the wrapper package because it handles low level configurations for
-them.
+Users generally use the wrapper package because it handles low level configurations for them.
 
 - version: determined by `info.version` in `openapi.yaml`. Please remember to update the
-  version whenever you change the openapi definition. If `openapi.yaml` is modified but
+  version whenever you change the OpenAPI definition. If `openapi.yaml` is modified but
   the version number has been used in an old version, "Python API Client Release" will
   fail to flag that error.
 - codegen tool: [openapi generator](https://github.com/OpenAPITools/openapi-generator)
@@ -97,6 +96,7 @@ them.
     `python-experimental` provides better typing but it is buggy and difficult to work
     with. So, currently, we use the `python` template. There's limited type hint but
     it's relatively easy to figure out the input and outputs from the docstrings.
+
   - generated code follows the following structure:
 
     ```text
