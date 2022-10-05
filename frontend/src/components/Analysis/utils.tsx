@@ -226,7 +226,10 @@ export function parseFineGrainedResults(
   // Add combo count analysis to all metrics
   for (const metric of Object.keys(parsedResults)) {
     for (const comboAnalysis of parsedComboAnalyses) {
-      parsedResults[metric][comboAnalysis.featureName] = [comboAnalysis];
+      if (!(comboAnalysis.featureName in parsedResults[metric])) {
+        parsedResults[metric][comboAnalysis.featureName] = [];
+      }
+      parsedResults[metric][comboAnalysis.featureName].push(comboAnalysis);
     }
   }
 
