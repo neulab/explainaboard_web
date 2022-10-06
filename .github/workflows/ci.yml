@@ -85,7 +85,7 @@ jobs:
       - name: mypy
         uses: pre-commit/action@v2.0.3
         with:
-          extra_args: mypy --all-files
+          extra_args: mypy --files $(find backend -name "*.py")
   markdownlint:
     runs-on: ubuntu-latest
     steps:
