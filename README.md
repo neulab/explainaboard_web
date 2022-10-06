@@ -28,9 +28,9 @@ application. The frontend is built with React and the backend uses Flask.
 
 4. Setup dev environment for the frontend
    1. Install project dependencies `npm install`
-   2. Install frontend dependencies `npm --prefix frontend install`
-      - Check the FAQ section if `npm` said there are vulnerabilities to verify if they
-        are false alarms.
+   2. Install frontend dependencies `npm --prefix frontend install`. See
+      [FAQ](#npm-install---prefix-frontend-says-we-have-x-vulnerabilities) when `npm`
+      reports vulnerabilities.
 5. Setup dev environment for the backend
    1. Install `python` version >= 3.9.7 and create a venv or conda environment for this project
    2. `pip install -r backend/src/gen/requirements.txt`
