@@ -16,7 +16,7 @@ FRONTEND_GEN_PATH="frontend/src/clients/openapi"
 # download codegen cli if not exists
 cd $script_dir
 if [ ! -f swagger-codegen-cli-3.0.29.jar ]; then
-    wget https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar -O swagger-codegen-cli-3.0.29.jar
+    wget --progress=dot:giga https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar -O swagger-codegen-cli-3.0.29.jar
 fi
 
 
