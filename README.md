@@ -25,14 +25,11 @@ application. The frontend is built with React and the backend uses Flask.
 
    - Run `npm run gen-api-code` to generate code for api layer (both server and client).
      Please remember to run this whenever OpenAPI definition changes.
-     - We assume your computer already has `wget` and `realpath` command installed. If
-       not found, please install by:
+     - We assume your computer already has `wget` command installed. If not found,
+       please install by:
        - for `wget`
          - MacOS Users: `brew install wget`
          - Ubuntu Users: `sudo apt-get install wget`
-       - for `realpath`
-         - MacOS Users: `brew install coreutils`
-         - Ubuntu Users: `sudo apt-get install coreutils`
 
 4. Setup dev environment for the frontend
    1. Install project dependencies `npm install`
