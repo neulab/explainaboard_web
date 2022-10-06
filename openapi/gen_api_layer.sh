@@ -13,10 +13,15 @@ OPENAPI_PATH="openapi"
 BACKEND_GEN_PATH="backend/src/gen"
 FRONTEND_GEN_PATH="frontend/src/clients/openapi"
 
+if ! [ `which curl` ]; then
+    echo "ERROR: curl not found. Please install curl command."
+    exit 1
+fi
+
 # download codegen cli if not exists
 cd $script_dir
 if [ ! -f swagger-codegen-cli-3.0.29.jar ]; then
-    wget --progress=dot:giga https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar -O swagger-codegen-cli-3.0.29.jar
+    curl -L -O https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar
 fi
 
 
