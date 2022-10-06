@@ -144,7 +144,7 @@ application. The frontend is built with React and the backend uses Flask.
         via a proxy.
       - Any code not in `impl` is generated. If you want to modify the generated code,
         you need to modify the mustache templates.
-   2. For details of the backend, please refer to `README.md` under `backend/`.
+   2. For details of the backend, please refer to [backend/README.md](backend/README.md).
 
 ## Project Structure
 
