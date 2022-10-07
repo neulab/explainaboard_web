@@ -77,7 +77,7 @@ jobs:
         with:
           python-version: 3.9
       - name: Install pre-commit
-         run: python -m pip install pre-commit
+        run: python -m pip install pre-commit
       - name: Install node 14.x
         uses: actions/setup-node@v2
         with:
