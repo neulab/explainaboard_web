@@ -48,6 +48,7 @@ def check_BearerAuth(token: str):
 
 class User:
     # keys for fields in self._info
+    _SUB_KEY = "sub"
     _USERNAME_KEY = "username"
     _EMAIL_KEY = "email"
     _API_KEY_KEY = "api_key"
@@ -63,6 +64,7 @@ class User:
         if self._is_authenticated:
             if not self._info:
                 raise ValueError("info is required to create an authenticated user")
+            self._info[self._SUB_KEY] = self._info.pop(CognitoClient.SUB_KEY)
             self._info[self._USERNAME_KEY] = self._info.pop(CognitoClient.USERNAME_KEY)
             self._info[self._API_KEY_KEY] = self._info.pop(
                 CognitoClient.API_KEY_KEY, None
@@ -72,7 +74,7 @@ class User:
         if not self._info.get(self._API_KEY_KEY) or not self._info.get(
             self._PREFERRED_USERNAME_KEY
         ):
-            user = CognitoClient().fetch_user_info(username=self.username)
+            user = CognitoClient().fetch_user_info(sub=self.sub)
             if not user:
                 raise Exception("user info not found")
             preferred_username = user[CognitoClient.PREFERRED_USERNAME_KEY]
@@ -84,10 +86,10 @@ class User:
             )
 
             """create a new user entry if not exists in DB"""
-            db_user = UserDBUtils.find_user(self.username)
+            db_user = UserDBUtils.find_user(self.sub)
             if db_user is None:
                 db_user = UserMetadataInDB(
-                    username=self.username, preferred_username=preferred_username
+                    sub=self.sub, preferred_username=preferred_username
                 )
                 UserDBUtils.create_user(db_user)
 
@@ -96,6 +98,10 @@ class User:
     @property
     def is_authenticated(self) -> bool:
         return self._is_authenticated
+
+    @property
+    def sub(self) -> str:
+        return self._info[self._SUB_KEY]
 
     @property
     def email(self) -> str:
@@ -119,7 +125,16 @@ def get_user() -> User:
 
 
 class CognitoClient:
-    # keys for fields in returned user_info
+    """
+    keys for fields in returned user_info
+    - sub: a unique identifier (UUID) for the authenticated user.
+    - username: a fixed value that identifies each user.
+    In our case, it has the same value as sub.
+    - custom:api_key: the api key of the user.
+    - preferred_username: a user name which users can change.
+    """
+
+    SUB_KEY = "sub"
     USERNAME_KEY = "cognito:username"
     API_KEY_KEY = "custom:api_key"
     PREFERRED_USERNAME_KEY = "preferred_username"
@@ -132,10 +147,10 @@ class CognitoClient:
         )
         self._user_pool_id = current_app.config.get("USER_POOL_ID")
 
-    def fetch_user_info(self, username: str | None = None, email: str | None = None):
-        if not username and not email:
+    def fetch_user_info(self, sub: str | None = None, email: str | None = None):
+        if not sub and not email:
             raise ValueError("no user ID provided")
-        filter = f'username="{username}"' if username else f'email="{email}"'
+        filter = f'sub="{sub}"' if sub else f'email="{email}"'
         users = self._client.list_users(
             UserPoolId=self._user_pool_id,
             Filter=filter,
@@ -144,7 +159,7 @@ class CognitoClient:
         if not users:
             return None
         if len(users) > 1:
-            raise RuntimeError(f"user ID {username or email} is not unique")
+            raise RuntimeError(f"user ID {sub or email} is not unique")
         user = {attr["Name"]: attr["Value"] for attr in users[0]["Attributes"]}
         user[self.USERNAME_KEY] = users[0]["Username"]
         if self.API_KEY_KEY not in user:
@@ -156,6 +171,7 @@ class CognitoClient:
     def update_user(self, username: str, attributes: dict):
         self._client.admin_update_user_attributes(
             UserPoolId=self._user_pool_id,
+            # Cognito only accepts username and not sub at the moment
             Username=username,
             UserAttributes=[{"Name": k, "Value": v} for k, v in attributes.items()],
         )
