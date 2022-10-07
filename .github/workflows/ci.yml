@@ -1,5 +1,5 @@
 name: Continuous Integration
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - main
@@ -80,3 +80,11 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: markdownlint-cli2 --all-files
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: yamllint --all-files

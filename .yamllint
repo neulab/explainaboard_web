@@ -1,0 +1,8 @@
+extends: default
+
+rules:
+  line-length:
+    max: 88
+  document-start: disable
+  truthy:
+    level: error
