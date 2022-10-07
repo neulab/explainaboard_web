@@ -82,10 +82,15 @@ jobs:
           node-version-file: 'frontend/.nvmrc'
       - name: Generate code from OpenAPI spec
         run: npm run gen-api-code
+      - name: Find Python code
+        id: find-python-code
+        run: |
+          FILES=`find backend -name '*.py' -print0`
+          echo "::set-output name=files::${FILES}"
       - name: mypy
         uses: pre-commit/action@v2.0.3
         with:
-          extra_args: mypy --files $(find backend -name '*.py')
+          extra_args: mypy --files ${{ steps.find-python-code.outputs.files }}
   markdownlint:
     runs-on: ubuntu-latest
     steps:
