@@ -62,7 +62,7 @@ class TestBenchmark(TestCase):
     def test_masakhaner_aggregate(self):
 
         json_file = os.path.join(TestBenchmark._config_path(), "masakhaner.json")
-        config = BenchmarkUtils.config_from_json_file(json_file)
+        config = BenchmarkUtils.config_dict_from_file(json_file)
 
         languages = [
             "bam",
@@ -109,7 +109,9 @@ class TestBenchmark(TestCase):
                 "score": all_f1s,
             }
         )
-        view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
+        view_dfs = BenchmarkUtils.generate_view_dataframes(
+            config, orig_df, by_creator=False
+        )
         mean_df = pd.DataFrame(
             {
                 "system_name": ["sys1", "sys2"],
@@ -138,6 +140,12 @@ class TestBenchmark(TestCase):
                 "score": [0.6, 0.7, 0.5, 0.9, 0.8, 0.0],
             }
         )
-        table = BenchmarkUtils.dataframe_to_table("my_view", orig_df)
+        plot_dict = {"my_view": []}
+        table = BenchmarkUtils.dataframe_to_table(
+            "my_view",
+            orig_df,
+            plot_dict,
+            "system_name",
+        )
         exp_scores = [[0.7, 0.8], [0.6, 0.9], [0.5, 0.0]]
         self.assertDeepAlmostEqual(exp_scores, table.scores)
