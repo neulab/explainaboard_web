@@ -34,7 +34,7 @@ application. The frontend is built with React and the backend uses Flask.
       reports vulnerabilities.
 5. Setup dev environment for the backend
    1. Install `python` version >= 3.9.7 and create a venv or conda environment for this project
-   2. `pip install -r backend/src/gen/requirements.txt`
+   2. `pip install -r backend/requirements.txt -r backend/src/gen/requirements.txt`
    3. Create `backend/src/impl/.env` to store all environment variables. An example has
       been provided in `.env.example`. Contact the dev team to get the credentials for
       dev and prod environments.
