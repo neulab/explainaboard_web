@@ -19,8 +19,9 @@ application. The frontend is built with React and the backend uses Flask.
    - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use
      `nvm` to manage node versions. Run `nvm install` to install node and npm.
 
-2. Make sure `java` is installed correctly in your environment. Verify this by running
-   `java --version`.
+2. Install `java`. Verify that `java` is installed correctly in your environment by
+   running `java --version`.
+
 3. Generate code for API layer
 
    - Run `npm run gen-api-code` to generate code for api layer (both server and client).
