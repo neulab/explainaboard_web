@@ -58,8 +58,10 @@ application. The frontend is built with React and the backend uses Flask.
   changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
 - The frontend and backend dependencies must be reinstalled whenever the associated
   dependency files are changed, including `package.json`, `frontend/package.json`,
-  `backend/src/gen/requirements.txt` (generated from
-  `backend/templates/requirements.mustache`).
+  `backend/requirements.txt`, `backend/src/gen/requirements.txt` (generated from
+  `backend/templates/requirements.mustache`). `backend/requirements.txt` is the main
+  requirements file to manage application specific dependencies.
+
 - ExplainaBoard API client release depends on the API defined in `openapi.yaml`. If
   `openapi.yaml` is changed, remember to bump up the openapi version `0.2.x` as well.
 
@@ -169,6 +171,7 @@ application. The frontend is built with React and the backend uses Flask.
 
 - backend
    - templates # mustache templates to generate template code
+   - requirements.txt
    - src
       - gen # template code generated with openapi, code in this folder should not be
             # modified manually
