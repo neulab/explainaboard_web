@@ -1,0 +1,15 @@
+apache-beam>=2.38.0
+boto3==1.24.68
+pymongo[srv]
+Flask-PyMongo
+python-dotenv
+pyjwt[crypto] == 2.3.0
+explainaboard == 0.11.1
+en_core_web_sm@https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.2.0/en_core_web_sm-3.2.0-py3-none-any.whl
+pre-commit
+marisa_trie
+sacrebleu[ja]
+six
+pandas
+iso-639
+google-cloud-storage==2.5.0

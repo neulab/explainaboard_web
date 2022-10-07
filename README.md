@@ -19,8 +19,9 @@ application. The frontend is built with React and the backend uses Flask.
    - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use
      `nvm` to manage node versions. Run `nvm install` to install node and npm.
 
-2. Make sure `java` is installed correctly in your environment. Verify this by running
-   `java --version`.
+2. Install `java`. Verify that `java` is installed correctly in your environment by
+   running `java --version`.
+
 3. Generate code for API layer
 
    - Run `npm run gen-api-code` to generate code for api layer (both server and client).
@@ -28,12 +29,12 @@ application. The frontend is built with React and the backend uses Flask.
 
 4. Setup dev environment for the frontend
    1. Install project dependencies `npm install`
-   2. Install frontend dependencies `npm --prefix frontend install`
-      - Check the FAQ section if `npm` said there are vulnerabilities to verify if they
-        are false alarms.
+   2. Install frontend dependencies `npm --prefix frontend install`. See
+      [FAQ](#npm-install---prefix-frontend-says-we-have-x-vulnerabilities) when `npm`
+      reports vulnerabilities.
 5. Setup dev environment for the backend
    1. Install `python` version >= 3.9.7 and create a venv or conda environment for this project
-   2. `pip install -r backend/src/gen/requirements.txt`
+   2. `pip install -r backend/requirements.txt -r backend/src/gen/requirements.txt`
    3. Create `backend/src/impl/.env` to store all environment variables. An example has
       been provided in `.env.example`. Contact the dev team to get the credentials for
       dev and prod environments.
@@ -58,8 +59,10 @@ application. The frontend is built with React and the backend uses Flask.
   changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
 - The frontend and backend dependencies must be reinstalled whenever the associated
   dependency files are changed, including `package.json`, `frontend/package.json`,
-  `backend/src/gen/requirements.txt` (generated from
-  `backend/templates/requirements.mustache`).
+  `backend/requirements.txt`, `backend/src/gen/requirements.txt` (generated from
+  `backend/templates/requirements.mustache`). `backend/requirements.txt` is the main
+  requirements file to manage application specific dependencies.
+
 - ExplainaBoard API client release depends on the API defined in `openapi.yaml`. If
   `openapi.yaml` is changed, remember to bump up the openapi version `0.2.x` as well.
 
@@ -169,6 +172,7 @@ application. The frontend is built with React and the backend uses Flask.
 
 - backend
    - templates # mustache templates to generate template code
+   - requirements.txt
    - src
       - gen # template code generated with openapi, code in this folder should not be
             # modified manually
