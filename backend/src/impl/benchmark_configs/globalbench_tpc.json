@@ -7,6 +7,6 @@
     "type": "standard",
     "metrics": [{"name": "Accuracy"}],
     "system_query": {
-        "task": "text-pair-classification"
+        "task_name": "text-pair-classification"
     }
 }
