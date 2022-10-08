@@ -9,8 +9,7 @@ interface Props {
   systemID: string;
   task: string;
   cases: AnalysisCase[];
-  page: number;
-  setPage: React.Dispatch<React.SetStateAction<number>>;
+  changeState: (newState: PageState) => void;
 }
 
 function renderColInfo(
@@ -109,7 +108,7 @@ function specifyDataSeqLab(
 
     for (let i = 0; i < systemOutputs.length; i++) {
       // Get the outputs from the bucket case
-      const origToks = systemOutputs[i][cases[i]["orig_str"]];
+      const origToks = systemOutputs[i]["tokens"];
       let sentence = origToks;
       const pos = cases[i]["token_span"];
       if (Array.isArray(origToks)) {
@@ -156,16 +155,21 @@ function specifyDataSeqLab(
   return dataSource;
 }
 
-export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
-  const [pageState, setPageState] = useState(PageState.loading);
+export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
+  const [page, setPage] = useState(0);
+
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
   const total = cases.length;
   const tableRef = useRef<null | HTMLDivElement>(null);
 
   useEffect(() => {
+    setPage(0);
+  }, [cases]);
+
+  useEffect(() => {
     async function refreshSystemOutputs() {
-      setPageState(PageState.loading);
+      changeState(PageState.loading);
       try {
         const offset = page * pageSize;
         const end = Math.min(offset + pageSize, cases.length);
@@ -185,7 +189,7 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
           }
         }
       } finally {
-        setPageState(PageState.success);
+        changeState(PageState.success);
         /* 
         The table after the 1st scroll may be incomplete as the async API call
         is not finished. If we stop there, the bottom portion of the examples will
@@ -202,7 +206,7 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [systemID, page, pageSize, cases]);
+  }, [systemID, page, pageSize, cases, changeState]);
 
   // other fields
   if (systemOutputs.length === 0) {
@@ -257,7 +261,6 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
       ref={tableRef}
       columns={columns}
       dataSource={dataSource}
-      loading={pageState === PageState.loading}
       rowKey="id"
       size="small"
       pagination={{
@@ -267,9 +270,7 @@ export function AnalysisTable({ systemID, task, cases, page, setPage }: Props) {
         pageSize,
         // conversion between 0-based and 1-based index
         current: page + 1,
-        onChange: (newPage, newPageSize) => {
-          setPage(newPage - 1);
-        },
+        onChange: (newPage) => setPage(newPage - 1),
       }}
       scroll={{ y: 550, x: "max-content", scrollToFirstRowOnChange: true }}
     />

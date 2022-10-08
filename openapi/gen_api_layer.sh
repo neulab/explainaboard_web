@@ -6,17 +6,22 @@ set -e
 
 # three modes: generate frontend only, backend only and both
 mode=$1
-script_dir=`dirname "$(realpath $0)"`
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 project_root=`dirname $script_dir`
 
 OPENAPI_PATH="openapi"
 BACKEND_GEN_PATH="backend/src/gen"
 FRONTEND_GEN_PATH="frontend/src/clients/openapi"
 
+if ! [ `which curl` ]; then
+    echo "ERROR: curl not found. Please install curl command."
+    exit 1
+fi
+
 # download codegen cli if not exists
 cd $script_dir
 if [ ! -f swagger-codegen-cli-3.0.29.jar ]; then
-    wget https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar -O swagger-codegen-cli-3.0.29.jar
+    curl -L -O https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar
 fi
 
 

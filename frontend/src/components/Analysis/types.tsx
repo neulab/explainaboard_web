@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { AnalysisCase, Performance } from "../../clients/openapi";
+import { AnalysisCase, Performance, ComboCount } from "../../clients/openapi";
 
 export interface ResultFineGrainedParsed {
   /**
@@ -22,23 +22,12 @@ export interface ResultFineGrainedParsed {
   numbersOfSamples: number[];
   // performances[i]: performance (value/confidence) for bucket i
   performances: Performance[];
+  // Used by combo count analyses
+  comboCounts: ComboCount[];
   // levelName: is the level that this result belongs to
   levelName: string;
   // cases[i][j]: is the index of the ith bucket's jth example
   cases: number[][];
-}
-
-// Examples to be shown in the analysis table when a bar is clicked
-export interface ActiveSystemExamples {
-  // invariant information across systems
-  // but depends on which bar or graph is clicked.
-  title: string;
-  barIndex: number;
-
-  // system-dependent information across systems
-  systemIndex: number;
-  // bucket of analysis cases
-  bucketOfCasesList: AnalysisCase[][];
 }
 
 export interface SystemInfoFeatureBucketInfo {

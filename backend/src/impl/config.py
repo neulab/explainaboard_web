@@ -14,6 +14,11 @@ class Config:
         self.AWS_SECRET_ACCESS_KEY = os.environ["AWS_SECRET_ACCESS_KEY"]
         self.AWS_DEFAULT_REGION = os.environ["AWS_DEFAULT_REGION"]
 
+        self.STORAGE_BUCKET_NAME = os.environ["STORAGE_BUCKET_NAME"]
+
+        # used for ECS environment only
+        self.GCP_SERVICE_CREDENTIALS = os.environ.get("GCP_SERVICE_CREDENTIALS")
+
 
 class LocalDevelopmentConfig(Config):
     def __init__(self) -> None:

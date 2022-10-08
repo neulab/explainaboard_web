@@ -190,6 +190,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
     // set to true so analysis is performed next time when drawer is opened
     setShouldUpdateAnalysis(true);
     closeDrawer();
+    setSystemAnalysesReturn(undefined);
     setPageState(PageState.loading);
     setFeatureNameToBucketInfo({});
     setBucketInfoUpdated(false);

@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.4"
+  version: "0.2.5"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -36,7 +36,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TaskCategory"
-  
+
   /languagecodes:
     get:
       summary: Return all language codes
@@ -51,7 +51,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/LanguageCode"
-  
+
   /benchmarkconfigs:
     get:
       summary: Returns all benchmark configs matching the specification
@@ -79,7 +79,7 @@ paths:
       summary: Returns benchmark metadata by id
       operationId: benchmarkGetById
       security: []
-      description: Returns benchmark metadata by id. 
+      description: Returns benchmark metadata by id.
       parameters:
         - in: path
           name: benchmark_id
@@ -87,12 +87,12 @@ paths:
           schema:
             type: string
           required: true
-        - in: query 
-          name: by_creator 
-          example: True 
-          schema: 
-            type: boolean 
-          required: true 
+        - in: query
+          name: by_creator
+          example: true
+          schema:
+            type: boolean
+          required: true
       responses:
         "200":
           description: OK
@@ -106,14 +106,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/APIError"
-          
+
 
   /datasets/{dataset_id}:
     get:
       summary: Returns dataset metadata by id
       operationId: datasetsGetById
       security: []
-      description: Returns dataset metadata by id. id is the DB id so it is mostly used internally. See datasets MGet endpoints for general use.
+      description: |
+        Returns dataset metadata by id. id is the DB id so it is mostly used internally.
+        See datasets MGet endpoints for general use.
       parameters:
         - in: path
           name: dataset_id
@@ -140,7 +142,9 @@ paths:
       summary: Returns a list of datasets
       operationId: datasetsGet
       security: []
-      description: Returns a list of datasets. Returns empty list if current page is empty. Returns `total=0` if no match datasets.
+      description: |
+        Returns a list of datasets. Returns empty list if current page is empty.
+        Returns `total=0` if no match datasets.
       parameters:
         - in: query
           name: dataset_ids
@@ -185,13 +189,7 @@ paths:
     get:
       summary: Returns system metadata info by id
       operationId: systemsGetById
-      description: "Returns a system_metadata by id. id is the DB id so it is mostly used internally.
-      If with_user_info is set to true and the user has permssion, the returned system_metadata will 
-      contain user information such as shared users."
-      security:
-        - ApiKeyAuth: []
-        - BearerAuth: []
-        - {}
+      description: Returns a system_metadata by id. id is the DB id so it is mostly used internally.
       parameters:
         - in: path
           name: system_id
@@ -369,9 +367,9 @@ paths:
       operationId: systemOutputsGetById
       description: This will fail if the user doesn't have permissions for that system.
       security:
-        - ApiKeyAuth: [ ]
-        - BearerAuth: [ ]
-        - { }
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       parameters:
         - in: path
           name: system_id
@@ -404,9 +402,9 @@ paths:
       operationId: systemCasesGetById
       description: This will fail if the user doesn't have permissions for that system.
       security:
-        - ApiKeyAuth: [ ]
-        - BearerAuth: [ ]
-        - { }
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       parameters:
         - in: path
           name: system_id
@@ -490,7 +488,9 @@ paths:
 
   /info:
     get:
-      summary: information for environment identifier, backend version, login URL, etc. (not intent for public users)
+      summary: |
+        information for environment identifier, backend version, login URL, etc.
+        (not intent for public users)
       operationId: infoGet
       security: []
       responses:
@@ -638,10 +638,10 @@ components:
           type: string
         source_language:
           type: string
-          nullable: True
+          nullable: true
         target_language:
           type: string
-          nullable: True
+          nullable: true
         cls_name:
           type: string
       additionalProperties: true
@@ -663,7 +663,8 @@ components:
       required: [dtype, cls_name]
 
     SystemInfo:
-      description: Information about a system output, used in SDK's fine-grained analysis
+      description: |
+        Information about a system output, used in SDK's fine-grained analysis
       type: object
       properties:
         task_name:
@@ -693,7 +694,7 @@ components:
           type: number
         system_details:
           type: object
-          nullable: True
+          nullable: true
         analysis_levels:
           type: array
           items:
@@ -863,7 +864,7 @@ components:
       properties:
         is_private:
           type: boolean
-          default: True
+          default: true
         shared_users:
           type: array
           items:
@@ -964,9 +965,12 @@ components:
               required: [dataset_id, dataset_name, tasks]
             system_details:
               type: object
-              description: a place to store arbitrary system details you want to remember
+              description: |
+                a place to store arbitrary system details you want to remember
             metric_stats:
-              description: An array of sufficient statistics for each metric, used in SDK's fine-grained analysis
+              description: |
+                An array of sufficient statistics for each metric, used in SDK's
+                fine-grained analysis
               type: array
               items:
                 type: array
@@ -1135,8 +1139,6 @@ components:
             $ref: "#/components/schemas/AnalysisResult"
       required: [analysis_results]
 
-
-
     SystemAnalysesReturn:
       type: object
       properties:
@@ -1149,7 +1151,6 @@ components:
           items:
             $ref: "#/components/schemas/SignificanceTestInfo"
       required: [system_analyses]
-
 
     Performance:
       type: object
@@ -1165,6 +1166,22 @@ components:
           type: number
           nullable: true
       required: [metric_name, value]
+
+    ComboCount:
+      type: object
+      properties:
+        bucket:
+          type: array
+          items:
+            type: string
+        count:
+          type: number
+        samples:
+          type: array
+          items:
+            type: integer
+      required: [bucket, count, samples]
+
 
     AnalysisCase:
       type: object
@@ -1228,7 +1245,8 @@ components:
           type: string
         type:
           type: string
-          description: "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+          description: |
+            "could be 'abstract' to indicate this doesn't fully specify a benchmark"
         parent:
           type: string
           description: "a parent benchmark that this benchmark inherits config from"
@@ -1240,10 +1258,10 @@ components:
         contact:
           type: string
         homepage:
-          type: string          
+          type: string
         paper:
-          type: object 
-          $ref: "#/components/schemas/Paper"                     
+          type: object
+          $ref: "#/components/schemas/Paper"
         metrics:
           type: array
           items:
@@ -1305,12 +1323,12 @@ components:
             items:
               type: number
         plot_y_values:
-          type: array 
+          type: array
           items:
             type: number
-        plot_x_values: 
-          type: array 
-          items: 
+        plot_x_values:
+          type: array
+          items:
             type: string
       required: [name, system_names, column_names, scores, plot_y_values, plot_x_values]
 
@@ -1323,8 +1341,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BenchmarkTableData"
-        time: 
-          type: string 
+        time:
+          type: string
       required: [config]
 
     Paper:
