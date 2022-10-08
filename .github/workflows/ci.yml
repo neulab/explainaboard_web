@@ -19,6 +19,13 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version-file: 'frontend/.nvmrc'
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            frontend/node_modules
+          key: node-${{ hashFiles('.nvmrc', 'package-lock.json', 'frontend/package-lock.json') }}
       - name: Install node components
         run: |
           npm run gen-api-code
