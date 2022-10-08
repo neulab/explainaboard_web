@@ -290,7 +290,7 @@ paths:
           name: creator
           schema:
             type: string
-            description: sub of the creator
+            description: id of the creator
         - in: query
           name: shared_users
           schema:
@@ -487,7 +487,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserMetadataInCognito"
+                $ref: "#/components/schemas/UserMetadata"
 
 components:
   securitySchemes:
@@ -1292,30 +1292,27 @@ components:
           type: string
       required: [title, url]
 
-    UserMetadataInCognito:
-      type: object
-      properties:
-        sub:
-          description: a unique identifier (UUID) for the authenticated user. 
-        username:
-          description: a fixed value that identifies each user. In our case, it has the same value as sub.
-          type: string
-        email:
-          type: string
-        preferred_username:
-          description: a user name which users can change.
-          type: string
-        api_key:
-          type: string
-      required: [sub, username, email, preferred_username, api_key]
-
     UserMetadataInDB:
       type: object
       properties:
-        sub:
-          description: identical to the sub in Cognito. Used as the creator name of a system
+        id:
+          description: identical to the sub in Cognito, which is a unique identifier for the authenticated user.
           type: string
         preferred_username:
-          description: identical to the preferred_username in Cognito. Used as the displayed name of a system
+          description: identical to the preferred_username in Cognito.
           type: string
-      required: [sub, preferred_username]
+      required: [id, preferred_username]
+
+    UserMetadata:
+      allOf:
+        - type: object
+        - properties:
+            username:
+              description: a fixed value identifying each user. In our case, it has the same value as id.
+              type: string
+            email:
+              type: string
+            api_key:
+              type: string
+          required: [id, preferred_username, username, email, api_key]
+        - $ref: "#/components/schemas/UserMetadataInDB"

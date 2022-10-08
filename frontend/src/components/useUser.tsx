@@ -8,7 +8,7 @@ import React, {
 import { backendClient, refreshBackendClient } from "../clients";
 import { useEnv } from ".";
 import { useHistory } from "react-router-dom";
-import { UserMetadataInCognito } from "../clients/openapi";
+import { UserMetadata } from "../clients/openapi";
 
 export enum LoginState {
   yes = "yes",
@@ -17,7 +17,7 @@ export enum LoginState {
   loading = "loading",
 }
 interface IUserContext {
-  userInfo?: UserMetadataInCognito;
+  userInfo?: UserMetadata;
   jwt: string | null;
   login: () => void;
   logout: () => void;
@@ -35,7 +35,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
 
   const [jwt, setJwt] = useState(initJWT());
   const [state, setState] = useState(LoginState.loading);
-  const [userInfo, setUserInfo] = useState<UserMetadataInCognito>();
+  const [userInfo, setUserInfo] = useState<UserMetadata>();
 
   function initJWT() {
     const savedToken = localStorage.getItem(jwtKey);

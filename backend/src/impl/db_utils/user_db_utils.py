@@ -6,8 +6,8 @@ class UserDBUtils:
     @staticmethod
     def create_user(user: UserMetadataInDB) -> UserMetadataInDB:
         doc = user.to_dict()
-        doc["_id"] = doc["sub"]
-        doc.pop("sub")
+        doc["_id"] = doc["id"]
+        doc.pop("id")
         DBUtils.insert_one(DBUtils.USER_METADATA, doc)
         return user
 
@@ -16,28 +16,28 @@ class UserDBUtils:
         docs = []
         for user in users:
             doc = user.to_dict()
-            doc["_id"] = doc["sub"]
-            doc.pop("sub")
+            doc["_id"] = doc["id"]
+            doc.pop("id")
             docs.append(doc)
         DBUtils.insert_many(DBUtils.USER_METADATA, docs)
         return users
 
     @staticmethod
-    def find_user(sub: str) -> UserMetadataInDB | None:
-        doc = DBUtils.find_one_by_id(DBUtils.USER_METADATA, sub)
+    def find_user(id: str) -> UserMetadataInDB | None:
+        doc = DBUtils.find_one_by_id(DBUtils.USER_METADATA, id)
         if doc is not None:
-            doc["sub"] = doc["_id"]
+            doc["id"] = doc["_id"]
             return UserMetadataInDB.from_dict(doc)
         return None
 
     @staticmethod
-    def find_users(subs: list[str]) -> list[UserMetadataInDB]:
-        filt = {"_id": {"$in": subs}}
+    def find_users(ids: list[str]) -> list[UserMetadataInDB]:
+        filt = {"_id": {"$in": ids}}
         cursor, _ = DBUtils.find(DBUtils.USER_METADATA, filt=filt)
 
         users = []
         for doc in cursor:
-            doc["sub"] = doc["_id"]
+            doc["id"] = doc["_id"]
             users.append(UserMetadataInDB.from_dict(doc))
 
         return users

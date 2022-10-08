@@ -126,7 +126,7 @@ class SystemDBUtils:
         permissions_list = [{"is_private": False}]
         if get_user().is_authenticated:
             user = get_user()
-            permissions_list.append({"creator": user.sub})
+            permissions_list.append({"creator": user.id})
             permissions_list.append({"shared_users": user.email})
         permission_query = {"$or": permissions_list}
 
@@ -157,13 +157,13 @@ class SystemDBUtils:
                 dataset_dict[dataset.dataset_id] = dataset
 
         # query preferred_usernames in batch to make it more efficient
-        subs = set(doc["creator"] for doc in documents)
-        users = UserDBUtils.find_users(list(subs))
-        if len(users) < len(subs):
+        ids = set(doc["creator"] for doc in documents)
+        users = UserDBUtils.find_users(list(ids))
+        if len(users) < len(ids):
             abort_with_error_message(
                 500, "system creator not found in DB, please contact the system admins"
             )
-        sub_to_preferred = {user.sub: user.preferred_username for user in users}
+        id_to_preferred = {user.id: user.preferred_username for user in users}
 
         for doc in documents:
             if not include_datasets or "dataset_metadata_id" not in doc:
@@ -179,7 +179,7 @@ class SystemDBUtils:
                     }
                 doc.pop("dataset_metadata_id")
             doc["system_id"] = doc.pop("_id")
-            doc["preferred_username"] = sub_to_preferred[doc["creator"]]
+            doc["preferred_username"] = id_to_preferred[doc["creator"]]
             system = SystemDBUtils.system_from_dict(
                 doc, include_metric_stats=include_metric_stats
             )
@@ -383,7 +383,7 @@ class SystemDBUtils:
 
         # -- set the creator
         user = get_user()
-        system.creator = user.sub
+        system.creator = user.id
 
         # -- set the preferred_username to conform with the return schema
         system.preferred_username = user.preferred_username
@@ -578,7 +578,7 @@ class SystemDBUtils:
         def db_operations(session: ClientSession) -> bool:
             """TODO: add logging if error"""
             sys = SystemDBUtils.find_system_by_id(system_id)
-            if sys.creator != user.sub:
+            if sys.creator != user.id:
                 abort_with_error_message(403, "you can only delete your own systems")
             result = DBUtils.delete_one_by_id(
                 DBUtils.DEV_SYSTEM_METADATA, system_id, session=session
