@@ -1,5 +1,5 @@
 name: Continuous Integration
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches:
       - main
@@ -19,6 +19,15 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version-file: 'frontend/.nvmrc'
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            frontend/node_modules
+          # yamllint disable rule:line-length
+          key: node-${{ hashFiles('.nvmrc', 'package-lock.json', 'frontend/package-lock.json') }}
+          # yamllint enable
       - name: Install node components
         run: |
           npm run gen-api-code
@@ -100,3 +109,11 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: markdownlint-cli2 --all-files
+  yamllint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: yamllint --all-files
