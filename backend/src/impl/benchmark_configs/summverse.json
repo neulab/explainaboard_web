@@ -6,7 +6,7 @@
   "homepage": null,
   "paper": {
       "title": "Summverse",
-      "url": null
+      "url": ""
   },
   "description": "Benchmark Summarization Task",
   "logo": "https://explainaboard.s3.amazonaws.com/benchmarks/figures/sumverse.png",
