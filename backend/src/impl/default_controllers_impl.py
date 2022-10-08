@@ -61,9 +61,19 @@ def _is_shared_user(system: System, user: User) -> bool:
     return system.shared_users and user.email in system.shared_users
 
 
-def _has_read_access(system: System, user: User) -> bool:
-    """check if a user has read access of a system"""
-    return _is_creator(system, user) or _is_shared_user(system, user)
+def _has_write_access(system: System) -> bool:
+    """check if the current user has write access of a system"""
+    user = get_user()
+    return user.is_authenticated and _is_creator(system, user)
+
+
+def _has_read_access(system: System) -> bool:
+    """check if the current user has read access of a system"""
+    user = get_user()
+    return not system.is_private or (
+        user.is_authenticated
+        and (_is_creator(system, user) or _is_shared_user(system, user))
+    )
 
 
 """ /info """
@@ -238,26 +248,9 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
 
 def systems_get_by_id(system_id: str) -> System:
     system = SystemDBUtils.find_system_by_id(system_id)
-    user = get_user()
-    if system.is_private:
-        if user.is_authenticated:
-            if _is_creator(system, user):
-                return system
-            elif _is_shared_user(system, user):
-                # must be creator to see shared_users
-                system.shared_users = None
-                return system
-            else:
-                abort_with_error_message(403, "system access denied", 40302)
-        else:
-            abort_with_error_message(403, "system access denied", 40302)
-    else:
-        if user.is_authenticated and _is_creator(system, user):
-            return system
-        else:
-            # must be creator to see shared_users
-            system.shared_users = None
-            return system
+    if not _has_read_access(system):
+        abort_with_error_message(403, "system access denied", 40302)
+    return system
 
 
 def systems_get(
@@ -333,9 +326,7 @@ def systems_post(body: SystemCreateProps) -> System:
 
 def systems_update_by_id(body: SystemUpdateProps, system_id: str):
     system = SystemDBUtils.find_system_by_id(system_id)
-    user = get_user()
-    has_access = user.is_authenticated and _is_creator(system, user)
-    if not has_access:
+    if not _has_write_access(system):
         abort_with_error_message(403, "system update denied", 40303)
 
     success = SystemDBUtils.update_system_by_id(system_id, body.metadata)
@@ -351,9 +342,7 @@ def system_outputs_get_by_id(
     TODO: return special error/warning if some ids cannot be found
     """
     system = SystemDBUtils.find_system_by_id(system_id)
-    user = get_user()
-    has_access = user.is_authenticated and _has_read_access(system, user)
-    if system.is_private and not has_access:
+    if not _has_read_access(system):
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(
@@ -378,9 +367,7 @@ def system_cases_get_by_id(
     TODO: return special error/warning if some ids cannot be found
     """
     system = SystemDBUtils.find_system_by_id(system_id)
-    user = get_user()
-    has_access = user.is_authenticated and _has_read_access(system, user)
-    if system.is_private and not has_access:
+    if not _has_read_access(system):
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(

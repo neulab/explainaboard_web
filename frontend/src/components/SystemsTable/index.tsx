@@ -59,7 +59,12 @@ export function SystemsTable({
   const [systemIDToEdit, setSystemIDToEdit] = useState<string>("");
 
   const { state: loginState, userInfo } = useUser();
+
   const userEmail = userInfo?.email;
+  const systemsToEdit = systems.filter(
+    (sys) => systemIDToEdit === sys.system_id
+  );
+  const systemToEdit = systemsToEdit.length < 1 ? undefined : systemsToEdit[0];
 
   /** generate metrics options list */
   function getMetricsNames() {
@@ -192,7 +197,6 @@ export function SystemsTable({
         setActiveSystemIDs={setActiveSystemIDs}
       />
       <SystemTableContent
-        creator={userEmail}
         systems={systems}
         page={page}
         total={total}
@@ -216,7 +220,7 @@ export function SystemsTable({
         closeDrawer={() => setActiveSystemIDs([])}
       />
       <SystemSubmitDrawer
-        systemIDToEdit={systemIDToEdit}
+        systemToEdit={systemToEdit}
         visible={submitDrawerVisible}
         onClose={() => {
           setSystemIDToEdit("");

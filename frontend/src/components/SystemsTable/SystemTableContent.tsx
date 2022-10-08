@@ -13,14 +13,12 @@ import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
-import { PrivateIcon } from "..";
+import { PrivateIcon, useUser } from "..";
 import { generateLeaderboardURL } from "../../utils";
 import { getOverallMap } from "../Analysis/utils";
 const { Text } = Typography;
 
 interface Props {
-  /* creator is the current user's creator name */
-  creator: string | undefined;
   systems: SystemModel[];
   total: number;
   pageSize: number;
@@ -36,7 +34,6 @@ interface Props {
 }
 
 export function SystemTableContent({
-  creator,
   systems,
   page,
   total,
@@ -49,6 +46,7 @@ export function SystemTableContent({
   setActiveSystemIDs,
   showEditDrawer,
 }: Props) {
+  const { userInfo } = useUser();
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
     render: (_, record) =>
@@ -176,7 +174,7 @@ export function SystemTableContent({
       fixed: "right",
       width: 90,
       render: (_, record) => {
-        const notCreator = record.creator !== creator;
+        const notCreator = record.creator !== userInfo?.email;
         return (
           <Space size="small" direction="vertical">
             <Space size="small">

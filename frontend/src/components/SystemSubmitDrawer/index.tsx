@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Button,
   Drawer,
@@ -27,11 +27,12 @@ import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
 import ReactGA from "react-ga4";
+import { SystemModel } from "../../models";
 
 const { TextArea } = Input;
 
 interface Props extends DrawerProps {
-  systemIDToEdit: string;
+  systemToEdit: SystemModel | undefined;
   onClose: () => void;
   visible: boolean;
 }
@@ -54,63 +55,42 @@ export function SystemSubmitDrawer(props: Props) {
   const [languageCodes, setLanguageCodes] = useState<LanguageCode[]>([]);
   const [datasetOptions, setDatasetOptions] = useState<DatasetMetadata[]>([]);
   const [useCustomDataset, setUseCustomDataset] = useState(false);
-  const [systemToEdit, setSystemToEdit] = useState<System | undefined>(
-    undefined
-  );
-  const [resetForm, setResetForm] = useState<boolean>();
   const [otherSourceLang, setOtherSourceLang] = useState(false);
   const [otherTargetLang, setOtherTargetLang] = useState(false);
 
   const [form] = useForm<FormData>();
-  const { systemIDToEdit, onClose, ...rest } = props;
-  const editMode = systemIDToEdit !== "";
+  const { systemToEdit, onClose, ...rest } = props;
+  const editMode = systemToEdit !== undefined;
+
+  const resetAllFormFields = useCallback(() => {
+    form.resetFields([
+      "name",
+      "task",
+      "dataset",
+      "sys_out_file",
+      "custom_dataset_file",
+      "metric_names",
+      "is_private",
+      "source_language",
+      "target_language",
+      "shared_users",
+      "system_details",
+    ]);
+  }, [form]);
 
   useEffect(() => {
-    function resetAllFormFields() {
-      form.resetFields([
-        "name",
-        "task",
-        "dataset",
-        "sys_out_file",
-        "custom_dataset_file",
-        "metric_names",
-        "is_private",
-        "source_language",
-        "target_language",
-        "shared_users",
-        "system_details",
-      ]);
-    }
     async function fetchTasks() {
+      setState(State.loading);
       setTaskCategories(await backendClient.tasksGet());
       setLanguageCodes(await backendClient.languageCodesGet());
       setState(State.other);
     }
-    async function getSystemToEditByID(systemID: string) {
-      setState(State.loading);
-      try {
-        const system = await backendClient.systemsGetById(systemID);
-        setSystemToEdit(system);
-      } catch (e) {
-        if (e instanceof Response) {
-          message.error((await parseBackendError(e)).getErrorMsg());
-          onClose();
-        }
-      } finally {
-        resetAllFormFields();
-        setState(State.other);
-      }
-    }
-    if (resetForm) {
-      resetAllFormFields();
-      setResetForm(false);
-    }
+
     if (!editMode) {
       fetchTasks();
-    } else {
-      getSystemToEditByID(systemIDToEdit);
     }
-  }, [systemIDToEdit, editMode, resetForm, form, onClose]);
+    resetAllFormFields();
+  }, [editMode, resetAllFormFields]);
 
   const selectedTaskName = form.getFieldValue("task");
   const selectedTask = findTask(taskCategories, selectedTaskName);
@@ -185,13 +165,15 @@ export function SystemSubmitDrawer(props: Props) {
               system_details: { __TO_PARSE__: system_details },
             },
           },
-          systemIDToEdit
+          systemToEdit.system_id
         );
         ReactGA.event({
           category: "System",
           action: `system_update_success`,
         });
-        message.success(`Successfully updated system (${systemIDToEdit}).`);
+        message.success(
+          `Successfully updated system (${systemToEdit.system_id}).`
+        );
       } else {
         source_language =
           source_language === "other"
@@ -277,8 +259,7 @@ export function SystemSubmitDrawer(props: Props) {
       }
     } finally {
       setState(State.other);
-      setResetForm(true);
-      setSystemToEdit(undefined);
+      resetAllFormFields();
     }
   }
 
@@ -409,10 +390,6 @@ export function SystemSubmitDrawer(props: Props) {
       title={editMode ? "Edit System" : "New System"}
       footer={footer}
       onClose={() => {
-        if (editMode) {
-          setResetForm(true);
-          setSystemToEdit(undefined);
-        }
         onClose();
       }}
       {...rest}
