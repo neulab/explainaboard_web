@@ -5,6 +5,7 @@ import { AnalysisTable } from "../AnalysisTable";
 import { AnalysisCase } from "../../../clients/openapi";
 import { PageState } from "../../../utils";
 
+import { multiSystemExampleTableSupportedTasks } from "../AnalysisTable/supportedTasks";
 interface Props {
   /** title of the table */
   title: string;
@@ -25,13 +26,6 @@ export function ExampleTable({
   onActiveSystemIndexChange,
   changeState,
 }: Props) {
-  const multiSystemExampleTableSupportedTasks = [
-    "machine-translation",
-    "summarization",
-    "conditional_generation",
-    "text-classification",
-    "text-pair-classification",
-  ];
   let exampleTable: React.ReactNode;
   const systemIDs = useMemo(
     () => systems.map((system) => system.system_id),
@@ -41,6 +35,10 @@ export function ExampleTable({
     () => systems.map((system) => system.system_info.system_name),
     [systems]
   );
+  const systemIDsArray = useMemo(
+    () => systems.map((system) => [system.system_id]),
+    [systems]
+  );
 
   if (systems.length !== cases.length) {
     console.error(
@@ -48,7 +46,6 @@ export function ExampleTable({
     );
     exampleTable = <Result status="error" title="Failed to show examples." />;
   } else if (multiSystemExampleTableSupportedTasks.includes(task)) {
-    console.log("inside multiSystemExampleTableSupportedTasks");
     // TODO(noel): need to expand for every task
     exampleTable = (
       <AnalysisTable
@@ -85,7 +82,7 @@ export function ExampleTable({
                 key={`${sysIndex}`}
               >
                 <AnalysisTable
-                  systemIDs={[system.system_id]}
+                  systemIDs={systemIDsArray[sysIndex]}
                   systemNames={[system.system_info.system_name]}
                   task={task}
                   cases={cases[sysIndex]}

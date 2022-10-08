@@ -4,53 +4,17 @@ import { ColumnsType } from "antd/lib/table";
 import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
+import {
+  multiSystemExampleTableSupportedTasks,
+  colInfoForTasks,
+  predictionColForTasks,
+} from "../AnalysisTable/supportedTasks";
 
-const condgenTasks = [
-  "machine-translation",
-  "summarization",
-  "conditional_generation",
-];
-const seqLabTasks = [
+export const seqLabTasks = [
   "named-entity-recognition",
   "chunking",
   "word-segmentation",
 ];
-
-/**  Defined Column Info for partial tasks (machine-translation,
- * summarization, conditional_generation, text-classification,
- * text-pair-classification) */
-const colInfoForTasks = new Map();
-for (const t of condgenTasks) {
-  colInfoForTasks.set(t, [
-    { id: "source", name: "Source", maxWidth: "500px" },
-    { id: "reference", name: "Reference", maxWidth: "500px" },
-  ]);
-}
-colInfoForTasks.set("text-classification", [
-  { id: "text", name: "Text", maxWidth: "400px" },
-  { id: "true_label", name: "True Label" },
-]);
-colInfoForTasks.set("text-pair-classification", [
-  { id: "text1", name: "Text 1", maxWidth: "400px" },
-  { id: "text2", name: "Text 2", maxWidth: "400px" },
-  { id: "true_label", name: "True Label" },
-]);
-
-/** Prediction Column for partial tasks (machine-translation,
- * summarization, conditional_generation, text-classification,
- * text-pair-classification)*/
-const predictionColForTasks = new Map();
-for (const t of condgenTasks) {
-  predictionColForTasks.set(t, [
-    { id: "hypothesis", name: "Hypothesis", maxWidth: "500px" },
-  ]);
-}
-predictionColForTasks.set("text-classification", [
-  { id: "predicted_label", name: "Predicted Label" },
-]);
-predictionColForTasks.set("text-pair-classification", [
-  { id: "predicted_label", name: "Predicted Label" },
-]);
 
 interface Props {
   systemIDs: string[];
@@ -311,8 +275,7 @@ export function AnalysisTable({
         const offset = page * pageSize;
         const end = Math.min(offset + pageSize, cases.length);
         const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
-        const predCol = predictionColForTasks.get(task)[0].id;
-
+        let joinedResult: SystemOutput[] = [];
         const results = [];
         for (const systemID of systemIDs) {
           const result = await backendClient.systemOutputsGetById(
@@ -321,10 +284,21 @@ export function AnalysisTable({
           );
           results.push(result);
         }
-        const joinedResult =
-          results.length > 1 ? joinResults(results, predCol) : results[0];
+
+        // join the results if it is one of the supported tasks and is multi-system
+        if (
+          multiSystemExampleTableSupportedTasks.includes(task) &&
+          results.length > 1
+        ) {
+          const predCol = predictionColForTasks.get(task)[0].id;
+          joinedResult = joinResults(results, predCol);
+        } else {
+          joinedResult = results[0];
+        }
+
         setSystemOutputs(joinedResult);
       } catch (e) {
+        console.log("error", e);
         if (e instanceof Response) {
           const error = await parseBackendError(e);
           if (error.error_code === 40301) {
