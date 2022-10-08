@@ -1296,7 +1296,9 @@ components:
       type: object
       properties:
         id:
-          description: identical to the sub in Cognito, which is a unique identifier for the authenticated user.
+          description: |
+            identical to the sub in Cognito, which is a unique identifier for 
+            the authenticated user.
           type: string
         preferred_username:
           description: identical to the preferred_username in Cognito.
@@ -1308,7 +1310,9 @@ components:
         - type: object
         - properties:
             username:
-              description: a fixed value identifying each user. In our case, it has the same value as id.
+              description: |
+                a fixed value identifying each user. In our case, it has 
+                the same value as id.
               type: string
             email:
               type: string
