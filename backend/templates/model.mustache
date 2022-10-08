@@ -27,7 +27,19 @@ class {{classname}}(Model):
 {{/@last}}
 {{/enumVars}}{{/allowableValues}}
 
-    def __init__(self{{#vars}}, {{name}}{{^supportPython2}}: {{datatype}}{{/supportPython2}}={{#defaultValue}}{{{defaultValue}}}{{/defaultValue}}{{^defaultValue}}None{{/defaultValue}}{{/vars}}):  # noqa: E501
+    swagger_types = {
+    {{#vars}}
+        '{{name}}': {{{datatype}}}{{#hasMore}},{{/hasMore}}
+    {{/vars}}
+    }
+    
+    attribute_map = {
+    {{#vars}}
+        '{{name}}': '{{baseName}}'{{#hasMore}},{{/hasMore}}
+    {{/vars}}
+    }
+
+    def __init__(self{{#vars}}, {{name}}{{^supportPython2}}: {{datatype}}{{^required}} | None{{/required}}{{/supportPython2}}{{#defaultValue}} = {{{defaultValue}}}{{/defaultValue}}{{^defaultValue}}{{^required}} = None{{/required}}{{/defaultValue}}{{/vars}}):  # noqa: E501
         """{{classname}} - a model defined in Swagger
 
         {{#vars}}
@@ -35,24 +47,14 @@ class {{classname}}(Model):
         :type {{name}}: {{datatype}}
         {{/vars}}
         """
-        self.swagger_types = {
-{{#vars}}
-            '{{name}}': {{{datatype}}}{{#hasMore}},{{/hasMore}}
-{{/vars}}
-        }
-
-        self.attribute_map = {
-{{#vars}}
-            '{{name}}': '{{baseName}}'{{#hasMore}},{{/hasMore}}
-{{/vars}}
-        }
+        
 {{#vars}}{{#@first}}
 {{/@first}}
         self._{{name}} = {{name}}
 {{/vars}}
 
     @classmethod
-    def from_dict(cls, dikt){{^supportPython2}} -> '{{classname}}'{{/supportPython2}}:
+    def from_dict(cls, dikt: dict){{^supportPython2}} -> '{{classname}}'{{/supportPython2}}:
         """Returns the dict as a model
 
         :param dikt: A dict.

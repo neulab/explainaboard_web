@@ -104,6 +104,23 @@ class SystemDBUtils:
         if "metric_stats" in document:
             metric_stats = document["metric_stats"]
             document["metric_stats"] = []
+
+        # FIX (lh): The following for loop is added to work around an issue related
+        # to default values of models. Previously, the generated models don't enforce
+        # required attributes. This function exploits tht loophole. Now that we have
+        # fixed that loophole, this function needs some major refactoring. None was
+        # assigned for these fields before implicitly. Now we assign them explicitly
+        # so this hack does not change the current behavior.
+        for required_field in (
+            "created_at",
+            "last_modified",
+            "system_id",
+            "system_info",
+            "metric_stats",
+        ):
+            if required_field not in document:
+                document[required_field] = None
+
         system = System.from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
