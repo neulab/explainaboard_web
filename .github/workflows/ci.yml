@@ -76,18 +76,10 @@ jobs:
         uses: actions/setup-python@v3
         with:
           python-version: 3.9
-      - name: Install pre-commit
-        run: python -m pip install pre-commit
-      - name: Install node 14.x
-        uses: actions/setup-node@v2
-        with:
-          node-version-file: 'frontend/.nvmrc'
-      - name: Generate code from OpenAPI spec
-        run: npm run gen-api-code
-      # Runs pre-commit directly because auto generated Python files cannot be passed to
-      # pre-commit using pre-commit/action.
       - name: mypy
-        run: pre-commit run mypy --color=always --files `find backend -type f -name '*.py'`
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: mypy --all-files
   markdownlint:
     runs-on: ubuntu-latest
     steps:
