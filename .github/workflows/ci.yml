@@ -25,7 +25,9 @@ jobs:
           path: |
             node_modules
             frontend/node_modules
+          # yamllint disable rule:line-length
           key: node-${{ hashFiles('.nvmrc', 'package-lock.json', 'frontend/package-lock.json') }}
+          # yamllint enable
       - name: Install node components
         run: |
           npm run gen-api-code
