@@ -28,7 +28,7 @@ fi
 # backend
 if [[ $mode == "backend" || $mode == "project" ]]; then
     # remove src/gen if exists and generate code
-    # we also create a link to src/impl in src/gen which contains our own implementation 
+    # we also create a link to src/impl in src/gen which contains our own implementation
     cd $project_root && rm -rf $BACKEND_GEN_PATH && \
     mkdir -p $BACKEND_GEN_PATH/explainaboard_web && \
     cd $BACKEND_GEN_PATH/explainaboard_web/ && \
