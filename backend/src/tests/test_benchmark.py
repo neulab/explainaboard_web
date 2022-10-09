@@ -1,6 +1,6 @@
 import os
 import pathlib
-from unittest import TestCase
+import unittest
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,11 @@ from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.constants import POP_WEIGHT
 
 
-class TestBenchmark(TestCase):
+@unittest.skip(
+    reason="to be fixed in future PR: "
+    "https://github.com/neulab/explainaboard_web/issues/402"
+)
+class TestBenchmark(unittest.TestCase):
     @staticmethod
     def _config_path():
         return os.path.join(
