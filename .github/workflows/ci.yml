@@ -117,3 +117,11 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: trailing-whitespace --all-files
+  lint-eof-newline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: end-of-file-fixer --all-files
