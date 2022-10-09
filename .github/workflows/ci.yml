@@ -59,6 +59,7 @@ jobs:
           pip install -r backend/requirements.txt -r backend/src/gen/requirements.txt
       - name: Test
         run: PYTHONPATH=backend/src/gen python -m unittest discover -v backend/src/tests
+        timeout-minutes: 10
   format:
     runs-on: ubuntu-latest
     steps:
