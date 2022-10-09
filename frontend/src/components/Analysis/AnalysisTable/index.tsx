@@ -4,11 +4,7 @@ import { ColumnsType } from "antd/lib/table";
 import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
-import {
-  multiSystemExampleTableSupportedTasks,
-  colInfoForTasks,
-  predictionColForTasks,
-} from "../AnalysisTable/supportedTasks";
+import { taskTable } from "../AnalysisTable/supportedTasks";
 import { joinResults, addPredictionColInfo, unnestSystemOutput } from "./utils";
 
 export const seqLabTasks = [
@@ -212,11 +208,9 @@ export function AnalysisTable({
         }
 
         // join the results if it is one of the supported tasks and is multi-system
-        if (
-          multiSystemExampleTableSupportedTasks.includes(task) &&
-          results.length > 1
-        ) {
-          const predCol = predictionColForTasks.get(task)[0].id;
+        const taskCols = taskTable.get(task);
+        if (results.length > 1 && taskCols !== undefined) {
+          const predCol = taskCols.predictionColumns[0].id;
           joinedResult = joinResults(results, predCol);
         } else {
           joinedResult = results[0];
@@ -263,17 +257,15 @@ export function AnalysisTable({
   let dataSource: { [p: string]: string }[];
   let colInfo;
   const numSystems = systemIDs.length;
+  const taskCols = taskTable.get(task);
   if (seqLabTasks.includes(task)) {
     dataSource = specifyDataSeqLab(systemOutputs, cases, columns);
-  } else if (colInfoForTasks.has(task)) {
+  } else if (taskCols !== undefined) {
     colInfo = addPredictionColInfo(task, systemNames);
     /* expand columns if it is multi-system analysis */
     if (numSystems > 1) {
       dataSource = specifyDataGeneric(
-        unnestSystemOutput(
-          systemOutputs,
-          predictionColForTasks.get(task)[0].id
-        ),
+        unnestSystemOutput(systemOutputs, taskCols.predictionColumns[0].id),
         columns,
         colInfo
       );

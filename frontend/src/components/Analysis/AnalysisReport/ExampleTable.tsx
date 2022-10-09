@@ -5,7 +5,7 @@ import { AnalysisTable } from "../AnalysisTable";
 import { AnalysisCase } from "../../../clients/openapi";
 import { PageState } from "../../../utils";
 
-import { multiSystemExampleTableSupportedTasks } from "../AnalysisTable/supportedTasks";
+import { taskTable } from "../AnalysisTable/supportedTasks";
 interface Props {
   /** title of the table */
   title: string;
@@ -27,6 +27,8 @@ export function ExampleTable({
   changeState,
 }: Props) {
   let exampleTable: React.ReactNode;
+  /** whether we can put multiple system outputs in the same table */
+  const supported = taskTable.get(task);
   const systemIDs = useMemo(
     () => systems.map((system) => system.system_id),
     [systems]
@@ -45,7 +47,7 @@ export function ExampleTable({
       `ExampleTable input error: systems=${systems}, cases=${cases} doesn't match`
     );
     exampleTable = <Result status="error" title="Failed to show examples." />;
-  } else if (multiSystemExampleTableSupportedTasks.includes(task)) {
+  } else if (supported !== undefined) {
     // TODO(noel): need to expand for every task
     exampleTable = (
       <AnalysisTable
@@ -68,7 +70,7 @@ export function ExampleTable({
       />
     );
   } else {
-    // multi-system analysis
+    // multi-system analysis for non-supported tasks
     exampleTable = (
       <Space style={{ width: "fit-content" }}>
         <Tabs

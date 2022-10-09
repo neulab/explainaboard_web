@@ -4,46 +4,44 @@ export const condgenTasks = [
   "conditional_generation",
 ];
 
-export const multiSystemExampleTableSupportedTasks = [
-  "machine-translation",
-  "summarization",
-  "conditional_generation",
-  "text-classification",
-  "text-pair-classification",
-];
+export const taskTable = new Map<string, Table>();
 
-/**  Defined Column Info for partial tasks (machine-translation,
- * summarization, conditional_generation, text-classification,
- * text-pair-classification) */
-export const colInfoForTasks = new Map();
-for (const t of condgenTasks) {
-  colInfoForTasks.set(t, [
-    { id: "source", name: "Source", maxWidth: "500px" },
-    { id: "reference", name: "Reference", maxWidth: "500px" },
-  ]);
+interface Table {
+  datasetColumns: ColumnInfo[];
+  predictionColumns: ColumnInfo[];
 }
-colInfoForTasks.set("text-classification", [
-  { id: "text", name: "Text", maxWidth: "400px" },
-  { id: "true_label", name: "True Label" },
-]);
-colInfoForTasks.set("text-pair-classification", [
-  { id: "text1", name: "Text 1", maxWidth: "400px" },
-  { id: "text2", name: "Text 2", maxWidth: "400px" },
-  { id: "true_label", name: "True Label" },
-]);
 
-/** Prediction Column for partial tasks (machine-translation,
- * summarization, conditional_generation, text-classification,
- * text-pair-classification)*/
-export const predictionColForTasks = new Map();
-for (const t of condgenTasks) {
-  predictionColForTasks.set(t, [
-    { id: "hypothesis", name: "Hypothesis", maxWidth: "500px" },
-  ]);
+export interface ColumnInfo {
+  id: string;
+  name: string;
+  maxWidth?: string;
 }
-predictionColForTasks.set("text-classification", [
-  { id: "predicted_label", name: "Predicted Label" },
-]);
-predictionColForTasks.set("text-pair-classification", [
-  { id: "predicted_label", name: "Predicted Label" },
-]);
+
+for (const t of condgenTasks) {
+  taskTable.set(t, {
+    datasetColumns: [
+      { id: "source", name: "Source", maxWidth: "400px" },
+      { id: "reference", name: "Reference", maxWidth: "400px" },
+    ],
+    predictionColumns: [
+      { id: "hypothesis", name: "Hypothesis", maxWidth: "400px" },
+    ],
+  });
+}
+
+taskTable.set("text-classification", {
+  datasetColumns: [
+    { id: "text", name: "Text", maxWidth: "400px" },
+    { id: "true_label", name: "True Label" },
+  ],
+  predictionColumns: [{ id: "predicted_label", name: "Predicted Label" }],
+});
+
+taskTable.set("text-pair-classification", {
+  datasetColumns: [
+    { id: "text1", name: "Text 1", maxWidth: "400px" },
+    { id: "text2", name: "Text 2", maxWidth: "400px" },
+    { id: "true_label", name: "True Label" },
+  ],
+  predictionColumns: [{ id: "predicted_label", name: "Predicted Label" }],
+});

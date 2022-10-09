@@ -1,5 +1,5 @@
 import { SystemOutput } from "../../../clients/openapi";
-import { colInfoForTasks, predictionColForTasks } from "./supportedTasks";
+import { taskTable, ColumnInfo } from "./supportedTasks";
 
 export function addPredictionColInfo(
   tsk: string,
@@ -7,12 +7,16 @@ export function addPredictionColInfo(
 ): { [key: string]: string }[] {
   const finalColInfo = [];
   // add dataset groundtruth columns
-  colInfoForTasks.get(tsk).forEach(function (value: [key: string]) {
-    finalColInfo.push(value);
+  const taskCols = taskTable.get(tsk);
+  if (taskCols === undefined) {
+    throw new Error(`cannot handle undefined task: ${tsk}`);
+  }
+  taskCols.datasetColumns.forEach(function (col: ColumnInfo) {
+    finalColInfo.push(col);
   });
 
   // add system prediction columns
-  const predColInfo = predictionColForTasks.get(tsk)[0];
+  const predColInfo = taskCols.predictionColumns[0];
   // single analysis
   if (systemNames.length === 1) {
     finalColInfo.push({
