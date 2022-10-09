@@ -7,7 +7,12 @@ export const condgenTasks = [
 export const taskTable = new Map<string, Table>();
 
 interface Table {
+  /** Columns which are dependent on the task and dataset (should be the same
+   *  for different systems on the same dataset). i.e., source, text,
+   *  true_label*/
   datasetColumns: ColumnInfo[];
+  /** Columns which are dependent on the system, e.g. columns related to
+   * predictions*/
   predictionColumns: ColumnInfo[];
 }
 
