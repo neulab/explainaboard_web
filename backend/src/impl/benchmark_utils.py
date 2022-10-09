@@ -84,9 +84,11 @@ class BenchmarkUtils:
         systems = systems_return.systems
         for system in systems:
             temp = system.system_info.to_dict()
-            temp["creator"] = system.creator.split("@")[0]
-            temp["created_at"] = system.created_at
-            sys_infos.append(temp)
+            # Don't include systems with no dataset
+            if temp["dataset_name"] is not None:
+                temp["creator"] = system.creator.split("@")[0]
+                temp["created_at"] = system.created_at
+                sys_infos.append(temp)
         return sys_infos
 
     @staticmethod
