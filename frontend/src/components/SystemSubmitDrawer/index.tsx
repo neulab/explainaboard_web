@@ -41,24 +41,36 @@ enum State {
   other,
 }
 
-function biDirectionalMatch(one: string, other: string): boolean {
-  return isMatch(one, other) || isMatch(other, one);
+function hasCommonString(one: string, other: string): boolean {
+  return isSubstring(one, other) || isSubstring(other, one);
 }
-function isMatch(query: string, string: string): boolean {
+function isSubstring(query: string, string: string): boolean {
   return string.toLowerCase().includes(query.toLocaleLowerCase());
 }
 
 type LangScore = {
   lang: LanguageCode;
+
+  // The score of the language code, used for ranking during search
+  // Higher value ones are better results and will be displayed earlier in a list
   value: number;
 };
 
+/**
+ * Given a query, search in a given list of language codes to get
+ * the matching ones. The query will try to match all fields
+ * of a language code with different priority
+ *
+ * @param query a query string used to match all fields
+ * @param data a list of language codes to search from
+ * @returns a filtered list ordered (descending) by score
+ */
 const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
   const added = new Set<string>();
   const scores: LangScore[] = [];
 
   // match iso3
-  const iso3Matches = data.filter((lang) => isMatch(query, lang.iso3_code));
+  const iso3Matches = data.filter((lang) => isSubstring(query, lang.iso3_code));
   iso3Matches.forEach((match) => {
     added.add(match.name);
     scores.push({ lang: match, value: 100 });
@@ -77,9 +89,7 @@ const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
   });
 
   // match names: exact match of a name will have the highest score, decreases by distance
-  const nameMatches = data.filter((lang) =>
-    biDirectionalMatch(query, lang.name)
-  );
+  const nameMatches = data.filter((lang) => hasCommonString(query, lang.name));
   nameMatches.forEach((match) => {
     if (!added.has(match.name))
       scores.push({
