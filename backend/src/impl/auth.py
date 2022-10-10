@@ -8,7 +8,8 @@ from explainaboard_web.impl.utils import abort_with_error_message
 from flask import current_app, g
 
 
-def check_api_key_auth(user_email: str, api_key: str, required_scopes):
+# Disables N802 to follow the naming scheme in the OpenAPI definition.
+def check_ApiKeyAuth(user_email: str, api_key: str, required_scopes):  # noqa: N802
     """
     :param user_id: we use user email as ID
     :param api_key: is generated for the user when they login for the first time. Only
@@ -24,7 +25,8 @@ def check_api_key_auth(user_email: str, api_key: str, required_scopes):
     return {}
 
 
-def check_bearer_auth(token: str):
+# Disables N802 to follow the naming scheme in the OpenAPI definition.
+def check_BearerAuth(token: str):  # noqa: N802
     """JWT authentication"""
     public_key_url = f"https://cognito-idp.{current_app.config.get('AWS_DEFAULT_REGION')}.amazonaws.com/{current_app.config.get('USER_POOL_ID')}/.well-known/jwks.json"  # noqa
     public_key = jwt.PyJWKClient(public_key_url).get_signing_key_from_jwt(token)
