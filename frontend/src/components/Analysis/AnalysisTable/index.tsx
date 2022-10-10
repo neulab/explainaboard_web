@@ -4,7 +4,7 @@ import { ColumnsType } from "antd/lib/table";
 import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
-import { taskTable, seqLabTasks } from "../AnalysisTable/supportedTasks";
+import { taskTable, seqLabTasks } from "../AnalysisTable/taskColumnMapping";
 import { joinResults, addPredictionColInfo, unnestSystemOutput } from "./utils";
 
 interface Props {

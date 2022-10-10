@@ -1,5 +1,5 @@
 import { SystemOutput } from "../../../clients/openapi";
-import { taskTable, ColumnInfo } from "./supportedTasks";
+import { taskTable, ColumnInfo } from "./taskColumnMapping";
 
 export function addPredictionColInfo(
   tsk: string,

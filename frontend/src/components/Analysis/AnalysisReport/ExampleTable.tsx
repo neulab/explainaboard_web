@@ -5,7 +5,7 @@ import { AnalysisTable } from "../AnalysisTable";
 import { AnalysisCase } from "../../../clients/openapi";
 import { PageState } from "../../../utils";
 
-import { taskTable } from "../AnalysisTable/supportedTasks";
+import { taskTable } from "../AnalysisTable/taskColumnMapping";
 interface Props {
   /** title of the table */
   title: string;
