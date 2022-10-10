@@ -23,7 +23,7 @@ class TestTasks(unittest.TestCase):
                 supported_formats = get_loader_class(task.name).supported_file_types()
                 self.assertEqual(
                     len(supported_metrics),
-                    len(set([x.name for x in supported_metrics])),
+                    len({x.name for x in supported_metrics}),
                     f"duplicate metric names in {task.name}",
                 )
                 self.assertGreater(len(supported_formats.custom_dataset), 0)

@@ -8,9 +8,9 @@ PRIVATE_DATASETS = [
     DatalabLoaderOption("fudan_nlp", "conll2003", "test"),
 ]
 
-_private_dataset_lookup = set(
+_private_dataset_lookup = {
     (dataset.dataset, dataset.subdataset, dataset.split) for dataset in PRIVATE_DATASETS
-)
+}
 
 
 def is_private_dataset(dataset: DatalabLoaderOption):
