@@ -22,7 +22,7 @@ class TestBenchmark(unittest.TestCase):
             "benchmark_configs",
         )
 
-    def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):
+    def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):  # noqa: N802
         """
         Assert that two complex structures have almost equal contents.
 
