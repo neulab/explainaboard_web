@@ -5,7 +5,7 @@ repos:
       - id: black
         files: '\.py$'
   - repo: https://gitlab.com/pycqa/flake8.git
-    rev: 4.0.1
+    rev: 5.0.4
     hooks:
       - id: flake8
         additional_dependencies:
