@@ -5,7 +5,7 @@
   "scripts": {
     "start": "react-scripts start",
     "prettier": "prettier --write --ignore-unknown .",
-    "lint": "eslint --ext .js,.ts,.tsx,.js .",
+    "lint": "eslint --max-warnings 0 --ext .js,.ts,.tsx,.js .",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
@@ -37,8 +37,13 @@
   },
   "lint-staged": {
     "**/*": [
-      "npm run lint",
       "npm run prettier"
+    ],
+    "**/*.ts": [
+      "npm run lint"
+    ],
+    "**/*.tsx": [
+      "npm run lint"
     ]
   },
   "browserslist": {
