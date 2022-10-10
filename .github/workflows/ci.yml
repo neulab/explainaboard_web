@@ -60,7 +60,7 @@ jobs:
       - name: Test
         run: PYTHONPATH=backend/src/gen python -m unittest discover -v backend/src/tests
         timeout-minutes: 10
-  format:
+  python-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -72,7 +72,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: black --all-files
-  isort:
+  python-isort:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -84,7 +84,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: isort --all-files
-  lint:
+  python-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -100,7 +100,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: pyupgrade --all-files
-  typecheck:
+  python-typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
