@@ -10,9 +10,9 @@ export const seqLabTasks = [
   "word-segmentation",
 ];
 
-export const taskColumnMapping = new Map<string, Table>();
+export const taskColumnMapping = new Map<string, TaskColumnSpec>();
 
-interface Table {
+interface TaskColumnSpec {
   /** Columns which are dependent on the task and dataset (should be the same
    *  for different systems on the same dataset). i.e., source, text,
    *  true_label*/
