@@ -7,7 +7,7 @@ import zlib
 from datetime import datetime
 from inspect import getsource
 from types import FunctionType
-from typing import Any, Optional
+from typing import Any
 
 from bson import ObjectId
 from explainaboard import DatalabLoaderOption, FileType, Source, get_processor
@@ -117,7 +117,7 @@ class SystemDBUtils:
         query: list | dict,
         page: int,
         page_size: int,
-        sort: Optional[list] = None,
+        sort: list | None = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
     ):
@@ -180,20 +180,20 @@ class SystemDBUtils:
     def find_systems(
         page: int,
         page_size: int,
-        ids: Optional[list[str]] = None,
-        system_name: Optional[str] = None,
-        task: Optional[str] = None,
-        dataset_name: Optional[str] = None,
-        subdataset_name: Optional[str] = None,
-        split: Optional[str] = None,
-        source_language: Optional[str] = None,
-        target_language: Optional[str] = None,
-        sort: Optional[list] = None,
-        creator: Optional[str] = None,
-        shared_users: Optional[list[str]] = None,
+        ids: list[str] | None = None,
+        system_name: str | None = None,
+        task: str | None = None,
+        dataset_name: str | None = None,
+        subdataset_name: str | None = None,
+        split: str | None = None,
+        source_language: str | None = None,
+        target_language: str | None = None,
+        sort: list | None = None,
+        creator: str | None = None,
+        shared_users: list[str] | None = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
-        dataset_list: Optional[list[tuple[str, str, str]]] = None,
+        dataset_list: list[tuple[str, str, str]] | None = None,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
 
