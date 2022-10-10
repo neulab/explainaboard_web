@@ -12,110 +12,34 @@ export const filterKeyMap = {
 };
 
 export type FilterUpdate = Partial<SystemFilter>;
-export type QueryDict = { [key: string]: string };
+type QueryDict = { [key: string]: string };
 
 export class SystemFilter {
-  name: string;
-  task: string;
+  name: string | undefined;
+  task: string | undefined;
   showMine: boolean;
-  sortField: string;
+  sortField: string | undefined;
   sortDir: "asc" | "desc";
-  dataset: string;
-  split: string;
-  subdataset: string;
-  activeSystemIDs: Array<string>;
+  dataset: string | undefined;
+  split: string | undefined;
+  subdataset: string | undefined;
+  activeSystemIDs: Array<string> | undefined;
 
-  constructor(partial: FilterUpdate | null) {
-    if (!partial) {
-      this.name = "";
-      this.task = "";
-      this.showMine = false;
-      this.sortField = "created_at";
-      this.sortDir = "desc";
-      this.dataset = "";
-      this.split = "";
-      this.subdataset = "";
-      this.activeSystemIDs = [];
-      return;
-    }
-
-    const defaultFilter = SystemFilter.getDefaultFilter();
-    this.name = partial.name || defaultFilter.name;
-    this.task = partial.task || defaultFilter.task;
-    this.showMine =
-      partial.showMine === undefined
-        ? defaultFilter.showMine
-        : partial.showMine;
-    this.sortField = partial.sortField || defaultFilter.sortField;
-    this.sortDir = partial.sortDir || defaultFilter.sortDir;
-    this.dataset = partial.dataset || defaultFilter.dataset;
-    this.split = partial.split || defaultFilter.split;
-    this.subdataset = partial.subdataset || defaultFilter.subdataset;
-    this.activeSystemIDs =
-      partial.activeSystemIDs || defaultFilter.activeSystemIDs;
+  constructor(partial: FilterUpdate) {
+    Object.assign(this, partial);
+    this.showMine = partial.showMine === undefined ? false : partial.showMine;
+    this.sortField = partial.sortField || "created_at";
+    this.sortDir = partial.sortDir || "desc";
   }
 
-  /*  Update the filter with the values in the new partial filter 
-      Returns true if >= 1 of current filter values get updated
+  /* Update the filter with the values in the new partial filter */
 
-      TODO: Rolling out all if statement seems necessary because Typescript
-      won't allow variable field access for classes. Is there a bette way tho?
-  */
-  update(partial: FilterUpdate): boolean {
-    let updated = false;
-
-    if ((partial.name && this.name !== partial.name) || partial.name === "") {
-      updated = true;
-      this.name = partial.name;
-    }
-
-    if ((partial.task && this.task !== partial.task) || partial.task === "") {
-      updated = true;
-      this.task = partial.task;
-    }
-
-    if (partial.showMine !== undefined && this.showMine !== partial.showMine) {
-      updated = true;
-      this.showMine = partial.showMine;
-    }
-
-    if (partial.sortField && this.sortField !== partial.sortField) {
-      updated = true;
-      this.sortField = partial.sortField;
-    }
-
-    if (partial.sortDir && this.sortDir !== partial.sortDir) {
-      updated = true;
-      this.sortDir = partial.sortDir;
-    }
-
-    if (partial.dataset && this.dataset !== partial.dataset) {
-      updated = true;
-      this.dataset = partial.dataset;
-    }
-
-    if (partial.split && this.split !== partial.split) {
-      updated = true;
-      this.split = partial.split;
-    }
-
-    if (partial.subdataset && this.subdataset !== partial.subdataset) {
-      updated = true;
-      this.subdataset = partial.subdataset;
-    }
-
-    if (
-      partial.activeSystemIDs &&
-      JSON.stringify(this.activeSystemIDs.sort()) !==
-        JSON.stringify(partial.activeSystemIDs.sort())
-    ) {
-      updated = true;
-      this.activeSystemIDs = partial.activeSystemIDs;
-    }
-
-    return updated;
+  update(filterUpdate: FilterUpdate): SystemFilter {
+    const filterValues = { ...this, ...filterUpdate };
+    return new SystemFilter(filterValues);
   }
 
+  /* Parse current instance to url parameters */
   toUrlParams(): URLSearchParams {
     const queryParams = new URLSearchParams();
     for (const [key, val] of Object.entries(
@@ -126,39 +50,38 @@ export class SystemFilter {
     return queryParams;
   }
 
-  static getDefaultFilter(): SystemFilter {
-    return new SystemFilter(null);
-  }
-
   static parseQueryToFilter(query: URLSearchParams): SystemFilter {
-    const defaultFilter = SystemFilter.getDefaultFilter();
+    const filters: FilterUpdate = {};
+
+    const name = query.get(filterKeyMap.nameFilter);
+    filters.name = name === null ? undefined : name;
+
+    const task = query.get(filterKeyMap.taskFilter);
+    filters.task = task === null ? undefined : task;
+
+    const showMine = query.get(filterKeyMap.showMine);
+    filters.showMine = showMine === "true" ? true : false;
+
+    const sortDir = query.get(filterKeyMap.sortDir);
+    filters.sortDir = sortDir === "asc" ? "asc" : "desc";
+
+    const sortField = query.get(filterKeyMap.sortField);
+    filters.sortField = sortField === null ? undefined : sortField;
+
+    const split = query.get(filterKeyMap.datasetSplit);
+    filters.split = split === null ? undefined : split;
 
     const activeSystemIDs = query.get(filterKeyMap.activeSystemIDs);
-    let activeSystemIDArray: string[];
-    if (activeSystemIDs) {
-      activeSystemIDArray = activeSystemIDs.split(filterDelim);
-    } else {
-      activeSystemIDArray = [];
-    }
+    filters.activeSystemIDs =
+      activeSystemIDs === null ? undefined : activeSystemIDs.split(filterDelim);
 
-    return new SystemFilter({
-      name: query.get(filterKeyMap.nameFilter) || defaultFilter.name,
-      task: query.get(filterKeyMap.taskFilter) || defaultFilter.task,
-      showMine:
-        query.get(filterKeyMap.showMine) === "true"
-          ? true
-          : defaultFilter.showMine,
-      sortDir:
-        query.get(filterKeyMap.sortDir) === "asc"
-          ? "asc"
-          : defaultFilter.sortDir,
-      sortField: query.get(filterKeyMap.sortField) || defaultFilter.sortField,
-      split: query.get(filterKeyMap.datasetSplit) || defaultFilter.split,
-      activeSystemIDs: activeSystemIDArray || defaultFilter.activeSystemIDs,
-      dataset: query.get(filterKeyMap.dataset) || defaultFilter.dataset,
-      subdataset:
-        query.get(filterKeyMap.subdataset) || defaultFilter.subdataset,
-    });
+    const dataset = query.get(filterKeyMap.dataset);
+    filters.dataset = dataset === null ? undefined : dataset;
+
+    const subdataset = query.get(filterKeyMap.subdataset);
+    filters.subdataset = subdataset === null ? undefined : subdataset;
+
+    return new SystemFilter(filters);
   }
 
   static parseFilterToQuery(filter: Partial<SystemFilter>): QueryDict {

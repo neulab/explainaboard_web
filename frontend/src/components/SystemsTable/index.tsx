@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "./index.css";
 import { message, Space } from "antd";
 import { SystemSubmitDrawer, AnalysisDrawer } from "../../components";
@@ -83,45 +83,32 @@ export function SystemsTable() {
   }, []);
 
   /** TODO: add debounce */
-  const onFilterChange = useCallback(
-    function (updates: FilterUpdate) {
-      /* When task filter changes, also reset the ordering */
-      function getInitialSortField(
-        taskCategories: TaskCategory[],
-        taskFilter: string
-      ) {
-        if (taskFilter) {
-          const initialTask = findTask(taskCategories, taskFilter);
-          if (initialTask && initialTask.supported_metrics.length > 0)
-            return initialTask.supported_metrics[0];
-        }
-        return "created_at";
+  const onFilterChange = function (updates: FilterUpdate) {
+    /* When task filter changes, also reset the ordering */
+    function getInitialSortField(
+      taskCategories: TaskCategory[],
+      taskFilter: string
+    ) {
+      if (taskFilter) {
+        const initialTask = findTask(taskCategories, taskFilter);
+        if (initialTask && initialTask.supported_metrics.length > 0)
+          return initialTask.supported_metrics[0];
       }
+      return "created_at";
+    }
 
-      if (updates.task) {
-        const initialSortField = getInitialSortField(
-          taskCategories,
-          updates.task
-        );
-        updates.sortField = initialSortField;
-      }
+    if (updates.task) {
+      const initialSortField = getInitialSortField(
+        taskCategories,
+        updates.task
+      );
+      updates.sortField = initialSortField;
+    }
 
-      function updateFilterAndQuery(
-        currFilters: SystemFilter,
-        updates: FilterUpdate
-      ) {
-        const updated = currFilters.update(updates);
-        if (updated) {
-          setFilters(new SystemFilter(currFilters));
-        }
-      }
-
-      updateFilterAndQuery(filters, updates);
-      setPage(0);
-      setSelectedSystemIDs([]);
-    },
-    [taskCategories, filters]
-  );
+    setFilters(filters.update(updates));
+    setPage(0);
+    setSelectedSystemIDs([]);
+  };
 
   useEffect(() => {
     async function refreshSystems() {
@@ -131,11 +118,11 @@ export function SystemsTable() {
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
-            filters.name || undefined,
+            filters.name,
             filters.task,
-            filters.dataset || undefined,
-            filters.subdataset || undefined,
-            datasetSplit || undefined,
+            filters.dataset,
+            filters.subdataset,
+            datasetSplit,
             page,
             pageSize,
             filters.sortField,
