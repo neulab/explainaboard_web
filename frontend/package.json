@@ -5,6 +5,7 @@
   "scripts": {
     "start": "react-scripts start",
     "prettier": "prettier --write --ignore-unknown .",
+    "prettier-check": "prettier --check --ignore-unknown .",
     "lint": "eslint --ext .js,.ts,.tsx,.js .",
     "typecheck": "tsc",
     "build": "react-scripts build",

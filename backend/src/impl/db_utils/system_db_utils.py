@@ -5,15 +5,13 @@ import re
 import traceback
 import zlib
 from datetime import datetime
-from inspect import getsource
-from types import FunctionType
 from typing import Any
 
 from bson import ObjectId
 from explainaboard import DatalabLoaderOption, FileType, Source, get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.loaders.loader_registry import get_loader_class
-from explainaboard.utils.serialization import general_to_dict
+from explainaboard.serialization.legacy import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
@@ -104,6 +102,7 @@ class SystemDBUtils:
         if "metric_stats" in document:
             metric_stats = document["metric_stats"]
             document["metric_stats"] = []
+
         system = System.from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
@@ -486,12 +485,6 @@ class SystemDBUtils:
 
             # -- replace things that can't be returned through JSON for now
             system.metric_stats = []
-            for analysis_level in system.system_info.analysis_levels:
-                for feature_name, feature in analysis_level.features.items():
-                    if isinstance(feature.func, FunctionType):
-                        # Convert the function to a string, this is noqa to prevent a
-                        # typing error
-                        feature.func = getsource(feature.func)  # noqa
 
             # -- return the system
             return system

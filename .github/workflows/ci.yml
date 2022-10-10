@@ -112,6 +112,44 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: mypy --all-files
+  frontend-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: 'frontend/.nvmrc'
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: node-${{ hashFiles('.nvmrc', 'frontend/package-lock.json') }}
+      - name: Install Node dependencies
+        run: npm install
+        working-directory: frontend
+      - name: format
+        run: npm run prettier-check
+        working-directory: frontend
+  frontend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: 'frontend/.nvmrc'
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: node-${{ hashFiles('.nvmrc', 'frontend/package-lock.json') }}
+      - name: Install Node dependencies
+        run: npm install
+        working-directory: frontend
+      - name: lint
+        run: npm run lint
+        working-directory: frontend
   frontend-typecheck:
     runs-on: ubuntu-latest
     steps:
@@ -141,7 +179,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: requirements-txt-fixer --all-files
-  markdownlint:
+  lint-markdown:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -153,7 +191,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: markdownlint-cli2 --all-files
-  yamllint:
+  lint-yaml:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3

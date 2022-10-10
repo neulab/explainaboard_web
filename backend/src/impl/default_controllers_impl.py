@@ -14,8 +14,8 @@ from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import SimpleMetricStats
+from explainaboard.serialization.legacy import general_to_dict
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
-from explainaboard.utils.serialization import general_to_dict
 from explainaboard.utils.typing_utils import narrow
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
