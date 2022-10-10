@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { AnalysisCase, Performance, ComboCount } from "../../clients/openapi";
+import { Performance, ComboCount } from "../../clients/openapi";
 
 export interface ResultFineGrainedParsed {
   /**
