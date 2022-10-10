@@ -112,7 +112,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: mypy --all-files
-  frontend-lint:
+  frontend-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -128,8 +128,8 @@ jobs:
       - name: Install Node dependencies
         run: npm install
         working-directory: frontend
-      - name: lint
-        run: npm run lint
+      - name: format
+        run: npm run prettier-check
         working-directory: frontend
   lint-requirements-txt:
     runs-on: ubuntu-latest
@@ -139,7 +139,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: requirements-txt-fixer --all-files
-  markdownlint:
+  lint-markdown:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -151,7 +151,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: markdownlint-cli2 --all-files
-  yamllint:
+  lint-yaml:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
