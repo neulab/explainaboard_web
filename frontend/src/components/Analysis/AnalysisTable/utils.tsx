@@ -1,5 +1,5 @@
 import { SystemOutput } from "../../../clients/openapi";
-import { taskTable, ColumnInfo } from "./taskColumnMapping";
+import { taskColumnMapping, ColumnInfo } from "./taskColumnMapping";
 
 export function addPredictionColInfo(
   tsk: string,
@@ -7,7 +7,7 @@ export function addPredictionColInfo(
 ): { [key: string]: string }[] {
   const finalColInfo = [];
   // add dataset groundtruth columns
-  const taskCols = taskTable.get(tsk);
+  const taskCols = taskColumnMapping.get(tsk);
   if (taskCols === undefined) {
     throw new Error(`cannot handle undefined task: ${tsk}`);
   }

@@ -4,7 +4,10 @@ import { ColumnsType } from "antd/lib/table";
 import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
-import { taskTable, seqLabTasks } from "../AnalysisTable/taskColumnMapping";
+import {
+  taskColumnMapping,
+  seqLabTasks,
+} from "../AnalysisTable/taskColumnMapping";
 import { joinResults, addPredictionColInfo, unnestSystemOutput } from "./utils";
 
 interface Props {
@@ -202,7 +205,7 @@ export function AnalysisTable({
         }
 
         // join the results if it is one of the supported tasks and is multi-system
-        const taskCols = taskTable.get(task);
+        const taskCols = taskColumnMapping.get(task);
         if (results.length > 1 && taskCols !== undefined) {
           const predCol = taskCols.predictionColumns[0].id;
           console.log("predCol", predCol);
@@ -252,7 +255,7 @@ export function AnalysisTable({
   let dataSource: { [p: string]: string }[];
   let colInfo;
   const numSystems = systemIDs.length;
-  const taskCols = taskTable.get(task);
+  const taskCols = taskColumnMapping.get(task);
   console.log("systemOutputs", systemOutputs);
   console.log("cases", cases);
   if (seqLabTasks.includes(task)) {

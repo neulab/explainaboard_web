@@ -10,7 +10,7 @@ export const seqLabTasks = [
   "word-segmentation",
 ];
 
-export const taskTable = new Map<string, Table>();
+export const taskColumnMapping = new Map<string, Table>();
 
 interface Table {
   /** Columns which are dependent on the task and dataset (should be the same
@@ -29,7 +29,7 @@ export interface ColumnInfo {
 }
 
 for (const t of condgenTasks) {
-  taskTable.set(t, {
+  taskColumnMapping.set(t, {
     datasetColumns: [
       { id: "source", name: "Source", maxWidth: "400px" },
       { id: "reference", name: "Reference", maxWidth: "400px" },
@@ -40,7 +40,7 @@ for (const t of condgenTasks) {
   });
 }
 
-taskTable.set("text-classification", {
+taskColumnMapping.set("text-classification", {
   datasetColumns: [
     { id: "text", name: "Text", maxWidth: "400px" },
     { id: "true_label", name: "True Label" },
@@ -48,7 +48,7 @@ taskTable.set("text-classification", {
   predictionColumns: [{ id: "predicted_label", name: "Predicted Label" }],
 });
 
-taskTable.set("text-pair-classification", {
+taskColumnMapping.set("text-pair-classification", {
   datasetColumns: [
     { id: "text1", name: "Text 1", maxWidth: "400px" },
     { id: "text2", name: "Text 2", maxWidth: "400px" },
@@ -58,7 +58,7 @@ taskTable.set("text-pair-classification", {
 });
 
 // // feature for individual entities
-// taskTable.set("named-entity-recognition", {
+// taskColumnMapping.set("named-entity-recognition", {
 //   datasetColumns: [
 //     { id: "sentence", name: "Sentence", maxWidth: "400px" },
 //     { id: "span", name: "Span Text" },

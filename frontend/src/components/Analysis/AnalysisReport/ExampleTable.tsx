@@ -5,7 +5,7 @@ import { AnalysisTable } from "../AnalysisTable";
 import { AnalysisCase } from "../../../clients/openapi";
 import { PageState } from "../../../utils";
 
-import { taskTable } from "../AnalysisTable/taskColumnMapping";
+import { taskColumnMapping } from "../AnalysisTable/taskColumnMapping";
 interface Props {
   /** title of the table */
   title: string;
@@ -28,7 +28,7 @@ export function ExampleTable({
 }: Props) {
   let exampleTable: React.ReactNode;
   /** whether we can put multiple system outputs in the same table */
-  const supported = taskTable.get(task);
+  const supported = taskColumnMapping.get(task);
   const systemIDs = useMemo(
     () => systems.map((system) => system.system_id),
     [systems]
