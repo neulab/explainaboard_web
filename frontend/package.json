@@ -6,6 +6,7 @@
     "start": "react-scripts start",
     "prettier": "prettier --write --ignore-unknown .",
     "lint": "eslint --ext .js,.ts,.tsx,.js .",
+    "typecheck": "tsc",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
