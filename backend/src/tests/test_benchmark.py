@@ -60,7 +60,7 @@ class TestBenchmark(unittest.TestCase):
             exc.__dict__.setdefault("traces", []).append(trace)
             if is_root:
                 trace = " -> ".join(reversed(exc.traces))
-                exc = AssertionError("%s\nTRACE: %s" % (exc.message, trace))
+                exc = AssertionError(f"{exc.message}\nTRACE: {trace}")
             raise exc
 
     def test_masakhaner_aggregate(self):
