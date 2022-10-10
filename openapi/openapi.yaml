@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.5"
+  version: "0.2.6"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -628,15 +628,20 @@ components:
       properties:
         dtype:
           type: string
+          nullable: true
         cls_name:
           type: string
         description:
           type: string
+          nullable: true
         func:
           type: string
+          nullable: true
         require_training_set:
           type: boolean
-      required: [dtype, cls_name]
+          nullable: true
+      additionalProperties: true
+      required: [cls_name]
 
     SystemInfo:
       description: |
@@ -666,7 +671,7 @@ components:
           example: en
         reload_stat:
           type: boolean
-        conf_value:
+        confidence_alpha:
           type: number
         system_details:
           type: object
@@ -703,7 +708,7 @@ components:
           source_language,
           target_language,
           reload_stat,
-          conf_value,
+          confidence_alpha,
           source_tokenizer,
           target_tokenizer,
           analysis_levels,
