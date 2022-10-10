@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import secrets
-from typing import Optional
 
 import boto3
 import jwt
@@ -53,7 +52,7 @@ class User:
     def __init__(
         self,
         is_authenticated: bool,
-        info: Optional[dict] = None,
+        info: dict | None = None,
     ) -> None:
         self._is_authenticated: bool = is_authenticated
         self._info: dict = info.copy() if info else {}
