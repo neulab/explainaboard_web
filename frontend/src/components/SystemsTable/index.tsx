@@ -37,16 +37,6 @@ export function SystemsTable() {
     }
   }, [history, filters, query]);
 
-  const updateFilterAndQuery = useCallback(
-    (currFilters: SystemFilter, updates: FilterUpdate) => {
-      const updated = currFilters.update(updates);
-      if (updated) {
-        setFilters(new SystemFilter(currFilters));
-      }
-    },
-    []
-  );
-
   // submit
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);
 
@@ -115,11 +105,22 @@ export function SystemsTable() {
         );
         updates.sortField = initialSortField;
       }
+
+      function updateFilterAndQuery(
+        currFilters: SystemFilter,
+        updates: FilterUpdate
+      ) {
+        const updated = currFilters.update(updates);
+        if (updated) {
+          setFilters(new SystemFilter(currFilters));
+        }
+      }
+
       updateFilterAndQuery(filters, updates);
       setPage(0);
       setSelectedSystemIDs([]);
     },
-    [taskCategories, filters, updateFilterAndQuery]
+    [taskCategories, filters]
   );
 
   useEffect(() => {

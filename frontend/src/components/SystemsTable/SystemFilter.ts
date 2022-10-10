@@ -25,7 +25,7 @@ export class SystemFilter {
   subdataset: string;
   activeSystemIDs: Array<string>;
 
-  constructor(partial: Partial<FilterUpdate> | null) {
+  constructor(partial: FilterUpdate | null) {
     if (!partial) {
       this.name = "";
       this.task = "";
