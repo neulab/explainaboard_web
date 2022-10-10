@@ -20,7 +20,7 @@ interface Props {
 
 function renderColInfo(
   columns: ColumnsType<SystemOutput>,
-  col_info: { [key: string]: string | undefined }[]
+  colInfo: { [key: string]: string | undefined }[]
 ) {
   // example ID
   columns.push({
@@ -34,7 +34,7 @@ function renderColInfo(
     ),
   });
 
-  for (const col of col_info) {
+  for (const col of colInfo) {
     if (col["name"] === "id") {
       continue;
     }
@@ -59,7 +59,7 @@ function renderColInfo(
   }
 }
 
-function createSentenceForNER(
+function createSentenceForSeqLab(
   systemOutput: SystemOutput,
   analysisCase: AnalysisCase
 ) {
@@ -83,17 +83,17 @@ function createSentenceForNER(
 function specifyDataGeneric(
   systemOutputs: SystemOutput[],
   columns: ColumnsType<SystemOutput>,
-  col_info: { [key: string]: string }[] | undefined = undefined
+  colInfo: { [key: string]: string }[] | undefined = undefined
 ): { [key: string]: string }[] {
   const systemOutputFirst = systemOutputs[0];
 
-  col_info =
-    col_info !== undefined
-      ? col_info
+  colInfo =
+    colInfo !== undefined
+      ? colInfo
       : Object.keys(systemOutputFirst).map((x) => {
           return { id: x, name: x };
         });
-  renderColInfo(columns, col_info);
+  renderColInfo(columns, colInfo);
 
   // clone the system output for modification
   return systemOutputs.map(function (systemOutput) {
@@ -124,18 +124,18 @@ function specifyDataSeqLab(
 
   // This is a feature defined over individual entities
   if ("token_span" in cases[0]) {
-    const col_info = [
+    const colInfo = [
       { id: "sentence", name: "Sentence", maxWidth: "400px" },
       { id: "span", name: "Span Text" },
       { id: "true_label", name: "True Label" },
       { id: "pred_label", name: "Predicted Label" },
     ];
 
-    renderColInfo(columns, col_info);
+    renderColInfo(columns, colInfo);
 
     for (let i = 0; i < systemOutputs.length; i++) {
       // Get the outputs from the bucket case
-      const sentence = createSentenceForNER(systemOutputs[i], cases[i]);
+      const sentence = createSentenceForSeqLab(systemOutputs[i], cases[i]);
       const pos = cases[i]["token_span"];
       const spanPos =
         pos[0] === pos[1] - 1 ? `${pos[0]}` : `${pos[0]}:${pos[1]}`;
@@ -151,9 +151,9 @@ function specifyDataSeqLab(
   }
   // This is feature defined over whole sentences
   else {
-    const col_info = [{ id: "sentence", name: "Sentence", maxWidth: "800px" }];
+    const colInfo = [{ id: "sentence", name: "Sentence", maxWidth: "800px" }];
 
-    renderColInfo(columns, col_info);
+    renderColInfo(columns, colInfo);
 
     for (let i = 0; i < systemOutputs.length; i++) {
       // Get the outputs from the bucket case

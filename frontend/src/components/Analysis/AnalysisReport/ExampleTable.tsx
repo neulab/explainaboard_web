@@ -28,7 +28,7 @@ export function ExampleTable({
 }: Props) {
   let exampleTable: React.ReactNode;
   /** whether we can put multiple system outputs in the same table */
-  const supported = taskColumnMapping.get(task);
+  const taskColumns = taskColumnMapping.get(task);
   const systemIDs = useMemo(
     () => systems.map((system) => system.system_id),
     [systems]
@@ -47,19 +47,9 @@ export function ExampleTable({
       `ExampleTable input error: systems=${systems}, cases=${cases} doesn't match`
     );
     exampleTable = <Result status="error" title="Failed to show examples." />;
-  } else if (supported !== undefined) {
+  } else if (taskColumns !== undefined || systems.length === 1) {
     // TODO(noel): need to expand for every task
-    exampleTable = (
-      <AnalysisTable
-        systemIDs={systemIDs}
-        systemNames={systemNames}
-        task={task}
-        cases={cases[0]}
-        changeState={changeState}
-      />
-    );
-  } else if (systems.length === 1) {
-    // single analysis
+    // all single analysis cases + multi-system analysis for tasks with column info
     exampleTable = (
       <AnalysisTable
         systemIDs={systemIDs}
@@ -70,7 +60,7 @@ export function ExampleTable({
       />
     );
   } else {
-    // multi-system analysis for non-supported tasks
+    // multi-system analysis for tasks without column info
     exampleTable = (
       <Space style={{ width: "fit-content" }}>
         <Tabs
