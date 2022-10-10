@@ -4,6 +4,12 @@ export const condgenTasks = [
   "conditional_generation",
 ];
 
+export const seqLabTasks = [
+  "named-entity-recognition",
+  "chunking",
+  "word-segmentation",
+];
+
 export const taskTable = new Map<string, Table>();
 
 interface Table {
@@ -50,3 +56,13 @@ taskTable.set("text-pair-classification", {
   ],
   predictionColumns: [{ id: "predicted_label", name: "Predicted Label" }],
 });
+
+// // feature for individual entities
+// taskTable.set("named-entity-recognition", {
+//   datasetColumns: [
+//     { id: "sentence", name: "Sentence", maxWidth: "400px" },
+//     { id: "span", name: "Span Text" },
+//     { id: "true_label", name: "True Label" },
+//   ],
+//   predictionColumns: [{ id: "predicted_label", name: "Predicted Label" }],
+// });

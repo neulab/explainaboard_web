@@ -4,14 +4,8 @@ import { ColumnsType } from "antd/lib/table";
 import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
-import { taskTable } from "../AnalysisTable/supportedTasks";
+import { taskTable, seqLabTasks } from "../AnalysisTable/supportedTasks";
 import { joinResults, addPredictionColInfo, unnestSystemOutput } from "./utils";
-
-export const seqLabTasks = [
-  "named-entity-recognition",
-  "chunking",
-  "word-segmentation",
-];
 
 interface Props {
   systemIDs: string[];
@@ -128,10 +122,10 @@ function specifyDataSeqLab(
   // This is a feature defined over individual entities
   if ("token_span" in cases[0]) {
     const col_info = [
+      { id: "sentence", name: "Sentence", maxWidth: "400px" },
       { id: "span", name: "Span Text" },
       { id: "true_label", name: "True Label" },
       { id: "pred_label", name: "Predicted Label" },
-      { id: "sentence", name: "Sentence", maxWidth: "800px" },
     ];
 
     renderColInfo(columns, col_info);
@@ -211,6 +205,7 @@ export function AnalysisTable({
         const taskCols = taskTable.get(task);
         if (results.length > 1 && taskCols !== undefined) {
           const predCol = taskCols.predictionColumns[0].id;
+          console.log("predCol", predCol);
           joinedResult = joinResults(results, predCol);
         } else {
           joinedResult = results[0];
@@ -258,8 +253,11 @@ export function AnalysisTable({
   let colInfo;
   const numSystems = systemIDs.length;
   const taskCols = taskTable.get(task);
+  console.log("systemOutputs", systemOutputs);
+  console.log("cases", cases);
   if (seqLabTasks.includes(task)) {
     dataSource = specifyDataSeqLab(systemOutputs, cases, columns);
+    console.log("dataSource", dataSource);
   } else if (taskCols !== undefined) {
     colInfo = addPredictionColInfo(task, systemNames);
     /* expand columns if it is multi-system analysis */
