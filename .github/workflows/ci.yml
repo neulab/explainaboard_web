@@ -96,10 +96,10 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: flake8 --all-files
-      - name: lint-pep585-compliant
+      - name: lint-upgrade-syntax
         uses: pre-commit/action@v2.0.3
         with:
-          extra_args: upgrade-type-hints --all-files
+          extra_args: pyupgrade --all-files
   typecheck:
     runs-on: ubuntu-latest
     steps:
