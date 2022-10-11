@@ -1,6 +1,6 @@
 import os
 import pathlib
-from unittest import TestCase
+import unittest
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,11 @@ from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.constants import POP_WEIGHT
 
 
-class TestBenchmark(TestCase):
+@unittest.skip(
+    reason="to be fixed in future PR: "
+    "https://github.com/neulab/explainaboard_web/issues/402"
+)
+class TestBenchmark(unittest.TestCase):
     @staticmethod
     def _config_path():
         return os.path.join(
@@ -18,7 +22,7 @@ class TestBenchmark(TestCase):
             "benchmark_configs",
         )
 
-    def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):
+    def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):  # noqa: N802
         """
         Assert that two complex structures have almost equal contents.
 
@@ -56,7 +60,7 @@ class TestBenchmark(TestCase):
             exc.__dict__.setdefault("traces", []).append(trace)
             if is_root:
                 trace = " -> ".join(reversed(exc.traces))
-                exc = AssertionError("%s\nTRACE: %s" % (exc.message, trace))
+                exc = AssertionError(f"{exc.message}\nTRACE: {trace}")
             raise exc
 
     def test_masakhaner_aggregate(self):

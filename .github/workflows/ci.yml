@@ -12,13 +12,23 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install Python 3
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v4
         with:
           python-version: 3.9
+          cache: 'pip'
       - name: Install node 14.x
         uses: actions/setup-node@v2
         with:
           node-version-file: 'frontend/.nvmrc'
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            node_modules
+            frontend/node_modules
+          # yamllint disable rule:line-length
+          key: node-${{ hashFiles('.nvmrc', 'package-lock.json', 'frontend/package-lock.json') }}
+          # yamllint enable
       - name: Install node components
         run: |
           npm run gen-api-code
@@ -28,7 +38,29 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt -r backend/src/gen/requirements.txt
-  format:
+  integration-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Python 3
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          cache: 'pip'
+      - name: Install node 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: 'frontend/.nvmrc'
+      - name: Generate code
+        run: npm run gen-api-code
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt -r backend/src/gen/requirements.txt
+      - name: Test
+        run: PYTHONPATH=backend/src/gen python -m unittest discover -v backend/src/tests
+        timeout-minutes: 10
+  python-format:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -40,7 +72,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: black --all-files
-  isort:
+  python-isort:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -52,7 +84,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: isort --all-files
-  lint:
+  python-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -64,11 +96,90 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: flake8 --all-files
-      - name: lint-pep585-compliant
+      - name: lint-upgrade-syntax
         uses: pre-commit/action@v2.0.3
         with:
-          extra_args: upgrade-type-hints --all-files
-  markdownlint:
+          extra_args: pyupgrade --all-files
+  python-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install Python 3
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.9
+      - name: mypy
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: mypy --all-files
+  frontend-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: 'frontend/.nvmrc'
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: node-${{ hashFiles('.nvmrc', 'frontend/package-lock.json') }}
+      - name: Install Node dependencies
+        run: npm install
+        working-directory: frontend
+      - name: format
+        run: npm run prettier-check
+        working-directory: frontend
+  frontend-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: 'frontend/.nvmrc'
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: node-${{ hashFiles('.nvmrc', 'frontend/package-lock.json') }}
+      - name: Install Node dependencies
+        run: npm install
+        working-directory: frontend
+      - name: lint
+        run: npm run lint
+        working-directory: frontend
+  frontend-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install node 14.x
+        uses: actions/setup-node@v2
+        with:
+          node-version-file: 'frontend/.nvmrc'
+      - name: Cache Node modules
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: node-${{ hashFiles('.nvmrc', 'frontend/package-lock.json') }}
+      - name: Generate client code from OpenAPI definition
+        run: npm run gen-api-code
+      - name: Install Node dependencies
+        run: npm install
+        working-directory: frontend
+      - name: typecheck
+        run: npm run typecheck
+        working-directory: frontend
+  lint-requirements-txt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: requirements-txt-fixer --all-files
+  lint-markdown:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -80,7 +191,7 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: markdownlint-cli2 --all-files
-  yamllint:
+  lint-yaml:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -88,3 +199,35 @@ jobs:
         uses: pre-commit/action@v2.0.3
         with:
           extra_args: yamllint --all-files
+  lint-dockerfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: lint
+        uses: hadolint/hadolint-action@v2.0.0
+        with:
+          dockerfile: "Dockerfile"
+  lint-trailing-whitespace:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: trailing-whitespace --all-files
+  lint-eof-newline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: end-of-file-fixer --all-files
+  lint-shell-script:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: lint
+        uses: pre-commit/action@v2.0.3
+        with:
+          extra_args: shellcheck --all-files

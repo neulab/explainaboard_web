@@ -5,15 +5,13 @@ import re
 import traceback
 import zlib
 from datetime import datetime
-from inspect import getsource
-from types import FunctionType
-from typing import Any, Optional
+from typing import Any
 
 from bson import ObjectId
 from explainaboard import DatalabLoaderOption, FileType, Source, get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.loaders.loader_registry import get_loader_class
-from explainaboard.utils.serialization import general_to_dict
+from explainaboard.serialization.legacy import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
@@ -134,7 +132,7 @@ class SystemDBUtils:
         query: list | dict,
         page: int,
         page_size: int,
-        sort: Optional[list] = None,
+        sort: list | None = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
     ):
@@ -197,20 +195,20 @@ class SystemDBUtils:
     def find_systems(
         page: int,
         page_size: int,
-        ids: Optional[list[str]] = None,
-        system_name: Optional[str] = None,
-        task: Optional[str] = None,
-        dataset_name: Optional[str] = None,
-        subdataset_name: Optional[str] = None,
-        split: Optional[str] = None,
-        source_language: Optional[str] = None,
-        target_language: Optional[str] = None,
-        sort: Optional[list] = None,
-        creator: Optional[str] = None,
-        shared_users: Optional[list[str]] = None,
+        ids: list[str] | None = None,
+        system_name: str | None = None,
+        task: str | None = None,
+        dataset_name: str | None = None,
+        subdataset_name: str | None = None,
+        split: str | None = None,
+        source_language: str | None = None,
+        target_language: str | None = None,
+        sort: list | None = None,
+        creator: str | None = None,
+        shared_users: list[str] | None = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
-        dataset_list: Optional[list[tuple[str, str, str]]] = None,
+        dataset_list: list[tuple[str, str, str]] | None = None,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
 
@@ -503,12 +501,6 @@ class SystemDBUtils:
 
             # -- replace things that can't be returned through JSON for now
             system.metric_stats = []
-            for analysis_level in system.system_info.analysis_levels:
-                for feature_name, feature in analysis_level.features.items():
-                    if isinstance(feature.func, FunctionType):
-                        # Convert the function to a string, this is noqa to prevent a
-                        # typing error
-                        feature.func = getsource(feature.func)  # noqa
 
             # -- return the system
             return system

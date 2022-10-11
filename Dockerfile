@@ -5,17 +5,18 @@
 FROM node:14-bullseye-slim as build-step
 WORKDIR /app
 ENV PATH /app/node_modules/.bin:$PATH
-RUN apt-get update && apt-get install -y default-jre curl
+RUN apt-get update && apt-get install -y default-jre curl --no-install-recommends
 RUN mkdir ./frontend
 COPY ./frontend/package.json ./frontend/package-lock.json ./frontend/
 WORKDIR /app/frontend
 RUN npm install -g npm@8.5.4
+# It's OK to have multiple consecutive `RUN` instructions.
+# hadolint ignore=DL3059
 RUN npm install
 
 WORKDIR /app
 COPY ./frontend ./frontend
 COPY ./openapi ./openapi
-RUN chmod a+x ./openapi/gen_api_layer.sh
 RUN /bin/bash ./openapi/gen_api_layer.sh frontend
 
 WORKDIR /app/frontend
@@ -24,18 +25,19 @@ RUN npm run build
 
 # Step #2: build the API with the client as static files
 FROM python:3.9-slim-bullseye
-RUN apt-get update && apt-get install -y default-jre curl nginx
+RUN apt-get update \
+    && apt-get install -y default-jre curl nginx --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-RUN python3 -m pip install --upgrade pip
-RUN pip install gunicorn
+# hadolint ignore=DL3013
+RUN python3 -m pip install --upgrade pip \
+    && pip install gunicorn==20.1.0
 
 COPY ./backend ./backend
 COPY ./openapi ./openapi
-RUN chmod a+x ./openapi/gen_api_layer.sh
-RUN /bin/bash ./openapi/gen_api_layer.sh backend
-
-RUN pip install -r ./backend/requirements.txt -r ./backend/src/gen/requirements.txt
+RUN /bin/bash ./openapi/gen_api_layer.sh backend \
+    && pip install -r ./backend/requirements.txt -r ./backend/src/gen/requirements.txt
 
 # Step #3: configure nginx and flask
 WORKDIR /app/backend/src/gen

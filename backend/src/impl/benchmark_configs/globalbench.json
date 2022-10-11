@@ -37,16 +37,16 @@
                 {"op": "max", "group_by": ["source_language"], "skip_group_system": false},
                 {"op": "weighted_sum", "weight": "source_language", "weight_map": "ling_weight", "skip_group_system": false}
             ]
-        }, 
+        },
         {
             "name": "Most-underserved Languages",
             "operations": [
                 {"op": "max", "group_by": ["source_language"], "skip_group_system": true},
                 {"op": "add_default", "column": "source_language", "default_set": "all_lang", "score": 0},
-                {"op": "subtract", "num": 1}, 
+                {"op": "subtract", "num": 1},
                 {"op": "multiply", "weight": "source_language", "weight_map": "pop_weight"}
             ]
         }
     ],
     "default_views": ["Linguistic-weighted Global Average", "Demographic-weighted Global Average", "Linguistic-weighted System-by-system Average", "Demographic-weighted System-by-system Average", "Languages", "Original"]
-}   
+}

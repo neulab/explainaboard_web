@@ -190,7 +190,7 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
         }
       } finally {
         changeState(PageState.success);
-        /* 
+        /*
         The table after the 1st scroll may be incomplete as the async API call
         is not finished. If we stop there, the bottom portion of the examples will
         be concealed. Therefore, we need a 2nd scroll to bring the entire table
@@ -200,9 +200,9 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
       }
     }
     refreshSystemOutputs();
-    /* 
+    /*
     1st scroll to the table, which is likely still loading and
-    incomplete. This is needed so the scroll is immediate and 
+    incomplete. This is needed so the scroll is immediate and
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
