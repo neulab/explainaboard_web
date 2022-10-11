@@ -104,7 +104,7 @@ def deserialize_model(data: dict, klass):
     if not issubclass(klass, Model):
         return data
     # If swagger_types is empty, klass has additionalProperties=true. data
-    # is returned without deserialization in this case. FIX (lh) This is a hack
+    # is returned without deserialization in this case. FIXME(lyuyang) This is a hack
     # used by the original template. We should investigate ways to fix it.
     if not klass.swagger_types:
         return data
