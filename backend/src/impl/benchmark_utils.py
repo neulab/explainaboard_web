@@ -29,7 +29,7 @@ class BenchmarkUtils:
 
     @staticmethod
     def config_dict_from_file(path_json: str) -> dict:
-        with open(path_json, "r") as fin:
+        with open(path_json) as fin:
             benchmark_config = json.load(fin)
         # If a parent exists, then get the parent and update
         parent_id = benchmark_config.get("parent")
@@ -118,12 +118,10 @@ class BenchmarkUtils:
         # Collect (and deduplicate) all datasets from system infos otherwise
         else:
             dataset_tuples = list(
-                set(
-                    [
-                        (x["dataset_name"], x["sub_dataset_name"], x["dataset_split"])
-                        for x in systems
-                    ]
-                )
+                {
+                    (x["dataset_name"], x["sub_dataset_name"], x["dataset_split"])
+                    for x in systems
+                }
             )
             dataset_configs = [
                 {"dataset_name": x, "sub_dataset": y, "dataset_split": z}
@@ -408,9 +406,7 @@ class BenchmarkUtils:
             json_dict = {k.name: [] for k in config.views}
             json_dict["Original"] = []
             json_dict["times"] = []
-            unique_dates = sorted(
-                list(set([x["created_at"].date() for x in sys_infos]))
-            )
+            unique_dates = sorted(list({x["created_at"].date() for x in sys_infos}))
             for date in unique_dates:
                 systems = [sys for sys in sys_infos if sys["created_at"].date() <= date]
                 orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(
@@ -423,7 +419,7 @@ class BenchmarkUtils:
                 system_dict = {k: v for k, v in system_dfs}
                 for k, v in system_dfs:
                     if (
-                        (set(system_dict[k].columns) == set(["score", "system_name"]))
+                        (set(system_dict[k].columns) == {"score", "system_name"})
                         and len(json_dict[k]) == 0
                         or (
                             len(json_dict[k]) > 0

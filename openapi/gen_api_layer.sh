@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Generates API layer code for backend and frontend based on openapi.yaml
 # reference: https://stackoverflow.com/a/47554626
 
@@ -7,19 +9,19 @@ set -e
 # three modes: generate frontend only, backend only and both
 mode=$1
 script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
-project_root=`dirname $script_dir`
+project_root=$(dirname "$script_dir")
 
 OPENAPI_PATH="openapi"
 BACKEND_GEN_PATH="backend/src/gen"
 FRONTEND_GEN_PATH="frontend/src/clients/openapi"
 
-if ! [ `which curl` ]; then
+if ! [ "$(which curl)" ]; then
     echo "ERROR: curl not found. Please install curl command."
     exit 1
 fi
 
 # download codegen cli if not exists
-cd $script_dir
+cd "$script_dir"
 if [ ! -f swagger-codegen-cli-3.0.29.jar ]; then
     curl -L -O https://repo1.maven.org/maven2/io/swagger/codegen/v3/swagger-codegen-cli/3.0.29/swagger-codegen-cli-3.0.29.jar
 fi
@@ -28,11 +30,11 @@ fi
 # backend
 if [[ $mode == "backend" || $mode == "project" ]]; then
     # remove src/gen if exists and generate code
-    # we also create a link to src/impl in src/gen which contains our own implementation 
-    cd $project_root && rm -rf $BACKEND_GEN_PATH && \
+    # we also create a link to src/impl in src/gen which contains our own implementation
+    cd "$project_root" && rm -rf $BACKEND_GEN_PATH && \
     mkdir -p $BACKEND_GEN_PATH/explainaboard_web && \
     cd $BACKEND_GEN_PATH/explainaboard_web/ && \
-    ln -sf ../../impl/ && \
+    ln -sf ../../impl/ . && \
     cd ../../../.. && \
     java -jar $OPENAPI_PATH/swagger-codegen-cli-3.0.29.jar generate \
         -i $OPENAPI_PATH/openapi.yaml \
@@ -49,7 +51,7 @@ fi
 
 # frontend
 if [[ $mode == "frontend" || $mode == "project" ]]; then
-    cd $project_root && rm -rf $FRONTEND_GEN_PATH && \
+    cd "$project_root" && rm -rf $FRONTEND_GEN_PATH && \
     java -jar $OPENAPI_PATH/swagger-codegen-cli-3.0.29.jar generate \
         -i $OPENAPI_PATH/openapi.yaml \
         -l typescript-fetch \
