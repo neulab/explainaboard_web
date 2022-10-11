@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import re
 import traceback
-import zlib
 from datetime import datetime
 from typing import Any
 
@@ -329,15 +328,7 @@ class SystemDBUtils:
                 400, f"Could not find system outputs for {system_id}"
             )
         data = next(cursor)["data"]
-
-        # NOTE: (backward compatibility) Previously, we store data in MongoDB
-        # so the following if else statement is added to handle data created
-        # with the old version of the code. Once we regenerate DB next time,
-        # we can remove the if block.
-        if isinstance(data, bytes):
-            sys_data_str = zlib.decompress(data).decode()
-        else:
-            sys_data_str = get_storage().download_and_decompress(data)
+        sys_data_str = get_storage().download_and_decompress(data)
         sys_data: list = json.loads(sys_data_str)
 
         if output_ids is not None:
@@ -560,10 +551,7 @@ class SystemDBUtils:
             output_collection = DBUtils.get_system_output_collection(system_id)
             filt = {"system_id": system_id}
             outputs, _ = DBUtils.find(output_collection, filt)
-            data = (output["data"] for output in outputs)
-            # NOTE: (backward compatibility) data was stored in MongoDB previously,
-            # the isinstance filtering can be removed after we regenerate DB next time.
-            data_blob_names = [name for name in data if isinstance(name, str)]
+            data_blob_names = [output["data"] for output in outputs]
             DBUtils.delete_many(output_collection, filt, session=session)
 
             # Delete system output objects from Storage. This needs to be the last step
