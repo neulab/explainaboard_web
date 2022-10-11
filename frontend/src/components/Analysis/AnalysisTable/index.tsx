@@ -208,7 +208,6 @@ export function AnalysisTable({
         const taskCols = taskColumnMapping.get(task);
         if (results.length > 1 && taskCols !== undefined) {
           const predCol = taskCols.predictionColumns[0].id;
-          console.log("predCol", predCol);
           joinedResult = joinResults(results, predCol);
         } else {
           joinedResult = results[0];
@@ -256,11 +255,8 @@ export function AnalysisTable({
   let colInfo;
   const numSystems = systemIDs.length;
   const taskCols = taskColumnMapping.get(task);
-  console.log("systemOutputs", systemOutputs);
-  console.log("cases", cases);
   if (seqLabTasks.includes(task)) {
     dataSource = specifyDataSeqLab(systemOutputs, cases, columns);
-    console.log("dataSource", dataSource);
   } else if (taskCols !== undefined) {
     colInfo = addPredictionColInfo(task, systemNames);
     /* expand columns if it is multi-system analysis */
