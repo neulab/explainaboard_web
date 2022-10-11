@@ -6,13 +6,8 @@
     "start": "react-scripts start",
     "prettier": "prettier --write --ignore-unknown .",
     "prettier-check": "prettier --check --ignore-unknown .",
-<<<<<<< HEAD
-    "lint": "eslint --ext .js,.ts,.tsx,.js .",
-    "typecheck": "tsc",
-=======
     "lint": "eslint --max-warnings 0 --ext .js,.ts,.tsx,.js .",
     "typecheck": "tsc",
->>>>>>> main
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
