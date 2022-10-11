@@ -32,7 +32,6 @@ class {{classname}}(Model):
         '{{name}}': {{{datatype}}}{{#hasMore}},{{/hasMore}}
     {{/vars}}
     }
-    
     attribute_map = {
     {{#vars}}
         '{{name}}': '{{baseName}}'{{#hasMore}},{{/hasMore}}
@@ -47,7 +46,6 @@ class {{classname}}(Model):
         :type {{name}}: {{datatype}}
         {{/vars}}
         """
-        
 {{#vars}}{{#@first}}
 {{/@first}}
         self._{{name}} = {{name}}

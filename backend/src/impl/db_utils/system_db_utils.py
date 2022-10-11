@@ -105,7 +105,7 @@ class SystemDBUtils:
 
         # FIX (lh): The following for loop is added to work around an issue related
         # to default values of models. Previously, the generated models don't enforce
-        # required attributes. This function exploits tht loophole. Now that we have
+        # required attributes. This function exploits that loophole. Now that we have
         # fixed that loophole, this function needs some major refactoring. None was
         # assigned for these fields before implicitly. Now we assign them explicitly
         # so this hack does not change the current behavior.
