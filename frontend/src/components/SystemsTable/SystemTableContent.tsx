@@ -29,7 +29,7 @@ interface Props {
   metricNames: string[];
   selectedSystemIDs: string[];
   setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
-  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  onActiveSystemChange: (ids: string[]) => void;
   showEditDrawer: (systemIDToEdit: string) => void;
 }
 
@@ -43,7 +43,7 @@ export function SystemTableContent({
   metricNames,
   selectedSystemIDs,
   setSelectedSystemIDs,
-  setActiveSystemIDs,
+  onActiveSystemChange,
   showEditDrawer,
 }: Props) {
   const { userInfo } = useUser();
@@ -58,7 +58,7 @@ export function SystemTableContent({
   }));
 
   function showSystemAnalysis(systemID: string) {
-    setActiveSystemIDs([systemID]);
+    onActiveSystemChange([systemID]);
   }
 
   async function deleteSystem(systemID: string) {

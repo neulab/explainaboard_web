@@ -4,43 +4,38 @@ import { message, Space } from "antd";
 import { SystemSubmitDrawer, AnalysisDrawer } from "../../components";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel, newSystemModel } from "../../models";
-import { Filter, SystemTableTools } from "./SystemTableTools";
+import { SystemTableTools } from "./SystemTableTools";
 import { SystemTableContent } from "./SystemTableContent";
 import { findTask, PageState } from "../../utils";
 import { TaskCategory } from "../../clients/openapi";
 import { LoginState, useUser } from "../useUser";
-
-interface Props {
-  /**initial value for task filter */
-  name?: string;
-  initialTaskFilter?: string;
-  dataset?: string;
-  subdataset?: string;
-  datasetSplit?: string;
-}
+import { useHistory } from "react-router-dom";
+import useQuery from "../useQuery";
+import { FilterUpdate, SystemFilter } from "./SystemFilter";
 
 /** A table that lists all systems */
-export function SystemsTable({
-  name,
-  initialTaskFilter,
-  dataset,
-  subdataset,
-  datasetSplit,
-}: Props) {
+export function SystemsTable() {
   const [pageState, setPageState] = useState(PageState.loading);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
+  const history = useHistory();
 
   const [systems, setSystems] = useState<SystemModel[]>([]);
   const [total, setTotal] = useState(0);
+  const query = useQuery();
+  const [filters, setFilters] = useState<SystemFilter>(
+    SystemFilter.parseQueryToFilter(query)
+  );
 
-  // filters
-  const [nameFilter, setNameFilter] = useState(name);
-  const [taskFilter, setTaskFilter] = useState(initialTaskFilter);
-  const [showMine, setShowMine] = useState(false);
-  const [sortField, setSortField] = useState("created_at");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [split, setSplit] = useState<string | undefined>(datasetSplit);
+  const [activeSystemIDs, setActiveSystemIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const prevString = query.toString();
+    const newString = filters.toUrlParams().toString();
+    if (prevString !== newString) {
+      history.push({ search: filters.toUrlParams().toString() });
+    }
+  }, [history, filters, query]);
 
   // submit
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);
@@ -52,8 +47,10 @@ export function SystemsTable({
   // systems selected in the table
   const [selectedSystemIDs, setSelectedSystemIDs] = useState<string[]>([]);
 
-  // systems to be analyzed
-  const [activeSystemIDs, setActiveSystemIDs] = useState<string[]>([]);
+  // set systems to be analyzed
+  const onActiveSystemChange = (ids: string[]) => {
+    setActiveSystemIds(ids);
+  };
 
   // system to be edited
   const [systemIDToEdit, setSystemIDToEdit] = useState<string>("");
@@ -75,8 +72,8 @@ export function SystemsTable({
       }
     }
     // if a task is selected, add all supported metrics to the options list
-    if (taskFilter) {
-      const task = findTask(taskCategories, taskFilter);
+    if (filters.task) {
+      const task = findTask(taskCategories, filters.task);
       if (task)
         task.supported_metrics.forEach((metric) => metricNames.add(metric));
     }
@@ -84,40 +81,60 @@ export function SystemsTable({
   }
   const metricNames = getMetricsNames();
 
+  /* Fetch all tasks from backend during page initialization */
   useEffect(() => {
-    function getInitialSortField(taskCategories: TaskCategory[]) {
-      if (initialTaskFilter) {
-        const initialTask = findTask(taskCategories, initialTaskFilter);
+    async function fetchTasks() {
+      const taskCategoriesData = await backendClient.tasksGet();
+      setTaskCategories(taskCategoriesData);
+    }
+    fetchTasks();
+  }, []);
+
+  /** TODO: add debounce */
+  const onFilterChange = function (updates: FilterUpdate) {
+    /* When task filter changes, also reset the ordering */
+    function getInitialSortField(
+      taskCategories: TaskCategory[],
+      taskFilter: string
+    ) {
+      if (taskFilter) {
+        const initialTask = findTask(taskCategories, taskFilter);
         if (initialTask && initialTask.supported_metrics.length > 0)
           return initialTask.supported_metrics[0];
       }
       return "created_at";
     }
-    async function fetchTasks() {
-      const taskCategoriesData = await backendClient.tasksGet();
-      setTaskCategories(taskCategoriesData);
-      setSortField(getInitialSortField(taskCategoriesData));
+
+    if (updates.task) {
+      const initialSortField = getInitialSortField(
+        taskCategories,
+        updates.task
+      );
+      updates.sortField = initialSortField;
     }
-    fetchTasks();
-  }, [initialTaskFilter]);
+
+    setFilters(filters.update(updates));
+    setPage(0);
+    setSelectedSystemIDs([]);
+  };
 
   useEffect(() => {
     async function refreshSystems() {
       setPageState(PageState.loading);
-      const datasetSplit = split === "all" ? undefined : split;
-      const creator = showMine === true ? userEmail : undefined;
+      const datasetSplit = filters.split === "all" ? undefined : filters.split;
+      const creator = filters.showMine ? userEmail : undefined;
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
-            nameFilter || undefined,
-            taskFilter,
-            dataset || undefined,
-            subdataset || undefined,
-            datasetSplit || undefined,
+            filters.name,
+            filters.task,
+            filters.dataset,
+            filters.subdataset,
+            datasetSplit,
             page,
             pageSize,
-            sortField,
-            sortDir,
+            filters.sortField,
+            filters.sortDir,
             creator
           );
         setSystems(newSystems.map((sys) => newSystemModel(sys)));
@@ -134,39 +151,13 @@ export function SystemsTable({
     }
     if (loginState !== LoginState.loading) refreshSystems();
   }, [
-    nameFilter,
-    taskFilter,
-    showMine,
-    dataset,
-    subdataset,
-    split,
+    filters,
     page,
     pageSize,
-    sortField,
-    sortDir,
     refreshTrigger,
     userEmail,
     loginState, // refresh when login state changes
   ]);
-
-  /** TODO: add debounce */
-  function onFilterChange({
-    name,
-    task,
-    showMine,
-    sortField: newSortField,
-    sortDir: newSortDir,
-    split: newSplit,
-  }: Partial<Filter>) {
-    if (name != null) setNameFilter(name);
-    if (task != null) setTaskFilter(task || undefined);
-    if (showMine != null) setShowMine(showMine);
-    if (newSortField != null) setSortField(newSortField);
-    if (newSortDir != null) setSortDir(newSortDir);
-    if (newSplit != null) setSplit(newSplit);
-    setPage(0);
-    setSelectedSystemIDs([]);
-  }
 
   function showSubmitDrawer() {
     setSubmitDrawerVisible(true);
@@ -183,18 +174,11 @@ export function SystemsTable({
         systems={systems}
         showSubmitDrawer={showSubmitDrawer}
         taskCategories={taskCategories}
-        value={{
-          task: taskFilter,
-          name: nameFilter,
-          showMine: showMine,
-          sortField,
-          sortDir,
-          split,
-        }}
+        value={filters}
         onChange={onFilterChange}
         metricOptions={metricNames}
         selectedSystemIDs={selectedSystemIDs}
-        setActiveSystemIDs={setActiveSystemIDs}
+        onActiveSystemChange={onActiveSystemChange}
       />
       <SystemTableContent
         systems={systems}
@@ -210,14 +194,14 @@ export function SystemsTable({
         metricNames={metricNames}
         selectedSystemIDs={selectedSystemIDs}
         setSelectedSystemIDs={setSelectedSystemIDs}
-        setActiveSystemIDs={setActiveSystemIDs}
+        onActiveSystemChange={onActiveSystemChange}
         showEditDrawer={showEditDrawer}
       />
       <AnalysisDrawer
         systems={systems.filter((sys) =>
           activeSystemIDs.includes(sys.system_id)
         )}
-        closeDrawer={() => setActiveSystemIDs([])}
+        closeDrawer={() => onActiveSystemChange([])}
       />
       <SystemSubmitDrawer
         systemToEdit={systemToEdit}

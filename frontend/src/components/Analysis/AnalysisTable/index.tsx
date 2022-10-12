@@ -4,9 +4,15 @@ import { ColumnsType } from "antd/lib/table";
 import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
+import {
+  taskColumnMapping,
+  seqLabTasks,
+} from "../AnalysisTable/taskColumnMapping";
+import { joinResults, addPredictionColInfo, unnestSystemOutput } from "./utils";
 
 interface Props {
-  systemID: string;
+  systemIDs: string[];
+  systemNames: string[];
   task: string;
   cases: AnalysisCase[];
   changeState: (newState: PageState) => void;
@@ -53,6 +59,27 @@ function renderColInfo(
   }
 }
 
+function createSentenceForSeqLab(
+  systemOutput: SystemOutput,
+  analysisCase: AnalysisCase
+) {
+  const origToks = systemOutput["tokens"];
+  let sentence = origToks;
+  const pos = analysisCase["token_span"];
+  if (Array.isArray(origToks)) {
+    const copiedToks = origToks.map((x: string) => `${x} `);
+    const prefix = copiedToks.slice(0, pos[0]).join(" ");
+    const infix = copiedToks.slice(pos[0], pos[1]).join(" ");
+    const suffix = copiedToks.slice(pos[1]).join(" ");
+    sentence = (
+      <div>
+        {prefix} <b>{infix}</b> {suffix}
+      </div>
+    );
+  }
+  return sentence;
+}
+
 function specifyDataGeneric(
   systemOutputs: SystemOutput[],
   columns: ColumnsType<SystemOutput>,
@@ -97,31 +124,19 @@ function specifyDataSeqLab(
 
   // This is a feature defined over individual entities
   if ("token_span" in cases[0]) {
-    const col_info = [
+    const colInfo = [
+      { id: "sentence", name: "Sentence", maxWidth: "400px" },
       { id: "span", name: "Span Text" },
       { id: "true_label", name: "True Label" },
       { id: "pred_label", name: "Predicted Label" },
-      { id: "sentence", name: "Sentence", maxWidth: "800px" },
     ];
 
-    renderColInfo(columns, col_info);
+    renderColInfo(columns, colInfo);
 
     for (let i = 0; i < systemOutputs.length; i++) {
       // Get the outputs from the bucket case
-      const origToks = systemOutputs[i]["tokens"];
-      let sentence = origToks;
+      const sentence = createSentenceForSeqLab(systemOutputs[i], cases[i]);
       const pos = cases[i]["token_span"];
-      if (Array.isArray(origToks)) {
-        const copiedToks = origToks.map((x: string) => `${x} `);
-        const prefix = copiedToks.slice(0, pos[0]).join(" ");
-        const infix = copiedToks.slice(pos[0], pos[1]).join(" ");
-        const suffix = copiedToks.slice(pos[1]).join(" ");
-        sentence = (
-          <div>
-            {prefix} <b>{infix}</b> {suffix}
-          </div>
-        );
-      }
       const spanPos =
         pos[0] === pos[1] - 1 ? `${pos[0]}` : `${pos[0]}:${pos[1]}`;
       const dataRow = {
@@ -136,9 +151,9 @@ function specifyDataSeqLab(
   }
   // This is feature defined over whole sentences
   else {
-    const col_info = [{ id: "sentence", name: "Sentence", maxWidth: "800px" }];
+    const colInfo = [{ id: "sentence", name: "Sentence", maxWidth: "800px" }];
 
-    renderColInfo(columns, col_info);
+    renderColInfo(columns, colInfo);
 
     for (let i = 0; i < systemOutputs.length; i++) {
       // Get the outputs from the bucket case
@@ -155,9 +170,14 @@ function specifyDataSeqLab(
   return dataSource;
 }
 
-export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
+export function AnalysisTable({
+  systemIDs,
+  systemNames,
+  task,
+  cases,
+  changeState,
+}: Props) {
   const [page, setPage] = useState(0);
-
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
   const total = cases.length;
@@ -174,12 +194,28 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
         const offset = page * pageSize;
         const end = Math.min(offset + pageSize, cases.length);
         const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
-        const result = await backendClient.systemOutputsGetById(
-          systemID,
-          outputIDs
-        );
-        setSystemOutputs(result);
+        let joinedResult: SystemOutput[] = [];
+        const results = [];
+        for (const systemID of systemIDs) {
+          const result = await backendClient.systemOutputsGetById(
+            systemID,
+            outputIDs
+          );
+          results.push(result);
+        }
+
+        // join the results if it is one of the supported tasks and is multi-system
+        const taskCols = taskColumnMapping.get(task);
+        if (results.length > 1 && taskCols !== undefined) {
+          const predCol = taskCols.predictionColumns[0].id;
+          joinedResult = joinResults(results, predCol);
+        } else {
+          joinedResult = results[0];
+        }
+
+        setSystemOutputs(joinedResult);
       } catch (e) {
+        console.log("error", e);
         if (e instanceof Response) {
           const error = await parseBackendError(e);
           if (error.error_code === 40301) {
@@ -190,7 +226,7 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
         }
       } finally {
         changeState(PageState.success);
-        /* 
+        /*
         The table after the 1st scroll may be incomplete as the async API call
         is not finished. If we stop there, the bottom portion of the examples will
         be concealed. Therefore, we need a 2nd scroll to bring the entire table
@@ -200,13 +236,13 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
       }
     }
     refreshSystemOutputs();
-    /* 
+    /*
     1st scroll to the table, which is likely still loading and
-    incomplete. This is needed so the scroll is immediate and 
+    incomplete. This is needed so the scroll is immediate and
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [systemID, page, pageSize, cases, changeState]);
+  }, [page, pageSize, cases, changeState, systemIDs, task]);
 
   // other fields
   if (systemOutputs.length === 0) {
@@ -215,43 +251,24 @@ export function AnalysisTable({ systemID, task, cases, changeState }: Props) {
 
   const columns: ColumnsType<SystemOutput> = [];
 
-  const condgenTasks = [
-    "machine-translation",
-    "summarization",
-    "conditional_generation",
-  ];
-  const seqLabTasks = [
-    "named-entity-recognition",
-    "chunking",
-    "word-segmentation",
-  ];
-
   let dataSource: { [p: string]: string }[];
   let colInfo;
+  const numSystems = systemIDs.length;
+  const taskCols = taskColumnMapping.get(task);
   if (seqLabTasks.includes(task)) {
     dataSource = specifyDataSeqLab(systemOutputs, cases, columns);
-  } else if (condgenTasks.includes(task)) {
-    colInfo = [
-      { id: "source", name: "Source", maxWidth: "500px" },
-      { id: "reference", name: "Reference", maxWidth: "500px" },
-      { id: "hypothesis", name: "Hypothesis", maxWidth: "500px" },
-    ];
-    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
-  } else if (task === "text-classification") {
-    colInfo = [
-      { id: "true_label", name: "True Label" },
-      { id: "predicted_label", name: "Predicted Label" },
-      { id: "text", name: "Text", maxWidth: "800px" },
-    ];
-    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
-  } else if (task === "text-pair-classification") {
-    colInfo = [
-      { id: "true_label", name: "True Label" },
-      { id: "predicted_label", name: "Predicted Label" },
-      { id: "text1", name: "Text 1", maxWidth: "500px" },
-      { id: "text2", name: "Text 2", maxWidth: "500px" },
-    ];
-    dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
+  } else if (taskCols !== undefined) {
+    colInfo = addPredictionColInfo(task, systemNames);
+    /* expand columns if it is multi-system analysis */
+    if (numSystems > 1) {
+      dataSource = specifyDataGeneric(
+        unnestSystemOutput(systemOutputs, taskCols.predictionColumns[0].id),
+        columns,
+        colInfo
+      );
+    } else {
+      dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
+    }
   } else {
     dataSource = specifyDataGeneric(systemOutputs, columns);
   }
