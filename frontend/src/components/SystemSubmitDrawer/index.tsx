@@ -35,6 +35,11 @@ interface Props extends DrawerProps {
   visible: boolean;
 }
 
+type SysToSubmit = {
+  base64: string;
+  sysName: string;
+};
+
 enum State {
   loading,
   other,
@@ -104,13 +109,27 @@ export function SystemSubmitDrawer(props: Props) {
     return ((await toBase64(file)) as string).split(",")[1];
   }
 
+  async function extractAndEncodeAllFiles(fileValue: DataFileValue) {
+    const fileList = unwrap(fileValue.fileList);
+    const sysNames = unwrap(fileValue.sysNames);
+
+    // A list of system name and base 64 string
+    const sysSubmitList: SysToSubmit[] = [];
+    for (const file of fileList) {
+      const fileObj = file.originFileObj;
+      if (fileObj == null) throw new Error("Some file is undefined");
+      const fileBase64 = ((await toBase64(fileObj)) as string).split(",")[1];
+      sysSubmitList.push({ sysName: sysNames[file.uid], base64: fileBase64 });
+    }
+    return sysSubmitList;
+  }
+
   /**
    *
    * TODO:
    * 1. a more robust way to get file extension
    */
   async function submit({
-    name,
     task,
     dataset,
     metric_names,
@@ -126,64 +145,69 @@ export function SystemSubmitDrawer(props: Props) {
   }: FormData) {
     try {
       setState(State.loading);
-      const systemOutBase64 = await extractAndEncodeFile(sys_out_file);
-      let system: System;
-      const trimmedUsers =
-        shared_users === undefined
-          ? undefined
-          : shared_users.map((user) => user.trim());
-      source_language =
-        source_language === "other"
-          ? "other-" + other_source_language
-          : source_language;
-      target_language =
-        target_language === "other"
-          ? "other-" + other_target_language
-          : target_language;
-      if (useCustomDataset) {
-        const customDatasetBase64 = await extractAndEncodeFile(
-          custom_dataset_file
-        );
-        system = await backendClient.systemsPost({
-          metadata: {
-            metric_names,
-            system_name: name,
-            task: task,
-            source_language,
-            target_language,
-            is_private,
-            shared_users: trimmedUsers,
-            system_details: { __TO_PARSE__: system_details },
-          },
-          system_output: {
-            data: systemOutBase64,
-            file_type: unwrap(sys_out_file.fileType),
-          },
-          custom_dataset: {
-            data: customDatasetBase64,
-            file_type: unwrap(custom_dataset_file.fileType),
-          },
-        });
-      } else {
-        const { datasetID, split } = dataset;
-        system = await backendClient.systemsPost({
-          metadata: {
-            dataset_metadata_id: datasetID,
-            dataset_split: split,
-            metric_names,
-            system_name: name,
-            task: task,
-            source_language,
-            target_language,
-            is_private,
-            shared_users: trimmedUsers,
-            system_details: { __TO_PARSE__: system_details },
-          },
-          system_output: {
-            data: systemOutBase64,
-            file_type: unwrap(sys_out_file.fileType),
-          },
-        });
+      const sysSubmitList = await extractAndEncodeAllFiles(sys_out_file);
+      const systems: System[] = [];
+
+      for (const sysToSubmit of Object.values(sysSubmitList)) {
+        let system;
+        const trimmedUsers =
+          shared_users === undefined
+            ? undefined
+            : shared_users.map((user) => user.trim());
+        source_language =
+          source_language === "other"
+            ? "other-" + other_source_language
+            : source_language;
+        target_language =
+          target_language === "other"
+            ? "other-" + other_target_language
+            : target_language;
+        if (useCustomDataset) {
+          const customDatasetBase64 = await extractAndEncodeFile(
+            custom_dataset_file
+          );
+          system = await backendClient.systemsPost({
+            metadata: {
+              metric_names,
+              system_name: sysToSubmit.sysName,
+              task: task,
+              source_language,
+              target_language,
+              is_private,
+              shared_users: trimmedUsers,
+              system_details: { __TO_PARSE__: system_details },
+            },
+            system_output: {
+              data: sysToSubmit.base64,
+              file_type: unwrap(sys_out_file.fileType),
+            },
+            custom_dataset: {
+              data: customDatasetBase64,
+              file_type: unwrap(custom_dataset_file.fileType),
+            },
+          });
+        } else {
+          const { datasetID, split } = dataset;
+          system = await backendClient.systemsPost({
+            metadata: {
+              dataset_metadata_id: datasetID,
+              dataset_split: split,
+              metric_names,
+              system_name: sysToSubmit.sysName,
+              task: task,
+              source_language,
+              target_language,
+              is_private,
+              shared_users: trimmedUsers,
+              system_details: { __TO_PARSE__: system_details },
+            },
+            system_output: {
+              data: sysToSubmit.base64,
+              file_type: unwrap(sys_out_file.fileType),
+            },
+          });
+          systems.push(system);
+        }
       }
 
       ReactGA.event({
@@ -191,7 +215,11 @@ export function SystemSubmitDrawer(props: Props) {
         action: `system_submit_success`,
         label: task,
       });
-      message.success(`Successfully submitted system (${system.system_id}).`);
+      message.success(
+        `Successfully submitted systems (${systems.map(
+          (system) => system.system_id
+        )}).`
+      );
       onClose();
       form.resetFields([
         "name",
@@ -363,14 +391,6 @@ export function SystemSubmitDrawer(props: Props) {
           onValuesChange={onValuesChange}
         >
           <Form.Item
-            name="name"
-            label="System Name"
-            rules={[{ required: true }]}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
             name="task"
             label="Task"
             rules={[{ required: true }]}
@@ -448,7 +468,10 @@ export function SystemSubmitDrawer(props: Props) {
             required
             rules={[{ validator: getDataFileValidator(true, "System Output") }]}
           >
-            <DataFileUpload allowedFileTypes={allowedFileType.system_output} />
+            <DataFileUpload
+              allowedFileTypes={allowedFileType.system_output}
+              maxFileCount={10}
+            />
           </Form.Item>
 
           <Form.Item

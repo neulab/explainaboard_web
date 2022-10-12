@@ -1,32 +1,42 @@
 import React, { useCallback, useEffect } from "react";
 import { UploadChangeParam, UploadFile } from "antd/lib/upload/interface";
-import { Button, CheckboxOptionType, Radio, Upload } from "antd";
+import { Space, Button, CheckboxOptionType, Radio, Upload, Input } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 
 export interface DataFileValue {
   fileList?: UploadFile[];
+  // A map from uploaded file uid to the system name
+  sysNames?: { [key: string]: string };
   fileType?: string;
 }
 interface Props {
   value?: DataFileValue;
   onChange?: (value: DataFileValue) => void;
+  maxFileCount?: number;
   allowedFileTypes: string[];
 }
 /** DataFileUpload that works with Form.Item */
-export function DataFileUpload({ value, onChange, allowedFileTypes }: Props) {
+export function DataFileUpload({
+  value,
+  onChange,
+  allowedFileTypes,
+  maxFileCount = 1,
+}: Props) {
   const fileList = value?.fileList;
+  const sysNames = value?.sysNames;
   const fileType = value?.fileType;
 
   const triggerChange = useCallback(
     (changedValue: Partial<DataFileValue>) => {
       const newValue = {
         fileList,
+        sysNames,
         fileType,
         ...changedValue,
       };
       if (onChange) onChange(newValue);
     },
-    [fileList, fileType, onChange]
+    [fileList, fileType, sysNames, onChange]
   );
 
   useEffect(() => {
@@ -60,15 +70,33 @@ export function DataFileUpload({ value, onChange, allowedFileTypes }: Props) {
     triggerChange({ fileType: newFileType });
   }
 
+  function onSysNameChange(fileName: string, sysName: string) {
+    const newSysNames = { ...sysNames, [fileName]: sysName };
+    triggerChange({ sysNames: newSysNames });
+  }
+
   return (
     <div>
       <Upload
-        maxCount={1}
+        maxCount={maxFileCount}
         beforeUpload={(file) => {
           return false;
         }}
         fileList={fileList}
         onChange={onFileChange}
+        itemRender={(originNode, file) =>
+          maxFileCount > 1 ? (
+            <Space>
+              <Input
+                addonBefore="System Name"
+                onChange={(e) => onSysNameChange(file.uid, e.target.value)}
+              ></Input>
+              {originNode}
+            </Space>
+          ) : (
+            originNode
+          )
+        }
       >
         <Button icon={<UploadOutlined />}>Select File</Button>
       </Upload>
