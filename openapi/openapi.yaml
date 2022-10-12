@@ -654,15 +654,6 @@ components:
         system_name:
           type: string
           example: "sst2-cnn"
-        dataset_name:
-          type: string
-          nullable: true
-        sub_dataset_name:
-          type: string
-          nullable: true
-        dataset_split:
-          type: string
-          nullable: true
         source_language:
           type: string
           example: en
@@ -673,9 +664,6 @@ components:
           type: boolean
         confidence_alpha:
           type: number
-        system_details:
-          type: object
-          nullable: true
         analysis_levels:
           type: array
           items:
@@ -701,6 +689,18 @@ components:
             analyses:
               type: object
           required: [overall]
+        dataset_name:
+          type: string
+          nullable: true
+        sub_dataset_name:
+          type: string
+          nullable: true
+        dataset_split:
+          type: string
+          nullable: true
+        system_details:
+          type: object
+          nullable: true
       required:
         [
           task_name,
@@ -792,9 +792,9 @@ components:
       properties:
         name:
           type: string
-        iso1_code:
-          type: string
         iso3_code:
+          type: string
+        iso1_code:
           type: string
       required: [name, iso3_code]
 
@@ -840,6 +840,19 @@ components:
         task:
           type: string
           example: "text_classification"
+        system_name:
+          type: string
+        metric_names:
+          type: array
+          items:
+            type: string
+          example: [Accuracy]
+        source_language:
+          type: string
+          example: en
+        target_language:
+          type: string
+          example: en
         is_private:
           type: boolean
           default: true
@@ -855,19 +868,6 @@ components:
           type: string
           description: required if dataset_metadata_id specified
           example: test
-        system_name:
-          type: string
-        metric_names:
-          type: array
-          items:
-            type: string
-          example: [Accuracy]
-        source_language:
-          type: string
-          example: en
-        target_language:
-          type: string
-          example: en
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
@@ -898,39 +898,10 @@ components:
         - properties:
             system_id:
               type: string
-            creator:
-              type: string
-              description: user email
-            shared_users:
-              type: array
-              items:
-                type: string
-              description: list of emails with which system is shared
             is_private:
               type: boolean
             system_info:
               $ref: "#/components/schemas/SystemInfo"
-            # TODO(chihhao) Deduplication of dataset information here and in system_info
-            dataset:
-              description: if not specified, it is undefined
-              type: object
-              properties:
-                dataset_id:
-                  type: string
-                dataset_name:
-                  type: string
-                sub_dataset:
-                  type: string
-                  nullable: true
-                tasks:
-                  type: array
-                  items:
-                    type: string
-              required: [dataset_id, dataset_name, tasks]
-            system_details:
-              type: object
-              description: |
-                a place to store arbitrary system details you want to remember
             metric_stats:
               description: |
                 An array of sufficient statistics for each metric, used in SDK's
@@ -940,6 +911,35 @@ components:
                 type: array
                 items:
                   type: number
+            creator:
+              type: string
+              description: user email
+            shared_users:
+              type: array
+              items:
+                type: string
+              description: list of emails with which system is shared
+            # TODO(chihhao) Deduplication of dataset information here and in system_info
+            dataset:
+              description: if not specified, it is undefined
+              type: object
+              properties:
+                dataset_id:
+                  type: string
+                dataset_name:
+                  type: string
+                tasks:
+                  type: array
+                  items:
+                    type: string
+                sub_dataset:
+                  type: string
+                  nullable: true
+              required: [dataset_id, dataset_name, tasks]
+            system_details:
+              type: object
+              description: |
+                a place to store arbitrary system details you want to remember
           required:
             [
               system_id,
@@ -976,6 +976,11 @@ components:
           example: "61611c3a414abfb115397ca5"
         dataset_name:
           type: string
+        tasks:
+          type: array
+          items:
+            type: string
+            description: task name
         sub_dataset:
           type: string
           description: sub dataset id (TODO)
@@ -999,11 +1004,6 @@ components:
         person_of_contact:
           type: string
           nullable: true
-        tasks:
-          type: array
-          items:
-            type: string
-            description: task name
         task_categories:
           type: array
           items:
@@ -1075,12 +1075,6 @@ components:
     BucketPerformance:
       type: object
       properties:
-        bucket_interval:
-          type: array
-          items:
-            type: number
-        bucket_name:
-          type: string
         n_samples:
           type: number
         bucket_samples:
@@ -1091,6 +1085,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Performance"
+        bucket_name:
+          type: string
+        bucket_interval:
+          type: array
+          items:
+            type: number
       required: [n_samples, bucket_samples, performances]
 
     SingleAnalysis:
@@ -1201,9 +1201,13 @@ components:
     BenchmarkConfig:
       type: object
       properties:
-        id:
-          type: string
         name:
+          type: string
+        views:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkViewConfig'
+        id:
           type: string
         description:
           type: string
@@ -1236,10 +1240,6 @@ components:
             $ref: '#/components/schemas/BenchmarkDatasetConfig'
         system_query:
           type: object
-        views:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkViewConfig'
         default_views:
           type: array
           items:
