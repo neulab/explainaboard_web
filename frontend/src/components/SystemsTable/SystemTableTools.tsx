@@ -25,7 +25,7 @@ import { FilterUpdate, SystemFilter } from "./SystemFilter";
 interface Props {
   systems: SystemModel[];
   /** show/hide submit drawer */
-  toggleSubmitDrawer: () => void;
+  showSubmitDrawer: () => void;
   taskCategories: TaskCategory[];
   value: SystemFilter;
   onChange: (value: FilterUpdate) => void;
@@ -35,7 +35,7 @@ interface Props {
 }
 export function SystemTableTools({
   systems,
-  toggleSubmitDrawer,
+  showSubmitDrawer,
   taskCategories,
   value,
   onChange,
@@ -281,7 +281,7 @@ export function SystemTableTools({
           onChange={(e) => onChange({ name: e.target.value })}
         />
 
-        <NewSystemButton onClick={toggleSubmitDrawer} />
+        <NewSystemButton onClick={showSubmitDrawer} />
       </Space>
     </div>
   );
