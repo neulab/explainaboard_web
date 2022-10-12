@@ -46,6 +46,7 @@ from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
+from explainaboard_web.models.user import User
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
 
@@ -72,11 +73,11 @@ def info_get():
 """ /user """
 
 
-def user_get():
+def user_get() -> User:
     user = get_user()
     if not user:
         abort_with_error_message(401, "login required")
-    return user.get_user_info()
+    return User.from_dict(user.get_user_info())
 
 
 """ /tasks """

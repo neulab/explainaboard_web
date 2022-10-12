@@ -159,10 +159,6 @@ class SystemDBUtils:
         # query preferred_usernames in batch to make it more efficient
         ids = set(doc["creator"] for doc in documents)
         users = UserDBUtils.find_users(list(ids))
-        if len(users) < len(ids):
-            abort_with_error_message(
-                500, "system creator not found in DB, please contact the system admins"
-            )
         id_to_preferred = {user.id: user.preferred_username for user in users}
 
         for doc in documents:

@@ -56,7 +56,7 @@ export function SystemsTable({
   const [activeSystemIDs, setActiveSystemIDs] = useState<string[]>([]);
 
   const { state: loginState, userInfo } = useUser();
-  const username = userInfo?.username;
+  const userId = userInfo?.id;
 
   /** generate metrics options list */
   function getMetricsNames() {
@@ -97,7 +97,7 @@ export function SystemsTable({
     async function refreshSystems() {
       setPageState(PageState.loading);
       const datasetSplit = split === "all" ? undefined : split;
-      const creator = showMine === true ? username : undefined;
+      const creator = showMine === true ? userId : undefined;
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
@@ -137,7 +137,7 @@ export function SystemsTable({
     sortField,
     sortDir,
     refreshTrigger,
-    username,
+    userId,
     loginState, // refresh when login state changes
   ]);
 

@@ -487,7 +487,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/UserMetadata"
+                $ref: "#/components/schemas/User"
 
 components:
   securitySchemes:
@@ -1292,7 +1292,7 @@ components:
           type: string
       required: [title, url]
 
-    UserMetadataInDB:
+    User:
       type: object
       properties:
         id:
@@ -1300,23 +1300,11 @@ components:
             identical to the sub in Cognito, which is a unique identifier for
             the authenticated user.
           type: string
+        email:
+          type: string
+        api_key:
+          type: string
         preferred_username:
           description: identical to the preferred_username in Cognito.
           type: string
-      required: [id, preferred_username]
-
-    UserMetadata:
-      allOf:
-        - type: object
-        - properties:
-            username:
-              description: |
-                a fixed value identifying each user. In our case, it has
-                the same value as id.
-              type: string
-            email:
-              type: string
-            api_key:
-              type: string
-          required: [id, preferred_username, username, email, api_key]
-        - $ref: "#/components/schemas/UserMetadataInDB"
+      required: [id, email, api_key, preferred_username]

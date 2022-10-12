@@ -5,9 +5,8 @@ from typing import Optional
 
 import boto3
 import jwt
-from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils
+from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils, UserInDB
 from explainaboard_web.impl.utils import abort_with_error_message
-from explainaboard_web.models.user_metadata_in_db import UserMetadataInDB
 from flask import current_app, g
 
 
@@ -88,9 +87,7 @@ class User:
             """create a new user entry if not exists in DB"""
             db_user = UserDBUtils.find_user(self.id)
             if db_user is None:
-                db_user = UserMetadataInDB(
-                    id=self.id, preferred_username=preferred_username
-                )
+                db_user = UserInDB(id=self.id, preferred_username=preferred_username)
                 UserDBUtils.create_user(db_user)
 
         return self._info
