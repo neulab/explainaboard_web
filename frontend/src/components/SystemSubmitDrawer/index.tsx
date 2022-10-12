@@ -32,7 +32,7 @@ import { SystemModel } from "../../models";
 const { TextArea } = Input;
 
 interface Props extends DrawerProps {
-  systemToEdit: SystemModel | undefined;
+  systemToEdit?: SystemModel;
   onClose: () => void;
   visible: boolean;
 }
@@ -63,19 +63,7 @@ export function SystemSubmitDrawer(props: Props) {
   const editMode = systemToEdit !== undefined;
 
   const resetAllFormFields = useCallback(() => {
-    form.resetFields([
-      "name",
-      "task",
-      "dataset",
-      "sys_out_file",
-      "custom_dataset_file",
-      "metric_names",
-      "is_private",
-      "source_language",
-      "target_language",
-      "shared_users",
-      "system_details",
-    ]);
+    form.resetFields();
   }, [form]);
 
   useEffect(() => {
@@ -86,9 +74,7 @@ export function SystemSubmitDrawer(props: Props) {
       setState(State.other);
     }
 
-    if (!editMode) {
-      fetchTasks();
-    }
+    fetchTasks();
     resetAllFormFields();
   }, [editMode, resetAllFormFields]);
 
@@ -236,6 +222,7 @@ export function SystemSubmitDrawer(props: Props) {
         });
         message.success(`Successfully submitted system (${system.system_id}).`);
       }
+      resetAllFormFields();
       onClose();
     } catch (e) {
       if (editMode) {
@@ -259,7 +246,6 @@ export function SystemSubmitDrawer(props: Props) {
       }
     } finally {
       setState(State.other);
-      resetAllFormFields();
     }
   }
 
@@ -389,9 +375,7 @@ export function SystemSubmitDrawer(props: Props) {
       width="60%"
       title={editMode ? "Edit System" : "New System"}
       footer={footer}
-      onClose={() => {
-        onClose();
-      }}
+      onClose={onClose}
       {...rest}
     >
       <Spin spinning={state === State.loading} tip="processing...">
