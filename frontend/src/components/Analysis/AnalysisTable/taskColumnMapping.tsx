@@ -56,13 +56,3 @@ taskColumnMapping.set("text-pair-classification", {
   ],
   predictionColumns: [{ id: "predicted_label", name: "Predicted Label" }],
 });
-
-// // feature for individual entities
-// taskColumnMapping.set("named-entity-recognition", {
-//   datasetColumns: [
-//     { id: "sentence", name: "Sentence", maxWidth: "400px" },
-//     { id: "span", name: "Span Text" },
-//     { id: "true_label", name: "True Label" },
-//   ],
-//   predictionColumns: [{ id: "predicted_label", name: "Predicted Label" }],
-// });
