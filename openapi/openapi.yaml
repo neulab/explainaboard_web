@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.4"
+  version: "0.2.6"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -36,7 +36,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/TaskCategory"
-  
+
   /languagecodes:
     get:
       summary: Return all language codes
@@ -51,7 +51,7 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/LanguageCode"
-  
+
   /benchmarkconfigs:
     get:
       summary: Returns all benchmark configs matching the specification
@@ -79,7 +79,7 @@ paths:
       summary: Returns benchmark metadata by id
       operationId: benchmarkGetById
       security: []
-      description: Returns benchmark metadata by id. 
+      description: Returns benchmark metadata by id.
       parameters:
         - in: path
           name: benchmark_id
@@ -87,12 +87,12 @@ paths:
           schema:
             type: string
           required: true
-        - in: query 
-          name: by_creator 
-          example: True 
-          schema: 
-            type: boolean 
-          required: true 
+        - in: query
+          name: by_creator
+          example: true
+          schema:
+            type: boolean
+          required: true
       responses:
         "200":
           description: OK
@@ -106,14 +106,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/APIError"
-          
+
 
   /datasets/{dataset_id}:
     get:
       summary: Returns dataset metadata by id
       operationId: datasetsGetById
       security: []
-      description: Returns dataset metadata by id. id is the DB id so it is mostly used internally. See datasets MGet endpoints for general use.
+      description: |
+        Returns dataset metadata by id. id is the DB id so it is mostly used internally.
+        See datasets MGet endpoints for general use.
       parameters:
         - in: path
           name: dataset_id
@@ -140,7 +142,9 @@ paths:
       summary: Returns a list of datasets
       operationId: datasetsGet
       security: []
-      description: Returns a list of datasets. Returns empty list if current page is empty. Returns `total=0` if no match datasets.
+      description: |
+        Returns a list of datasets. Returns empty list if current page is empty.
+        Returns `total=0` if no match datasets.
       parameters:
         - in: query
           name: dataset_ids
@@ -185,7 +189,9 @@ paths:
     get:
       summary: Returns system metadata info by id
       operationId: systemsGetById
-      description: Returns a system_metadata by id. id is the DB id so it is mostly used internally.
+      description: |
+        Returns a system_metadata by id. id is the DB id so it is mostly used
+        internally.
       parameters:
         - in: path
           name: system_id
@@ -337,9 +343,9 @@ paths:
       operationId: systemOutputsGetById
       description: This will fail if the user doesn't have permissions for that system.
       security:
-        - ApiKeyAuth: [ ]
-        - BearerAuth: [ ]
-        - { }
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       parameters:
         - in: path
           name: system_id
@@ -372,9 +378,9 @@ paths:
       operationId: systemCasesGetById
       description: This will fail if the user doesn't have permissions for that system.
       security:
-        - ApiKeyAuth: [ ]
-        - BearerAuth: [ ]
-        - { }
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       parameters:
         - in: path
           name: system_id
@@ -458,7 +464,9 @@ paths:
 
   /info:
     get:
-      summary: information for environment identifier, backend version, login URL, etc. (not intent for public users)
+      summary: |
+        information for environment identifier, backend version, login URL, etc.
+        (not intent for public users)
       operationId: infoGet
       security: []
       responses:
@@ -606,10 +614,10 @@ components:
           type: string
         source_language:
           type: string
-          nullable: True
+          nullable: true
         target_language:
           type: string
-          nullable: True
+          nullable: true
         cls_name:
           type: string
       additionalProperties: true
@@ -620,18 +628,24 @@ components:
       properties:
         dtype:
           type: string
+          nullable: true
         cls_name:
           type: string
         description:
           type: string
+          nullable: true
         func:
           type: string
+          nullable: true
         require_training_set:
           type: boolean
-      required: [dtype, cls_name]
+          nullable: true
+      additionalProperties: true
+      required: [cls_name]
 
     SystemInfo:
-      description: Information about a system output, used in SDK's fine-grained analysis
+      description: |
+        Information about a system output, used in SDK's fine-grained analysis
       type: object
       properties:
         task_name:
@@ -640,15 +654,6 @@ components:
         system_name:
           type: string
           example: "sst2-cnn"
-        dataset_name:
-          type: string
-          nullable: true
-        sub_dataset_name:
-          type: string
-          nullable: true
-        dataset_split:
-          type: string
-          nullable: true
         source_language:
           type: string
           example: en
@@ -657,11 +662,8 @@ components:
           example: en
         reload_stat:
           type: boolean
-        conf_value:
+        confidence_alpha:
           type: number
-        system_details:
-          type: object
-          nullable: True
         analysis_levels:
           type: array
           items:
@@ -687,6 +689,18 @@ components:
             analyses:
               type: object
           required: [overall]
+        dataset_name:
+          type: string
+          nullable: true
+        sub_dataset_name:
+          type: string
+          nullable: true
+        dataset_split:
+          type: string
+          nullable: true
+        system_details:
+          type: object
+          nullable: true
       required:
         [
           task_name,
@@ -694,7 +708,7 @@ components:
           source_language,
           target_language,
           reload_stat,
-          conf_value,
+          confidence_alpha,
           source_tokenizer,
           target_tokenizer,
           analysis_levels,
@@ -778,9 +792,9 @@ components:
       properties:
         name:
           type: string
-        iso1_code:
-          type: string
         iso3_code:
+          type: string
+        iso1_code:
           type: string
       required: [name, iso3_code]
 
@@ -826,21 +840,6 @@ components:
         task:
           type: string
           example: "text_classification"
-        is_private:
-          type: boolean
-          default: True
-        shared_users:
-          type: array
-          items:
-            type: string
-          description: space-separated list of emails with which system is shared
-          example: ["hello@gmail.com", "world@gmail.com"]
-        dataset_metadata_id:
-          type: string
-        dataset_split:
-          type: string
-          description: required if dataset_metadata_id specified
-          example: test
         system_name:
           type: string
         metric_names:
@@ -854,6 +853,21 @@ components:
         target_language:
           type: string
           example: en
+        is_private:
+          type: boolean
+          default: true
+        shared_users:
+          type: array
+          items:
+            type: string
+          description: space-separated list of emails with which system is shared
+          example: ["hello@gmail.com", "world@gmail.com"]
+        dataset_metadata_id:
+          type: string
+        dataset_split:
+          type: string
+          description: required if dataset_metadata_id specified
+          example: test
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
@@ -884,6 +898,19 @@ components:
         - properties:
             system_id:
               type: string
+            is_private:
+              type: boolean
+            system_info:
+              $ref: "#/components/schemas/SystemInfo"
+            metric_stats:
+              description: |
+                An array of sufficient statistics for each metric, used in SDK's
+                fine-grained analysis
+              type: array
+              items:
+                type: array
+                items:
+                  type: number
             creator:
               type: string
               description: identical to the sub field in Cognito
@@ -895,10 +922,6 @@ components:
               items:
                 type: string
               description: list of emails with which system is shared
-            is_private:
-              type: boolean
-            system_info:
-              $ref: "#/components/schemas/SystemInfo"
             # TODO(chihhao) Deduplication of dataset information here and in system_info
             dataset:
               description: if not specified, it is undefined
@@ -908,24 +931,18 @@ components:
                   type: string
                 dataset_name:
                   type: string
-                sub_dataset:
-                  type: string
-                  nullable: true
                 tasks:
                   type: array
                   items:
                     type: string
+                sub_dataset:
+                  type: string
+                  nullable: true
               required: [dataset_id, dataset_name, tasks]
             system_details:
               type: object
-              description: a place to store arbitrary system details you want to remember
-            metric_stats:
-              description: An array of sufficient statistics for each metric, used in SDK's fine-grained analysis
-              type: array
-              items:
-                type: array
-                items:
-                  type: number
+              description: |
+                a place to store arbitrary system details you want to remember
           required:
             [
               system_id,
@@ -964,6 +981,11 @@ components:
           example: "61611c3a414abfb115397ca5"
         dataset_name:
           type: string
+        tasks:
+          type: array
+          items:
+            type: string
+            description: task name
         sub_dataset:
           type: string
           description: sub dataset id (TODO)
@@ -987,11 +1009,6 @@ components:
         person_of_contact:
           type: string
           nullable: true
-        tasks:
-          type: array
-          items:
-            type: string
-            description: task name
         task_categories:
           type: array
           items:
@@ -1063,12 +1080,6 @@ components:
     BucketPerformance:
       type: object
       properties:
-        bucket_interval:
-          type: array
-          items:
-            type: number
-        bucket_name:
-          type: string
         n_samples:
           type: number
         bucket_samples:
@@ -1079,6 +1090,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Performance"
+        bucket_name:
+          type: string
+        bucket_interval:
+          type: array
+          items:
+            type: number
       required: [n_samples, bucket_samples, performances]
 
     SingleAnalysis:
@@ -1090,8 +1107,6 @@ components:
           items:
             $ref: "#/components/schemas/AnalysisResult"
       required: [analysis_results]
-
-
 
     SystemAnalysesReturn:
       type: object
@@ -1105,7 +1120,6 @@ components:
           items:
             $ref: "#/components/schemas/SignificanceTestInfo"
       required: [system_analyses]
-
 
     Performance:
       type: object
@@ -1121,6 +1135,22 @@ components:
           type: number
           nullable: true
       required: [metric_name, value]
+
+    ComboCount:
+      type: object
+      properties:
+        bucket:
+          type: array
+          items:
+            type: string
+        count:
+          type: number
+        samples:
+          type: array
+          items:
+            type: integer
+      required: [bucket, count, samples]
+
 
     AnalysisCase:
       type: object
@@ -1176,15 +1206,20 @@ components:
     BenchmarkConfig:
       type: object
       properties:
-        id:
-          type: string
         name:
+          type: string
+        views:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkViewConfig'
+        id:
           type: string
         description:
           type: string
         type:
           type: string
-          description: "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+          description: |
+            "could be 'abstract' to indicate this doesn't fully specify a benchmark"
         parent:
           type: string
           description: "a parent benchmark that this benchmark inherits config from"
@@ -1196,10 +1231,10 @@ components:
         contact:
           type: string
         homepage:
-          type: string          
+          type: string
         paper:
-          type: object 
-          $ref: "#/components/schemas/Paper"                     
+          type: object
+          $ref: "#/components/schemas/Paper"
         metrics:
           type: array
           items:
@@ -1210,10 +1245,6 @@ components:
             $ref: '#/components/schemas/BenchmarkDatasetConfig'
         system_query:
           type: object
-        views:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkViewConfig'
         default_views:
           type: array
           items:
@@ -1261,12 +1292,12 @@ components:
             items:
               type: number
         plot_y_values:
-          type: array 
+          type: array
           items:
             type: number
-        plot_x_values: 
-          type: array 
-          items: 
+        plot_x_values:
+          type: array
+          items:
             type: string
       required: [name, system_names, column_names, scores, plot_y_values, plot_x_values]
 
@@ -1279,8 +1310,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/BenchmarkTableData"
-        time: 
-          type: string 
+        time:
+          type: string
       required: [config]
 
     Paper:

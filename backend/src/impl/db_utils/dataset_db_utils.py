@@ -3,7 +3,6 @@ from __future__ import annotations
 import itertools
 import json
 from datetime import datetime, timedelta
-from typing import Optional
 
 import marisa_trie
 from explainaboard.utils.cache_api import cache_online_file
@@ -79,7 +78,7 @@ class DatasetDBUtils:
                 lifetime=DatasetDBUtils._cached_lifetime,
             )
             datasets = {}
-            with open(local_path, "r") as fin:
+            with open(local_path) as fin:
                 for line in fin:
                     data = json.loads(line)
                     for k, v in data.items():
@@ -101,10 +100,10 @@ class DatasetDBUtils:
     def find_datasets(
         page: int = 0,
         page_size: int = 0,
-        dataset_ids: Optional[list[str]] = None,
-        dataset_name: Optional[str] = None,
-        sub_dataset: Optional[str] = None,
-        task: Optional[str] = None,
+        dataset_ids: list[str] | None = None,
+        dataset_name: str | None = None,
+        sub_dataset: str | None = None,
+        task: str | None = None,
         no_limit: bool = False,
     ) -> DatasetsReturn:
         my_db = DatasetDBUtils.get_dataset_db()

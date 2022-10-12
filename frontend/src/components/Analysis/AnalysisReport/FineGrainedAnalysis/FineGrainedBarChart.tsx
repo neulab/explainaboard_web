@@ -13,6 +13,7 @@ interface Props {
     featureName: string,
     bucketInfo: BucketIntervals
   ) => void;
+  colSpan: 8 | 12 | 24;
   title: string;
   results: ResultFineGrainedParsed[];
   onBarClick: (barIndex: number, systemIndex: number) => void;
@@ -24,6 +25,7 @@ export function FineGrainedBarChart(props: Props) {
     systems,
     featureNameToBucketInfo,
     updateFeatureNameToBucketInfo,
+    colSpan,
     results,
     onBarClick,
   } = props;
@@ -74,29 +76,6 @@ export function FineGrainedBarChart(props: Props) {
       result.performances.map((perf) => unwrapConfidence(perf))
     );
   }
-
-  /** The visualization chart of a fine-grained result is displayed using the "Grid" layout by Ant Design.
-    Specifically, all charts are enclosed by <Col></Col>, which are then enclosed by a single <Row></Row>.
-    Ant design takes care of overflow and auto starts a new line. */
-  function getColSpan() {
-    // Get the maximum right bound length
-    const maxRightBoundsLength = Math.max(
-      ...Object.values(featureNameToBucketInfo).map(
-        (bucketInfo) => bucketInfo.bounds.length
-      )
-    );
-    if (
-      maxRightBoundsLength > 5 ||
-      (systems.length > 1 && maxRightBoundsLength > 3)
-    ) {
-      return 24;
-    } else if (maxRightBoundsLength > 3 || systems.length > 1) {
-      return 12;
-    } else {
-      return 8;
-    }
-  }
-  const colSpan = getColSpan();
 
   return (
     <Col span={colSpan} key={resultFirst.featureDescription}>

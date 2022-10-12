@@ -6,7 +6,6 @@ import json
 import logging
 import os
 from functools import lru_cache
-from typing import Optional
 
 import pandas as pd
 from explainaboard import DatalabLoaderOption, TaskType, get_processor
@@ -15,8 +14,8 @@ from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import SimpleMetricStats
+from explainaboard.serialization.legacy import general_to_dict
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
-from explainaboard.utils.serialization import general_to_dict
 from explainaboard.utils.typing_utils import narrow
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
@@ -122,9 +121,9 @@ def datasets_dataset_id_get(dataset_id: str) -> DatasetMetadata:
 
 
 def datasets_get(
-    dataset_ids: Optional[str],
-    dataset_name: Optional[str],
-    task: Optional[str],
+    dataset_ids: str | None,
+    dataset_name: str | None,
+    task: str | None,
     page: int,
     page_size: int,
 ) -> DatasetsReturn:
@@ -141,7 +140,7 @@ def datasets_get(
 """ /benchmarks """
 
 
-def benchmark_configs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
+def benchmark_configs_get(parent: str | None) -> list[BenchmarkConfig]:
     scriptpath = os.path.dirname(__file__)
     config_folder = os.path.join(scriptpath, "./benchmark_configs/")
     # Add benchmarks to here if they should be displayed on the page.
@@ -225,17 +224,17 @@ def systems_get_by_id(system_id: str) -> System:
 
 
 def systems_get(
-    system_name: Optional[str],
-    task: Optional[str],
-    dataset: Optional[str],
-    subdataset: Optional[str],
-    split: Optional[str],
+    system_name: str | None,
+    task: str | None,
+    dataset: str | None,
+    subdataset: str | None,
+    split: str | None,
     page: int,
     page_size: int,
     sort_field: str,
     sort_direction: str,
-    creator: Optional[str],
-    shared_users: Optional[list[str]],
+    creator: str | None,
+    shared_users: list[str] | None,
 ) -> SystemsReturn:
     ids = None
     if not sort_field:

@@ -3,17 +3,14 @@ from __future__ import annotations
 import json
 import re
 import traceback
-import zlib
 from datetime import datetime
-from inspect import getsource
-from types import FunctionType
-from typing import Any, Optional
+from typing import Any
 
 from bson import ObjectId
 from explainaboard import DatalabLoaderOption, FileType, Source, get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.loaders.loader_registry import get_loader_class
-from explainaboard.utils.serialization import general_to_dict
+from explainaboard.serialization.legacy import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
@@ -105,6 +102,24 @@ class SystemDBUtils:
         if "metric_stats" in document:
             metric_stats = document["metric_stats"]
             document["metric_stats"] = []
+
+        # FIXME(lyuyang): The following for loop is added to work around an issue
+        # related to default values of models. Previously, the generated models
+        # don't enforce required attributes. This function exploits that loophole.
+        # Now that we have fixed that loophole, this function needs some major
+        # refactoring. None was assigned for these fields before implicitly. Now
+        # we assign them explicitly so this hack does not change the current
+        # behavior.
+        for required_field in (
+            "created_at",
+            "last_modified",
+            "system_id",
+            "system_info",
+            "metric_stats",
+        ):
+            if required_field not in document:
+                document[required_field] = None
+
         system = System.from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
@@ -118,7 +133,7 @@ class SystemDBUtils:
         query: list | dict,
         page: int,
         page_size: int,
-        sort: Optional[list] = None,
+        sort: list | None = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
     ):
@@ -157,7 +172,7 @@ class SystemDBUtils:
                 dataset_dict[dataset.dataset_id] = dataset
 
         # query preferred_usernames in batch to make it more efficient
-        ids = set(doc["creator"] for doc in documents)
+        ids = {doc["creator"] for doc in documents}
         users = UserDBUtils.find_users(list(ids))
         id_to_preferred = {user.id: user.preferred_username for user in users}
 
@@ -187,20 +202,20 @@ class SystemDBUtils:
     def find_systems(
         page: int,
         page_size: int,
-        ids: Optional[list[str]] = None,
-        system_name: Optional[str] = None,
-        task: Optional[str] = None,
-        dataset_name: Optional[str] = None,
-        subdataset_name: Optional[str] = None,
-        split: Optional[str] = None,
-        source_language: Optional[str] = None,
-        target_language: Optional[str] = None,
-        sort: Optional[list] = None,
-        creator: Optional[str] = None,
-        shared_users: Optional[list[str]] = None,
+        ids: list[str] | None = None,
+        system_name: str | None = None,
+        task: str | None = None,
+        dataset_name: str | None = None,
+        subdataset_name: str | None = None,
+        split: str | None = None,
+        source_language: str | None = None,
+        target_language: str | None = None,
+        sort: list | None = None,
+        creator: str | None = None,
+        shared_users: list[str] | None = None,
         include_datasets: bool = True,
         include_metric_stats: bool = False,
-        dataset_list: Optional[list[tuple[str, str, str]]] = None,
+        dataset_list: list[tuple[str, str, str]] | None = None,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
 
@@ -337,15 +352,7 @@ class SystemDBUtils:
                 400, f"Could not find system outputs for {system_id}"
             )
         data = next(cursor)["data"]
-
-        # NOTE: (backward compatibility) Previously, we store data in MongoDB
-        # so the following if else statement is added to handle data created
-        # with the old version of the code. Once we regenerate DB next time,
-        # we can remove the if block.
-        if isinstance(data, bytes):
-            sys_data_str = zlib.decompress(data).decode()
-        else:
-            sys_data_str = get_storage().download_and_decompress(data)
+        sys_data_str = get_storage().download_and_decompress(data)
         sys_data: list = json.loads(sys_data_str)
 
         if output_ids is not None:
@@ -497,12 +504,6 @@ class SystemDBUtils:
 
             # -- replace things that can't be returned through JSON for now
             system.metric_stats = []
-            for analysis_level in system.system_info.analysis_levels:
-                for feature_name, feature in analysis_level.features.items():
-                    if isinstance(feature.func, FunctionType):
-                        # Convert the function to a string, this is noqa to prevent a
-                        # typing error
-                        feature.func = getsource(feature.func)  # noqa
 
             # -- return the system
             return system
@@ -586,10 +587,7 @@ class SystemDBUtils:
             output_collection = DBUtils.get_system_output_collection(system_id)
             filt = {"system_id": system_id}
             outputs, _ = DBUtils.find(output_collection, filt)
-            data = (output["data"] for output in outputs)
-            # NOTE: (backward compatibility) data was stored in MongoDB previously,
-            # the isinstance filtering can be removed after we regenerate DB next time.
-            data_blob_names = [name for name in data if isinstance(name, str)]
+            data_blob_names = [output["data"] for output in outputs]
             DBUtils.delete_many(output_collection, filt, session=session)
 
             # Delete system output objects from Storage. This needs to be the last step

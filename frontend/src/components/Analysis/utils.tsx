@@ -3,7 +3,6 @@ import {
   AnalysisCase,
   SingleAnalysis,
   AnalysisResult,
-  BucketPerformance,
   Performance,
 } from "../../clients/openapi";
 import { SystemModel } from "../../models";
@@ -23,6 +22,7 @@ export function initParsedResult(
   const bucketNames: string[] = [];
   const bucketType = "";
   const performances: ResultFineGrainedParsed["performances"] = [];
+  const comboCounts: ResultFineGrainedParsed["comboCounts"] = [];
   const cases: ResultFineGrainedParsed["cases"] = [];
   const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
   return {
@@ -35,6 +35,7 @@ export function initParsedResult(
     bucketIntervals,
     numbersOfSamples,
     performances,
+    comboCounts,
     cases,
   };
 }
@@ -58,10 +59,34 @@ export function formatBucketName(unformattedName: Array<number>): string {
   }
 }
 
+export function parseComboCountFeatures(
+  comboCounts: AnalysisResult[],
+  levelName: string,
+  analysisName: string,
+  featureDescription: string
+) {
+  const parsedResult: ResultFineGrainedParsed = initParsedResult(
+    "", // we don't need a metric name for combo count analyses
+    analysisName,
+    featureDescription,
+    levelName
+  );
+
+  parsedResult.comboCounts = comboCounts.map((countArr) => {
+    return {
+      bucket: countArr[0],
+      count: countArr[1],
+      samples: countArr[2],
+    };
+  });
+
+  return parsedResult;
+}
+
 /**
  * Parses features according to task type.
  */
-export function parse(
+export function parseBucketAnalysisFeatures(
   bucketPerformances: AnalysisResult[],
   bucketType: string,
   levelName: string,
@@ -149,6 +174,7 @@ export function parseFineGrainedResults(
       [analysis: string]: ResultFineGrainedParsed[];
     };
   } = {};
+  const parsedComboAnalyses: ResultFineGrainedParsed[] = [];
 
   // Loop through each system analysis and parse
   for (let systemIdx = 0; systemIdx < systems.length; systemIdx++) {
@@ -163,35 +189,50 @@ export function parseFineGrainedResults(
       const myAnalysis = system.system_info.analyses[analysisIdx];
       const myResult = singleAnalysis.analysis_results[analysisIdx];
 
-      // Skip non-bucketing analyses for now
-      if (myResult.cls_name !== "BucketAnalysisResult") {
-        continue;
-      }
       const analysisName = myResult.name;
-      const analysisBuckets: BucketPerformance[] =
-        myResult["bucket_performances"];
       const analysisDescription = myAnalysis.description;
       const bucketType = myAnalysis["method"];
 
-      const metricToParsed: { [metric: string]: ResultFineGrainedParsed } =
-        parse(
-          analysisBuckets,
+      if (myResult.cls_name === "BucketAnalysisResult") {
+        const metricToParsed = parseBucketAnalysisFeatures(
+          myResult["bucket_performances"],
           bucketType,
           myResult.level,
           analysisName,
           analysisDescription
         );
-      for (const [metric, singleResult] of Object.entries(metricToParsed)) {
-        if (!(metric in parsedResults)) {
-          parsedResults[metric] = {};
+
+        for (const [metric, singleResult] of Object.entries(metricToParsed)) {
+          if (!(metric in parsedResults)) {
+            parsedResults[metric] = {};
+          }
+          if (!(analysisName in parsedResults[metric])) {
+            parsedResults[metric][analysisName] = [];
+          }
+          parsedResults[metric][analysisName].push(singleResult);
         }
-        if (!(analysisName in parsedResults[metric])) {
-          parsedResults[metric][analysisName] = [];
-        }
-        parsedResults[metric][analysisName].push(singleResult);
+      } else if (myResult.cls_name === "ComboCountAnalysisResult") {
+        const parsedComboAnalysis = parseComboCountFeatures(
+          myResult["combo_counts"],
+          myResult.level,
+          analysisName,
+          analysisDescription
+        );
+        parsedComboAnalyses.push(parsedComboAnalysis);
       }
     }
   }
+
+  // Add combo count analysis to all metrics
+  for (const metric of Object.keys(parsedResults)) {
+    for (const comboAnalysis of parsedComboAnalyses) {
+      if (!(comboAnalysis.featureName in parsedResults[metric])) {
+        parsedResults[metric][comboAnalysis.featureName] = [];
+      }
+      parsedResults[metric][comboAnalysis.featureName].push(comboAnalysis);
+    }
+  }
+
   // Sanity check to make sure that whatever features were found were found for all systems
   for (const [metric, metricResults] of Object.entries(parsedResults)) {
     for (const [feature, metricFeatureResults] of Object.entries(
