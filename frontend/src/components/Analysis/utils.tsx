@@ -4,6 +4,7 @@ import {
   SingleAnalysis,
   AnalysisResult,
   Performance,
+  Analysis,
 } from "../../clients/openapi";
 import { SystemModel } from "../../models";
 
@@ -186,8 +187,23 @@ export function parseFineGrainedResults(
       analysisIdx < singleAnalysis.analysis_results.length;
       analysisIdx++
     ) {
-      const myAnalysis = system.system_info.analyses[analysisIdx];
       const myResult = singleAnalysis.analysis_results[analysisIdx];
+      const myAnalysis: Analysis = system.system_info.analyses.filter(
+        (analysis) => {
+          if (myResult.cls_name === "BucketAnalysisResult") {
+            return (
+              analysis.cls_name === "BucketAnalysis" &&
+              analysis.feature === myResult.name
+            );
+          } else {
+            return (
+              analysis.cls_name === "ComboCountAnalysis" &&
+              myResult.features.sort().join() ===
+                analysis.features.sort().join()
+            );
+          }
+        }
+      )[0];
 
       const analysisName = myResult.name;
       const analysisDescription = myAnalysis.description;
