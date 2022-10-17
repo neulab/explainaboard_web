@@ -24,7 +24,7 @@ COPY backend backend
 RUN python3 -m pip install --upgrade pip \
     && pip install --no-cache-dir gunicorn==20.1.0 -r ./backend/requirements.txt -r ./backend/src/gen/requirements.txt
 
-# # Step #3: configure nginx and flask
+# Step #3: configure nginx and flask
 WORKDIR /app/backend/src/gen
 # Run app in production mode by default. Override this env to run in
 # development or in staging
