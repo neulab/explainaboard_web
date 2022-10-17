@@ -8,8 +8,8 @@ WORKDIR /app
 
 # Install required resources
 COPY . .
-RUN cd frontend \
-    && npm install -g npm@8.5.4 \
+WORKDIR /app/frontend
+RUN npm install -g npm@8.5.4 \
     && npm install \
     && npm run build
 
@@ -20,6 +20,7 @@ WORKDIR /app
 
 # Install required resources
 COPY backend backend
+# hadolint ignore=DL3013
 RUN python3 -m pip install --upgrade pip \
     && pip install --no-cache-dir gunicorn==20.1.0 -r ./backend/requirements.txt -r ./backend/src/gen/requirements.txt
 
