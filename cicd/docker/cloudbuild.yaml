@@ -1,0 +1,41 @@
+steps:
+  - id: Copy scripts
+    name: bash
+    args:
+      - -c
+      - |
+        mkdir -p build
+        mkdir -p build/deployment
+        mkdir -p build/openapi
+        mkdir -p build/frontend
+        mkdir -p build/backend
+
+        cp -a Dockerfile build
+        cp -a deployment/* build/deployment
+        cp -a openapi/* build/openapi
+        cp -a openapi/.swagger-codegen-ignore build/openapi
+        cp -a backend/* build/backend
+        cp frontend/.eslint* build/frontend
+        cp frontend/.nvmrc build/frontend
+        cp frontend/.prettier* build/frontend
+        cp -a frontend/src build/frontend
+        cp -a frontend/public build/frontend
+        cp -a frontend/*.json build/frontend
+  - id: Generate code from the OpenAPI definition
+    name: swaggerapi/swagger-codegen-cli-v3:3.0.29
+    entrypoint: 'sh'
+    args: ['openapi/gen_api_layer.sh']
+  - id: Build image
+    name: gcr.io/cloud-builders/docker:latest
+    args: [
+      "build",
+      "-t", "${_GAR_ROOT}:${_TAG_PREFIX}-${COMMIT_SHA}",
+      "build",
+    ]
+
+images:
+  - "${_GAR_ROOT}/webapp:${_TAG_PREFIX}-${COMMIT_SHA}"
+
+substitutions:
+  _GAR_ROOT: ""  # "us-central1-docker.pkg.dev/<project name>/eb-web-public-images"
+  _TAG_PRFIX: ""  # "push"
