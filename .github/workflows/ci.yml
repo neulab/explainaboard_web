@@ -161,13 +161,16 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version-file: 'frontend/.nvmrc'
+      - name: Generate code
+        uses: docker://swaggerapi/swagger-codegen-cli-v3:3.0.29
+        with:
+          entrypoint: /bin/sh
+          args: openapi/gen_api_layer.sh
       - name: Cache Node modules
         uses: actions/cache@v3
         with:
           path: frontend/node_modules
           key: node-${{ hashFiles('.nvmrc', 'frontend/package-lock.json') }}
-      - name: Generate client code from OpenAPI definition
-        run: npm run gen-api-code
       - name: Install Node dependencies
         run: npm install
         working-directory: frontend
