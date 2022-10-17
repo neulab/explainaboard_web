@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install Python 3
         uses: actions/setup-python@v4
         with:
@@ -41,7 +41,7 @@ jobs:
   integration-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Install Python 3
         uses: actions/setup-python@v4
         with:
@@ -202,7 +202,7 @@ jobs:
   lint-dockerfile:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: lint
         uses: hadolint/hadolint-action@v2.0.0
         with:
