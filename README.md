@@ -19,20 +19,17 @@ application. The frontend is built with React and the backend uses Flask.
    - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use
      `nvm` to manage node versions. Run `nvm install` to install node and npm.
 
-2. Install `java`. Verify that `java` is installed correctly in your environment by
-   running `java --version`.
-
-3. Generate code for API layer
+2. Generate code for API layer
 
    - Run `npm run gen-api-code` to generate code for api layer (both server and client).
      Please remember to run this whenever OpenAPI definition changes.
 
-4. Setup dev environment for the frontend
+3. Setup dev environment for the frontend
    1. Install project dependencies `npm install`
    2. Install frontend dependencies `npm --prefix frontend install`. See
       [FAQ](#npm-install---prefix-frontend-says-we-have-x-vulnerabilities) when `npm`
       reports vulnerabilities.
-5. Setup dev environment for the backend
+4. Setup dev environment for the backend
    1. Install `python` version >= 3.9.7 and create a venv or conda environment for this project
    2. `pip install -r backend/requirements.txt -r backend/src/gen/requirements.txt`
    3. Create `backend/src/impl/.env` to store all environment variables. An example has
@@ -45,10 +42,10 @@ application. The frontend is built with React and the backend uses Flask.
         the user account locally. (for more information, see this
         [guide](https://cloud.google.com/docs/authentication/provide-credentials-adc#local-user-cred))
       - Set project by running `gcloud config set project inspired-app-eb-dev`
-6. Install pre-commit hooks
+5. Install pre-commit hooks
    - Run `npm run prepare` to install the pre-commit hook via husky. The hook
      auto-checks both frontend and backend code before commits. Please do not skip it.
-7. Launch explainaboard
+6. Launch explainaboard
    1. Run `npm run start` to start the frontend and backend server concurrently.
       - Both frontend and backend can be started independently as well. Check out
         "More details on frontend and backend".

@@ -7,7 +7,7 @@
     "start-backend": "cd backend/src/gen && FLASK_ENV=development python -m explainaboard_web",
     "start-backend:staging": "cd backend/src/gen && FLASK_ENV=staging python -m explainaboard_web",
     "start-backend:prod": "cd backend/src/gen && FLASK_ENV=production python -m explainaboard_web",
-    "gen-api-code": "bash openapi/gen_api_layer.sh",
+    "gen-api-code": "bash openapi/gen_api_layer_local.sh",
     "setup": "npm install && npm run gen-api-code && pip install -r backend/requirements.txt -r backend/src/gen/requirements.txt && npm --prefix frontend install",
     "prepare": "husky install",
     "build-image": "docker build . --platform amd64 --tag \"explainaboard_web:latest\"",
