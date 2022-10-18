@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import { UploadChangeParam, UploadFile } from "antd/lib/upload/interface";
 import { Space, Button, CheckboxOptionType, Radio, Upload, Input } from "antd";
-import { PlusOutlined } from "@ant-design/icons";
+import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
 
 export interface DataFileValue {
   fileList?: UploadFile[];
@@ -75,6 +75,16 @@ export function DataFileUpload({
     triggerChange({ sysNames: newSysNames });
   }
 
+  const singleFile = maxFileCount <= 1;
+
+  const uploadBtn = singleFile ? (
+    <Button icon={<UploadOutlined />}>Select File</Button>
+  ) : (
+    <Button icon={<PlusOutlined />} block className="add-submission">
+      Add Another File
+    </Button>
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       <Radio.Group
@@ -93,9 +103,11 @@ export function DataFileUpload({
         }}
         fileList={fileList}
         onChange={onFileChange}
-        className="file-submissions"
+        className={singleFile ? "" : "file-submissions"}
         itemRender={(originNode, file) =>
-          maxFileCount > 1 ? (
+          singleFile ? (
+            originNode
+          ) : (
             <Space>
               <Input
                 addonBefore="System Name"
@@ -103,14 +115,10 @@ export function DataFileUpload({
               ></Input>
               {originNode}
             </Space>
-          ) : (
-            originNode
           )
         }
       >
-        <Button icon={<PlusOutlined />} block className="add-submission">
-          Add Another File
-        </Button>
+        {uploadBtn}
       </Upload>
     </div>
   );

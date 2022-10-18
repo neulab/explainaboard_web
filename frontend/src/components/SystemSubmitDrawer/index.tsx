@@ -439,7 +439,19 @@ export function SystemSubmitDrawer(props: Props) {
     if (!isRequired) return () => Promise.resolve();
     else
       return (_: unknown, value: DataFileValue) => {
-        if (value && value.fileList && value.fileType) return Promise.resolve();
+        let valid;
+        valid =
+          value &&
+          value.fileList &&
+          value.fileType &&
+          value.fileList.length > 0;
+        if (value.sysNames) {
+          for (const name of Object.values(value.sysNames)) {
+            valid = valid && name;
+          }
+        }
+
+        if (valid) return Promise.resolve();
         else return Promise.reject(`'${fieldName}' and file type are required`);
       };
   }
