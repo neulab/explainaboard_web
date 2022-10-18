@@ -7,6 +7,6 @@
     "type": "standard",
     "metrics": [{"name": "F1"}, {"name": "ExactMatch"}],
     "system_query": {
-        "task": "qa-extractive"
+        "task_name": "qa-extractive"
     }
 }

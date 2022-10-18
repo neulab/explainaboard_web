@@ -20,35 +20,28 @@ import {
 import { SystemModel } from "../../models";
 import { LoginState, useUser } from "../useUser";
 import { backendClient, parseBackendError } from "../../clients";
-export interface Filter {
-  name?: string;
-  task?: string;
-  showMine: boolean;
-  sortField: string;
-  sortDir: "asc" | "desc";
-  split: string | undefined;
-}
+import { FilterUpdate, SystemFilter } from "./SystemFilter";
 
 interface Props {
   systems: SystemModel[];
   /** show/hide submit drawer */
-  toggleSubmitDrawer: () => void;
+  showSubmitDrawer: () => void;
   taskCategories: TaskCategory[];
-  value: Filter;
-  onChange: (value: Partial<Filter>) => void;
+  value: SystemFilter;
+  onChange: (value: FilterUpdate) => void;
   metricOptions: string[];
   selectedSystemIDs: string[];
-  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  onActiveSystemChange: (ids: string[]) => void;
 }
 export function SystemTableTools({
   systems,
-  toggleSubmitDrawer,
+  showSubmitDrawer,
   taskCategories,
   value,
   onChange,
   metricOptions,
   selectedSystemIDs,
-  setActiveSystemIDs,
+  onActiveSystemChange,
 }: Props) {
   function findSelectedSystemDatasetNames() {
     const selectedSystems = systems.filter((sys) =>
@@ -128,7 +121,7 @@ export function SystemTableTools({
   // Single analysis
   if (selectedSystemIDs.length === 1) {
     analysisButton = (
-      <Button onClick={() => setActiveSystemIDs(selectedSystemIDs)}>
+      <Button onClick={() => onActiveSystemChange(selectedSystemIDs)}>
         Analysis
       </Button>
     );
@@ -149,7 +142,7 @@ export function SystemTableTools({
     analysisButton = (
       <Button
         disabled={disabled}
-        onClick={() => setActiveSystemIDs(selectedSystemIDs)}
+        onClick={() => onActiveSystemChange(selectedSystemIDs)}
       >
         Pairwise Analysis
         {warning && <WarningOutlined />}
@@ -177,7 +170,7 @@ export function SystemTableTools({
     analysisButton = (
       <Button
         disabled={disabled}
-        onClick={() => setActiveSystemIDs(selectedSystemIDs)}
+        onClick={() => onActiveSystemChange(selectedSystemIDs)}
       >
         Multiple System Analysis
         {warning && <WarningOutlined />}
@@ -243,7 +236,7 @@ export function SystemTableTools({
             value: opt,
             label: opt,
           }))}
-          value={value.split}
+          value={value.split || undefined}
           placeholder="Dataset split"
           onChange={(value) => onChange({ split: value })}
           style={{ minWidth: "120px" }}
@@ -251,7 +244,7 @@ export function SystemTableTools({
         <TaskSelect
           taskCategories={taskCategories}
           allowClear
-          value={value.task}
+          value={value.task || undefined}
           onChange={(value) => onChange({ task: value || "" })}
           placeholder="All Tasks"
           style={{ minWidth: "150px" }}
@@ -288,7 +281,7 @@ export function SystemTableTools({
           onChange={(e) => onChange({ name: e.target.value })}
         />
 
-        <NewSystemButton onClick={toggleSubmitDrawer} />
+        <NewSystemButton onClick={showSubmitDrawer} />
       </Space>
     </div>
   );

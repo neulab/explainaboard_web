@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Result, Space, Tabs, Typography } from "antd";
 import { SystemModel } from "../../../models";
 import { AnalysisTable } from "../AnalysisTable";
 import { AnalysisCase } from "../../../clients/openapi";
 import { PageState } from "../../../utils";
 
+import { taskColumnMapping } from "../AnalysisTable/taskColumnMapping";
 interface Props {
   /** title of the table */
   title: string;
@@ -26,23 +27,40 @@ export function ExampleTable({
   changeState,
 }: Props) {
   let exampleTable: React.ReactNode;
+  /** whether we can put multiple system outputs in the same table */
+  const taskColumns = taskColumnMapping.get(task);
+  const systemIDs = useMemo(
+    () => systems.map((system) => system.system_id),
+    [systems]
+  );
+  const systemNames = useMemo(
+    () => systems.map((system) => system.system_info.system_name),
+    [systems]
+  );
+  const systemIDsArray = useMemo(
+    () => systems.map((system) => [system.system_id]),
+    [systems]
+  );
+
   if (systems.length !== cases.length) {
     console.error(
       `ExampleTable input error: systems=${systems}, cases=${cases} doesn't match`
     );
     exampleTable = <Result status="error" title="Failed to show examples." />;
-  } else if (systems.length === 1) {
-    // single analysis
+  } else if (taskColumns !== undefined || systems.length === 1) {
+    // TODO(noel): need to expand for every task
+    // all single analysis cases + multi-system analysis for tasks with column info
     exampleTable = (
       <AnalysisTable
-        systemID={systems[0].system_id}
+        systemIDs={systemIDs}
+        systemNames={systemNames}
         task={task}
         cases={cases[0]}
         changeState={changeState}
       />
     );
   } else {
-    // multi-system analysis
+    // multi-system analysis for tasks without column info
     exampleTable = (
       <Space style={{ width: "fit-content" }}>
         <Tabs
@@ -56,7 +74,8 @@ export function ExampleTable({
                 key={`${sysIndex}`}
               >
                 <AnalysisTable
-                  systemID={system.system_id}
+                  systemIDs={systemIDsArray[sysIndex]}
+                  systemNames={[system.system_info.system_name]}
                   task={task}
                   cases={cases[sysIndex]}
                   changeState={changeState}
