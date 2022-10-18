@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { AnalysisCase, Performance, ComboCount } from "../../clients/openapi";
+import { Performance, ComboCount } from "../../clients/openapi";
 
 export interface ResultFineGrainedParsed {
   /**
@@ -28,24 +28,6 @@ export interface ResultFineGrainedParsed {
   levelName: string;
   // cases[i][j]: is the index of the ith bucket's jth example
   cases: number[][];
-}
-
-export interface SystemInfoFeatureBucketInfo {
-  method: string;
-  number: number;
-  setting: number | number[];
-}
-
-export interface SystemInfoFeature {
-  /**
-   * A single feature in the system info class.
-   */
-  bucket_info: SystemInfoFeatureBucketInfo | null;
-  description: string | null;
-  dtype?: string;
-  is_bucket: boolean;
-  require_training_set: boolean;
-  _type: string;
 }
 
 export interface BucketIntervals {

@@ -234,7 +234,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
       title={getDrawerTitle()}
       width="90%"
       bodyStyle={{ minWidth: "800px" }}
-      /*Mark the drawer unclosable when the page is still loading to prevent 
+      /*Mark the drawer unclosable when the page is still loading to prevent
         users from exiting before the asycn function finishes.
       */
       closable={pageState !== PageState.loading}

@@ -12,8 +12,8 @@ import {
 import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
-import { DeleteOutlined } from "@ant-design/icons";
-import { PrivateIcon } from "..";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { PrivateIcon, useUser } from "..";
 import { generateLeaderboardURL } from "../../utils";
 import { getOverallMap } from "../Analysis/utils";
 const { Text } = Typography;
@@ -29,7 +29,8 @@ interface Props {
   metricNames: string[];
   selectedSystemIDs: string[];
   setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
-  setActiveSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
+  onActiveSystemChange: (ids: string[]) => void;
+  showEditDrawer: (systemIDToEdit: string) => void;
 }
 
 export function SystemTableContent({
@@ -42,8 +43,10 @@ export function SystemTableContent({
   metricNames,
   selectedSystemIDs,
   setSelectedSystemIDs,
-  setActiveSystemIDs,
+  onActiveSystemChange,
+  showEditDrawer,
 }: Props) {
+  const { userInfo } = useUser();
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
     render: (_, record) =>
@@ -55,7 +58,7 @@ export function SystemTableContent({
   }));
 
   function showSystemAnalysis(systemID: string) {
-    setActiveSystemIDs([systemID]);
+    onActiveSystemChange([systemID]);
   }
 
   async function deleteSystem(systemID: string) {
@@ -169,23 +172,44 @@ export function SystemTableContent({
       dataIndex: "action",
       title: "",
       fixed: "right",
-      width: 110,
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            size="small"
-            onClick={() => showSystemAnalysis(record.system_id)}
-          >
-            Analysis
-          </Button>
-          <Popconfirm
-            title="Are you sure?"
-            onConfirm={() => deleteSystem(record.system_id)}
-          >
-            <Button danger size="small" icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
+      width: 90,
+      render: (_, record) => {
+        const notCreator = record.creator !== userInfo?.email;
+        return (
+          <Space size="small" direction="vertical">
+            <Space size="small">
+              <Button
+                size="small"
+                onClick={() => showSystemAnalysis(record.system_id)}
+              >
+                Analysis
+              </Button>
+            </Space>
+            <Space size="small">
+              <Button
+                size="small"
+                disabled={notCreator}
+                icon={<EditOutlined />}
+                onClick={() => {
+                  showEditDrawer(record.system_id);
+                }}
+              />
+              <Popconfirm
+                disabled={notCreator}
+                title="Are you sure?"
+                onConfirm={() => deleteSystem(record.system_id)}
+              >
+                <Button
+                  danger
+                  disabled={notCreator}
+                  size="small"
+                  icon={<DeleteOutlined />}
+                />
+              </Popconfirm>
+            </Space>
+          </Space>
+        );
+      },
     },
   ];
 

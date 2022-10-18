@@ -19,8 +19,9 @@ application. The frontend is built with React and the backend uses Flask.
    - The recommended way is to install [nvm](https://github.com/nvm-sh/nvm) and use
      `nvm` to manage node versions. Run `nvm install` to install node and npm.
 
-2. Make sure `java` is installed correctly in your environment. Verify this by running
-   `java --version`.
+2. Install `java`. Verify that `java` is installed correctly in your environment by
+   running `java --version`.
+
 3. Generate code for API layer
 
    - Run `npm run gen-api-code` to generate code for api layer (both server and client).
@@ -28,12 +29,12 @@ application. The frontend is built with React and the backend uses Flask.
 
 4. Setup dev environment for the frontend
    1. Install project dependencies `npm install`
-   2. Install frontend dependencies `npm --prefix frontend install`
-      - Check the FAQ section if `npm` said there are vulnerabilities to verify if they
-        are false alarms.
+   2. Install frontend dependencies `npm --prefix frontend install`. See
+      [FAQ](#npm-install---prefix-frontend-says-we-have-x-vulnerabilities) when `npm`
+      reports vulnerabilities.
 5. Setup dev environment for the backend
    1. Install `python` version >= 3.9.7 and create a venv or conda environment for this project
-   2. `pip install -r backend/src/gen/requirements.txt`
+   2. `pip install -r backend/requirements.txt -r backend/src/gen/requirements.txt`
    3. Create `backend/src/impl/.env` to store all environment variables. An example has
       been provided in `.env.example`. Contact the dev team to get the credentials for
       dev and prod environments.
@@ -58,8 +59,10 @@ application. The frontend is built with React and the backend uses Flask.
   changes, you must run `npm run gen-api-code` to regenerate code for the api layer.
 - The frontend and backend dependencies must be reinstalled whenever the associated
   dependency files are changed, including `package.json`, `frontend/package.json`,
-  `backend/src/gen/requirements.txt` (generated from
-  `backend/templates/requirements.mustache`).
+  `backend/requirements.txt`, `backend/src/gen/requirements.txt` (generated from
+  `backend/templates/requirements.mustache`). `backend/requirements.txt` is the main
+  requirements file to manage application specific dependencies.
+
 - ExplainaBoard API client release depends on the API defined in `openapi.yaml`. If
   `openapi.yaml` is changed, remember to bump up the openapi version `0.2.x` as well.
 
@@ -79,72 +82,75 @@ application. The frontend is built with React and the backend uses Flask.
 
 ## More details on frontend and backend
 
-1. Frontend:
+### Frontend
 
-   1. To start frontend dev server only, run `npm run start-frontend`
-      - Runs the app in the development mode. Open
-        [http://localhost:3000](http://localhost:3000) to view it in the browser. The
-        page will reload if you make edits. You will also see any lint errors in the
-        console.
-   2. linter and formatter
-      - eslint is used for linting. Please install eslint VSCode extension to get
-        immediate feedback while writing code.
-        - configurations can be found in `.eslintignore` and `.eslintrc.json`
-        - `npm run lint` runs eslint in the commandline
-      - prettier is used for formatting. Please install prettier VSCode extension and
-        enable format on save to get the best results.
-        - configurations can be found in `.prettierignore` and `.prettierrc.json`
-      - linting and formatting is enforced automatically at the "pre-commit" stage with
-        husky. Please do not skip it. If you find a rule particularly annoying, please
-        post in Slack and we can remove it.
-      - eslint and prettier should not be applied on the python code (backend). I should
-        have already configured both of the tools to ignore python. Please let me know
-        if you think something isn't working properly.
-   3. Testing
-      - `npm test` launches the test runner in the interactive watch mode. See the
-        section about
-        [running tests](https://facebook.github.io/create-react-app/docs/running-tests)
-        for more information.
-   4. Build `npm run build`
+- To start frontend dev server only, run `npm run start-frontend`
+  - Runs the app in the development mode. Open
+    [http://localhost:3000](http://localhost:3000) to view it in the browser. The page
+    will reload if you make edits. You will also see any lint errors in the console.
 
-      - You do not need to run this manually. It is handled automatically by the `Dockerfile`.
-      - Builds the app for production to the `build` folder. It correctly bundles React
-        in production mode and optimizes the build for the best performance.
-      - See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment)
-        for more information.
+- linter and formatter
+  - eslint is used for linting. Please install eslint VSCode extension to get
+    immediate feedback while writing code.
+    - configurations can be found in `.eslintignore` and `.eslintrc.json`
+    - `npm run lint` runs eslint in the commandline
 
-   5. Frontend is created with [Create React App](https://github.com/facebook/create-react-app).
+  - prettier is used for formatting. Please install prettier VSCode extension and
+    enable format on save to get the best results.
+    - configurations can be found in `.prettierignore` and `.prettierrc.json`
 
-      - A note about `npm run eject`
-        **Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+  - linting and formatting is enforced automatically at the "pre-commit" stage with
+    husky. Please do not skip it. If you find a rule particularly annoying, please
+    post in Slack and we can remove it.
+  - eslint and prettier should not be applied on the python code (backend). I should
+    have already configured both of the tools to ignore python. Please let me know
+    if you think something isn't working properly.
 
-        If you aren’t satisfied with the build tool and configuration choices, you can
-        `eject` at any time. This command will remove the single build dependency from
-        your project.
+- Testing
+  - `npm test` launches the test runner in the interactive watch mode. See the
+    section about
+    [running tests](https://facebook.github.io/create-react-app/docs/running-tests)
+    for more information.
 
-        Instead, it will copy all the configuration files and the transitive
-        dependencies (webpack, Babel, ESLint, etc) right into your project so you have
-        full control over them. All of the commands except `eject` will still work, but
-        they will point to the copied scripts so you can tweak them. At this point
-        you’re on your own.
+- Build `npm run build`
+  - You do not need to run this manually. It is handled automatically by the `Dockerfile`.
+  - Builds the app for production to the `build` folder. It correctly bundles React
+    in production mode and optimizes the build for the best performance.
+  - See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment)
+    for more information.
 
-        You don’t have to ever use `eject`. The curated feature set is suitable for
-        small and middle deployments, and you shouldn’t feel obligated to use this
-        feature. However we understand that this tool wouldn’t be useful if you couldn’t
-        customize it when you are ready for it.
+- Frontend is created with [Create React App](https://github.com/facebook/create-react-app).
 
-      - You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+  - A note about `npm run eject`
+    **Note: this is a one-way operation. Once you `eject`, you can’t go back!**
 
-      - To learn React, check out the [React documentation](https://reactjs.org/).
+    If you aren’t satisfied with the build tool and configuration choices, you can
+    `eject` at any time. This command will remove the single build dependency from
+    your project.
 
-2. Backend
+    Instead, it will copy all the configuration files and the transitive
+    dependencies (webpack, Babel, ESLint, etc) right into your project so you have
+    full control over them. All of the commands except `eject` will still work, but
+    they will point to the copied scripts so you can tweak them. At this point
+    you’re on your own.
 
-   1. To start backend server only, run `npm run start-backend`
-      - Listens on port 5000. Frontend is configured to send all API requests to 5000
-        via a proxy.
-      - Any code not in `impl` is generated. If you want to modify the generated code,
-        you need to modify the mustache templates.
-   2. For details of the backend, please refer to [backend/README.md](backend/README.md).
+    You don’t have to ever use `eject`. The curated feature set is suitable for
+    small and middle deployments, and you shouldn’t feel obligated to use this
+    feature. However we understand that this tool wouldn’t be useful if you couldn’t
+    customize it when you are ready for it.
+
+  - You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+  - To learn React, check out the [React documentation](https://reactjs.org/).
+
+### Backend
+
+- To start backend server only, run `npm run start-backend`
+  - Listens on port 5000. Frontend is configured to send all API requests to 5000
+     via a proxy.
+  - Any code not in `impl` is generated. If you want to modify the generated code,
+     you need to modify the mustache templates.
+- For details of the backend, please refer to [backend/README.md](backend/README.md).
 
 ## Project Structure
 
@@ -169,6 +175,7 @@ application. The frontend is built with React and the backend uses Flask.
 
 - backend
    - templates # mustache templates to generate template code
+   - requirements.txt
    - src
       - gen # template code generated with openapi, code in this folder should not be
             # modified manually

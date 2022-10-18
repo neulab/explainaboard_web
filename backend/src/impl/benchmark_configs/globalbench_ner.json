@@ -7,6 +7,6 @@
     "type": "standard",
     "metrics": [{"name": "F1"}],
     "system_query": {
-        "task": "named-entity-recognition"
+        "task_name": "named-entity-recognition"
     }
 }

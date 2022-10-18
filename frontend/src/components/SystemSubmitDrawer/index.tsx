@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Button,
   Drawer,
@@ -27,10 +27,13 @@ import { TaskSelect, TextWithLink } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
 import ReactGA from "react-ga4";
+import useSearch, { FilterFunc } from "./useSearch";
+import { SystemModel } from "../../models";
 
 const { TextArea } = Input;
 
 interface Props extends DrawerProps {
+  systemToEdit?: SystemModel;
   onClose: () => void;
   visible: boolean;
 }
@@ -45,6 +48,68 @@ enum State {
   other,
 }
 
+function hasCommonString(one: string, other: string): boolean {
+  return isSubstring(one, other) || isSubstring(other, one);
+}
+function isSubstring(query: string, string: string): boolean {
+  return string.toLowerCase().includes(query.toLocaleLowerCase());
+}
+
+/**
+ * Given a query, search in a given list of language codes to get
+ * the matching ones. The query will try to match all fields
+ * of a language code with different priority
+ *
+ * @param query a query string used to match all fields
+ * @param data a list of language codes to search from
+ * @returns a filtered list ordered (descending) by score
+ */
+const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
+  // The matching score for each language code
+  // Higher value ones are better results and will be displayed earlier in a list
+  const scores: { [key: string]: number } = {};
+
+  // Maps from language name to language code object
+  const languages = new Map(data.map((langCode) => [langCode.name, langCode]));
+
+  // match iso3
+  const iso3Matches = data.filter((lang) => isSubstring(query, lang.iso3_code));
+  iso3Matches.forEach((match) => {
+    scores[match.name] = Math.max(scores[match.name] || 0, 100);
+  });
+
+  // match iso1: we only consider exact match for iso1_code
+  const iso1Matches = data.filter((lang) => {
+    if (lang.iso1_code) {
+      return query === lang.iso1_code;
+    }
+    return false;
+  });
+  iso1Matches.forEach((match) => {
+    scores[match.name] = Math.max(scores[match.name] || 0, 100);
+  });
+
+  // match names: exact match of a name will have the highest score, decreases by distance
+  const nameMatches = data.filter((lang) => hasCommonString(query, lang.name));
+  nameMatches.forEach((match) => {
+    const score = 101 - Math.abs(match.name.length - query.length);
+    scores[match.name] = Math.max(scores[match.name] || 0, score);
+  });
+
+  // Sort by score
+  const result = Object.entries(scores)
+    .sort((obj1, obj2) => obj2[1] - obj1[1])
+    .map((obj) => {
+      const code = languages.get(obj[0]);
+      if (!code) {
+        throw new Error("Something went wrong when searching");
+      }
+      return code;
+    });
+
+  return result;
+};
+
 /**
  * A drawer for system output submission
  * @param props.onClose
@@ -56,22 +121,34 @@ export function SystemSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.loading);
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
   const [languageCodes, setLanguageCodes] = useState<LanguageCode[]>([]);
+  const { filtered: inputLangFiltered, setQuery: setInputLangQuery } =
+    useSearch<LanguageCode>(languageCodes, filterFunc);
+  const { filtered: outputLangFiltered, setQuery: setOutputLangQuery } =
+    useSearch<LanguageCode>(languageCodes, filterFunc);
   const [datasetOptions, setDatasetOptions] = useState<DatasetMetadata[]>([]);
   const [useCustomDataset, setUseCustomDataset] = useState(false);
   const [otherSourceLang, setOtherSourceLang] = useState(false);
   const [otherTargetLang, setOtherTargetLang] = useState(false);
 
   const [form] = useForm<FormData>();
-  const { onClose } = props;
+  const { systemToEdit, onClose, ...rest } = props;
+  const editMode = systemToEdit !== undefined;
+
+  const resetAllFormFields = useCallback(() => {
+    form.resetFields();
+  }, [form]);
 
   useEffect(() => {
     async function fetchTasks() {
+      setState(State.loading);
       setTaskCategories(await backendClient.tasksGet());
       setLanguageCodes(await backendClient.languageCodesGet());
       setState(State.other);
     }
+
     fetchTasks();
-  }, []);
+    resetAllFormFields();
+  }, [editMode, resetAllFormFields]);
 
   const selectedTaskName = form.getFieldValue("task");
   const selectedTask = findTask(taskCategories, selectedTaskName);
@@ -130,6 +207,7 @@ export function SystemSubmitDrawer(props: Props) {
    * 1. a more robust way to get file extension
    */
   async function submit({
+    name,
     task,
     dataset,
     metric_names,
@@ -145,102 +223,119 @@ export function SystemSubmitDrawer(props: Props) {
   }: FormData) {
     try {
       setState(State.loading);
-      const sysSubmitList = await extractAndEncodeAllFiles(sys_out_file);
-      const systems: System[] = [];
 
-      for (const sysToSubmit of Object.values(sysSubmitList)) {
-        let system;
-        const trimmedUsers =
-          shared_users === undefined
-            ? undefined
-            : shared_users.map((user) => user.trim());
-        source_language =
-          source_language === "other"
-            ? "other-" + other_source_language
-            : source_language;
-        target_language =
-          target_language === "other"
-            ? "other-" + other_target_language
-            : target_language;
-        if (useCustomDataset) {
-          const customDatasetBase64 = await extractAndEncodeFile(
-            custom_dataset_file
-          );
-          system = await backendClient.systemsPost({
+      const trimmedUsers =
+        shared_users === undefined
+          ? undefined
+          : shared_users.map((user) => user.trim());
+
+      if (editMode) {
+        await backendClient.systemsUpdateById(
+          {
             metadata: {
-              metric_names,
-              system_name: sysToSubmit.sysName,
-              task: task,
-              source_language,
-              target_language,
+              system_name: name,
               is_private,
               shared_users: trimmedUsers,
               system_details: { __TO_PARSE__: system_details },
             },
-            system_output: {
-              data: sysToSubmit.base64,
-              file_type: unwrap(sys_out_file.fileType),
-            },
-            custom_dataset: {
-              data: customDatasetBase64,
-              file_type: unwrap(custom_dataset_file.fileType),
-            },
-          });
-        } else {
-          const { datasetID, split } = dataset;
-          system = await backendClient.systemsPost({
-            metadata: {
-              dataset_metadata_id: datasetID,
-              dataset_split: split,
-              metric_names,
-              system_name: sysToSubmit.sysName,
-              task: task,
-              source_language,
-              target_language,
-              is_private,
-              shared_users: trimmedUsers,
-              system_details: { __TO_PARSE__: system_details },
-            },
-            system_output: {
-              data: sysToSubmit.base64,
-              file_type: unwrap(sys_out_file.fileType),
-            },
-          });
-          systems.push(system);
+          },
+          systemToEdit.system_id
+        );
+        ReactGA.event({
+          category: "System",
+          action: `system_update_success`,
+        });
+        message.success(
+          `Successfully updated system (${systemToEdit.system_id}).`
+        );
+      } else {
+        const sysSubmitList = await extractAndEncodeAllFiles(sys_out_file);
+        const systems: System[] = [];
+
+        for (const sysToSubmit of Object.values(sysSubmitList)) {
+          let system;
+          source_language =
+            source_language === "other"
+              ? "other-" + other_source_language
+              : source_language;
+          target_language =
+            target_language === "other"
+              ? "other-" + other_target_language
+              : target_language;
+          if (useCustomDataset) {
+            const customDatasetBase64 = await extractAndEncodeFile(
+              custom_dataset_file
+            );
+            system = await backendClient.systemsPost({
+              metadata: {
+                metric_names,
+                system_name: sysToSubmit.sysName,
+                task: task,
+                source_language,
+                target_language,
+                is_private,
+                shared_users: trimmedUsers,
+                system_details: { __TO_PARSE__: system_details },
+              },
+              system_output: {
+                data: sysToSubmit.base64,
+                file_type: unwrap(sys_out_file.fileType),
+              },
+              custom_dataset: {
+                data: customDatasetBase64,
+                file_type: unwrap(custom_dataset_file.fileType),
+              },
+            });
+          } else {
+            const { datasetID, split } = dataset;
+            system = await backendClient.systemsPost({
+              metadata: {
+                dataset_metadata_id: datasetID,
+                dataset_split: split,
+                metric_names,
+                system_name: sysToSubmit.sysName,
+                task: task,
+                source_language,
+                target_language,
+                is_private,
+                shared_users: trimmedUsers,
+                system_details: { __TO_PARSE__: system_details },
+              },
+              system_output: {
+                data: sysToSubmit.base64,
+                file_type: unwrap(sys_out_file.fileType),
+              },
+            });
+            systems.push(system);
+          }
         }
-      }
 
-      ReactGA.event({
-        category: "System",
-        action: `system_submit_success`,
-        label: task,
-      });
-      message.success(
-        `Successfully submitted systems (${systems.map(
-          (system) => system.system_id
-        )}).`
-      );
-      onClose();
-      form.resetFields([
-        "name",
-        "task",
-        "dataset",
-        "sys_out_file",
-        "custom_dataset_file",
-        "metric_names",
-        "source_language",
-        "target_language",
-        "other_source_language",
-        "other_target_language",
-        "shared_users",
-        "system_details",
-      ]);
+        ReactGA.event({
+          category: "System",
+          action: `system_submit_success`,
+          label: task,
+        });
+        message.success(
+          `Successfully submitted systems (${systems.map(
+            (system) => system.system_id
+          )}).`
+        );
+        resetAllFormFields();
+        onClose();
+      }
     } catch (e) {
-      ReactGA.event({
-        category: "System",
-        action: `system_submit_failure`,
-        label: task,
-      });
+      if (editMode) {
+        ReactGA.event({
+          category: "System",
+          action: `system_update_failure`,
+        });
+      } else {
+        ReactGA.event({
+          category: "System",
+          action: `system_submit_failure`,
+          label: task,
+        });
+      }
       if (e instanceof Response) {
         const err = await parseBackendError(e);
         message.error(err.getErrorMsg());
@@ -377,10 +472,10 @@ export function SystemSubmitDrawer(props: Props) {
   return (
     <Drawer
       width="60%"
-      title="New System"
+      title={editMode ? "Edit System" : "New System"}
       footer={footer}
-      destroyOnClose
-      {...props}
+      onClose={onClose}
+      {...rest}
     >
       <Spin spinning={state === State.loading} tip="processing...">
         <Form
@@ -389,11 +484,30 @@ export function SystemSubmitDrawer(props: Props) {
           form={form}
           scrollToFirstError
           onValuesChange={onValuesChange}
+          initialValues={
+            editMode
+              ? {
+                  name: systemToEdit?.system_info.system_name,
+                  // Must be boolean
+                  is_private: systemToEdit?.is_private || false,
+                  shared_users: systemToEdit?.shared_users,
+                }
+              : { is_private: true }
+          }
         >
+          <Form.Item
+            name="name"
+            label="System Name"
+            rules={editMode ? [{ required: true }] : []}
+            hidden={!editMode}
+          >
+            <Input />
+          </Form.Item>
+
           <Form.Item
             name="task"
             label="Task"
-            rules={[{ required: true }]}
+            rules={editMode ? [] : [{ required: true }]}
             help={
               selectedTask && (
                 <Tooltip
@@ -413,6 +527,7 @@ export function SystemSubmitDrawer(props: Props) {
                 </Tooltip>
               )
             }
+            hidden={editMode}
           >
             <TaskSelect taskCategories={taskCategories} />
           </Form.Item>
@@ -420,10 +535,12 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             label="Use custom dataset?"
             tooltip="Custom dataset will not be shown on the leaderboard"
+            hidden={editMode}
           >
             <Checkbox
               checked={useCustomDataset}
               onChange={(e) => onUseCustomDatasetChange(e.target.checked)}
+              disabled={editMode}
             />
           </Form.Item>
 
@@ -432,15 +549,20 @@ export function SystemSubmitDrawer(props: Props) {
               <Form.Item
                 name="custom_dataset_file"
                 label="Custom Dataset"
-                required
-                rules={[
-                  {
-                    validator: getDataFileValidator(
-                      useCustomDataset,
-                      "Custom Dataset"
-                    ),
-                  },
-                ]}
+                rules={
+                  editMode
+                    ? []
+                    : [
+                        { required: true },
+                        {
+                          validator: getDataFileValidator(
+                            useCustomDataset,
+                            "Custom Dataset"
+                          ),
+                        },
+                      ]
+                }
+                hidden={editMode}
               >
                 <DataFileUpload
                   allowedFileTypes={allowedFileType.custom_dataset}
@@ -451,8 +573,10 @@ export function SystemSubmitDrawer(props: Props) {
             <Form.Item
               name="dataset"
               label="Dataset"
-              required
-              rules={[{ validator: validateDataset }]}
+              rules={
+                editMode ? [] : [{ required: true, validator: validateDataset }]
+              }
+              hidden={editMode}
             >
               <DatasetSelect
                 options={datasetOptions}
@@ -465,8 +589,15 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="sys_out_file"
             label="System Output"
-            required
-            rules={[{ validator: getDataFileValidator(true, "System Output") }]}
+            rules={
+              editMode
+                ? []
+                : [
+                    { required: true },
+                    { validator: getDataFileValidator(true, "System Output") },
+                  ]
+            }
+            hidden={editMode}
           >
             <DataFileUpload
               allowedFileTypes={allowedFileType.system_output}
@@ -477,7 +608,8 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="metric_names"
             label="Metrics"
-            rules={[{ required: true }]}
+            rules={editMode ? [] : [{ required: true }]}
+            hidden={editMode}
           >
             <Select
               mode="multiple"
@@ -490,7 +622,6 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="is_private"
             label="Make it private?"
-            initialValue={true}
             rules={[{ required: true }]}
             valuePropName="checked"
             tooltip="Check this box if you don't want other users to see your system (We will add support to change the visibility of systems in the future)"
@@ -513,24 +644,19 @@ export function SystemSubmitDrawer(props: Props) {
               <Form.Item
                 name="source_language"
                 label="Input Language"
-                rules={[{ required: true }]}
+                rules={editMode ? [] : [{ required: true }]}
+                hidden={editMode}
                 tooltip="Choose the input/output languages of the dataset. Select 'Other(other)' if the dataset uses custom languages. Select 'None(none)' if the dataset contains other modalities like images. "
               >
                 <Select
                   showSearch
-                  options={languageCodes.map((opt) => ({
-                    label: opt.name + "(" + opt.iso3_code + ")",
+                  options={inputLangFiltered.map((opt) => ({
+                    label: `${opt.name}(${opt.iso3_code})`,
                     value: opt.iso3_code,
                   }))}
                   placeholder="Search language"
-                  filterOption={(input, option) =>
-                    option === undefined
-                      ? false
-                      : option.label
-                          .toLowerCase()
-                          .includes(input.toLowerCase()) ||
-                        option.value.toLowerCase().includes(input.toLowerCase())
-                  }
+                  filterOption={() => true}
+                  onSearch={setInputLangQuery}
                   onChange={onSourceLangChange}
                 />
               </Form.Item>
@@ -548,23 +674,18 @@ export function SystemSubmitDrawer(props: Props) {
               <Form.Item
                 name="target_language"
                 label="Output Language"
-                rules={[{ required: true }]}
+                rules={editMode ? [] : [{ required: true }]}
+                hidden={editMode}
               >
                 <Select
                   showSearch
-                  options={languageCodes.map((opt) => ({
-                    label: opt.name + "(" + opt.iso3_code + ")",
+                  options={outputLangFiltered.map((opt) => ({
+                    label: `${opt.name}(${opt.iso3_code})`,
                     value: opt.iso3_code,
                   }))}
                   placeholder="Search language"
-                  filterOption={(input, option) =>
-                    option === undefined
-                      ? false
-                      : option.label
-                          .toLowerCase()
-                          .includes(input.toLowerCase()) ||
-                        option.value.toLowerCase().includes(input.toLowerCase())
-                  }
+                  filterOption={() => true}
+                  onSearch={setOutputLangQuery}
                   onChange={onTargetLangChange}
                 />
               </Form.Item>
@@ -613,6 +734,7 @@ export function SystemSubmitDrawer(props: Props) {
                 </p>
               </>
             }
+            hidden={editMode}
           >
             <TextArea rows={3} />
           </Form.Item>

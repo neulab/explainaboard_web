@@ -6,7 +6,6 @@ import json
 import logging
 import os
 from functools import lru_cache
-from typing import Optional
 
 import pandas as pd
 from explainaboard import DatalabLoaderOption, TaskType, get_processor
@@ -15,13 +14,13 @@ from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import SimpleMetricStats
+from explainaboard.serialization.legacy import general_to_dict
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
-from explainaboard.utils.serialization import general_to_dict
 from explainaboard.utils.typing_utils import narrow
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
-from explainaboard_web.impl.auth import get_user
+from explainaboard_web.impl.auth import User, get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -34,6 +33,7 @@ from explainaboard_web.models import (
     BenchmarkConfig,
     DatasetMetadata,
     SingleAnalysis,
+    SystemOutput,
 )
 from explainaboard_web.models.datasets_return import DatasetsReturn
 from explainaboard_web.models.language_code import LanguageCode
@@ -41,13 +41,39 @@ from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_create_props import SystemCreateProps
 from explainaboard_web.models.system_info import SystemInfo
-from explainaboard_web.models.system_output import SystemOutput
+from explainaboard_web.models.system_update_props import SystemUpdateProps
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
+
+
+def _is_creator(system: System, user: User) -> bool:
+    """check if a user is the creator of a system"""
+    return system.creator == user.email
+
+
+def _is_shared_user(system: System, user: User) -> bool:
+    """check if a user is a shared user of a system"""
+    return system.shared_users and user.email in system.shared_users
+
+
+def _has_write_access(system: System) -> bool:
+    """check if the current user has write access of a system"""
+    user = get_user()
+    return user.is_authenticated and _is_creator(system, user)
+
+
+def _has_read_access(system: System) -> bool:
+    """check if the current user has read access of a system"""
+    user = get_user()
+    return not system.is_private or (
+        user.is_authenticated
+        and (_is_creator(system, user) or _is_shared_user(system, user))
+    )
+
 
 """ /info """
 
@@ -121,9 +147,9 @@ def datasets_dataset_id_get(dataset_id: str) -> DatasetMetadata:
 
 
 def datasets_get(
-    dataset_ids: Optional[str],
-    dataset_name: Optional[str],
-    task: Optional[str],
+    dataset_ids: str | None,
+    dataset_name: str | None,
+    task: str | None,
     page: int,
     page_size: int,
 ) -> DatasetsReturn:
@@ -140,7 +166,7 @@ def datasets_get(
 """ /benchmarks """
 
 
-def benchmark_configs_get(parent: Optional[str]) -> list[BenchmarkConfig]:
+def benchmark_configs_get(parent: str | None) -> list[BenchmarkConfig]:
     scriptpath = os.path.dirname(__file__)
     config_folder = os.path.join(scriptpath, "./benchmark_configs/")
     # Add benchmarks to here if they should be displayed on the page.
@@ -220,21 +246,24 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
 
 
 def systems_get_by_id(system_id: str) -> System:
-    return SystemDBUtils.find_system_by_id(system_id)
+    system = SystemDBUtils.find_system_by_id(system_id)
+    if not _has_read_access(system):
+        abort_with_error_message(403, "system access denied", 40302)
+    return system
 
 
 def systems_get(
-    system_name: Optional[str],
-    task: Optional[str],
-    dataset: Optional[str],
-    subdataset: Optional[str],
-    split: Optional[str],
+    system_name: str | None,
+    task: str | None,
+    dataset: str | None,
+    subdataset: str | None,
+    split: str | None,
     page: int,
     page_size: int,
     sort_field: str,
     sort_direction: str,
-    creator: Optional[str],
-    shared_users: Optional[list[str]],
+    creator: str | None,
+    shared_users: list[str] | None,
 ) -> SystemsReturn:
     ids = None
     if not sort_field:
@@ -294,6 +323,17 @@ def systems_post(body: SystemCreateProps) -> System:
         )
 
 
+def systems_update_by_id(body: SystemUpdateProps, system_id: str):
+    system = SystemDBUtils.find_system_by_id(system_id)
+    if not _has_write_access(system):
+        abort_with_error_message(403, "system update denied", 40303)
+
+    success = SystemDBUtils.update_system_by_id(system_id, body.metadata)
+    if success:
+        return "Success"
+    abort_with_error_message(400, f"failed to update system {system_id}")
+
+
 def system_outputs_get_by_id(
     system_id: str, output_ids: list[int] | None
 ) -> list[SystemOutput]:
@@ -301,12 +341,7 @@ def system_outputs_get_by_id(
     TODO: return special error/warning if some ids cannot be found
     """
     system = SystemDBUtils.find_system_by_id(system_id)
-    user = get_user()
-    has_access = user.is_authenticated and (
-        system.creator == user.email
-        or (system.shared_users and user.email in system.shared_users)
-    )
-    if system.is_private and not has_access:
+    if not _has_read_access(system):
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(
@@ -331,12 +366,7 @@ def system_cases_get_by_id(
     TODO: return special error/warning if some ids cannot be found
     """
     system = SystemDBUtils.find_system_by_id(system_id)
-    user = get_user()
-    has_access = user.is_authenticated and (
-        system.creator == user.email
-        or (system.shared_users and user.email in system.shared_users)
-    )
-    if system.is_private and not has_access:
+    if not _has_read_access(system):
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(
