@@ -30,7 +30,7 @@ export function FineGrainedBarChart(props: Props) {
     onBarClick,
   } = props;
   // For invariant variables across all systems, we can simply take from the first result
-  const systemNames = systems.map((system) => system.system_info.system_name);
+  const systemNames = systems.map((system) => system.system_name);
   const resultFirst = results[0];
   const bucketNames = resultFirst.bucketNames;
   const featureName = resultFirst.featureName;

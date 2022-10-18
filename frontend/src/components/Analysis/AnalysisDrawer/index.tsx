@@ -198,11 +198,9 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
 
   function getDrawerTitle(): string {
     if (systems.length === 1) {
-      return `Single Analysis of ${systems[0].system_info.system_name}`;
+      return `Single Analysis of ${systems[0].system_name}`;
     } else if (systems.length === 2) {
-      const systemNames = systems
-        .map((sys) => sys.system_info.system_name)
-        .join(" and ");
+      const systemNames = systems.map((sys) => sys.system_name).join(" and ");
       return `Pairwise Analysis of ${systemNames}`;
     }
     return "Analysis";

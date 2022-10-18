@@ -388,7 +388,7 @@ export function SystemSubmitDrawer(props: Props) {
           initialValues={
             editMode
               ? {
-                  name: systemToEdit?.system_info.system_name,
+                  name: systemToEdit?.system_name,
                   // Must be boolean
                   is_private: systemToEdit?.is_private || false,
                   shared_users: systemToEdit?.shared_users,
