@@ -240,9 +240,9 @@ class SystemDBUtils:
         if subdataset_name:
             search_conditions.append({"system_info.sub_dataset_name": subdataset_name})
         if source_language:
-            search_conditions.append({"system_info.source_language": source_language})
+            search_conditions.append({"source_language": source_language})
         if target_language:
-            search_conditions.append({"system_info.target_language": target_language})
+            search_conditions.append({"target_language": target_language})
         if split:
             search_conditions.append({"system_info.dataset_split": split})
         if creator:
