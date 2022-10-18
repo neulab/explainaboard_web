@@ -50,14 +50,6 @@ function isSubstring(query: string, string: string): boolean {
   return string.toLowerCase().includes(query.toLocaleLowerCase());
 }
 
-type LangScore = {
-  lang: LanguageCode;
-
-  // The score of the language code, used for ranking during search
-  // Higher value ones are better results and will be displayed earlier in a list
-  value: number;
-};
-
 /**
  * Given a query, search in a given list of language codes to get
  * the matching ones. The query will try to match all fields
@@ -68,14 +60,17 @@ type LangScore = {
  * @returns a filtered list ordered (descending) by score
  */
 const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
-  const added = new Set<string>();
-  const scores: LangScore[] = [];
+  // The matching score for each language code
+  // Higher value ones are better results and will be displayed earlier in a list
+  const scores: { [key: string]: number } = {};
+
+  // Maps from language name to language code object
+  const languages = new Map(data.map((langCode) => [langCode.name, langCode]));
 
   // match iso3
   const iso3Matches = data.filter((lang) => isSubstring(query, lang.iso3_code));
   iso3Matches.forEach((match) => {
-    added.add(match.name);
-    scores.push({ lang: match, value: 100 });
+    scores[match.name] = Math.max(scores[match.name] || 0, 100);
   });
 
   // match iso1: we only consider exact match for iso1_code
@@ -86,24 +81,26 @@ const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
     return false;
   });
   iso1Matches.forEach((match) => {
-    added.add(match.name);
-    if (!added.has(match.name)) scores.push({ lang: match, value: 100 });
+    scores[match.name] = Math.max(scores[match.name] || 0, 100);
   });
 
   // match names: exact match of a name will have the highest score, decreases by distance
   const nameMatches = data.filter((lang) => hasCommonString(query, lang.name));
   nameMatches.forEach((match) => {
-    if (!added.has(match.name))
-      scores.push({
-        lang: match,
-        value: 101 - Math.abs(match.name.length - query.length),
-      });
+    const score = 101 - Math.abs(match.name.length - query.length);
+    scores[match.name] = Math.max(scores[match.name] || 0, score);
   });
 
   // Sort by score
-  const result = scores
-    .sort((score1, score2) => score2.value - score1.value)
-    .map((score) => score.lang);
+  const result = Object.entries(scores)
+    .sort((obj1, obj2) => obj2[1] - obj1[1])
+    .map((obj) => {
+      const code = languages.get(obj[0]);
+      if (!code) {
+        throw new Error("Something went wrong when searching");
+      }
+      return code;
+    });
 
   return result;
 };
