@@ -234,7 +234,7 @@ class SystemDBUtils:
         if system_name:
             search_conditions.append({"system_name": {"$regex": rf"^{system_name}.*"}})
         if task:
-            search_conditions.append({"system_info.task_name": task})
+            search_conditions.append({"task": task})
         if dataset_name:
             search_conditions.append({"system_info.dataset_name": dataset_name})
         if subdataset_name:

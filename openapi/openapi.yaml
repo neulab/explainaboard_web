@@ -963,6 +963,9 @@ components:
             target_language:
               type: string
               example: en
+            task:
+              type: string
+              example: "text-classification"
             system_info:
               $ref: "#/components/schemas/SystemInfo"
             metric_stats:
@@ -1009,6 +1012,7 @@ components:
             - is_private
             - source_language
             - target_language
+            - task
             - system_info
             - metric_stats
         - $ref: "#/components/schemas/Time"
