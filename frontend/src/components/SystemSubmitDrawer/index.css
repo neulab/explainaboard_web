@@ -1,0 +1,8 @@
+.file-submissions {
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.add-submission {
+  margin-top: 10px;
+}

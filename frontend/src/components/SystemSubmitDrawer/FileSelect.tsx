@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import { UploadChangeParam, UploadFile } from "antd/lib/upload/interface";
 import { Space, Button, CheckboxOptionType, Radio, Upload, Input } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 
 export interface DataFileValue {
   fileList?: UploadFile[];
@@ -76,7 +76,16 @@ export function DataFileUpload({
   }
 
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      <Radio.Group
+        size="small"
+        options={FILE_TYPES.map((type) => ({
+          ...type,
+          disabled: !allowedFileTypes.includes(type.value as string),
+        }))}
+        value={fileType}
+        onChange={(e) => onFileTypeChange(e.target.value)}
+      />
       <Upload
         maxCount={maxFileCount}
         beforeUpload={(file) => {
@@ -84,6 +93,7 @@ export function DataFileUpload({
         }}
         fileList={fileList}
         onChange={onFileChange}
+        className="file-submissions"
         itemRender={(originNode, file) =>
           maxFileCount > 1 ? (
             <Space>
@@ -98,17 +108,10 @@ export function DataFileUpload({
           )
         }
       >
-        <Button icon={<UploadOutlined />}>Select File</Button>
+        <Button icon={<PlusOutlined />} block className="add-submission">
+          Add Another File
+        </Button>
       </Upload>
-      <Radio.Group
-        size="small"
-        options={FILE_TYPES.map((type) => ({
-          ...type,
-          disabled: !allowedFileTypes.includes(type.value as string),
-        }))}
-        value={fileType}
-        onChange={(e) => onFileTypeChange(e.target.value)}
-      />
     </div>
   );
 }

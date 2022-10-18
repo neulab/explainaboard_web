@@ -29,6 +29,7 @@ import { DataFileUpload, DataFileValue } from "./FileSelect";
 import ReactGA from "react-ga4";
 import useSearch, { FilterFunc } from "./useSearch";
 import { SystemModel } from "../../models";
+import "./index.css";
 
 const { TextArea } = Input;
 
