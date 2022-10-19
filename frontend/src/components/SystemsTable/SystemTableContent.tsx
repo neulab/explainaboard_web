@@ -82,12 +82,12 @@ export function SystemTableContent({
       align: "center",
     },
     {
-      dataIndex: ["system_info", "system_name"],
+      dataIndex: "system_name",
       fixed: "left",
       title: "Name",
       render: (_, record) => (
         <div>
-          <Text strong>{record.system_info.system_name}</Text>
+          <Text strong>{record.system_name}</Text>
           {record.is_private && (
             <span style={{ paddingLeft: "3px" }}>
               <PrivateIcon />

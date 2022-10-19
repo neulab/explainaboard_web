@@ -953,6 +953,8 @@ components:
         - properties:
             system_id:
               type: string
+            system_name:
+              type: string
             is_private:
               type: boolean
             system_info:
@@ -998,6 +1000,7 @@ components:
           required:
             [
               system_id,
+              system_name,
               is_private,
               system_info,
               metric_stats,

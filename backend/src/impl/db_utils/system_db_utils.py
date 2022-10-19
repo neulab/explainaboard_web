@@ -232,9 +232,7 @@ class SystemDBUtils:
         if ids:
             search_conditions.append({"_id": {"$in": [ObjectId(_id) for _id in ids]}})
         if system_name:
-            search_conditions.append(
-                {"system_info.system_name": {"$regex": rf"^{system_name}.*"}}
-            )
+            search_conditions.append({"system_name": {"$regex": rf"^{system_name}.*"}})
         if task:
             search_conditions.append({"system_info.task_name": task})
         if dataset_name:
@@ -519,7 +517,7 @@ class SystemDBUtils:
 
         # TODO a more general, flexible solution instead of hard coding
         field_to_value = {
-            "system_info.system_name": metadata.system_name,
+            "system_name": metadata.system_name,
             "is_private": metadata.is_private,
             "shared_users": metadata.shared_users,
             "system_details": metadata.system_details,

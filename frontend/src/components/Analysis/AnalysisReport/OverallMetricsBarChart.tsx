@@ -16,7 +16,7 @@ export function OverallMetricsBarChart({
   metricNames,
   onBarClick,
 }: Props) {
-  const systemNames = systems.map((system) => system.system_info.system_name);
+  const systemNames = systems.map((system) => system.system_name);
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
