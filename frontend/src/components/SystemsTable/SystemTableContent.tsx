@@ -98,7 +98,7 @@ export function SystemTableContent({
       width: 150,
     },
     {
-      dataIndex: ["system_info", "task_name"],
+      dataIndex: "task",
       width: 120,
       fixed: "left",
       title: "Task",

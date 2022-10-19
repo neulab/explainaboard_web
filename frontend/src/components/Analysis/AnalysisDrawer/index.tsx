@@ -44,7 +44,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
   const getTask = useCallback(() => {
     if (systems.length === 0)
       throw new Error("systems is empty. cannot determine task.");
-    return systems[0].system_info.task_name;
+    return systems[0].task;
   }, [systems]);
 
   useEffect(() => {
