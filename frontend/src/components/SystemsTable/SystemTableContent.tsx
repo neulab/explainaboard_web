@@ -138,20 +138,16 @@ export function SystemTableContent({
       render: (_, record) => record.system_info.dataset_split || "unspecified",
     },
     {
-      dataIndex: ["system_info", "source_language"],
+      dataIndex: "source_language",
       width: 100,
       title: "Input Lang",
       align: "center",
-      render: (_, record) =>
-        record.system_info.source_language || "unspecified",
     },
     {
-      dataIndex: ["system_info", "target_language"],
+      dataIndex: "target_language",
       width: 100,
       title: "Output Lang",
       align: "center",
-      render: (_, record) =>
-        record.system_info.target_language || "unspecified",
     },
     ...metricColumns,
     {
