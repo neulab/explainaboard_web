@@ -12,8 +12,8 @@ import {
 import { ColumnsType } from "antd/lib/table";
 import { backendClient, parseBackendError } from "../../clients";
 import { SystemModel } from "../../models";
-import { DeleteOutlined } from "@ant-design/icons";
-import { PrivateIcon } from "..";
+import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
+import { PrivateIcon, useUser } from "..";
 import { generateLeaderboardURL } from "../../utils";
 import { getOverallMap } from "../Analysis/utils";
 const { Text } = Typography;
@@ -30,6 +30,7 @@ interface Props {
   selectedSystemIDs: string[];
   setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
   onActiveSystemChange: (ids: string[]) => void;
+  showEditDrawer: (systemIDToEdit: string) => void;
 }
 
 export function SystemTableContent({
@@ -43,7 +44,9 @@ export function SystemTableContent({
   selectedSystemIDs,
   setSelectedSystemIDs,
   onActiveSystemChange,
+  showEditDrawer,
 }: Props) {
+  const { userInfo } = useUser();
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: metric,
     render: (_, record) =>
@@ -79,12 +82,12 @@ export function SystemTableContent({
       align: "center",
     },
     {
-      dataIndex: ["system_info", "system_name"],
+      dataIndex: "system_name",
       fixed: "left",
       title: "Name",
       render: (_, record) => (
         <div>
-          <Text strong>{record.system_info.system_name}</Text>
+          <Text strong>{record.system_name}</Text>
           {record.is_private && (
             <span style={{ paddingLeft: "3px" }}>
               <PrivateIcon />
@@ -95,7 +98,7 @@ export function SystemTableContent({
       width: 150,
     },
     {
-      dataIndex: ["system_info", "task_name"],
+      dataIndex: "task",
       width: 120,
       fixed: "left",
       title: "Task",
@@ -135,20 +138,16 @@ export function SystemTableContent({
       render: (_, record) => record.system_info.dataset_split || "unspecified",
     },
     {
-      dataIndex: ["system_info", "source_language"],
+      dataIndex: "source_language",
       width: 100,
       title: "Input Lang",
       align: "center",
-      render: (_, record) =>
-        record.system_info.source_language || "unspecified",
     },
     {
-      dataIndex: ["system_info", "target_language"],
+      dataIndex: "target_language",
       width: 100,
       title: "Output Lang",
       align: "center",
-      render: (_, record) =>
-        record.system_info.target_language || "unspecified",
     },
     ...metricColumns,
     {
@@ -168,23 +167,44 @@ export function SystemTableContent({
       dataIndex: "action",
       title: "",
       fixed: "right",
-      width: 110,
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            size="small"
-            onClick={() => showSystemAnalysis(record.system_id)}
-          >
-            Analysis
-          </Button>
-          <Popconfirm
-            title="Are you sure?"
-            onConfirm={() => deleteSystem(record.system_id)}
-          >
-            <Button danger size="small" icon={<DeleteOutlined />} />
-          </Popconfirm>
-        </Space>
-      ),
+      width: 90,
+      render: (_, record) => {
+        const notCreator = record.creator !== userInfo?.id;
+        return (
+          <Space size="small" direction="vertical">
+            <Space size="small">
+              <Button
+                size="small"
+                onClick={() => showSystemAnalysis(record.system_id)}
+              >
+                Analysis
+              </Button>
+            </Space>
+            <Space size="small">
+              <Button
+                size="small"
+                disabled={notCreator}
+                icon={<EditOutlined />}
+                onClick={() => {
+                  showEditDrawer(record.system_id);
+                }}
+              />
+              <Popconfirm
+                disabled={notCreator}
+                title="Are you sure?"
+                onConfirm={() => deleteSystem(record.system_id)}
+              >
+                <Button
+                  danger
+                  disabled={notCreator}
+                  size="small"
+                  icon={<DeleteOutlined />}
+                />
+              </Popconfirm>
+            </Space>
+          </Space>
+        );
+      },
     },
   ];
 

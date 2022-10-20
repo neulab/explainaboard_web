@@ -52,6 +52,13 @@ export function SystemsTable() {
     setActiveSystemIds(ids);
   };
 
+  // system to be edited
+  const [systemIDToEdit, setSystemIDToEdit] = useState<string>("");
+  const systemsToEdit = systems.filter(
+    (sys) => systemIDToEdit === sys.system_id
+  );
+  const systemToEdit = systemsToEdit.length < 1 ? undefined : systemsToEdit[0];
+
   const { state: loginState, userInfo } = useUser();
   const userId = userInfo?.id;
 
@@ -152,11 +159,20 @@ export function SystemsTable() {
     loginState, // refresh when login state changes
   ]);
 
+  function showSubmitDrawer() {
+    setSubmitDrawerVisible(true);
+  }
+
+  function showEditDrawer(systemIDToEdit: string) {
+    setSystemIDToEdit(systemIDToEdit);
+    setSubmitDrawerVisible(true);
+  }
+
   return (
     <Space direction="vertical" style={{ width: "100%" }}>
       <SystemTableTools
         systems={systems}
-        toggleSubmitDrawer={() => setSubmitDrawerVisible((visible) => !visible)}
+        showSubmitDrawer={showSubmitDrawer}
         taskCategories={taskCategories}
         value={filters}
         onChange={onFilterChange}
@@ -179,6 +195,7 @@ export function SystemsTable() {
         selectedSystemIDs={selectedSystemIDs}
         setSelectedSystemIDs={setSelectedSystemIDs}
         onActiveSystemChange={onActiveSystemChange}
+        showEditDrawer={showEditDrawer}
       />
       <AnalysisDrawer
         systems={systems.filter((sys) =>
@@ -187,8 +204,10 @@ export function SystemsTable() {
         closeDrawer={() => onActiveSystemChange([])}
       />
       <SystemSubmitDrawer
+        systemToEdit={systemToEdit}
         visible={submitDrawerVisible}
         onClose={() => {
+          setSystemIDToEdit("");
           setSubmitDrawerVisible(false);
           setRefreshTrigger((value) => !value);
         }}

@@ -34,7 +34,7 @@ export function ExampleTable({
     [systems]
   );
   const systemNames = useMemo(
-    () => systems.map((system) => system.system_info.system_name),
+    () => systems.map((system) => system.system_name),
     [systems]
   );
   const systemIDsArray = useMemo(
@@ -69,13 +69,10 @@ export function ExampleTable({
         >
           {systems.map((system, sysIndex) => {
             return (
-              <Tabs.TabPane
-                tab={system.system_info.system_name}
-                key={`${sysIndex}`}
-              >
+              <Tabs.TabPane tab={system.system_name} key={`${sysIndex}`}>
                 <AnalysisTable
                   systemIDs={systemIDsArray[sysIndex]}
-                  systemNames={[system.system_info.system_name]}
+                  systemNames={[system.system_name]}
                   task={task}
                   cases={cases[sysIndex]}
                   changeState={changeState}

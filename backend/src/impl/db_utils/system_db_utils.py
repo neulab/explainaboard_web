@@ -27,6 +27,7 @@ from explainaboard_web.models import (
     System,
     SystemInfo,
     SystemMetadata,
+    SystemMetadataUpdatable,
     SystemOutput,
     SystemOutputProps,
     SystemsReturn,
@@ -65,6 +66,20 @@ class SystemDBUtils:
                 ]
                 ret = {k: v for k, v in ret_list}
         return ret
+
+    @staticmethod
+    def _parse_system_details_in_doc(
+        document: dict, metadata: SystemMetadata | SystemMetadataUpdatable
+    ):
+        if (
+            document.get("system_details")
+            and "__TO_PARSE__" in document["system_details"]
+        ):
+            parsed = SystemDBUtils._parse_system_details(
+                document["system_details"]["__TO_PARSE__"]
+            )
+            metadata.system_details = parsed
+            document["system_details"] = parsed
 
     @staticmethod
     def system_from_dict(
@@ -224,19 +239,17 @@ class SystemDBUtils:
         if ids:
             search_conditions.append({"_id": {"$in": [ObjectId(_id) for _id in ids]}})
         if system_name:
-            search_conditions.append(
-                {"system_info.system_name": {"$regex": rf"^{system_name}.*"}}
-            )
+            search_conditions.append({"system_name": {"$regex": rf"^{system_name}.*"}})
         if task:
-            search_conditions.append({"system_info.task_name": task})
+            search_conditions.append({"task": task})
         if dataset_name:
             search_conditions.append({"system_info.dataset_name": dataset_name})
         if subdataset_name:
             search_conditions.append({"system_info.sub_dataset_name": subdataset_name})
         if source_language:
-            search_conditions.append({"system_info.source_language": source_language})
+            search_conditions.append({"source_language": source_language})
         if target_language:
-            search_conditions.append({"system_info.target_language": target_language})
+            search_conditions.append({"target_language": target_language})
         if split:
             search_conditions.append({"system_info.dataset_split": split})
         if creator:
@@ -368,28 +381,20 @@ class SystemDBUtils:
         """
         Create a system given metadata and outputs, etc.
         """
+        document = metadata.to_dict()
 
         # -- parse the system details if getting a string from the frontend
-        document = metadata.to_dict()
-        if (
-            document.get("system_details")
-            and "__TO_PARSE__" in document["system_details"]
-        ):
-            parsed = SystemDBUtils._parse_system_details(
-                document["system_details"]["__TO_PARSE__"]
-            )
-            metadata.system_details = parsed
-            document["system_details"] = parsed
-
-        # -- create the object defined in openapi.yaml from only uploaded metadata
-        system: System = SystemDBUtils.system_from_dict(document)
+        SystemDBUtils._parse_system_details_in_doc(document, metadata)
 
         # -- set the creator
         user = get_user()
-        system.creator = user.id
+        document["creator"] = user.id
 
         # -- set the preferred_username to conform with the return schema
-        system.preferred_username = user.preferred_username
+        document["preferred_username"] = user.preferred_username
+
+        # -- create the object defined in openapi.yaml from only uploaded metadata
+        system: System = SystemDBUtils.system_from_dict(document)
 
         # -- validate the dataset metadata
         if metadata.dataset_metadata_id:
@@ -513,6 +518,25 @@ class SystemDBUtils:
             # mypy doesn't seem to understand the NoReturn type in an except block.
             # It's a noop to fix it
             raise e
+
+    @staticmethod
+    def update_system_by_id(system_id: str, metadata: SystemMetadataUpdatable) -> bool:
+        document = metadata.to_dict()
+
+        # -- parse the system details if getting a string from the frontend
+        SystemDBUtils._parse_system_details_in_doc(document, metadata)
+
+        # TODO a more general, flexible solution instead of hard coding
+        field_to_value = {
+            "system_name": metadata.system_name,
+            "is_private": metadata.is_private,
+            "shared_users": metadata.shared_users,
+            "system_details": metadata.system_details,
+        }
+
+        return DBUtils.update_one_by_id(
+            DBUtils.DEV_SYSTEM_METADATA, system_id, field_to_value
+        )
 
     @staticmethod
     def find_system_by_id(system_id: str):

@@ -7,7 +7,7 @@ from explainaboard_web.impl.db import get_db
 from explainaboard_web.impl.utils import abort_with_error_message
 from pymongo.client_session import ClientSession
 from pymongo.cursor import Cursor
-from pymongo.results import DeleteResult, InsertManyResult
+from pymongo.results import DeleteResult, InsertManyResult, UpdateResult
 
 
 @dataclass
@@ -103,6 +103,27 @@ class DBUtils:
             _id = docid
         finally:
             return DBUtils.get_collection(collection).find_one({"_id": _id}, projection)
+
+    @staticmethod
+    def update_one_by_id(
+        collection: DBCollection, docid: str, field_to_value: dict
+    ) -> bool:
+        """
+        Update a document with the _id field
+        Parameters:
+          - id: value of _id
+          - field_to_value: the new "field to value"(s) to be set in the document
+        Returns: `True` if a single document has been updated
+        """
+        try:
+            result: UpdateResult = DBUtils.get_collection(collection).update_one(
+                {"_id": ObjectId(docid)}, {"$set": field_to_value}
+            )
+            if int(result.modified_count) == 1:
+                return True
+        except InvalidId:
+            abort_with_error_message(400, f"id: {docid} is not a valid ID")
+        return False
 
     @staticmethod
     def replace_one_by_id(collection: DBCollection, doc: dict):

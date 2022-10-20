@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.6"
+  version: "0.2.7"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -212,6 +212,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/APIError"
+    patch:
+      summary: Updates a system by id
+      operationId: systemsUpdateById
+      description: Updates a system by id. See requestBody for supported fields.
+      parameters:
+        - in: path
+          name: system_id
+          schema:
+            type: string
+          required: true
+          example: "619f8ef56e638da17b06b38a"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemUpdateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
+
     delete:
       summary: Deletes a system by id
       operationId: systemsDeleteById
@@ -823,6 +849,13 @@ components:
           type: object
       required: [task_metadata_id, task_name]
 
+    SystemUpdateProps:
+      type: object
+      properties:
+        metadata:
+          $ref: "#/components/schemas/SystemMetadataUpdatable"
+      required: [metadata]
+
     SystemCreateProps:
       type: object
       properties:
@@ -833,6 +866,28 @@ components:
         custom_dataset:
           $ref: "#/components/schemas/SystemOutputProps"
       required: [metadata, system_output]
+
+    SystemMetadataUpdatable:
+      properties:
+        system_name:
+          type: string
+        system_details:
+          type: object
+          description: a place to store arbitrary system details you want to remember
+        is_private:
+          type: boolean
+          default: true
+        shared_users:
+          type: array
+          items:
+            type: string
+          description: space-separated list of emails with which system is shared
+          example: ["hello@gmail.com", "world@gmail.com"]
+      required:
+        [
+          is_private,
+          system_name,
+        ]
 
     SystemMetadata:
       type: object
@@ -898,8 +953,19 @@ components:
         - properties:
             system_id:
               type: string
+            system_name:
+              type: string
             is_private:
               type: boolean
+            source_language:
+              type: string
+              example: en
+            target_language:
+              type: string
+              example: en
+            task:
+              type: string
+              example: "text-classification"
             system_info:
               $ref: "#/components/schemas/SystemInfo"
             metric_stats:
@@ -944,14 +1010,16 @@ components:
               description: |
                 a place to store arbitrary system details you want to remember
           required:
-            [
-              system_id,
-              creator,
-              preferred_username,
-              is_private,
-              system_info,
-              metric_stats,
-            ]
+            - system_id
+            - creator
+            - preferred_username
+            - system_name
+            - is_private
+            - source_language
+            - target_language
+            - task
+            - system_info
+            - metric_stats
         - $ref: "#/components/schemas/Time"
 
     DatasetFeature:
