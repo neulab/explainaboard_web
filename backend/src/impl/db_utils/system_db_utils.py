@@ -22,7 +22,6 @@ from explainaboard_web.impl.utils import (
 )
 from explainaboard_web.models import (
     AnalysisCase,
-    DatasetMetadata,
     System,
     SystemInfo,
     SystemMetadata,
@@ -148,7 +147,6 @@ class SystemDBUtils:
         page: int,
         page_size: int,
         sort: list | None = None,
-        include_datasets: bool = True,
         include_metric_stats: bool = False,
     ):
 
@@ -172,33 +170,7 @@ class SystemDBUtils:
         if len(documents) == 0:
             return SystemsReturn(systems, 0)
 
-        # query datasets in batch to make it more efficient
-        dataset_dict: dict[str, DatasetMetadata] = {}
-        if include_datasets:
-            dataset_ids: list[str] = []
-            for doc in documents:
-                if doc.get("dataset_metadata_id"):
-                    dataset_ids.append(doc["dataset_metadata_id"])
-            datasets = DatasetDBUtils.find_datasets(
-                page=0, page_size=0, dataset_ids=dataset_ids, no_limit=True
-            ).datasets
-            for dataset in datasets:
-                dataset_dict[dataset.dataset_id] = dataset
-
         for doc in documents:
-            if not include_datasets or "dataset_metadata_id" not in doc:
-                doc.pop("dataset_metadata_id", None)
-            else:
-                dataset = dataset_dict.get(doc["dataset_metadata_id"])
-                if dataset:
-                    doc["dataset"] = {
-                        "dataset_id": dataset.dataset_id,
-                        "dataset_name": dataset.dataset_name,
-                        "sub_dataset": dataset.sub_dataset,
-                        "tasks": dataset.tasks,
-                    }
-                doc.pop("dataset_metadata_id")
-            doc["system_id"] = doc.pop("_id")
             system = SystemDBUtils.system_from_dict(
                 doc, include_metric_stats=include_metric_stats
             )
@@ -221,7 +193,6 @@ class SystemDBUtils:
         sort: list | None = None,
         creator: str | None = None,
         shared_users: list[str] | None = None,
-        include_datasets: bool = True,
         include_metric_stats: bool = False,
         dataset_list: list[tuple[str, str, str]] | None = None,
     ) -> SystemsReturn:
@@ -266,7 +237,6 @@ class SystemDBUtils:
             page,
             page_size,
             sort,
-            include_datasets,
             include_metric_stats,
         )
 
