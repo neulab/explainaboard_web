@@ -334,7 +334,7 @@ def system_outputs_get_by_id(
     system = SystemDBUtils.find_system_by_id(system_id)
     if not _has_read_access(system):
         abort_with_error_message(403, "system access denied", 40302)
-    if is_private_dataset(
+    if system.dataset and is_private_dataset(
         DatalabLoaderOption(
             system.dataset.dataset_name,
             system.dataset.sub_dataset,
@@ -359,7 +359,7 @@ def system_cases_get_by_id(
     system = SystemDBUtils.find_system_by_id(system_id)
     if not _has_read_access(system):
         abort_with_error_message(403, "system access denied", 40302)
-    if is_private_dataset(
+    if system.dataset and is_private_dataset(
         DatalabLoaderOption(
             system.dataset.dataset_name,
             system.dataset.sub_dataset,

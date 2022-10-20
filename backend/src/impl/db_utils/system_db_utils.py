@@ -249,7 +249,7 @@ class SystemDBUtils:
                 dataset_file_type=FileType(custom_dataset.file_type),
                 output_file_type=FileType(system_output.file_type),
             ).load()
-        else:
+        elif system.dataset:
             return (
                 get_loader_class(task=metadata.task)
                 .from_datalab(
@@ -265,6 +265,7 @@ class SystemDBUtils:
                 )
                 .load()
             )
+        raise ValueError("neither dataset or custom_dataset is available")
 
     @staticmethod
     def _process(
