@@ -187,7 +187,7 @@ export function SystemSubmitDrawer(props: Props) {
     return ((await toBase64(file)) as string).split(",")[1];
   }
 
-  async function extractAndEncodeAllFiles(fileValue: DataFileValue) {
+  async function extractAndEncodeFiles(fileValue: DataFileValue) {
     const fileList = unwrap(fileValue.fileList);
     const sysNames = unwrap(fileValue.sysNames);
 
@@ -250,7 +250,7 @@ export function SystemSubmitDrawer(props: Props) {
           `Successfully updated system (${systemToEdit.system_id}).`
         );
       } else {
-        const sysSubmitList = await extractAndEncodeAllFiles(sys_out_file);
+        const sysSubmitList = await extractAndEncodeFiles(sys_out_file);
         const systems: System[] = [];
 
         for (const sysToSubmit of Object.values(sysSubmitList)) {
@@ -287,6 +287,7 @@ export function SystemSubmitDrawer(props: Props) {
                 file_type: unwrap(custom_dataset_file.fileType),
               },
             });
+            systems.push(system);
           } else {
             const { datasetID, split } = dataset;
             system = await backendClient.systemsPost({
@@ -321,9 +322,9 @@ export function SystemSubmitDrawer(props: Props) {
             (system) => system.system_id
           )}).`
         );
-        resetAllFormFields();
-        onClose();
       }
+      resetAllFormFields();
+      onClose();
     } catch (e) {
       if (editMode) {
         ReactGA.event({

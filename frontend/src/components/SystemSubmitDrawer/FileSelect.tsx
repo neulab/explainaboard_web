@@ -81,7 +81,7 @@ export function DataFileUpload({
     <Button icon={<UploadOutlined />}>Select File</Button>
   ) : (
     <Button icon={<PlusOutlined />} block className="add-submission">
-      Add Another File
+      {fileList && fileList.length > 1 ? "Add Another File" : "Add File"}
     </Button>
   );
 
