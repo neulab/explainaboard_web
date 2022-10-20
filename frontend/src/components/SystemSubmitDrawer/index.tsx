@@ -29,6 +29,7 @@ import { DataFileUpload, DataFileValue } from "./FileSelect";
 import ReactGA from "react-ga4";
 import useSearch, { FilterFunc } from "./useSearch";
 import { SystemModel } from "../../models";
+import "./index.css";
 
 const { TextArea } = Input;
 
@@ -37,6 +38,11 @@ interface Props extends DrawerProps {
   onClose: () => void;
   visible: boolean;
 }
+
+type SysToSubmit = {
+  base64: string;
+  sysName: string;
+};
 
 enum State {
   loading,
@@ -181,6 +187,21 @@ export function SystemSubmitDrawer(props: Props) {
     return ((await toBase64(file)) as string).split(",")[1];
   }
 
+  async function extractAndEncodeFiles(fileValue: DataFileValue) {
+    const fileList = unwrap(fileValue.fileList);
+    const sysNames = unwrap(fileValue.sysNames);
+
+    // A list of system name and base 64 string
+    const sysSubmitList: SysToSubmit[] = [];
+    for (const file of fileList) {
+      const fileObj = file.originFileObj;
+      if (fileObj == null) throw new Error("Some file is undefined");
+      const fileBase64 = ((await toBase64(fileObj)) as string).split(",")[1];
+      sysSubmitList.push({ sysName: sysNames[file.uid], base64: fileBase64 });
+    }
+    return sysSubmitList;
+  }
+
   /**
    *
    * TODO:
@@ -203,11 +224,12 @@ export function SystemSubmitDrawer(props: Props) {
   }: FormData) {
     try {
       setState(State.loading);
-      let system: System;
+
       const trimmedUsers =
         shared_users === undefined
           ? undefined
           : shared_users.map((user) => user.trim());
+
       if (editMode) {
         await backendClient.systemsUpdateById(
           {
@@ -228,66 +250,78 @@ export function SystemSubmitDrawer(props: Props) {
           `Successfully updated system (${systemToEdit.system_id}).`
         );
       } else {
-        source_language =
-          source_language === "other"
-            ? "other-" + other_source_language
-            : source_language;
-        target_language =
-          target_language === "other"
-            ? "other-" + other_target_language
-            : target_language;
-        const systemOutBase64 = await extractAndEncodeFile(sys_out_file);
-        if (useCustomDataset) {
-          const customDatasetBase64 = await extractAndEncodeFile(
-            custom_dataset_file
-          );
-          system = await backendClient.systemsPost({
-            metadata: {
-              metric_names,
-              system_name: name,
-              task: task,
-              source_language,
-              target_language,
-              is_private,
-              shared_users: trimmedUsers,
-              system_details: { __TO_PARSE__: system_details },
-            },
-            system_output: {
-              data: systemOutBase64,
-              file_type: unwrap(sys_out_file.fileType),
-            },
-            custom_dataset: {
-              data: customDatasetBase64,
-              file_type: unwrap(custom_dataset_file.fileType),
-            },
-          });
-        } else {
-          const { datasetID, split } = dataset;
-          system = await backendClient.systemsPost({
-            metadata: {
-              dataset_metadata_id: datasetID,
-              dataset_split: split,
-              metric_names,
-              system_name: name,
-              task: task,
-              source_language,
-              target_language,
-              is_private,
-              shared_users: trimmedUsers,
-              system_details: { __TO_PARSE__: system_details },
-            },
-            system_output: {
-              data: systemOutBase64,
-              file_type: unwrap(sys_out_file.fileType),
-            },
-          });
+        const sysSubmitList = await extractAndEncodeFiles(sys_out_file);
+        const systems: System[] = [];
+
+        for (const sysToSubmit of Object.values(sysSubmitList)) {
+          let system;
+          source_language =
+            source_language === "other"
+              ? "other-" + other_source_language
+              : source_language;
+          target_language =
+            target_language === "other"
+              ? "other-" + other_target_language
+              : target_language;
+          if (useCustomDataset) {
+            const customDatasetBase64 = await extractAndEncodeFile(
+              custom_dataset_file
+            );
+            system = await backendClient.systemsPost({
+              metadata: {
+                metric_names,
+                system_name: sysToSubmit.sysName,
+                task: task,
+                source_language,
+                target_language,
+                is_private,
+                shared_users: trimmedUsers,
+                system_details: { __TO_PARSE__: system_details },
+              },
+              system_output: {
+                data: sysToSubmit.base64,
+                file_type: unwrap(sys_out_file.fileType),
+              },
+              custom_dataset: {
+                data: customDatasetBase64,
+                file_type: unwrap(custom_dataset_file.fileType),
+              },
+            });
+            systems.push(system);
+          } else {
+            const { datasetID, split } = dataset;
+            system = await backendClient.systemsPost({
+              metadata: {
+                dataset_metadata_id: datasetID,
+                dataset_split: split,
+                metric_names,
+                system_name: sysToSubmit.sysName,
+                task: task,
+                source_language,
+                target_language,
+                is_private,
+                shared_users: trimmedUsers,
+                system_details: { __TO_PARSE__: system_details },
+              },
+              system_output: {
+                data: sysToSubmit.base64,
+                file_type: unwrap(sys_out_file.fileType),
+              },
+            });
+            systems.push(system);
+          }
         }
+
         ReactGA.event({
           category: "System",
           action: `system_submit_success`,
           label: task,
         });
-        message.success(`Successfully submitted system (${system.system_id}).`);
+        message.success(
+          `Successfully submitted systems (${systems.map(
+            (system) => system.system_id
+          )}).`
+        );
       }
       resetAllFormFields();
       onClose();
@@ -406,7 +440,19 @@ export function SystemSubmitDrawer(props: Props) {
     if (!isRequired) return () => Promise.resolve();
     else
       return (_: unknown, value: DataFileValue) => {
-        if (value && value.fileList && value.fileType) return Promise.resolve();
+        let valid;
+        valid =
+          value &&
+          value.fileList &&
+          value.fileType &&
+          value.fileList.length > 0;
+        if (value.sysNames) {
+          for (const name of Object.values(value.sysNames)) {
+            valid = valid && name;
+          }
+        }
+
+        if (valid) return Promise.resolve();
         else return Promise.reject(`'${fieldName}' and file type are required`);
       };
   }
@@ -466,7 +512,8 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             name="name"
             label="System Name"
-            rules={[{ required: true }]}
+            rules={editMode ? [{ required: true }] : []}
+            hidden={!editMode}
           >
             <Input />
           </Form.Item>
@@ -566,7 +613,10 @@ export function SystemSubmitDrawer(props: Props) {
             }
             hidden={editMode}
           >
-            <DataFileUpload allowedFileTypes={allowedFileType.system_output} />
+            <DataFileUpload
+              allowedFileTypes={allowedFileType.system_output}
+              maxFileCount={10}
+            />
           </Form.Item>
 
           <Form.Item

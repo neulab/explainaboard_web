@@ -1,32 +1,42 @@
 import React, { useCallback, useEffect } from "react";
 import { UploadChangeParam, UploadFile } from "antd/lib/upload/interface";
-import { Button, CheckboxOptionType, Radio, Upload } from "antd";
-import { UploadOutlined } from "@ant-design/icons";
+import { Space, Button, CheckboxOptionType, Radio, Upload, Input } from "antd";
+import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
 
 export interface DataFileValue {
   fileList?: UploadFile[];
+  // A map from uploaded file uid to the system name
+  sysNames?: { [key: string]: string };
   fileType?: string;
 }
 interface Props {
   value?: DataFileValue;
   onChange?: (value: DataFileValue) => void;
+  maxFileCount?: number;
   allowedFileTypes: string[];
 }
 /** DataFileUpload that works with Form.Item */
-export function DataFileUpload({ value, onChange, allowedFileTypes }: Props) {
+export function DataFileUpload({
+  value,
+  onChange,
+  allowedFileTypes,
+  maxFileCount = 1,
+}: Props) {
   const fileList = value?.fileList;
+  const sysNames = value?.sysNames;
   const fileType = value?.fileType;
 
   const triggerChange = useCallback(
     (changedValue: Partial<DataFileValue>) => {
       const newValue = {
         fileList,
+        sysNames,
         fileType,
         ...changedValue,
       };
       if (onChange) onChange(newValue);
     },
-    [fileList, fileType, onChange]
+    [fileList, fileType, sysNames, onChange]
   );
 
   useEffect(() => {
@@ -60,18 +70,23 @@ export function DataFileUpload({ value, onChange, allowedFileTypes }: Props) {
     triggerChange({ fileType: newFileType });
   }
 
+  function onSysNameChange(fileName: string, sysName: string) {
+    const newSysNames = { ...sysNames, [fileName]: sysName };
+    triggerChange({ sysNames: newSysNames });
+  }
+
+  const singleFile = maxFileCount <= 1;
+
+  const uploadBtn = singleFile ? (
+    <Button icon={<UploadOutlined />}>Select File</Button>
+  ) : (
+    <Button icon={<PlusOutlined />} block className="add-submission">
+      {fileList && fileList.length > 1 ? "Add Another File" : "Add File"}
+    </Button>
+  );
+
   return (
-    <div>
-      <Upload
-        maxCount={1}
-        beforeUpload={(file) => {
-          return false;
-        }}
-        fileList={fileList}
-        onChange={onFileChange}
-      >
-        <Button icon={<UploadOutlined />}>Select File</Button>
-      </Upload>
+    <div style={{ display: "flex", flexDirection: "column" }}>
       <Radio.Group
         size="small"
         options={FILE_TYPES.map((type) => ({
@@ -81,6 +96,30 @@ export function DataFileUpload({ value, onChange, allowedFileTypes }: Props) {
         value={fileType}
         onChange={(e) => onFileTypeChange(e.target.value)}
       />
+      <Upload
+        maxCount={maxFileCount}
+        beforeUpload={(file) => {
+          return false;
+        }}
+        fileList={fileList}
+        onChange={onFileChange}
+        className={singleFile ? "" : "file-submissions"}
+        itemRender={(originNode, file) =>
+          singleFile ? (
+            originNode
+          ) : (
+            <Space>
+              <Input
+                addonBefore="System Name"
+                onChange={(e) => onSysNameChange(file.uid, e.target.value)}
+              ></Input>
+              {originNode}
+            </Space>
+          )
+        }
+      >
+        {uploadBtn}
+      </Upload>
     </div>
   );
 }
