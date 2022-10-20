@@ -297,30 +297,21 @@ def systems_post(body: SystemCreateProps) -> System:
     aborts with error if fails
     TODO: error handling
     """
-    if body.metadata.dataset_metadata_id:
-        if not body.metadata.dataset_split:
-            abort_with_error_message(
-                400, "dataset split is required if a dataset is chosen"
-            )
-        if body.custom_dataset:
-            abort_with_error_message(
-                400,
-                "both datalab dataset and custom dataset are "
-                "provided. please only select one.",
-            )
-
     try:
         body.system_output.data = decode_base64(body.system_output.data)
-        if body.custom_dataset and body.custom_dataset.data:
+        if body.custom_dataset:
+            if not body.custom_dataset.data:
+                abort_with_error_message(400, "custom_dataset.data cannot be empty")
             body.custom_dataset.data = decode_base64(body.custom_dataset.data)
-        system = SystemDBUtils.create_system(
-            body.metadata, body.system_output, body.custom_dataset
-        )
-        return system
     except binascii.Error as e:
         abort_with_error_message(
             400, f"file should be sent in plain text base64. ({e})"
         )
+    else:
+        system = SystemDBUtils.create_system(
+            body.metadata, body.system_output, body.custom_dataset
+        )
+        return system
 
 
 def systems_update_by_id(body: SystemUpdateProps, system_id: str):
@@ -345,13 +336,13 @@ def system_outputs_get_by_id(
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(
-            system.system_info.dataset_name,
-            system.system_info.sub_dataset_name,
-            system.system_info.dataset_split,
+            system.dataset.dataset_name,
+            system.dataset.sub_dataset,
+            system.dataset.split,
         )
     ):
         abort_with_error_message(
-            403, f"{system.system_info.dataset_name} is a private dataset", 40301
+            403, f"{system.dataset.dataset_name} is a private dataset", 40301
         )
 
     return SystemDBUtils.find_system_outputs(system_id, output_ids)
@@ -370,13 +361,13 @@ def system_cases_get_by_id(
         abort_with_error_message(403, "system access denied", 40302)
     if is_private_dataset(
         DatalabLoaderOption(
-            system.system_info.dataset_name,
-            system.system_info.sub_dataset_name,
-            system.system_info.dataset_split,
+            system.dataset.dataset_name,
+            system.dataset.sub_dataset,
+            system.dataset.split,
         )
     ):
         abort_with_error_message(
-            403, f"{system.system_info.dataset_name} is a private dataset", 40301
+            403, f"{system.dataset.dataset_name} is a private dataset", 40301
         )
 
     return SystemDBUtils.find_analysis_cases(system_id, level=level, case_ids=case_ids)

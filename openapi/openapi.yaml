@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.7"
+  version: "0.2.8"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -989,19 +989,18 @@ components:
             dataset:
               description: if not specified, it is undefined
               type: object
+              nullable: true
               properties:
                 dataset_id:
                   type: string
+                split:
+                  type: string
                 dataset_name:
                   type: string
-                tasks:
-                  type: array
-                  items:
-                    type: string
                 sub_dataset:
                   type: string
                   nullable: true
-              required: [dataset_id, dataset_name, tasks]
+              required: [dataset_id, dataset_name, split]
             system_details:
               type: object
               description: |
