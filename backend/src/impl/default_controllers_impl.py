@@ -59,7 +59,7 @@ def _is_creator(system: System, user: authUser) -> bool:
 
 def _is_shared_user(system: System, user: authUser) -> bool:
     """check if a user is a shared user of a system"""
-    return system.shared_users and user.id in system.shared_users
+    return system.shared_users and user.email in system.shared_users
 
 
 def _has_write_access(system: System) -> bool:
