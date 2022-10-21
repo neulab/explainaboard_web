@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import traceback
 from datetime import datetime
@@ -518,8 +519,9 @@ class SystemDBUtils:
         sub = sys_doc["creator"]
         user = UserDBUtils.find_user(sub)
         if user is None:
+            logging.getLogger().error(f"system creator ID {sub} not found in DB")
             abort_with_error_message(
-                500, "system creator not found in DB, please contact the system admins"
+                500, "system creator ID not found in DB, please contact the sysadmins"
             )
         sys_doc["preferred_username"] = user.preferred_username
         system = SystemDBUtils.system_from_dict(sys_doc)
@@ -581,7 +583,7 @@ class SystemDBUtils:
             # remove system outputs
             output_collection = DBUtils.get_system_output_collection(system_id)
             filt = {"system_id": system_id}
-            outputs, _ = DBUtils.find(output_collection, filt)
+            outputs, _ = DBUtils.find(output_collection, filt, limit=0)
             data_blob_names = [output["data"] for output in outputs]
             DBUtils.delete_many(output_collection, filt, session=session)
 
