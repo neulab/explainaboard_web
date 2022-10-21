@@ -979,10 +979,9 @@ components:
                   type: number
             creator:
               type: string
-              description: identical to the sub field in Cognito
+              description: the user who created the system
             preferred_username:
               type: string
-              description: identical to the preferred_username field in Cognito
             shared_users:
               type: array
               items:
@@ -1395,15 +1394,12 @@ components:
       type: object
       properties:
         id:
-          description: |
-            identical to the sub in Cognito, which is a unique identifier for
-            the authenticated user.
+          description: a unique identifier for the authenticated user.
           type: string
         email:
           type: string
         api_key:
           type: string
         preferred_username:
-          description: identical to the preferred_username in Cognito.
           type: string
       required: [id, email, api_key, preferred_username]

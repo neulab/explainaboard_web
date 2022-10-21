@@ -20,7 +20,8 @@ from explainaboard.utils.typing_utils import narrow
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
-from explainaboard_web.impl.auth import User, get_user
+from explainaboard_web.impl.auth import User as authUser
+from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -46,16 +47,17 @@ from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
+from explainaboard_web.models.user import User as modelUser
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
 
 
-def _is_creator(system: System, user: User) -> bool:
+def _is_creator(system: System, user: authUser) -> bool:
     """check if a user is the creator of a system"""
     return system.creator == user.id
 
 
-def _is_shared_user(system: System, user: User) -> bool:
+def _is_shared_user(system: System, user: authUser) -> bool:
     """check if a user is a shared user of a system"""
     return system.shared_users and user.id in system.shared_users
 
@@ -98,11 +100,11 @@ def info_get():
 """ /user """
 
 
-def user_get() -> User:
+def user_get() -> modelUser:
     user = get_user()
     if not user:
         abort_with_error_message(401, "login required")
-    return User.from_dict(user.get_user_info())
+    return modelUser.from_dict(user.get_user_info())
 
 
 """ /tasks """

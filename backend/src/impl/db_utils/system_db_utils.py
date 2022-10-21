@@ -167,11 +167,18 @@ class SystemDBUtils:
         )
         documents = list(cursor)
 
+        # query preferred_usernames in batch to make it more efficient
+        # use set to deduplicate ids
+        ids = {doc["creator"] for doc in documents}
+        users = UserDBUtils.find_users(list(ids))
+        id_to_preferred_username = {user.id: user.preferred_username for user in users}
+
         systems: list[System] = []
         if len(documents) == 0:
             return SystemsReturn(systems, 0)
 
         for doc in documents:
+            doc["preferred_username"] = id_to_preferred_username[doc["creator"]]
             system = SystemDBUtils.system_from_dict(
                 doc, include_metric_stats=include_metric_stats
             )

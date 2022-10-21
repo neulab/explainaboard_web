@@ -64,7 +64,7 @@ class User:
         if self._is_authenticated:
             if not self._info:
                 raise ValueError("info is required to create an authenticated user")
-            self._info[self._ID_KEY] = self._info.pop(CognitoClient.SUB_KEY)
+            self._info[self._ID_KEY] = self._info.pop(CognitoClient.ID_KEY)
             self._info[self._USERNAME_KEY] = self._info.pop(CognitoClient.USERNAME_KEY)
             self._info[self._API_KEY_KEY] = self._info.pop(
                 CognitoClient.API_KEY_KEY, None
@@ -74,7 +74,7 @@ class User:
         if not self._info.get(self._API_KEY_KEY) or not self._info.get(
             self._PREFERRED_USERNAME_KEY
         ):
-            user = CognitoClient().fetch_user_info(sub=self.id)
+            user = CognitoClient().fetch_user_info(_id=self.id)
             if not user:
                 raise Exception("user info not found")
             preferred_username = user[CognitoClient.PREFERRED_USERNAME_KEY]
@@ -125,14 +125,15 @@ def get_user() -> User:
 class CognitoClient:
     """
     keys for fields in returned user_info
-    - sub: a unique identifier (UUID) for the authenticated user.
+    - id: a unique identifier (UUID) for the authenticated user.
+    This corresponds to the "sub" field in Cognito
     - username: a fixed value that identifies each user.
-    In our case, it has the same value as sub.
+    In our case, it has the same value as id.
     - custom:api_key: the api key of the user.
     - preferred_username: a user name which users can change.
     """
 
-    SUB_KEY = "sub"
+    ID_KEY = "sub"
     USERNAME_KEY = "cognito:username"
     API_KEY_KEY = "custom:api_key"
     PREFERRED_USERNAME_KEY = "preferred_username"
@@ -145,10 +146,10 @@ class CognitoClient:
         )
         self._user_pool_id = current_app.config.get("USER_POOL_ID")
 
-    def fetch_user_info(self, sub: str | None = None, email: str | None = None):
-        if not sub and not email:
+    def fetch_user_info(self, _id: str | None = None, email: str | None = None):
+        if not _id and not email:
             raise ValueError("no user ID provided")
-        filter = f'sub="{sub}"' if sub else f'email="{email}"'
+        filter = f'{self.ID_KEY}="{_id}"' if _id else f'email="{email}"'
         users = self._client.list_users(
             UserPoolId=self._user_pool_id,
             Filter=filter,
@@ -157,7 +158,7 @@ class CognitoClient:
         if not users:
             return None
         if len(users) > 1:
-            raise RuntimeError("user sub or email is not unique")
+            raise RuntimeError("user id or email is not unique")
         user = {attr["Name"]: attr["Value"] for attr in users[0]["Attributes"]}
         user[self.USERNAME_KEY] = users[0]["Username"]
         if self.API_KEY_KEY not in user:
