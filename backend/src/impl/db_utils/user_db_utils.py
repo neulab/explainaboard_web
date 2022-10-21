@@ -1,4 +1,5 @@
 import dataclasses
+import logging
 from dataclasses import dataclass
 from typing import Optional
 
@@ -56,14 +57,20 @@ class UserDBUtils:
     @staticmethod
     def find_users(ids: list[str]) -> list[UserInDB]:
         filt = {"_id": {"$in": ids}}
-        cursor, _ = DBUtils.find(DBUtils.USER_METADATA, filt=filt)
+        cursor, _ = DBUtils.find(DBUtils.USER_METADATA, filt=filt, limit=0)
 
         users = []
+
         for doc in cursor:
             doc["id"] = doc["_id"]
             users.append(UserInDB.from_dict(doc))
 
         if len(users) < len(ids):
+            found_ids = {x.id for x in users}
+            missing_ids = [id for id in ids if id not in found_ids]
+            logging.getLogger().error(
+                f"system creator ID(s) {missing_ids} not found in DB"
+            )
             abort_with_error_message(
                 500, "system creator not found in DB, please contact the system admins"
             )
