@@ -22,7 +22,7 @@ class DBUtils:
     SYSTEM_OUTPUT_COLLECTION_DB = "system_output_collections_test"
     SYSTEM_OUTPUT_COLLECTION_PREFIX = "system_outputs"
     DEV_SYSTEM_METADATA = DBCollection(
-        db_name="metadata", collection_name="system_metadata_test"
+        db_name="metadata", collection_name="system_metadata_v012"
     )
     USER_METADATA = DBCollection(db_name="metadata", collection_name="user_metadata")
 
