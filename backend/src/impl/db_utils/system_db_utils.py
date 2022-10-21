@@ -14,6 +14,7 @@ from explainaboard.serialization.legacy import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
+from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils
 from explainaboard_web.impl.storage import get_storage
 from explainaboard_web.impl.utils import (
     abort_with_error_message,
@@ -152,9 +153,9 @@ class SystemDBUtils:
 
         permissions_list = [{"is_private": False}]
         if get_user().is_authenticated:
-            email = get_user().email
-            permissions_list.append({"creator": email})
-            permissions_list.append({"shared_users": email})
+            user = get_user()
+            permissions_list.append({"creator": user.id})
+            permissions_list.append({"shared_users": user.email})
         permission_query = {"$or": permissions_list}
 
         if isinstance(query, dict):
@@ -166,11 +167,18 @@ class SystemDBUtils:
         )
         documents = list(cursor)
 
+        # query preferred_usernames in batch to make it more efficient
+        # use set to deduplicate ids
+        ids = {doc["creator"] for doc in documents}
+        users = UserDBUtils.find_users(list(ids))
+        id_to_preferred_username = {user.id: user.preferred_username for user in users}
+
         systems: list[System] = []
         if len(documents) == 0:
             return SystemsReturn(systems, 0)
 
         for doc in documents:
+            doc["preferred_username"] = id_to_preferred_username[doc["creator"]]
             system = SystemDBUtils.system_from_dict(
                 doc, include_metric_stats=include_metric_stats
             )
@@ -349,12 +357,15 @@ class SystemDBUtils:
         # -- parse the system details if getting a string from the frontend
         SystemDBUtils._parse_system_details_in_doc(document, metadata)
 
-        # -- create the object defined in openapi.yaml from only uploaded metadata
-        system: System = SystemDBUtils.system_from_dict(document)
-
         # -- set the creator
         user = get_user()
-        system.creator = user.email
+        document["creator"] = user.id
+
+        # -- set the preferred_username to conform with the return schema
+        document["preferred_username"] = user.preferred_username
+
+        # -- create the object defined in openapi.yaml from only uploaded metadata
+        system: System = SystemDBUtils.system_from_dict(document)
 
         # -- validate the dataset metadata
         if metadata.dataset_metadata_id:
@@ -410,6 +421,7 @@ class SystemDBUtils:
                 system.created_at = system.last_modified = datetime.utcnow()
                 document = general_to_dict(system)
                 document.pop("system_id")
+                document.pop("preferred_username")
                 document["dataset_metadata_id"] = (
                     system.dataset.dataset_id if system.dataset else None
                 )
@@ -502,6 +514,14 @@ class SystemDBUtils:
         sys_doc = DBUtils.find_one_by_id(DBUtils.DEV_SYSTEM_METADATA, system_id)
         if not sys_doc:
             abort_with_error_message(404, f"system id: {system_id} not found")
+
+        sub = sys_doc["creator"]
+        user = UserDBUtils.find_user(sub)
+        if user is None:
+            abort_with_error_message(
+                500, "system creator not found in DB, please contact the system admins"
+            )
+        sys_doc["preferred_username"] = user.preferred_username
         system = SystemDBUtils.system_from_dict(sys_doc)
         return system
 
@@ -550,7 +570,7 @@ class SystemDBUtils:
         def db_operations(session: ClientSession) -> bool:
             """TODO: add logging if error"""
             sys = SystemDBUtils.find_system_by_id(system_id)
-            if sys.creator != user.email:
+            if sys.creator != user.id:
                 abort_with_error_message(403, "you can only delete your own systems")
             result = DBUtils.delete_one_by_id(
                 DBUtils.DEV_SYSTEM_METADATA, system_id, session=session

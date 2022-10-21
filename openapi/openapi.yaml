@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.7"
+  version: "0.2.8"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -322,7 +322,7 @@ paths:
           name: creator
           schema:
             type: string
-            description: email of the creator
+            description: id of the creator
         - in: query
           name: shared_users
           schema:
@@ -979,7 +979,9 @@ components:
                   type: number
             creator:
               type: string
-              description: user email
+              description: the user who created the system
+            preferred_username:
+              type: string
             shared_users:
               type: array
               items:
@@ -1008,6 +1010,8 @@ components:
                 a place to store arbitrary system details you want to remember
           required:
             - system_id
+            - creator
+            - preferred_username
             - system_name
             - is_private
             - source_language
@@ -1386,16 +1390,16 @@ components:
           type: string
       required: [title, url]
 
-
     User:
       type: object
       properties:
+        id:
+          description: a unique identifier for the authenticated user.
+          type: string
         email:
-          type: string
-        preferred_username:
-          type: string
-        username:
           type: string
         api_key:
           type: string
-      required: [email, preferred_username, username, api_key]
+        preferred_username:
+          type: string
+      required: [id, email, api_key, preferred_username]

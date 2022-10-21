@@ -54,14 +54,13 @@ export function SystemsTable() {
 
   // system to be edited
   const [systemIDToEdit, setSystemIDToEdit] = useState<string>("");
-
-  const { state: loginState, userInfo } = useUser();
-
-  const userEmail = userInfo?.email;
   const systemsToEdit = systems.filter(
     (sys) => systemIDToEdit === sys.system_id
   );
   const systemToEdit = systemsToEdit.length < 1 ? undefined : systemsToEdit[0];
+
+  const { state: loginState, userInfo } = useUser();
+  const userId = userInfo?.id;
 
   /** generate metrics options list */
   function getMetricsNames() {
@@ -121,8 +120,9 @@ export function SystemsTable() {
   useEffect(() => {
     async function refreshSystems() {
       setPageState(PageState.loading);
+
       const datasetSplit = filters.split === "all" ? undefined : filters.split;
-      const creator = filters.showMine ? userEmail : undefined;
+      const creator = filters.showMine ? userId : undefined;
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
@@ -155,7 +155,7 @@ export function SystemsTable() {
     page,
     pageSize,
     refreshTrigger,
-    userEmail,
+    userId,
     loginState, // refresh when login state changes
   ]);
 

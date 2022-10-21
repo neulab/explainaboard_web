@@ -12,7 +12,7 @@ export function useGoogleAnalytics() {
       ReactGA.initialize("G-CG1YDJJKV1");
 
       if (userInfo) {
-        ReactGA.set({ userId: userInfo.username });
+        ReactGA.set({ userId: userInfo.id });
       }
 
       ReactGA.send("pageview");
