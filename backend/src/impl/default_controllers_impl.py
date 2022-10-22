@@ -267,7 +267,6 @@ def systems_get(
     creator: str | None,
     shared_users: list[str] | None,
 ) -> SystemsReturn:
-    ids = None
     if not sort_field:
         sort_field = "created_at"
     if not sort_direction:
@@ -282,7 +281,6 @@ def systems_get(
     return SystemDBUtils.find_systems(
         page=page,
         page_size=page_size,
-        ids=ids,
         system_name=system_name,
         task=task,
         dataset_name=dataset,
@@ -397,28 +395,12 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
     system_analyses: list[SingleAnalysis] = []
     system_ids: list = system_ids_str.split(",")
-    system_name = None
-    task = None
-    dataset_name = None
-    subdataset_name = None
-    split = None
-    creator = None
-    shared_users = None
     page = 0
     page_size = len(system_ids)
-    sort = None
     systems: list[System] = SystemDBUtils.find_systems(
         ids=system_ids,
         page=page,
         page_size=page_size,
-        task=task,
-        system_name=system_name,
-        dataset_name=dataset_name,
-        subdataset_name=subdataset_name,
-        split=split,
-        sort=sort,
-        creator=creator,
-        shared_users=shared_users,
         include_metric_stats=True,
     ).systems
     systems_len = len(systems)
