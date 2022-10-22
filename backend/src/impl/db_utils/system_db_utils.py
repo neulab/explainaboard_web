@@ -241,13 +241,18 @@ class SystemDBUtils:
             ]
             search_conditions.append({"$or": dataset_dicts})
 
-        return SystemDBUtils.query_systems(
+        systems_return = SystemDBUtils.query_systems(
             search_conditions,
             page,
             page_size,
             sort,
             include_metric_stats,
         )
+        if ids and not sort:
+            # preserve id order if no `sort` is provided
+            orders = {sys_id: i for i, sys_id in enumerate(ids)}
+            systems_return.systems.sort(key=lambda sys: orders[sys.system_id])
+        return systems_return
 
     @staticmethod
     def _load_sys_output(
