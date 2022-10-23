@@ -4,6 +4,7 @@ PRIVATE_DATASETS = [
     DatalabLoaderOption("fig_qa", None, "test"),
     DatalabLoaderOption("cmu_anlp", "sst", "test"),
     DatalabLoaderOption("cmu_anlp", "cfimdb", "test"),
+    DatalabLoaderOption("cmu_anlp", "sciner", "test"),
     DatalabLoaderOption("fudan_nlp", "movie_review", "test"),
     DatalabLoaderOption("fudan_nlp", "conll2003", "test"),
 ]

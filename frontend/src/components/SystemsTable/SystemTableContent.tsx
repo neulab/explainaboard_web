@@ -150,10 +150,9 @@ export function SystemTableContent({
     },
     ...metricColumns,
     {
-      dataIndex: "creator",
+      dataIndex: "preferred_username",
       title: "Creator",
       align: "center",
-      render: (value) => value.split("@")[0],
       width: 95,
     },
     {
@@ -169,7 +168,7 @@ export function SystemTableContent({
       fixed: "right",
       width: 90,
       render: (_, record) => {
-        const notCreator = record.creator !== userInfo?.email;
+        const notCreator = record.creator !== userInfo?.id;
         return (
           <Space size="small" direction="vertical">
             <Space size="small">

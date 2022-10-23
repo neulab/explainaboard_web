@@ -20,7 +20,8 @@ from explainaboard.utils.typing_utils import narrow
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
-from explainaboard_web.impl.auth import User, get_user
+from explainaboard_web.impl.auth import User as authUser
+from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
@@ -46,16 +47,17 @@ from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
+from explainaboard_web.models.user import User as modelUser
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
 
 
-def _is_creator(system: System, user: User) -> bool:
+def _is_creator(system: System, user: authUser) -> bool:
     """check if a user is the creator of a system"""
-    return system.creator == user.email
+    return system.creator == user.id
 
 
-def _is_shared_user(system: System, user: User) -> bool:
+def _is_shared_user(system: System, user: authUser) -> bool:
     """check if a user is a shared user of a system"""
     return system.shared_users and user.email in system.shared_users
 
@@ -98,11 +100,11 @@ def info_get():
 """ /user """
 
 
-def user_get():
+def user_get() -> modelUser:
     user = get_user()
     if not user:
         abort_with_error_message(401, "login required")
-    return user.get_user_info()
+    return modelUser.from_dict(user.get_user_info())
 
 
 """ /tasks """
@@ -265,7 +267,6 @@ def systems_get(
     creator: str | None,
     shared_users: list[str] | None,
 ) -> SystemsReturn:
-    ids = None
     if not sort_field:
         sort_field = "created_at"
     if not sort_direction:
@@ -280,7 +281,6 @@ def systems_get(
     return SystemDBUtils.find_systems(
         page=page,
         page_size=page_size,
-        ids=ids,
         system_name=system_name,
         task=task,
         dataset_name=dataset,
@@ -386,28 +386,12 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
     system_analyses: list[SingleAnalysis] = []
     system_ids: list = system_ids_str.split(",")
-    system_name = None
-    task = None
-    dataset_name = None
-    subdataset_name = None
-    split = None
-    creator = None
-    shared_users = None
     page = 0
     page_size = len(system_ids)
-    sort = None
     systems: list[System] = SystemDBUtils.find_systems(
         ids=system_ids,
         page=page,
         page_size=page_size,
-        task=task,
-        system_name=system_name,
-        dataset_name=dataset_name,
-        subdataset_name=subdataset_name,
-        split=split,
-        sort=sort,
-        creator=creator,
-        shared_users=shared_users,
         include_metric_stats=True,
     ).systems
     systems_len = len(systems)
