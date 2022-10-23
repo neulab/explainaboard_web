@@ -188,26 +188,31 @@ export function parseFineGrainedResults(
       analysisIdx++
     ) {
       const myResult = singleAnalysis.analysis_results[analysisIdx];
-      const myAnalysis: Analysis = system.system_info.analyses.filter(
+      const analysisFeature =
+        myResult.cls_name === "BucketAnalysisResult"
+          ? myResult.name
+          : myResult.features.sort().join();
+      // Find the analysis setting for the system analysis
+      // Analysis results may not be in the same order or size as analysis settings
+      const myAnalysis: Analysis | undefined = system.system_info.analyses.find(
         (analysis) => {
           if (myResult.cls_name === "BucketAnalysisResult") {
             return (
               analysis.cls_name === "BucketAnalysis" &&
-              analysis.feature === myResult.name
+              analysis.feature === analysisFeature
             );
           } else {
             return (
               analysis.cls_name === "ComboCountAnalysis" &&
-              myResult.features.sort().join() ===
-                analysis.features.sort().join()
+              analysis.features.sort().join() === analysisFeature
             );
           }
         }
-      )[0];
+      );
 
       const analysisName = myResult.name;
-      const analysisDescription = myAnalysis.description;
-      const bucketType = myAnalysis["method"];
+      const analysisDescription = myAnalysis?.description;
+      const bucketType = myAnalysis ? myAnalysis["method"] : "";
 
       if (myResult.cls_name === "BucketAnalysisResult") {
         const metricToParsed = parseBucketAnalysisFeatures(
