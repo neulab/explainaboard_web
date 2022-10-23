@@ -351,6 +351,11 @@ class SystemDBUtils:
 
         def _validate_and_create_system():
             system = {}
+
+            user = get_user()
+            system["creator"] = user.id
+            system["preferred_username"] = user.preferred_username
+
             if metadata.dataset_metadata_id:
                 if not metadata.dataset_split:
                     abort_with_error_message(
@@ -394,13 +399,6 @@ class SystemDBUtils:
             return SystemDBUtils.system_from_dict(system)
 
         system = _validate_and_create_system()
-
-        # -- set the creator
-        user = get_user()
-        system.creator = user.id
-
-        # -- set the preferred_username to conform with the return schema
-        system.preferred_username = user.preferred_username
 
         try:
             # -- find the dataset and grab custom features if they exist
