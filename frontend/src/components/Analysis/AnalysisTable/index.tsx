@@ -1,20 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
-import { message, Table, Tooltip, Typography } from "antd";
+import { Table, Tooltip, Typography } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
-import { backendClient, parseBackendError } from "../../../clients";
 import { PageState } from "../../../utils";
 import {
   taskColumnMapping,
   seqLabTasks,
 } from "../AnalysisTable/taskColumnMapping";
-import { joinResults, addPredictionColInfo, unnestSystemOutput } from "./utils";
+import {
+  joinResults,
+  addPredictionColInfo,
+  unnestSystemOutput,
+  convertCasesToSystemOutput,
+} from "./utils";
 
 interface Props {
   systemIDs: string[];
   systemNames: string[];
   task: string;
-  cases: AnalysisCase[];
+  casesList: AnalysisCase[][];
   changeState: (newState: PageState) => void;
 }
 
@@ -174,9 +178,11 @@ export function AnalysisTable({
   systemIDs,
   systemNames,
   task,
-  cases,
+  casesList,
   changeState,
 }: Props) {
+  // the cases for each system are the same except for predicted_label
+  const cases = casesList[0];
   const [page, setPage] = useState(0);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
@@ -188,62 +194,29 @@ export function AnalysisTable({
   }, [cases]);
 
   useEffect(() => {
-    async function refreshSystemOutputs() {
-      changeState(PageState.loading);
-      try {
-        const offset = page * pageSize;
-        const end = Math.min(offset + pageSize, cases.length);
-        const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
-        let joinedResult: SystemOutput[] = [];
-        const results = [];
-        for (const systemID of systemIDs) {
-          const result = await backendClient.systemOutputsGetById(
-            systemID,
-            outputIDs
-          );
-          results.push(result);
-        }
+    const results = casesList.map((c) => {
+      return convertCasesToSystemOutput(c);
+    });
 
-        // join the results if it is one of the supported tasks and is multi-system
-        const taskCols = taskColumnMapping.get(task);
-        if (results.length > 1 && taskCols !== undefined) {
-          const predCol = taskCols.predictionColumns[0].id;
-          joinedResult = joinResults(results, predCol);
-        } else {
-          joinedResult = results[0];
-        }
-
-        setSystemOutputs(joinedResult);
-      } catch (e) {
-        console.log("error", e);
-        if (e instanceof Response) {
-          const error = await parseBackendError(e);
-          if (error.error_code === 40301) {
-            message.warn(error.getErrorMsg());
-          } else {
-            message.error(error.getErrorMsg());
-          }
-        }
-      } finally {
-        changeState(PageState.success);
-        /*
-        The table after the 1st scroll may be incomplete as the async API call
-        is not finished. If we stop there, the bottom portion of the examples will
-        be concealed. Therefore, we need a 2nd scroll to bring the entire table
-        into view after the API call completes.
-        */
-        tableRef.current?.scrollIntoView();
-      }
+    let joinedResult: SystemOutput[] = [];
+    // join the results if it is one of the supported tasks and is multi-system
+    const taskCols = taskColumnMapping.get(task);
+    if (results.length > 1 && taskCols !== undefined) {
+      const predCol = taskCols.predictionColumns[0].id;
+      joinedResult = joinResults(results, predCol);
+    } else {
+      joinedResult = results[0];
     }
-    refreshSystemOutputs();
+
+    setSystemOutputs(joinedResult);
+    changeState(PageState.success);
     /*
     1st scroll to the table, which is likely still loading and
     incomplete. This is needed so the scroll is immediate and
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [page, pageSize, cases, changeState, systemIDs, task]);
-
+  }, [page, pageSize, casesList, changeState, systemIDs, task]);
   // other fields
   if (systemOutputs.length === 0) {
     return <div>System outputs will display here.</div>;

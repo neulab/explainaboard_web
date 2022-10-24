@@ -1,4 +1,4 @@
-import { SystemOutput } from "../../../clients/openapi";
+import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { taskColumnMapping, ColumnInfo } from "./taskColumnMapping";
 
 export function addPredictionColInfo(
@@ -82,4 +82,33 @@ export function joinResults(
     row[prop] = predictions;
   }
   return joinedResult;
+}
+
+/**
+ * Converts a list of AnalysisCase to a list of SystemOutput by unnesting
+ * the `features` in AnalysisCase and using `id` instead of `sample_id`.
+ */
+export function convertCasesToSystemOutput(
+  cases: AnalysisCase[]
+): SystemOutput[] {
+  const res: SystemOutput[] = [];
+  for (let i = 0; i < cases.length; i++) {
+    const currOutput: SystemOutput = {};
+    const currCase = cases[i];
+    for (const [key, value] of Object.entries(currCase)) {
+      if (typeof value === "object") {
+        for (const [k, v] of Object.entries(value)) {
+          currOutput[k] = v;
+        }
+      } else {
+        if (key === "sample_id") {
+          currOutput["id"] = value;
+        } else {
+          currOutput[key] = value;
+        }
+      }
+    }
+    res.push(currOutput);
+  }
+  return res;
 }
