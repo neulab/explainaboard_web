@@ -181,6 +181,7 @@ export function AnalysisTable({
   const cases = casesList[0];
   const [page, setPage] = useState(0);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
+  const [casesThisPage, setCasesThisPage] = useState<AnalysisCase[]>([]);
   const pageSize = 10;
   const total = cases.length;
   const tableRef = useRef<null | HTMLDivElement>(null);
@@ -195,7 +196,8 @@ export function AnalysisTable({
       try {
         const offset = page * pageSize;
         const end = Math.min(offset + pageSize, cases.length);
-        const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
+        const casesThisPage = cases.slice(offset, end);
+        const outputIDs = casesThisPage.map((x) => x.sample_id);
         let joinedResult: SystemOutput[] = [];
         const results = [];
         for (const systemID of systemIDs) {
@@ -216,6 +218,7 @@ export function AnalysisTable({
         }
 
         setSystemOutputs(joinedResult);
+        setCasesThisPage(casesThisPage);
       } catch (e) {
         console.log("error", e);
         if (e instanceof Response) {
@@ -258,7 +261,7 @@ export function AnalysisTable({
   const numSystems = systemIDs.length;
   const taskCols = taskColumnMapping.get(task);
   if (seqLabTasks.includes(task)) {
-    dataSource = specifyDataSeqLab(systemOutputs, cases, columns);
+    dataSource = specifyDataSeqLab(systemOutputs, casesThisPage, columns);
   } else if (taskCols !== undefined) {
     colInfo = addPredictionColInfo(task, systemNames);
     /* expand columns if it is multi-system analysis */
