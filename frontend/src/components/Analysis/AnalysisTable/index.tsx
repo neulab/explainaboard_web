@@ -14,7 +14,7 @@ interface Props {
   systemIDs: string[];
   systemNames: string[];
   task: string;
-  cases: AnalysisCase[];
+  casesList: AnalysisCase[][];
   changeState: (newState: PageState) => void;
 }
 
@@ -174,9 +174,11 @@ export function AnalysisTable({
   systemIDs,
   systemNames,
   task,
-  cases,
+  casesList,
   changeState,
 }: Props) {
+  // the cases for each system are the same except for predicted_label
+  const cases = casesList[0];
   const [page, setPage] = useState(0);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
   const pageSize = 10;
