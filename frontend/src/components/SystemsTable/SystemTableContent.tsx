@@ -130,12 +130,11 @@ export function SystemTableContent({
         ),
     },
     {
-      dataIndex: ["system_info", "split"],
+      dataIndex: ["dataset", "split"],
       width: 110,
       title: "Dataset Split",
       fixed: "left",
       align: "center",
-      render: (_, record) => record.system_info.dataset_split || "unspecified",
     },
     {
       dataIndex: "source_language",

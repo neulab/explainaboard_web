@@ -90,17 +90,6 @@ class SystemDBUtils:
             document["system_id"] = str(document.pop("_id"))
         if document.get("is_private") is None:
             document["is_private"] = True
-        if document.get("dataset_metadata_id") and document.get("dataset") is None:
-            dataset = DatasetDBUtils.find_dataset_by_id(document["dataset_metadata_id"])
-            if dataset:
-                split = document.get("dataset_split")
-                # this check only valid for create
-                if split and split not in dataset.split:
-                    abort_with_error_message(
-                        400, f"{split} is not a valid split for {dataset.dataset_name}"
-                    )
-                document["dataset"] = dataset.to_dict()
-            document.pop("dataset_metadata_id")
 
         # Parse the shared users
         shared_users = document.get("shared_users", None)
@@ -216,15 +205,15 @@ class SystemDBUtils:
         if task:
             search_conditions.append({"task": task})
         if dataset_name:
-            search_conditions.append({"system_info.dataset_name": dataset_name})
+            search_conditions.append({"dataset.dataset_name": dataset_name})
         if subdataset_name:
-            search_conditions.append({"system_info.sub_dataset_name": subdataset_name})
+            search_conditions.append({"dataset.sub_dataset": subdataset_name})
         if source_language:
             search_conditions.append({"source_language": source_language})
         if target_language:
             search_conditions.append({"target_language": target_language})
         if split:
-            search_conditions.append({"system_info.dataset_split": split})
+            search_conditions.append({"dataset.split": split})
         if creator:
             search_conditions.append({"creator": creator})
         if shared_users:
@@ -233,9 +222,9 @@ class SystemDBUtils:
         if dataset_list:
             dataset_dicts = [
                 {
-                    "system_info.dataset_name": ds[0],
-                    "system_info.sub_dataset_name": ds[1],
-                    "system_info.dataset_split": ds[2],
+                    "dataset.dataset_name": ds[0],
+                    "dataset.sub_dataset": ds[1],
+                    "dataset.split": ds[2],
                 }
                 for ds in dataset_list
             ]
@@ -274,7 +263,7 @@ class SystemDBUtils:
                 dataset_file_type=FileType(custom_dataset.file_type),
                 output_file_type=FileType(system_output.file_type),
             ).load()
-        else:
+        elif system.dataset:
             return (
                 get_loader_class(task=metadata.task)
                 .from_datalab(
@@ -290,6 +279,7 @@ class SystemDBUtils:
                 )
                 .load()
             )
+        raise ValueError("neither dataset or custom_dataset is available")
 
     @staticmethod
     def _process(
@@ -358,33 +348,57 @@ class SystemDBUtils:
         """
         Create a system given metadata and outputs, etc.
         """
-        document = metadata.to_dict()
 
-        # -- parse the system details if getting a string from the frontend
-        SystemDBUtils._parse_system_details_in_doc(document, metadata)
+        def _validate_and_create_system():
+            system = {}
 
-        # -- set the creator
-        user = get_user()
-        document["creator"] = user.id
+            user = get_user()
+            system["creator"] = user.id
+            system["preferred_username"] = user.preferred_username
 
-        # -- set the preferred_username to conform with the return schema
-        document["preferred_username"] = user.preferred_username
-
-        # -- create the object defined in openapi.yaml from only uploaded metadata
-        system: System = SystemDBUtils.system_from_dict(document)
-
-        # -- validate the dataset metadata
-        if metadata.dataset_metadata_id:
-            if not system.dataset:
-                abort_with_error_message(
-                    400, f"dataset: {metadata.dataset_metadata_id} does not exist"
+            if metadata.dataset_metadata_id:
+                if not metadata.dataset_split:
+                    abort_with_error_message(
+                        400, "dataset split is required if a dataset is chosen"
+                    )
+                if custom_dataset:
+                    abort_with_error_message(
+                        400,
+                        "both datalab dataset and custom dataset are "
+                        "provided. please only select one.",
+                    )
+                dataset = DatasetDBUtils.find_dataset_by_id(
+                    metadata.dataset_metadata_id
                 )
-            if metadata.task not in system.dataset.tasks:
-                abort_with_error_message(
-                    400,
-                    f"dataset {system.dataset.dataset_name} cannot be used for "
-                    f"{metadata.task} tasks",
-                )
+                if dataset:
+                    if metadata.dataset_split not in dataset.split:
+                        abort_with_error_message(
+                            400,
+                            f"{metadata.dataset_split} is not a valid split "
+                            f"for {dataset.dataset_name}",
+                        )
+                    if metadata.task not in dataset.tasks:
+                        abort_with_error_message(
+                            400,
+                            f"dataset {dataset.dataset_name} cannot be used for "
+                            f"{metadata.task} tasks",
+                        )
+                    system["dataset"] = {
+                        "dataset_id": dataset.dataset_id,
+                        "split": metadata.dataset_split,
+                        "dataset_name": dataset.dataset_name,
+                        "sub_dataset": dataset.sub_dataset,
+                    }
+                else:
+                    abort_with_error_message(
+                        400, f"dataset: {metadata.dataset_metadata_id} cannot be found"
+                    )
+            system.update(metadata.to_dict())
+            # -- parse the system details if getting a string from the frontend
+            SystemDBUtils._parse_system_details_in_doc(system, metadata)
+            return SystemDBUtils.system_from_dict(system)
+
+        system = _validate_and_create_system()
 
         try:
             # -- find the dataset and grab custom features if they exist
@@ -428,10 +442,6 @@ class SystemDBUtils:
                 document = general_to_dict(system)
                 document.pop("system_id")
                 document.pop("preferred_username")
-                document["dataset_metadata_id"] = (
-                    system.dataset.dataset_id if system.dataset else None
-                )
-                document.pop("dataset")
                 system_id = DBUtils.insert_one(
                     DBUtils.DEV_SYSTEM_METADATA, document, session=session
                 )
