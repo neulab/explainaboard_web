@@ -70,12 +70,15 @@ export function ComboAnalysisChart(props: Props) {
     }
   }
 
-  let entryDataSum = 0;
-  entryData.forEach((entry) => (entryDataSum += entry[2]));
+  const entryDataSum: { [category: number]: number } = {};
+  entryData.forEach((entry) => {
+    const trueLabel = entry[0];
+    entryDataSum[trueLabel] = (entryDataSum[trueLabel] || 0) + entry[2];
+  });
   const entryRatioData = entryData.map((entry) => [
     entry[0],
     entry[1],
-    +(entry[2] / entryDataSum).toFixed(3),
+    +(entry[2] / entryDataSum[entry[0]]).toFixed(3),
   ]);
 
   // Get array min and max

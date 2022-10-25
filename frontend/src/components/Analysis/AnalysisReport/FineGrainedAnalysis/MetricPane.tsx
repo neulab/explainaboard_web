@@ -55,6 +55,10 @@ export function MetricPane(props: Props) {
     return `${metric} by ${featureDescription}`;
   }
 
+  function generateComboAnalysisChartTitle(feature: string): string {
+    return systemAnalysesParsed[feature][0].featureDescription;
+  }
+
   function getColSpan(): 8 | 12 | 24 {
     const maxRightBoundsLength = Math.max(
       ...Object.values(featureNameToBucketInfo).map(
@@ -168,7 +172,7 @@ export function MetricPane(props: Props) {
               if (feature.toLowerCase().startsWith("combo")) {
                 return (
                   <ComboAnalysisChart
-                    title={generateBarChartTitle(feature)}
+                    title={generateComboAnalysisChartTitle(feature)}
                     colSpan={chartColSpan}
                     systems={systems}
                     analyses={systemAnalysesParsed[feature]}
