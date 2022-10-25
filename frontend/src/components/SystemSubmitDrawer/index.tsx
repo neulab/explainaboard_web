@@ -436,24 +436,46 @@ export function SystemSubmitDrawer(props: Props) {
       });
   }
 
-  function getDataFileValidator(isRequired: boolean, fieldName: string) {
+  /**
+   *
+   * @param isRequired If the field is not required, the validator will always pass.
+   * @param fieldName For display purpose only. Will be shown in warnings.
+   * @param singleFile If validating multiple files, will check for each file's name
+   * @returns whether the form is valid nor not
+   */
+  function getDataFileValidator(
+    isRequired: boolean,
+    fieldName: string,
+    singleFile: boolean
+  ) {
     if (!isRequired) return () => Promise.resolve();
     else
       return (_: unknown, value: DataFileValue) => {
-        let valid;
-        valid =
-          value &&
-          value.fileList &&
-          value.fileType &&
-          value.fileList.length > 0;
-        if (value.sysNames) {
-          for (const name of Object.values(value.sysNames)) {
-            valid = valid && name;
+        if (
+          !value ||
+          !value.fileList ||
+          !value.fileType ||
+          value.fileList.length === 0
+        ) {
+          return Promise.reject(`'${fieldName}' and file type are required`);
+        }
+
+        if (!singleFile) {
+          if (!value.sysNames || !value.fileList) {
+            return Promise.reject(
+              `Something went wrong in ${fieldName}, please refresh`
+            );
+          }
+
+          for (const file of value.fileList) {
+            const uid = file.uid;
+            if (!value.sysNames[uid]) {
+              return Promise.reject(`Names in ${fieldName} must not be empty`);
+            }
           }
         }
 
-        if (valid) return Promise.resolve();
-        else return Promise.reject(`'${fieldName}' and file type are required`);
+        return Promise.resolve();
       };
   }
 
@@ -571,7 +593,8 @@ export function SystemSubmitDrawer(props: Props) {
                         {
                           validator: getDataFileValidator(
                             useCustomDataset,
-                            "Custom Dataset"
+                            "Custom Dataset",
+                            true
                           ),
                         },
                       ]
@@ -608,7 +631,13 @@ export function SystemSubmitDrawer(props: Props) {
                 ? []
                 : [
                     { required: true },
-                    { validator: getDataFileValidator(true, "System Output") },
+                    {
+                      validator: getDataFileValidator(
+                        true,
+                        "System Output",
+                        false
+                      ),
+                    },
                   ]
             }
             hidden={editMode}
