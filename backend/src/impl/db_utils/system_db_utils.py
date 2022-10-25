@@ -287,7 +287,7 @@ class SystemDBUtils:
         metadata: SystemMetadata,
         system_output_data: FileLoaderReturn,
         custom_features: dict,
-        custom_analyses: dict,
+        custom_analyses: list,
     ):
         processor = get_processor(metadata.task)
         metrics_lookup = {
@@ -419,7 +419,7 @@ class SystemDBUtils:
             system_custom_features: dict = (
                 system_output_data.metadata.custom_features or {}
             )
-            custom_analyses: dict = system_output_data.metadata.custom_analyses or {}
+            custom_analyses: list = system_output_data.metadata.custom_analyses or []
 
             # -- combine custom features from the two sources
             custom_features = dict(system_custom_features)
