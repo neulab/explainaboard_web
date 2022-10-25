@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.8"
+  version: "0.2.9"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -612,6 +612,7 @@ components:
       properties:
         description:
           type: string
+          nullable: true
         cls_name:
           type: string
       additionalProperties: true
