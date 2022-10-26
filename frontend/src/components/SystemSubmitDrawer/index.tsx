@@ -719,7 +719,7 @@ export function SystemSubmitDrawer(props: Props) {
               )}
             </Col>
           </Row>
-          <Form.Item name="system_tags" label="System Tags">
+          <Form.Item name="system_tags" label="System Tags" hidden={editMode}>
             <SystemTagInput />
           </Form.Item>
 
