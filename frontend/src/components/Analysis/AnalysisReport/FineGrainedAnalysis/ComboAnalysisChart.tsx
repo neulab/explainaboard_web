@@ -70,7 +70,15 @@ export function ComboAnalysisChart(props: Props) {
     }
   }
 
+  // Total samples for each true label
   const entryDataSum: { [category: number]: number } = {};
+
+  /**
+   * `entryData` and `entryRatioData` are arrays of entries (arrays of length 3)
+   * each entry is [<true_label>, <predicted_label>, <value>]
+   * where <value> is sample count (integer) in `entryData`
+   * and ratio (float) in `entryRatioData`, respectively
+   */
   entryData.forEach((entry) => {
     const trueLabel = entry[0];
     entryDataSum[trueLabel] = (entryDataSum[trueLabel] || 0) + entry[2];
