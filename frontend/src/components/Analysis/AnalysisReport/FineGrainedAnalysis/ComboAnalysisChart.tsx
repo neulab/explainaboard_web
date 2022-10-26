@@ -137,12 +137,24 @@ export function ComboAnalysisChart(props: Props) {
       splitArea: {
         show: true,
       },
+      name: analysis.comboFeatures[1],
+      nameLocation: "middle",
+      nameTextStyle: {
+        padding: [1, 0, 0, 0],
+        fontSize: 10,
+        fontWeight: "bold",
+      },
     },
     yAxis: {
       type: "category",
       data: categories,
       splitArea: {
         show: true,
+      },
+      name: analysis.comboFeatures[0],
+      nameTextStyle: {
+        fontWeight: "bold",
+        fontSize: 10,
       },
     },
     visualMap: {

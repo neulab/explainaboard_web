@@ -24,6 +24,8 @@ export interface ResultFineGrainedParsed {
   performances: Performance[];
   // Used by combo count analyses
   comboCounts: ComboCount[];
+  // Combo count analyses features. Used by combo count analyses
+  comboFeatures: string[];
   // levelName: is the level that this result belongs to
   levelName: string;
   // cases[i][j]: is the index of the ith bucket's jth example
