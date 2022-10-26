@@ -1,4 +1,4 @@
-import { Input, InputRef, Tag, Tooltip } from "antd";
+import { Input, InputRef, Space, Tag, Tooltip } from "antd";
 import React, { useEffect, useRef, useState } from "react";
 import { SystemTag } from "../../clients/openapi";
 import { PlusOutlined } from "@ant-design/icons";
@@ -74,7 +74,7 @@ export function SystemTagInput({ value, onChange }: Props) {
   };
 
   return (
-    <>
+    <Space wrap>
       {tags.map((tag, index) => {
         if (editInputIndex === index) {
           return (
@@ -132,6 +132,6 @@ export function SystemTagInput({ value, onChange }: Props) {
           <PlusOutlined /> New Tag
         </Tag>
       )}
-    </>
+    </Space>
   );
 }
