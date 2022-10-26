@@ -19,6 +19,7 @@ import {
   System,
   TaskCategory,
   LanguageCode,
+  SystemTag,
 } from "../../clients/openapi";
 import { backendClient, parseBackendError } from "../../clients";
 import { findTask, toBase64, unwrap } from "../../utils";
@@ -30,6 +31,7 @@ import ReactGA from "react-ga4";
 import useSearch, { FilterFunc } from "./useSearch";
 import { SystemModel } from "../../models";
 import "./index.css";
+import { SystemTagInput } from "./SystemTagInput";
 
 const { TextArea } = Input;
 
@@ -221,6 +223,7 @@ export function SystemSubmitDrawer(props: Props) {
     shared_users,
     is_private,
     system_details,
+    system_tags,
   }: FormData) {
     try {
       setState(State.loading);
@@ -274,6 +277,7 @@ export function SystemSubmitDrawer(props: Props) {
                 task: task,
                 source_language,
                 target_language,
+                system_tags,
                 is_private,
                 shared_users: trimmedUsers,
                 system_details: { __TO_PARSE__: system_details },
@@ -301,6 +305,7 @@ export function SystemSubmitDrawer(props: Props) {
                 target_language,
                 is_private,
                 shared_users: trimmedUsers,
+                system_tags,
                 system_details: { __TO_PARSE__: system_details },
               },
               system_output: {
@@ -714,6 +719,9 @@ export function SystemSubmitDrawer(props: Props) {
               )}
             </Col>
           </Row>
+          <Form.Item name="system_tags" label="System Tags">
+            <SystemTagInput />
+          </Form.Item>
 
           <Form.Item
             name="system_details"
@@ -773,4 +781,5 @@ interface FormData {
   is_private: boolean;
   system_details: string;
   shared_users: string[];
+  system_tags: SystemTag[];
 }

@@ -926,6 +926,14 @@ components:
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
+        system_tags:
+          type: array
+          items:
+            type: object
+          description: |
+            User defined tags for the system,
+            useful for searching and grouping systems
+
       required:
         [
           task,
@@ -1007,6 +1015,13 @@ components:
               type: object
               description: |
                 a place to store arbitrary system details you want to remember
+            system_tags:
+              description: |
+                User defined tags for the system,
+                useful for searching and grouping systems
+              type: array
+              items:
+                $ref: "#/components/schemas/SystemTag"
           required:
             - system_id
             - creator
@@ -1186,6 +1201,13 @@ components:
           items:
             $ref: "#/components/schemas/SignificanceTestInfo"
       required: [system_analyses]
+
+    SystemTag:
+      type: object
+      properties:
+        tag_name:
+          type: string
+      required: [tag_name]
 
     Performance:
       type: object
