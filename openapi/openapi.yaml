@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.8"
+  version: "0.2.9"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -307,10 +307,12 @@ paths:
             default: 20
         - in: query
           name: sort_field
-          description: supports `created_at` (default) and metric names.
+          description: >
+            Supports `created_at` (default) and metric names. Metric names should be
+            provided as {analysis_level}.{metric_name}
           schema:
             type: string
-            example: Accuracy
+            example: example.Accuracy
         - in: query
           name: sort_direction
           schema:
@@ -982,6 +984,13 @@ components:
               description: the user who created the system
             preferred_username:
               type: string
+            results:
+              type: object
+              example: {"span": {"F1": 0.9221}}
+              additionalProperties:
+                type: object
+                additionalProperties:
+                  type: number
             shared_users:
               type: array
               items:
@@ -1016,6 +1025,7 @@ components:
             - source_language
             - target_language
             - task
+            - results
             - system_info
             - metric_stats
         - $ref: "#/components/schemas/Time"

@@ -62,19 +62,26 @@ export function SystemsTable() {
   const { state: loginState, userInfo } = useUser();
   const userId = userInfo?.id;
 
-  /** generate metrics options list */
-  function getMetricsNames() {
+  /** generate metrics options list. Metric names use the pattern
+   *  `${analysisLevel}.{metricName}`. */
+  function getMetricsNames(): string[] {
     const metricNames = new Set<string>();
     for (const sys of systems) {
-      for (const resultsLevel of sys.system_info.results.overall) {
-        resultsLevel.forEach((name) => metricNames.add(name.metric_name));
+      for (const [level, metrics] of Object.entries(sys.results)) {
+        Object.keys(metrics).forEach((name) =>
+          metricNames.add(`${level}.${name}`)
+        );
       }
     }
     // if a task is selected, add all supported metrics to the options list
     if (filters.task) {
       const task = findTask(taskCategories, filters.task);
       if (task)
-        task.supported_metrics.forEach((metric) => metricNames.add(metric));
+        // The backend only returns metric names for the example level so it is
+        // hardcoded here. This should be fixed in the future.
+        task.supported_metrics.forEach((metricName) =>
+          metricNames.add(`example.${metricName}`)
+        );
     }
     return Array.from(metricNames);
   }
@@ -98,8 +105,9 @@ export function SystemsTable() {
     ) {
       if (taskFilter) {
         const initialTask = findTask(taskCategories, taskFilter);
-        if (initialTask && initialTask.supported_metrics.length > 0)
-          return initialTask.supported_metrics[0];
+        if (initialTask && initialTask.supported_metrics.length > 0) {
+          return `example.${initialTask.supported_metrics[0]}`;
+        }
       }
       return "created_at";
     }
