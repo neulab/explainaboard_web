@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.8"
+  version: "0.2.9"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -610,10 +610,11 @@ components:
       description: The specification of an analysis to return
       type: object
       properties:
-        description:
-          type: string
         cls_name:
           type: string
+        description:
+          type: string
+          nullable: true
       additionalProperties: true
       required: [cls_name]
 
