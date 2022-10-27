@@ -93,7 +93,7 @@ export function ExampleTable({
                   systemIDs={systemIDsArray[sysIndex]}
                   systemNames={[system.system_name]}
                   task={task}
-                  cases={cases[sysIndex]}
+                  casesList={[cases[sysIndex]]}
                   changeState={changeState}
                 />
               </Tabs.TabPane>

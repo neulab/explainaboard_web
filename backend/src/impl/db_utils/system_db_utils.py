@@ -287,6 +287,7 @@ class SystemDBUtils:
         metadata: SystemMetadata,
         system_output_data: FileLoaderReturn,
         custom_features: dict,
+        custom_analyses: list,
     ):
         processor = get_processor(metadata.task)
         metrics_lookup = {
@@ -308,6 +309,7 @@ class SystemDBUtils:
             "task_name": metadata.task,
             "metric_configs": metric_configs,
             "custom_features": custom_features,
+            "custom_analyses": custom_analyses,
         }
 
         return processor.get_overall_statistics(
@@ -417,6 +419,7 @@ class SystemDBUtils:
             system_custom_features: dict = (
                 system_output_data.metadata.custom_features or {}
             )
+            custom_analyses: list = system_output_data.metadata.custom_analyses or []
 
             # -- combine custom features from the two sources
             custom_features = dict(system_custom_features)
@@ -424,7 +427,7 @@ class SystemDBUtils:
 
             # -- do the actual analysis and binarize the metric stats
             overall_statistics = SystemDBUtils._process(
-                system, metadata, system_output_data, custom_features
+                system, metadata, system_output_data, custom_features, custom_analyses
             )
             binarized_stats = [
                 [binarize_bson(y.get_data()) for y in x]

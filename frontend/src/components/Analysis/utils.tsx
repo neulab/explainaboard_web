@@ -4,6 +4,7 @@ import {
   SingleAnalysis,
   AnalysisResult,
   Performance,
+  Analysis,
 } from "../../clients/openapi";
 import { SystemModel } from "../../models";
 
@@ -186,12 +187,32 @@ export function parseFineGrainedResults(
       analysisIdx < singleAnalysis.analysis_results.length;
       analysisIdx++
     ) {
-      const myAnalysis = system.system_info.analyses[analysisIdx];
       const myResult = singleAnalysis.analysis_results[analysisIdx];
+      const analysisFeature =
+        myResult.cls_name === "BucketAnalysisResult"
+          ? myResult.name
+          : myResult.features.sort().join();
+      // Find the analysis setting for the system analysis
+      // Analysis results may not be in the same order or size as analysis settings
+      const myAnalysis: Analysis | undefined = system.system_info.analyses.find(
+        (analysis) => {
+          if (myResult.cls_name === "BucketAnalysisResult") {
+            return (
+              analysis.cls_name === "BucketAnalysis" &&
+              analysis.feature === analysisFeature
+            );
+          } else {
+            return (
+              analysis.cls_name === "ComboCountAnalysis" &&
+              analysis.features.sort().join() === analysisFeature
+            );
+          }
+        }
+      );
 
       const analysisName = myResult.name;
-      const analysisDescription = myAnalysis.description;
-      const bucketType = myAnalysis["method"];
+      const analysisDescription = myAnalysis?.description || analysisName;
+      const bucketType = myAnalysis ? myAnalysis["method"] : "";
 
       if (myResult.cls_name === "BucketAnalysisResult") {
         const metricToParsed = parseBucketAnalysisFeatures(
