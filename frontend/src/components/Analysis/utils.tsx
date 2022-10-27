@@ -211,9 +211,7 @@ export function parseFineGrainedResults(
       );
 
       const analysisName = myResult.name;
-      const analysisDescription = myAnalysis?.description
-        ? myAnalysis.description
-        : analysisName;
+      const analysisDescription = myAnalysis?.description || analysisName;
       const bucketType = myAnalysis ? myAnalysis["method"] : "";
 
       if (myResult.cls_name === "BucketAnalysisResult") {
