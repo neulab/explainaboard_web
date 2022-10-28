@@ -111,6 +111,13 @@ def user_get() -> modelUser:
 
 
 def tasks_get() -> list[TaskCategory]:
+    """Returns a list of task categories and metadata for each
+    task.
+    NOTE: supported_metrics only returns metrics for the example
+    level. This is because the SDK does not provide a way to configure
+    the list of metrics for other analysis levels. This should be fixed
+    in the future.
+    """
     _categories = get_task_categories()
     categories: list[TaskCategory] = []
     for _category in _categories:
@@ -267,6 +274,13 @@ def systems_get(
     creator: str | None,
     shared_users: list[str] | None,
 ) -> SystemsReturn:
+    """Returns a systems according to the provided filters
+
+    Args:
+        sort_field: created_at or a field within results. `results` has two levels:
+            analysis level and metric so the field should be provided as a dot separated
+            value (e.g. example.F1)
+    """
     if not sort_field:
         sort_field = "created_at"
     if not sort_direction:
@@ -274,7 +288,7 @@ def systems_get(
     if sort_direction not in ["asc", "desc"]:
         abort_with_error_message(400, "sort_direction needs to be one of asc or desc")
     if sort_field != "created_at":
-        sort_field = f"system_info.results.overall.{sort_field}.value"
+        sort_field = f"results.{sort_field}"
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
