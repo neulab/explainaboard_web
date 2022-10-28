@@ -24,6 +24,7 @@ export function initParsedResult(
   const bucketType = "";
   const performances: ResultFineGrainedParsed["performances"] = [];
   const comboCounts: ResultFineGrainedParsed["comboCounts"] = [];
+  const comboFeatures: ResultFineGrainedParsed["comboFeatures"] = [];
   const cases: ResultFineGrainedParsed["cases"] = [];
   const numbersOfSamples: ResultFineGrainedParsed["numbersOfSamples"] = [];
   return {
@@ -37,6 +38,7 @@ export function initParsedResult(
     numbersOfSamples,
     performances,
     comboCounts,
+    comboFeatures,
     cases,
   };
 }
@@ -62,6 +64,7 @@ export function formatBucketName(unformattedName: Array<number>): string {
 
 export function parseComboCountFeatures(
   comboCounts: AnalysisResult[],
+  features: string[],
   levelName: string,
   analysisName: string,
   featureDescription: string
@@ -80,6 +83,7 @@ export function parseComboCountFeatures(
       samples: countArr[2],
     };
   });
+  parsedResult.comboFeatures = features;
 
   return parsedResult;
 }
@@ -211,7 +215,7 @@ export function parseFineGrainedResults(
       );
 
       const analysisName = myResult.name;
-      const analysisDescription = myAnalysis?.description;
+      const analysisDescription = myAnalysis?.description || analysisName;
       const bucketType = myAnalysis ? myAnalysis["method"] : "";
 
       if (myResult.cls_name === "BucketAnalysisResult") {
@@ -235,6 +239,7 @@ export function parseFineGrainedResults(
       } else if (myResult.cls_name === "ComboCountAnalysisResult") {
         const parsedComboAnalysis = parseComboCountFeatures(
           myResult["combo_counts"],
+          myResult.features,
           myResult.level,
           analysisName,
           analysisDescription

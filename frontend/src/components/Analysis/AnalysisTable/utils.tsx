@@ -1,4 +1,4 @@
-import { SystemOutput } from "../../../clients/openapi";
+import { AnalysisCase } from "../../../clients/openapi";
 import { taskColumnMapping, ColumnInfo } from "./taskColumnMapping";
 
 export function addPredictionColInfo(
@@ -37,37 +37,67 @@ export function addPredictionColInfo(
   return finalColInfo;
 }
 
-export function unnestSystemOutput(
-  systemOutputs: SystemOutput[],
+export function unnestAnalysisCases(
+  analysisCases: AnalysisCase[],
   targetProp: string
-): SystemOutput[] {
-  return systemOutputs.map(function (systemOutput: SystemOutput) {
-    let processedSystemOutput = { ...systemOutput };
-
-    processedSystemOutput = unnestElement(systemOutput, targetProp);
-    return processedSystemOutput;
+): AnalysisCase[] {
+  return analysisCases.map(function (analysisCase: AnalysisCase) {
+    let processedAnalysisCase = { ...analysisCase };
+    if (Array.isArray(analysisCase[targetProp])) {
+      processedAnalysisCase = unnestArrayElement(analysisCase, targetProp);
+    } else if (typeof analysisCase[targetProp] === "object") {
+      processedAnalysisCase = unnestObjectElement(analysisCase, targetProp);
+    } else {
+      throw new Error(
+        "cannot unnest properties that are not an array or an object"
+      );
+    }
+    return processedAnalysisCase;
   });
 }
 
-function unnestElement(systemOutput: SystemOutput, targetProp: string) {
-  const unnestedObj: SystemOutput = {};
-  Object.keys(systemOutput).forEach((key: string) => {
+/**
+ * Unnests the property (type: object) specified by `targetProp`. The parent property
+ * would be removed, and the children properties would be moved up one layer.
+ */
+function unnestObjectElement(analysisCase: AnalysisCase, targetProp: string) {
+  const unnestedObj: AnalysisCase = {};
+  Object.keys(analysisCase).forEach((key: string) => {
     if (key === targetProp) {
-      systemOutput[key].forEach((value: number, index: string) => {
-        unnestedObj[`${targetProp}.${index}`] = value;
+      Object.entries(analysisCase[key]).forEach((entry) => {
+        const [k, v] = entry;
+        unnestedObj[k] = v;
       });
     } else {
-      unnestedObj[key] = systemOutput[key];
+      unnestedObj[key] = analysisCase[key];
     }
   });
 
   return unnestedObj;
 }
 
+/**
+ * Unnests the property (type: array) specified by `targetProp`. The unnested
+ * keys would be the original property name with the index from its original array.
+ */
+function unnestArrayElement(analysisCase: AnalysisCase, targetProp: string) {
+  const unnestedObj: AnalysisCase = {};
+  Object.keys(analysisCase).forEach((key: string) => {
+    if (key === targetProp) {
+      analysisCase[key].forEach((value: number, index: string) => {
+        unnestedObj[`${targetProp}.${index}`] = value;
+      });
+    } else {
+      unnestedObj[key] = analysisCase[key];
+    }
+  });
+  return unnestedObj;
+}
+
 export function joinResults(
-  results: SystemOutput[][],
+  results: AnalysisCase[][],
   prop: string
-): SystemOutput[] {
+): AnalysisCase[] {
   // start from first result
   const joinedResult = [...results[0]];
   for (let i = 0; i < results[0].length; i++) {

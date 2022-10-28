@@ -6,6 +6,8 @@ import { AnalysisCase } from "../../../clients/openapi";
 import { PageState } from "../../../utils";
 
 import { taskColumnMapping } from "../AnalysisTable/taskColumnMapping";
+import { joinResults, unnestAnalysisCases } from "../AnalysisTable/utils";
+
 interface Props {
   /** title of the table */
   title: string;
@@ -41,6 +43,23 @@ export function ExampleTable({
     () => systems.map((system) => [system.system_id]),
     [systems]
   );
+  const mergedCases = useMemo(() => {
+    // unnest the features in cases
+    const unnestedCases = [];
+    for (let i = 0; i < cases.length; i++) {
+      unnestedCases.push(unnestAnalysisCases(cases[i], "features"));
+    }
+
+    // join the predictions
+    let finalCases;
+    if (unnestedCases.length > 1 && taskColumns !== undefined) {
+      const predCol = taskColumns.predictionColumns[0].id;
+      finalCases = joinResults(unnestedCases, predCol);
+    } else {
+      finalCases = unnestedCases[0];
+    }
+    return finalCases;
+  }, [cases, taskColumns]);
 
   if (systems.length !== cases.length) {
     console.error(
@@ -55,7 +74,7 @@ export function ExampleTable({
         systemIDs={systemIDs}
         systemNames={systemNames}
         task={task}
-        cases={cases[0]}
+        cases={mergedCases}
         changeState={changeState}
       />
     );

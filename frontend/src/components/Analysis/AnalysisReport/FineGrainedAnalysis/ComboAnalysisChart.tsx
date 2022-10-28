@@ -54,8 +54,7 @@ export function ComboAnalysisChart(props: Props) {
   for (const count of counts) {
     // count.bucket is a string array of bucket values
     // e.g., [true, false] (true label, predicted label)
-    const featA: string = count.bucket[0];
-    const featB: string = count.bucket[1];
+    const [featA, featB] = count.bucket;
     // count.count is the number of samples
     const nSamples = count.count;
     entryData.push([
@@ -70,13 +69,28 @@ export function ComboAnalysisChart(props: Props) {
     }
   }
 
-  let entryDataSum = 0;
-  entryData.forEach((entry) => (entryDataSum += entry[2]));
-  const entryRatioData = entryData.map((entry) => [
-    entry[0],
-    entry[1],
-    +(entry[2] / entryDataSum).toFixed(3),
-  ]);
+  // Total samples for each true label
+  const entryDataSum: { [category: number]: number } = {};
+
+  /**
+   * `entryData` and `entryRatioData` are arrays of entries (arrays of length 3)
+   * each entry is [<true_label>, <predicted_label>, <value>]
+   * where <value> is sample count (integer) in `entryData`
+   * and ratio (float) in `entryRatioData`, respectively
+   */
+  entryData.forEach((entry) => {
+    const [trueLabel, , count] = entry;
+    entryDataSum[trueLabel] = (entryDataSum[trueLabel] || 0) + count;
+  });
+  const entryRatioData = entryData.map((entry) => {
+    const [trueLabel, predictedLabel, count] = entry;
+
+    return [
+      trueLabel,
+      predictedLabel,
+      +(count / entryDataSum[trueLabel]).toFixed(3),
+    ];
+  });
 
   // Get array min and max
   let min = Infinity;
@@ -85,8 +99,8 @@ export function ComboAnalysisChart(props: Props) {
   let maxRatio = 0;
 
   for (let i = 0; i < entryData.length; i++) {
-    const nSamples = entryData[i][2];
-    const ratio = entryRatioData[i][2];
+    const [, , nSamples] = entryData[i];
+    const [, , ratio] = entryRatioData[i];
     min = Math.min(min, nSamples);
     max = Math.max(max, nSamples);
     minRatio = Math.min(minRatio, ratio);
@@ -123,12 +137,24 @@ export function ComboAnalysisChart(props: Props) {
       splitArea: {
         show: true,
       },
+      name: analysis.comboFeatures[1],
+      nameLocation: "middle",
+      nameTextStyle: {
+        padding: [1, 0, 0, 0],
+        fontSize: 10,
+        fontWeight: "bold",
+      },
     },
     yAxis: {
       type: "category",
       data: categories,
       splitArea: {
         show: true,
+      },
+      name: analysis.comboFeatures[0],
+      nameTextStyle: {
+        fontWeight: "bold",
+        fontSize: 10,
       },
     },
     visualMap: {

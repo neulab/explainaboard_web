@@ -15,7 +15,6 @@ import { SystemModel } from "../../models";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { PrivateIcon, useUser } from "..";
 import { generateLeaderboardURL } from "../../utils";
-import { getOverallMap } from "../Analysis/utils";
 const { Text } = Typography;
 
 interface Props {
@@ -48,11 +47,9 @@ export function SystemTableContent({
 }: Props) {
   const { userInfo } = useUser();
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
-    dataIndex: metric,
-    render: (_, record) =>
-      getOverallMap(record.system_info.results.overall)[metric]?.value,
+    dataIndex: ["results", ...metric.split(".")],
     title: metric,
-    width: 100,
+    width: 135,
     ellipsis: true,
     align: "center",
   }));

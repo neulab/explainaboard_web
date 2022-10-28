@@ -8,7 +8,7 @@ import {
   taskColumnMapping,
   seqLabTasks,
 } from "../AnalysisTable/taskColumnMapping";
-import { joinResults, addPredictionColInfo, unnestSystemOutput } from "./utils";
+import { addPredictionColInfo, unnestAnalysisCases } from "./utils";
 
 interface Props {
   systemIDs: string[];
@@ -81,37 +81,37 @@ function createSentenceForSeqLab(
 }
 
 function specifyDataGeneric(
-  systemOutputs: SystemOutput[],
+  cases: AnalysisCase[],
   columns: ColumnsType<SystemOutput>,
   colInfo: { [key: string]: string }[] | undefined = undefined
 ): { [key: string]: string }[] {
-  const systemOutputFirst = systemOutputs[0];
+  const casesFirst = cases[0];
 
   colInfo =
     colInfo !== undefined
       ? colInfo
-      : Object.keys(systemOutputFirst).map((x) => {
+      : Object.keys(casesFirst).map((x) => {
           return { id: x, name: x };
         });
   renderColInfo(columns, colInfo);
 
   // clone the system output for modification
-  return systemOutputs.map(function (systemOutput) {
-    const processedSystemOutput = { ...systemOutput };
-    for (const [key, output] of Object.entries(systemOutput)) {
+  return cases.map(function (cas) {
+    const processedCases = { ...cas };
+    for (const [key, output] of Object.entries(cas)) {
       /*Task like QA have object output besides string and number.
         For now we serialize the object to a displayable string.
         TODO: unnest or use a nested table
       */
       if (typeof output === "object") {
-        processedSystemOutput[key] = Object.entries(output)
+        processedCases[key] = Object.entries(output)
           .map(([subKey, subOutput]) => {
             return `${subKey}: ${subOutput}`;
           })
           .join("\n");
       }
     }
-    return processedSystemOutput;
+    return processedCases;
   });
 }
 
@@ -133,7 +133,7 @@ function specifyDataSeqLab(
 
     renderColInfo(columns, colInfo);
 
-    for (let i = 0; i < systemOutputs.length; i++) {
+    for (let i = 0; i < cases.length; i++) {
       // Get the outputs from the bucket case
       const sentence = createSentenceForSeqLab(systemOutputs[i], cases[i]);
       const pos = cases[i]["token_span"];
@@ -155,9 +155,9 @@ function specifyDataSeqLab(
 
     renderColInfo(columns, colInfo);
 
-    for (let i = 0; i < systemOutputs.length; i++) {
+    for (let i = 0; i < cases.length; i++) {
       // Get the outputs from the bucket case
-      const origToks = systemOutputs[i]["tokens"];
+      const origToks = cases[i]["tokens"];
       const sentence = Array.isArray(origToks) ? origToks.join(" ") : origToks;
       const dataRow = {
         sentence: sentence,
@@ -179,6 +179,7 @@ export function AnalysisTable({
 }: Props) {
   const [page, setPage] = useState(0);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
+  const [casesThisPage, setCasesThisPage] = useState<AnalysisCase[]>([]);
   const pageSize = 10;
   const total = cases.length;
   const tableRef = useRef<null | HTMLDivElement>(null);
@@ -193,27 +194,16 @@ export function AnalysisTable({
       try {
         const offset = page * pageSize;
         const end = Math.min(offset + pageSize, cases.length);
-        const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
-        let joinedResult: SystemOutput[] = [];
-        const results = [];
-        for (const systemID of systemIDs) {
-          const result = await backendClient.systemOutputsGetById(
-            systemID,
-            outputIDs
-          );
-          results.push(result);
-        }
+        const casesThisPage = cases.slice(offset, end);
+        const outputIDs = casesThisPage.map((x) => x.sample_id);
 
-        // join the results if it is one of the supported tasks and is multi-system
-        const taskCols = taskColumnMapping.get(task);
-        if (results.length > 1 && taskCols !== undefined) {
-          const predCol = taskCols.predictionColumns[0].id;
-          joinedResult = joinResults(results, predCol);
-        } else {
-          joinedResult = results[0];
-        }
+        const result = await backendClient.systemOutputsGetById(
+          systemIDs[0],
+          outputIDs
+        );
 
-        setSystemOutputs(joinedResult);
+        setCasesThisPage(casesThisPage);
+        setSystemOutputs(result);
       } catch (e) {
         console.log("error", e);
         if (e instanceof Response) {
@@ -245,32 +235,40 @@ export function AnalysisTable({
   }, [page, pageSize, cases, changeState, systemIDs, task]);
 
   // other fields
-  if (systemOutputs.length === 0) {
+  if (casesThisPage.length === 0) {
     return <div>System outputs will display here.</div>;
   }
 
   const columns: ColumnsType<SystemOutput> = [];
-
   let dataSource: { [p: string]: string }[];
   let colInfo;
   const numSystems = systemIDs.length;
   const taskCols = taskColumnMapping.get(task);
   if (seqLabTasks.includes(task)) {
-    dataSource = specifyDataSeqLab(systemOutputs, cases, columns);
+    dataSource = specifyDataSeqLab(systemOutputs, casesThisPage, columns);
   } else if (taskCols !== undefined) {
     colInfo = addPredictionColInfo(task, systemNames);
     /* expand columns if it is multi-system analysis */
     if (numSystems > 1) {
       dataSource = specifyDataGeneric(
-        unnestSystemOutput(systemOutputs, taskCols.predictionColumns[0].id),
+        unnestAnalysisCases(casesThisPage, taskCols.predictionColumns[0].id),
         columns,
         colInfo
       );
     } else {
-      dataSource = specifyDataGeneric(systemOutputs, columns, colInfo);
+      dataSource = specifyDataGeneric(casesThisPage, columns, colInfo);
     }
   } else {
-    dataSource = specifyDataGeneric(systemOutputs, columns);
+    dataSource = specifyDataGeneric(casesThisPage, columns);
+  }
+
+  // add id to dataSource
+  for (let i = 0; i < dataSource.length; i++) {
+    for (const [key, value] of Object.entries(dataSource[i])) {
+      if (key === "sample_id") {
+        dataSource[i]["id"] = value;
+      }
+    }
   }
 
   return (
