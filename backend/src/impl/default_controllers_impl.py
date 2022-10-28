@@ -292,7 +292,7 @@ def systems_get(
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
-    return SystemDBUtils.find_systems(
+    systems, total = SystemDBUtils.find_systems(
         page=page,
         page_size=page_size,
         system_name=system_name,
@@ -304,6 +304,7 @@ def systems_get(
         creator=creator,
         shared_users=shared_users,
     )
+    return SystemsReturn(systems, total)
 
 
 def systems_post(body: SystemCreateProps) -> System:
@@ -402,33 +403,29 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     system_ids: list = system_ids_str.split(",")
     page = 0
     page_size = len(system_ids)
-    systems: list[System] = SystemDBUtils.find_systems(
-        ids=system_ids,
-        page=page,
-        page_size=page_size,
-        include_metric_stats=True,
+    systems = SystemDBUtils.find_systems(
+        ids=system_ids, page=page, page_size=page_size
     ).systems
-    systems_len = len(systems)
-    if systems_len == 0:
+    if len(systems) == 0:
         return SystemAnalysesReturn(system_analyses)
 
     # performance significance test if there are two systems
     sig_info = []
     if len(systems) == 2:
 
-        system1_info: SystemInfo = systems[0].system_info
+        system1_info: SystemInfo = systems[0].get_system_info()
         system1_info_dict = general_to_dict(system1_info)
         system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
 
         system1_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[0].metric_stats[0]
+            SimpleMetricStats(stat) for stat in systems[0].get_metric_stats()[0]
         ]
 
-        system2_info: SystemInfo = systems[1].system_info
+        system2_info: SystemInfo = systems[1].get_system_info()
         system2_info_dict = general_to_dict(system2_info)
         system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
         system2_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[1].metric_stats[0]
+            SimpleMetricStats(stat) for stat in systems[1].get_metric_stats()[0]
         ]
 
         sig_info = pairwise_significance_test(
@@ -439,7 +436,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
     for system in systems:
-        system_info: SystemInfo = system.system_info
+        system_info = system.get_system_info()
         system_info_dict = general_to_dict(system_info)
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
@@ -464,12 +461,14 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
         processor = get_processor(TaskType(system_output_info.task_name))
-        metric_stats = [[SimpleMetricStats(y) for y in x] for x in system.metric_stats]
+        metric_stats = [
+            [SimpleMetricStats(y) for y in x] for x in system.get_metric_stats()
+        ]
 
         # Get analysis cases
         analysis_cases = []
         case_ids = None
-        for i, analysis_level in enumerate(system.system_info.analysis_levels):
+        for analysis_level in system.get_system_info().analysis_levels:
             level_cases = SystemDBUtils.find_analysis_cases(
                 system_id=system.system_id,
                 level=analysis_level.name,
@@ -486,7 +485,10 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             metric_stats,
             skip_failed_analyses=True,
         )
-        single_analysis = SingleAnalysis(analysis_results=processor_result)
+        single_analysis = SingleAnalysis(
+            system_info=system_info,
+            analysis_results=processor_result,
+        )
         system_analyses.append(single_analysis)
 
     return SystemAnalysesReturn(system_analyses, sig_info)

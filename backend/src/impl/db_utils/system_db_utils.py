@@ -5,7 +5,7 @@ import logging
 import re
 import traceback
 from datetime import datetime
-from typing import Any
+from typing import Any, NamedTuple
 
 from bson import ObjectId
 from explainaboard import DatalabLoaderOption, FileType, Source, get_processor
@@ -16,28 +16,22 @@ from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils
+from explainaboard_web.impl.internal_models.system_model import SystemModel
 from explainaboard_web.impl.storage import get_storage
-from explainaboard_web.impl.utils import (
-    abort_with_error_message,
-    binarize_bson,
-    unbinarize_bson,
-)
+from explainaboard_web.impl.utils import abort_with_error_message, binarize_bson
 from explainaboard_web.models import (
     AnalysisCase,
     System,
-    SystemInfo,
     SystemMetadata,
     SystemMetadataUpdatable,
     SystemOutput,
     SystemOutputProps,
-    SystemsReturn,
 )
 from pymongo.client_session import ClientSession
 
 
 class SystemDBUtils:
 
-    _EMAIL_RE = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
     _COLON_RE = r"^([A-Za-z0-9_-]+): (.+)$"
     _SYSTEM_OUTPUT_CONST = "__SYSOUT__"
 
@@ -82,64 +76,12 @@ class SystemDBUtils:
             document["system_details"] = parsed
 
     @staticmethod
-    def system_from_dict(
-        dikt: dict[str, Any], include_metric_stats: bool = False
-    ) -> System:
-        document: dict[str, Any] = dikt.copy()
-        if document.get("_id"):
-            document["system_id"] = str(document.pop("_id"))
-        if document.get("is_private") is None:
-            document["is_private"] = True
-
-        # Parse the shared users
-        shared_users = document.get("shared_users", None)
-        if shared_users is None or len(shared_users) == 0:
-            document.pop("shared_users", None)
-        else:
-            for user in shared_users:
-                if not re.fullmatch(SystemDBUtils._EMAIL_RE, user):
-                    abort_with_error_message(
-                        400, f"invalid email address for shared user {user}"
-                    )
-
-        metric_stats = []
-        if "metric_stats" in document:
-            metric_stats = document["metric_stats"]
-            document["metric_stats"] = []
-
-        # FIXME(lyuyang): The following for loop is added to work around an issue
-        # related to default values of models. Previously, the generated models
-        # don't enforce required attributes. This function exploits that loophole.
-        # Now that we have fixed that loophole, this function needs some major
-        # refactoring. None was assigned for these fields before implicitly. Now
-        # we assign them explicitly so this hack does not change the current
-        # behavior.
-        for required_field in (
-            "created_at",
-            "last_modified",
-            "system_id",
-            "system_info",
-            "metric_stats",
-        ):
-            if required_field not in document:
-                document[required_field] = None
-
-        system = System.from_dict(document)
-        if include_metric_stats:
-            # Unbinarize to numpy array and set explicitly
-            system.metric_stats = [
-                [unbinarize_bson(y) for y in x] for x in metric_stats
-            ]
-        return system
-
-    @staticmethod
     def query_systems(
         query: list | dict,
         page: int,
         page_size: int,
         sort: list | None = None,
-        include_metric_stats: bool = False,
-    ):
+    ) -> FindSystemsReturn:
 
         permissions_list = [{"is_private": False}]
         if get_user().is_authenticated:
@@ -163,18 +105,14 @@ class SystemDBUtils:
         users = UserDBUtils.find_users(list(ids))
         id_to_preferred_username = {user.id: user.preferred_username for user in users}
 
-        systems: list[System] = []
-        if len(documents) == 0:
-            return SystemsReturn(systems, 0)
+        systems: list[SystemModel] = []
 
         for doc in documents:
             doc["preferred_username"] = id_to_preferred_username[doc["creator"]]
-            system = SystemDBUtils.system_from_dict(
-                doc, include_metric_stats=include_metric_stats
-            )
+            system = SystemModel.from_dict(doc)
             systems.append(system)
 
-        return SystemsReturn(systems, total)
+        return FindSystemsReturn(systems, total)
 
     @staticmethod
     def find_systems(
@@ -191,9 +129,8 @@ class SystemDBUtils:
         sort: list | None = None,
         creator: str | None = None,
         shared_users: list[str] | None = None,
-        include_metric_stats: bool = False,
         dataset_list: list[tuple[str, str, str]] | None = None,
-    ) -> SystemsReturn:
+    ) -> FindSystemsReturn:
         """find multiple systems that matches the filters"""
 
         search_conditions: list[dict[str, Any]] = []
@@ -230,18 +167,14 @@ class SystemDBUtils:
             ]
             search_conditions.append({"$or": dataset_dicts})
 
-        systems_return = SystemDBUtils.query_systems(
-            search_conditions,
-            page,
-            page_size,
-            sort,
-            include_metric_stats,
+        systems, total = SystemDBUtils.query_systems(
+            search_conditions, page, page_size, sort
         )
         if ids and not sort:
             # preserve id order if no `sort` is provided
             orders = {sys_id: i for i, sys_id in enumerate(ids)}
-            systems_return.systems.sort(key=lambda sys: orders[sys.system_id])
-        return systems_return
+            systems.sort(key=lambda sys: orders[sys.system_id])
+        return FindSystemsReturn(systems, total)
 
     @staticmethod
     def _load_sys_output(
@@ -398,7 +331,7 @@ class SystemDBUtils:
             system.update(metadata.to_dict())
             # -- parse the system details if getting a string from the frontend
             SystemDBUtils._parse_system_details_in_doc(system, metadata)
-            return SystemDBUtils.system_from_dict(system)
+            return SystemModel.from_dict(system)
 
         system = _validate_and_create_system()
 
@@ -429,15 +362,13 @@ class SystemDBUtils:
             overall_statistics = SystemDBUtils._process(
                 system, metadata, system_output_data, custom_features, custom_analyses
             )
-            binarized_stats = [
+            binarized_metric_stats = [
                 [binarize_bson(y.get_data()) for y in x]
                 for x in overall_statistics.metric_stats
             ]
 
             # -- add the analysis results to the system object
             sys_info = overall_statistics.sys_info
-            system.system_info = SystemInfo.from_dict(sys_info.to_dict())
-            system.metric_stats = binarized_stats
 
             if sys_info.analysis_levels and sys_info.results.overall:
                 # store overall metrics in the DB so they can be queried
@@ -456,6 +387,8 @@ class SystemDBUtils:
                 document = general_to_dict(system)
                 document.pop("system_id")
                 document.pop("preferred_username")
+                document["system_info"] = sys_info.to_dict()
+                document["metric_stats"] = binarized_metric_stats
                 system_id = DBUtils.insert_one(
                     DBUtils.DEV_SYSTEM_METADATA, document, session=session
                 )
@@ -508,9 +441,6 @@ class SystemDBUtils:
             system_id = DBUtils.execute_transaction(db_operations)
             system.system_id = system_id
 
-            # -- replace things that can't be returned through JSON for now
-            system.metric_stats = []
-
             # -- return the system
             return system
         except ValueError as e:
@@ -553,7 +483,7 @@ class SystemDBUtils:
                 500, "system creator ID not found in DB, please contact the sysadmins"
             )
         sys_doc["preferred_username"] = user.preferred_username
-        system = SystemDBUtils.system_from_dict(sys_doc)
+        system = SystemModel.from_dict(sys_doc)
         return system
 
     @staticmethod
@@ -623,3 +553,8 @@ class SystemDBUtils:
             return True
 
         return DBUtils.execute_transaction(db_operations)
+
+
+class FindSystemsReturn(NamedTuple):
+    systems: list[SystemModel]
+    total: int

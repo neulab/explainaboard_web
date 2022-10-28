@@ -1,10 +1,12 @@
 import React from "react";
 import { BarChart } from "../..";
+import { SystemAnalysesReturn } from "../../../clients/openapi";
 import { SystemModel } from "../../../models";
 import { getOverallMap, unwrapConfidence } from "../utils";
 import { AnalysisPanel } from "./AnalysisPanel";
 interface Props {
   systems: SystemModel[];
+  systemAnalyses: SystemAnalysesReturn["system_analyses"];
   metricNames: string[];
   onBarClick: (metricName: string) => void;
 }
@@ -13,6 +15,7 @@ interface Props {
  *  metric. */
 export function OverallMetricsBarChart({
   systems,
+  systemAnalyses,
   metricNames,
   onBarClick,
 }: Props) {
@@ -21,8 +24,8 @@ export function OverallMetricsBarChart({
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];
   // The metric names that exist in overall results
-  for (const system of systems) {
-    const overallMap = getOverallMap(system.system_info.results.overall);
+  for (const analysis of systemAnalyses) {
+    const overallMap = getOverallMap(analysis.system_info.results.overall);
     const metricPerformance = [];
     const metricConfidence = [];
     const metricNumberOfSamples = [];

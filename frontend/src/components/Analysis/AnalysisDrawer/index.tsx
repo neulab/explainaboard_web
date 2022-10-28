@@ -67,10 +67,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
         clearTimeout(timeoutID);
         const { system_analyses: systemAnalyses } = newSystemAnalysesReturn;
 
-        const newMetricToAnalyses = parseFineGrainedResults(
-          systems,
-          systemAnalyses
-        );
+        const newMetricToAnalyses = parseFineGrainedResults(systemAnalyses);
 
         const newFeatureNameToBucketInfo: { [key: string]: BucketIntervals } =
           {};
@@ -118,6 +115,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
           const backendError = await parseBackendError(e);
           setErrorMessage(backendError.getErrorMsg());
         }
+        console.error(e);
       }
     }
 
