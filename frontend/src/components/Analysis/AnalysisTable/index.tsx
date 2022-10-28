@@ -217,8 +217,8 @@ export function AnalysisTable({
           joinedResult = results[0];
         }
 
-        setSystemOutputs(joinedResult);
         setCasesThisPage(casesThisPage);
+        setSystemOutputs(joinedResult);
       } catch (e) {
         console.log("error", e);
         if (e instanceof Response) {
