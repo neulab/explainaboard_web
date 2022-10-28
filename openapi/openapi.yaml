@@ -612,10 +612,11 @@ components:
       description: The specification of an analysis to return
       type: object
       properties:
-        description:
-          type: string
         cls_name:
           type: string
+        description:
+          type: string
+          nullable: true
       additionalProperties: true
       required: [cls_name]
 
