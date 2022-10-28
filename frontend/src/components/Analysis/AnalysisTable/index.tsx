@@ -181,7 +181,6 @@ export function AnalysisTable({
   const cases = casesList[0];
   const [page, setPage] = useState(0);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
-  const [casesThisPage, setCasesThisPage] = useState<AnalysisCase[]>([]);
   const pageSize = 10;
   const total = cases.length;
   const tableRef = useRef<null | HTMLDivElement>(null);
@@ -190,14 +189,13 @@ export function AnalysisTable({
     setPage(0);
   }, [cases]);
 
+  const offset = page * pageSize;
+  const end = Math.min(offset + pageSize, cases.length);
   useEffect(() => {
     async function refreshSystemOutputs() {
       changeState(PageState.loading);
       try {
-        const offset = page * pageSize;
-        const end = Math.min(offset + pageSize, cases.length);
-        const casesThisPage = cases.slice(offset, end);
-        const outputIDs = casesThisPage.map((x) => x.sample_id);
+        const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
         let joinedResult: SystemOutput[] = [];
         const results = [];
         for (const systemID of systemIDs) {
@@ -217,7 +215,6 @@ export function AnalysisTable({
           joinedResult = results[0];
         }
 
-        setCasesThisPage(casesThisPage);
         setSystemOutputs(joinedResult);
       } catch (e) {
         console.log("error", e);
@@ -247,7 +244,7 @@ export function AnalysisTable({
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [page, pageSize, cases, changeState, systemIDs, task]);
+  }, [page, pageSize, cases, changeState, systemIDs, task, offset, end]);
 
   // other fields
   if (systemOutputs.length === 0) {
@@ -261,7 +258,11 @@ export function AnalysisTable({
   const numSystems = systemIDs.length;
   const taskCols = taskColumnMapping.get(task);
   if (seqLabTasks.includes(task)) {
-    dataSource = specifyDataSeqLab(systemOutputs, casesThisPage, columns);
+    dataSource = specifyDataSeqLab(
+      systemOutputs,
+      cases.slice(offset, end),
+      columns
+    );
   } else if (taskCols !== undefined) {
     colInfo = addPredictionColInfo(task, systemNames);
     /* expand columns if it is multi-system analysis */
