@@ -202,8 +202,8 @@ export function AnalysisTable({
           outputIDs
         );
 
-        setSystemOutputs(result);
         setCasesThisPage(casesThisPage);
+        setSystemOutputs(result);
       } catch (e) {
         console.log("error", e);
         if (e instanceof Response) {
