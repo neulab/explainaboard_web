@@ -436,25 +436,32 @@ export function SystemSubmitDrawer(props: Props) {
       });
   }
 
-  function getDataFileValidator(isRequired: boolean, fieldName: string) {
-    if (!isRequired) return () => Promise.resolve();
-    else
-      return (_: unknown, value: DataFileValue) => {
-        let valid;
-        valid =
-          value &&
-          value.fileList &&
-          value.fileType &&
-          value.fileList.length > 0;
-        if (value.sysNames) {
-          for (const name of Object.values(value.sysNames)) {
-            valid = valid && name;
-          }
-        }
+  function isDataFileValueValid(value: DataFileValue) {
+    return value && value.fileList && value.fileType;
+  }
 
-        if (valid) return Promise.resolve();
-        else return Promise.reject(`'${fieldName}' and file type are required`);
-      };
+  function getSystemOutputFileValidator() {
+    return (_: unknown, value: DataFileValue) => {
+      if (!isDataFileValueValid(value) || !value.sysNames || !value.fileList) {
+        return Promise.reject("System Output files and file type are required");
+      }
+
+      for (const file of value.fileList) {
+        const uid = file.uid;
+        if (!value.sysNames[uid]) {
+          return Promise.reject(`Names in System Output must not be empty`);
+        }
+      }
+
+      return Promise.resolve();
+    };
+  }
+
+  function getDatasetFileValidator() {
+    return (_: unknown, value: DataFileValue) => {
+      if (isDataFileValueValid(value)) return Promise.resolve();
+      return Promise.reject("Custom Dataset file and file type are required");
+    };
   }
 
   function validateDataset(_: unknown, value: DatasetValue) {
@@ -569,10 +576,7 @@ export function SystemSubmitDrawer(props: Props) {
                     : [
                         { required: true },
                         {
-                          validator: getDataFileValidator(
-                            useCustomDataset,
-                            "Custom Dataset"
-                          ),
+                          validator: getDatasetFileValidator(),
                         },
                       ]
                 }
@@ -608,7 +612,9 @@ export function SystemSubmitDrawer(props: Props) {
                 ? []
                 : [
                     { required: true },
-                    { validator: getDataFileValidator(true, "System Output") },
+                    {
+                      validator: getSystemOutputFileValidator(),
+                    },
                   ]
             }
             hidden={editMode}
