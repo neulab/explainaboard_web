@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.10"
+  version: "0.2.11"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -985,13 +985,22 @@ components:
               description: the user who created the system
             preferred_username:
               type: string
-            results:
+            overall_metrics:
               type: object
-              example: {"span": {"F1": 0.9221}}
+              example: {
+                "span": {
+                  "F1": {
+                    "metric_name": "F1",
+                    "value": 0.76,
+                    "confidence_score_low": 0.75,
+                    "confidence_score_high": 0.77
+                  }
+                }
+              }
               additionalProperties:
                 type: object
                 additionalProperties:
-                  type: number
+                  $ref: "#/components/schemas/Performance"
             shared_users:
               type: array
               items:
@@ -1026,7 +1035,7 @@ components:
             - source_language
             - target_language
             - task
-            - results
+            - overall_metrics
             - system_info
             - metric_stats
         - $ref: "#/components/schemas/Time"

@@ -352,7 +352,7 @@ class SystemDBUtils:
         """
 
         def _validate_and_create_system():
-            system = {"results": {}}
+            system = {"overall_metrics": {}}
 
             user = get_user()
             system["creator"] = user.id
@@ -444,11 +444,11 @@ class SystemDBUtils:
                 for level, result in zip(
                     sys_info.analysis_levels, sys_info.results.overall
                 ):
-                    system.results[level.name] = {}
+                    system.overall_metrics[level.name] = {}
                     for metric_result in result:
-                        system.results[level.name][
+                        system.overall_metrics[level.name][
                             metric_result.metric_name
-                        ] = metric_result.value
+                        ] = metric_result
 
             def db_operations(session: ClientSession) -> str:
                 # Insert system

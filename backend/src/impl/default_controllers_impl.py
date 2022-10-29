@@ -277,9 +277,9 @@ def systems_get(
     """Returns a systems according to the provided filters
 
     Args:
-        sort_field: created_at or a field within results. `results` has two levels:
-            analysis level and metric so the field should be provided as a dot separated
-            value (e.g. example.F1)
+        sort_field: created_at or a field within overall_metrics. `overall_metrics`
+            has two levels: analysis level and metric so the field should be
+            provided as a dot separated value (e.g. example.F1)
     """
     if not sort_field:
         sort_field = "created_at"
@@ -288,7 +288,7 @@ def systems_get(
     if sort_direction not in ["asc", "desc"]:
         abort_with_error_message(400, "sort_direction needs to be one of asc or desc")
     if sort_field != "created_at":
-        sort_field = f"results.{sort_field}"
+        sort_field = f"overall_metrics.{sort_field}.value"
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 

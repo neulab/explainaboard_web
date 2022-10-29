@@ -67,7 +67,7 @@ export function SystemsTable() {
   function getMetricsNames(): string[] {
     const metricNames = new Set<string>();
     for (const sys of systems) {
-      for (const [level, metrics] of Object.entries(sys.results)) {
+      for (const [level, metrics] of Object.entries(sys.overall_metrics)) {
         Object.keys(metrics).forEach((name) =>
           metricNames.add(`${level}.${name}`)
         );

@@ -47,7 +47,7 @@ export function SystemTableContent({
 }: Props) {
   const { userInfo } = useUser();
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
-    dataIndex: ["results", ...metric.split(".")],
+    dataIndex: ["overall_metrics", ...metric.split("."), "value"],
     title: metric,
     width: 135,
     ellipsis: true,
