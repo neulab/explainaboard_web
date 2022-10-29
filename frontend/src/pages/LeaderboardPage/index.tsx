@@ -1,7 +1,6 @@
 import React from "react";
 import "./index.css";
 import { PageHeader } from "antd";
-import { useHistory } from "react-router-dom";
 import { SystemsTable } from "../../components";
 import { LeaderboardHome } from "../LeaderboardHome";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
@@ -14,7 +13,6 @@ import useQuery from "../../components/useQuery";
  */
 export function LeaderboardPage() {
   useGoogleAnalytics();
-  const history = useHistory();
   const query = useQuery();
   const task = query.get("task") || undefined;
   const dataset = query.get("dataset") || undefined;
@@ -42,7 +40,7 @@ export function LeaderboardPage() {
           <title>ExplainaBoard - {title} Leaderboard</title>
         </Helmet>
         <PageHeader
-          onBack={() => history.goBack()}
+          backIcon={false}
           title={title + " Leaderboard"}
           subTitle={`Leaderboard for ${subTitle}`}
         />

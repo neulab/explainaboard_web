@@ -22,7 +22,7 @@ export function BenchmarkCards({ items, subtitle }: Props) {
         <title>ExplainaBoard - Benchmarks</title>
       </Helmet>
       <PageHeader
-        onBack={() => history.goBack()}
+        onBack={() => history.push("/")}
         title="Benchmarks"
         subTitle={subtitle}
       />
