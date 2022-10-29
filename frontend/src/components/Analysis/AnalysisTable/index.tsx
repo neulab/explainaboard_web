@@ -202,7 +202,6 @@ export function AnalysisTable({
         );
 
         setSystemOutputs(result);
-        setCasesThisPage(casesThisPage);
       } catch (e) {
         console.log("error", e);
         if (e instanceof Response) {
