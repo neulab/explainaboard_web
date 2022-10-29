@@ -19,30 +19,36 @@ export function Home() {
         <div className="w-full h-full bg-opacity-60 items-center flex">
           <div className="text-center ml-auto mr-auto">
             <h1 className="text-white text-6xl mb-0">ExplainaBoard</h1>
-            <p className="text-white text-2xl ">Explainable Leaderboards</p>
+            <p className="text-white text-2xl ">
+              Understand and debug the state-of-the-art in NLP.
+            </p>
             <div className="relative flex flex-col min-w-0 break-words bg-white py-3 mx-20 rounded-lg">
               <h2 className="text-3xl">Do you want to?</h2>
               <ul className="text-xl text-left mx-16">
                 <li className="mb-1">
-                  Upload and analyze your own system results on an existing
-                  dataset:
+                  <b>Upload and analyze</b> your own system results on an
+                  existing dataset:
                   <br />
-                  Go to Systems and click New
+                  Use the{" "}
+                  <a href="https://github.com/neulab/explainaboard_client">
+                    ExplainaBoard client
+                  </a>{" "}
+                  or go to Systems and click New
                 </li>
                 <li className="mb-1">
-                  View a list of supported datasets:
+                  View a list of <b>supported datasets</b>:
                   <br />
                   Go to Datasets
                 </li>
 
                 <li className="mb-1">
-                  View well-performing systems on a particular dataset, and
-                  compare/contrast their strengths and weaknesses:
+                  <b>View systems</b> and compare/contrast their strengths and
+                  weaknesses:
                   <br />
                   Go to Systems, select a system or systems and click Analysis
                 </li>
                 <li className="mb-1">
-                  Ask a question, report an issue, or contribute to
+                  <b>Ask a question</b>, report an issue, or contribute to
                   ExplainaBoard:
                   <br />
                   File an issue on the github for the{" "}
