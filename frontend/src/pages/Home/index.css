@@ -42,8 +42,9 @@
   background-position: center;
   background-repeat: no-repeat;
 }
-.background-mask {
-  background-color: rgba(6, 24, 59, 0.567);
+
+.bg-mask {
+  background-color: rgba(4, 25, 67, 0.699);
 }
 
 .h-full {
@@ -100,10 +101,6 @@
 
 .flex {
   display: flex;
-}
-
-.bg-opacity-60 {
-  background-color: rgb(0, 0, 0, 0.6);
 }
 
 .items-center {

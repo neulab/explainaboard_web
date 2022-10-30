@@ -27,7 +27,7 @@ export function Home() {
           className="w-full h-50 bg-center bg-cover mb-4"
           style={{ backgroundImage: `url(${logo})` }}
         >
-          <div className="background-mask flex items-center">
+          <div className="bg-mask h-full flex items-center">
             <div>
               <div className="w-full text-center ml-auto mr-auto mt-3">
                 <h1 className="text-6xl header-style">ExplainaBoard</h1>
