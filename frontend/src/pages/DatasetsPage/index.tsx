@@ -10,7 +10,6 @@ import {
   PageState,
 } from "../../utils";
 import { useHistory } from "react-router";
-import { Link } from "react-router-dom";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
 import { Helmet } from "react-helmet";
 import { ModalForImportTip } from "../../components/DatasetComponent";
@@ -76,7 +75,7 @@ export function DatasetsPage() {
           <title>ExplainaBoard - Datasets</title>
         </Helmet>
         <PageHeader
-          onBack={() => history.goBack()}
+          onBack={() => history.push("/")}
           title="Datasets"
           subTitle="A list of all supported datasets"
           className="header"
@@ -167,16 +166,16 @@ const columns: ColumnsType<DatasetMetadata> = [
       return splits.map((split) => {
         return (
           <div key={split}>
-            <Link
-              to={generateLeaderboardURL(
+            <Typography.Link
+              href={generateLeaderboardURL(
                 record.dataset_name,
                 record.sub_dataset,
                 split
               )}
-              component={Typography.Link}
+              target="_blank"
             >
               {split}
-            </Link>
+            </Typography.Link>
           </div>
         );
       });
