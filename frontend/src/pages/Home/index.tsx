@@ -1,69 +1,109 @@
 import React from "react";
 
-import logo from "../../logo-full.png";
 import "./index.css";
+import logo from "../../logo-full-v2.png";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
 import { Helmet } from "react-helmet";
+import { Button, Card, Col, Row } from "antd";
+import { useHistory } from "react-router";
+import {
+  DatabaseOutlined,
+  LineChartOutlined,
+  CodeOutlined,
+  DoubleRightOutlined,
+  DoubleLeftOutlined,
+} from "@ant-design/icons";
 
 export function Home() {
   useGoogleAnalytics();
+  const history = useHistory();
   return (
     <div className="h-full flex items-center">
       <Helmet>
         <title>ExplainaBoard - Explainable Leaderboards</title>
       </Helmet>
-      <div
-        className="w-full h-full bg-center bg-cover"
-        style={{ backgroundImage: `url(${logo})` }}
-      >
-        <div className="w-full h-full bg-opacity-60 items-center flex">
-          <div className="text-center ml-auto mr-auto">
-            <h1 className="text-white text-6xl mb-0">ExplainaBoard</h1>
-            <p className="text-white text-2xl ">
-              Understand and debug the state-of-the-art in NLP.
-            </p>
-            <div className="relative flex flex-col min-w-0 break-words bg-white py-3 mx-20 rounded-lg">
-              <h2 className="text-3xl">Do you want to?</h2>
-              <ul className="text-xl text-left mx-16">
-                <li className="mb-1">
-                  <b>Upload and analyze</b> your own system results on an
-                  existing dataset:
-                  <br />
-                  Use the{" "}
-                  <a href="https://github.com/neulab/explainaboard_client">
-                    ExplainaBoard client
-                  </a>{" "}
-                  or go to Systems and click New
-                </li>
-                <li className="mb-1">
-                  View a list of <b>supported datasets</b>:
-                  <br />
-                  Go to Datasets
-                </li>
-
-                <li className="mb-1">
-                  <b>View systems</b> and compare/contrast their strengths and
-                  weaknesses:
-                  <br />
-                  Go to Systems, select a system or systems and click Analysis
-                </li>
-                <li className="mb-1">
-                  <b>Ask a question</b>, report an issue, or contribute to
-                  ExplainaBoard:
-                  <br />
-                  File an issue on the github for the{" "}
-                  <a href="https://github.com/neulab/explainaboard">
-                    ExplainaBoard backend
-                  </a>
-                  {" or "}
-                  <a href="https://github.com/neulab/explainaboard_web">
-                    web UI
-                  </a>
-                  .
-                </li>
-              </ul>
+      <div className="w-full h-full bg-white">
+        <div
+          className="w-full h-50 bg-center bg-cover mb-4"
+          style={{ backgroundImage: `url(${logo})` }}
+        >
+          <div className="background-mask flex items-center">
+            <div>
+              <div className="w-full text-center ml-auto mr-auto mt-3">
+                <h1 className="text-6xl header-style">ExplainaBoard</h1>
+              </div>
+              <div className="w-80 text-center ml-auto mr-auto mb-3">
+                <p className="text-2xl text-font text-bold text-light">
+                  Want to understand why your machine learning systems are
+                  working or failing?
+                </p>
+                <p className="text-2xl text-font text-bold text-light">
+                  ExplainaBoard can help!
+                </p>
+              </div>
             </div>
           </div>
+        </div>
+        <div className="items-center mb-4">
+          <Row className="flex">
+            <Col offset={1} span={6} className="items-center flex">
+              <Card
+                hoverable
+                className="homepage-card"
+                onClick={() => history.push("/datasets")}
+              >
+                <div className="text-2xl text-font text-center text-bold text-dark mb-2">
+                  <DatabaseOutlined /> Datasets
+                </div>
+                <div className="text-center text-dark ml-auto mr-auto text-font">
+                  Start exploring all the datasets we offer and their
+                  corresponding leaderboards.
+                </div>
+              </Card>
+            </Col>
+            <Col offset={2} span={6}>
+              <Card
+                hoverable
+                className="homepage-card"
+                onClick={() => history.push("/systems")}
+              >
+                <div className="text-2xl text-font text-center text-bold text-dark mb-2">
+                  <LineChartOutlined /> Systems
+                </div>
+                <div className="text-center text-dark ml-auto mr-auto text-font">
+                  Submit your ML systems and ExplainaBoard will do the
+                  evaluation and analysis for you.
+                </div>
+              </Card>
+            </Col>
+            <Col offset={2} span={6}>
+              <Card
+                hoverable
+                className="homepage-card"
+                onClick={() => history.push("/benchmark")}
+              >
+                <div className="text-2xl text-font text-center text-bold text-dark mb-2">
+                  <CodeOutlined /> Benchmarks
+                </div>
+                <div className="text-center text-dark ml-auto mr-auto text-font">
+                  View and compare your systems on multiple datasets and tasks
+                  all at once.
+                </div>
+              </Card>
+            </Col>
+          </Row>
+        </div>
+        <div className="w-full flex items-center">
+          <Button
+            type="primary"
+            size="large"
+            onClick={() => history.push("/systems")}
+          >
+            <div className="text-font text-center text-bold">
+              <DoubleRightOutlined /> Submit your first system!{" "}
+              <DoubleLeftOutlined />
+            </div>
+          </Button>
         </div>
       </div>
     </div>
