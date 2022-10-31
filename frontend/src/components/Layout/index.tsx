@@ -2,6 +2,7 @@ import React, { ReactNode, useState } from "react";
 import { Dropdown, Layout as AntdLayout, Menu, Typography } from "antd";
 import { Route } from "../../routes";
 import "./index.css";
+import logo from "../../logo-simple.png";
 import { useHistory, useLocation } from "react-router";
 import { useEnv } from "..";
 import { UserPanel } from "../UserPanel";
@@ -78,13 +79,19 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
   return (
     <AntdLayout style={{ minHeight: "100vh" }}>
       <AntdLayout.Sider collapsible collapsed={collapsed} onCollapse={toggle}>
-        <div className="logo">ExplainaBoard</div>
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={selectedMenus}
           openKeys={openMenus}
         >
+          <Menu.Item
+            key={"logo"}
+            icon={<img src={logo} alt="" style={{ height: "20px" }} />}
+            onClick={() => history.push("/")}
+          >
+            <div className="site-title">ExplainaBoard</div>
+          </Menu.Item>
           {routes
             .filter(({ hideFromMenu }) => !hideFromMenu)
             .map(({ path, icon, title, subroutes }) => {

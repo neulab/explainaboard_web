@@ -1,9 +1,12 @@
 .logo {
   height: 32px;
   margin: 16px;
-  background: rgba(255, 255, 255, 0.3);
+  color: #fff;
   text-align: center;
   line-height: 32px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
 }
 
 .site-layout .site-layout-header {
@@ -29,4 +32,9 @@
 .header-icon {
   padding-right: 10px;
   font-size: 20px;
+}
+
+.site-title {
+  font-weight: bold;
+  color: #fff;
 }
