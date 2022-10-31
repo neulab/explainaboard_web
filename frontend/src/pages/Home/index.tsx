@@ -3,8 +3,9 @@ import React from "react";
 import "./index.css";
 import logo from "../../logo-full-v2.png";
 import { useGoogleAnalytics } from "../../components/useGoogleAnalytics";
+import { HomepageCard } from "../../components/Home";
 import { Helmet } from "react-helmet";
-import { Button, Card, Col, Row } from "antd";
+import { Button, Col, Row } from "antd";
 import { useHistory } from "react-router";
 import {
   DatabaseOutlined,
@@ -47,49 +48,28 @@ export function Home() {
         <div className="items-center mb-4">
           <Row className="flex">
             <Col offset={1} span={6} className="items-center flex">
-              <Card
-                hoverable
-                className="homepage-card"
+              <HomepageCard
+                title="Datasets"
+                icon={<DatabaseOutlined />}
                 onClick={() => history.push("/datasets")}
-              >
-                <div className="text-2xl text-font text-center text-bold text-dark mb-2">
-                  <DatabaseOutlined /> Datasets
-                </div>
-                <div className="text-center text-dark ml-auto mr-auto text-font">
-                  Start exploring all the datasets we offer and their
-                  corresponding leaderboards.
-                </div>
-              </Card>
+                description="Start exploring all the datasets we offer and their corresponding leaderboards."
+              />
             </Col>
             <Col offset={2} span={6}>
-              <Card
-                hoverable
-                className="homepage-card"
+              <HomepageCard
+                title="Systems"
+                icon={<CodeOutlined />}
                 onClick={() => history.push("/systems")}
-              >
-                <div className="text-2xl text-font text-center text-bold text-dark mb-2">
-                  <LineChartOutlined /> Systems
-                </div>
-                <div className="text-center text-dark ml-auto mr-auto text-font">
-                  Submit your ML systems and ExplainaBoard will do the
-                  evaluation and analysis for you.
-                </div>
-              </Card>
+                description="Submit your ML systems and ExplainaBoard will do the evaluation and analysis for you."
+              />
             </Col>
             <Col offset={2} span={6}>
-              <Card
-                hoverable
-                className="homepage-card"
+              <HomepageCard
+                title="Benchmarks"
+                icon={<LineChartOutlined />}
                 onClick={() => history.push("/benchmark")}
-              >
-                <div className="text-2xl text-font text-center text-bold text-dark mb-2">
-                  <CodeOutlined /> Benchmarks
-                </div>
-                <div className="text-center text-dark ml-auto mr-auto text-font">
-                  View and compare your systems on multiple datasets and tasks
-                  all at once.
-                </div>
-              </Card>
+                description="View and compare your systems on multiple datasets and tasks all at once."
+              />
             </Col>
           </Row>
         </div>
@@ -100,7 +80,7 @@ export function Home() {
             onClick={() => history.push("/systems")}
           >
             <div className="text-font text-center text-bold">
-              <DoubleRightOutlined /> Submit your first system!{" "}
+              <DoubleRightOutlined /> Submit your first system{" "}
               <DoubleLeftOutlined />
             </div>
           </Button>
