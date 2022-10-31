@@ -23,4 +23,10 @@
   line-height: 55px;
   display: flex;
   float: right;
+  justify-content: space-between;
+}
+
+.header-icon {
+  padding-right: 10px;
+  font-size: 20px;
 }
