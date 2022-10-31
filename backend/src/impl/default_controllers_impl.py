@@ -91,7 +91,7 @@ def info_get():
     if not api_version:
         raise RuntimeError("failed to extract API version")
     return {
-        "env": os.getenv("FLASK_ENV"),
+        "env": os.getenv("EB_ENV"),
         "auth_url": current_app.config.get("AUTH_URL"),
         "api_version": api_version,
     }

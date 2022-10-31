@@ -15,10 +15,10 @@ def init(app: Flask) -> Flask:
 
 
 def _init_config(app: Flask):
-    flask_env = os.getenv("FLASK_ENV")
-    if flask_env == "production":
+    env = os.getenv("EB_ENV")
+    if env == "production":
         app.config.from_object(ProductionConfig())
-    elif flask_env == "development":
+    elif env == "development":
         app.config.from_object(LocalDevelopmentConfig())
-    elif flask_env == "staging":
+    elif env == "staging":
         app.config.from_object(StagingConfig())
