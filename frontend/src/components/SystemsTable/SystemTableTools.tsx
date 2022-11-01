@@ -51,9 +51,7 @@ export function SystemTableTools({
   function hasDuplicateSelectedSystemNames(selectedSystems: SystemModel[]) {
     const selectedSystemNames = selectedSystems.map((sys) => sys.system_name);
     const distinctSystemNames = new Set(selectedSystemNames);
-    return distinctSystemNames.size !== selectedSystemNames.length
-      ? true
-      : false;
+    return distinctSystemNames.size !== selectedSystemNames.length;
   }
   const selectedSystems = systems.filter((sys) =>
     selectedSystemIDs.includes(sys.system_id)
@@ -135,8 +133,8 @@ export function SystemTableTools({
         Analysis
       </Button>
     );
-    // Pairwise analysis
-  } else if (selectedSystemIDs.length === 2) {
+    // Pairwise or multiple system analysis
+  } else {
     let disabled = false;
     let warning = false;
     let tooltipMessage = "";
@@ -159,40 +157,9 @@ export function SystemTableTools({
         disabled={disabled}
         onClick={() => onActiveSystemChange(selectedSystemIDs)}
       >
-        Pairwise Analysis
-        {warning && <WarningOutlined />}
-      </Button>
-    );
-    if (tooltipMessage !== "") {
-      analysisButton = (
-        <Tooltip title={tooltipMessage}>{analysisButton}</Tooltip>
-      );
-    }
-    // three or more systems
-  } else if (selectedSystemIDs.length >= 3) {
-    let disabled = false;
-    let warning = false;
-    let tooltipMessage = "";
-    if (selectedSystemDatasetNames.has("unspecified")) {
-      warning = true;
-      tooltipMessage =
-        "Unspecified dataset name detected. Proceed if you are certain the systems use the same dataset.";
-    } else if (selectedSystemDatasetNames.size > 1) {
-      disabled = true;
-      tooltipMessage =
-        "Cannot perform multiple analysis on systems with different dataset names.";
-    }
-    if (duplicateSelectedSystemNames) {
-      disabled = true;
-      tooltipMessage =
-        "Cannot perform multiple system analysis on systems with the same names.";
-    }
-    analysisButton = (
-      <Button
-        disabled={disabled}
-        onClick={() => onActiveSystemChange(selectedSystemIDs)}
-      >
-        Multiple System Analysis
+        {selectedSystemIDs.length === 2
+          ? "Pairwise Analysis"
+          : "Multiple System Analysis"}
         {warning && <WarningOutlined />}
       </Button>
     );
