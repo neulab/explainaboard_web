@@ -30,6 +30,7 @@
     "moment": "^2.29.1",
     "rc-slider": "~10.0.0",
     "react": "^17.0.2",
+    "react-code-blocks": "^0.0.9-0",
     "react-dom": "^17.0.2",
     "react-ga4": "^1.4.1",
     "react-helmet": "^6.1.0",

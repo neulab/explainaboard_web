@@ -30,6 +30,7 @@ import ReactGA from "react-ga4";
 import useSearch, { FilterFunc } from "./useSearch";
 import { SystemModel } from "../../models";
 import "./index.css";
+import ClientCodeDisplay, { CodeGenFields } from "./ClientCodeDisplay";
 
 const { TextArea } = Input;
 
@@ -112,6 +113,25 @@ const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
 };
 
 /**
+ * Parse the form into fields so that client code generator can recognize
+ */
+function parseFormFields(formData: Partial<FormData>): CodeGenFields {
+  let names: string[] = [];
+  if (formData.sys_out_file?.sysNames) {
+    names = Object.values(formData.sys_out_file.sysNames);
+  }
+
+  return {
+    task: formData.task || "",
+    system_names: names,
+    system_output_file_type: formData.sys_out_file?.fileType || "",
+    dataset: formData.dataset?.datasetID || "",
+    split: formData.dataset?.split || "",
+    source_language: formData.source_language || "",
+  };
+}
+
+/**
  * A drawer for system output submission
  * @param props.onClose
  * @param props.visible
@@ -132,6 +152,9 @@ export function SystemSubmitDrawer(props: Props) {
   const [otherTargetLang, setOtherTargetLang] = useState(false);
 
   const [form] = useForm<FormData>();
+  const [codeGenFields, setCodeGenFields] = useState(
+    parseFormFields(form.getFieldsValue())
+  );
   const { systemToEdit, onClose, ...rest } = props;
   const editMode = systemToEdit !== undefined;
 
@@ -411,6 +434,9 @@ export function SystemSubmitDrawer(props: Props) {
         }
       }
     }
+    setCodeGenFields(
+      parseFormFields({ ...changedFields, ...form.getFieldsValue() })
+    );
   }
 
   const footer = (
@@ -418,7 +444,7 @@ export function SystemSubmitDrawer(props: Props) {
       <Button
         type="primary"
         onClick={() => form.submit()}
-        loading={state === State.loading}
+        // loading={state === State.loading}
       >
         Submit
       </Button>
@@ -759,6 +785,7 @@ export function SystemSubmitDrawer(props: Props) {
             <TextArea rows={3} />
           </Form.Item>
         </Form>
+        <ClientCodeDisplay codeGenFields={codeGenFields} />
       </Spin>
     </Drawer>
   );
