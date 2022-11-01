@@ -43,7 +43,6 @@ export function SystemTableTools({
   selectedSystemIDs,
   onActiveSystemChange,
 }: Props) {
-  console.log("selectedSystemIDs", selectedSystemIDs);
   function findSelectedSystemDatasetNames(selectedSystems: SystemModel[]) {
     return new Set<string>(
       selectedSystems.map((sys) => sys.dataset?.dataset_name || "unspecified")
