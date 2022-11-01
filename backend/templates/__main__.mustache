@@ -1,12 +1,26 @@
 import connexion
 from explainaboard_web.impl.init import init
+from explainaboard_web.impl.utils import abort_with_error_message, get_api_version
 from {{packageName}} import encoder
+from flask import request
 
 def create_app():
     app = connexion.App(__name__, specification_dir='./swagger/')
     app.app.json_encoder = encoder.JSONEncoder
     app.add_api('swagger.yaml', arguments={'title': '{{appName}}'},
                     pythonic_params=True, validate_responses=True)
+
+    @app.app.before_request
+    def check_api_version():
+        api_version = get_api_version()
+        header_api_version = request.headers.get("X-API-version", None)
+        if header_api_version is not None and header_api_version != api_version:
+            abort_with_error_message(
+                400,
+                f"Requires explainaboard_api_client=={api_version}, " +
+                f"got {header_api_version} instead. " +
+                "Please upgrade to the required version."
+            )
 
     app.app = init(app.app)
     return app
