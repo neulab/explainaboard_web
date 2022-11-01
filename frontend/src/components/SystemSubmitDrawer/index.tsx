@@ -13,6 +13,7 @@ import {
   Checkbox,
   Row,
   Col,
+  Typography,
 } from "antd";
 import {
   DatasetMetadata,
@@ -625,19 +626,34 @@ export function SystemSubmitDrawer(props: Props) {
             />
           </Form.Item>
 
-          <Form.Item
-            name="metric_names"
-            label="Metrics"
-            rules={editMode ? [] : [{ required: true }]}
-            hidden={editMode}
-          >
-            <Select
-              mode="multiple"
-              options={(selectedTask?.supported_metrics || []).map((opt) => ({
-                value: opt,
-              }))}
-            />
-          </Form.Item>
+          <Row>
+            <Col span={4}>&nbsp;</Col>
+            <Col span={10}>
+              <Form.Item
+                name="metric_names"
+                label="Metrics"
+                rules={editMode ? [] : [{ required: true }]}
+                hidden={editMode}
+              >
+                <Select
+                  mode="multiple"
+                  options={(selectedTask?.supported_metrics || []).map(
+                    (opt) => ({
+                      value: opt,
+                    })
+                  )}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={10}>
+              <Typography.Link
+                href="https://github.com/neulab/ExplainaBoard/docs/supported_metrics.md"
+                style={{ marginLeft: 8 }}
+              >
+                Metric Description
+              </Typography.Link>
+            </Col>
+          </Row>
 
           <Form.Item
             name="is_private"
