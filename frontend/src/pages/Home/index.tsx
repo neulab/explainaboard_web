@@ -73,14 +73,31 @@ export function Home() {
             </Col>
           </Row>
         </div>
-        <div className="w-full flex items-center">
+        <div className="w-full flex items-center mb-1">
           <Button
-            type="primary"
+            type="link"
             size="large"
             onClick={() => history.push("/systems")}
           >
-            <div className="text-font text-center text-bold">
-              <DoubleRightOutlined /> Submit your first system{" "}
+            <div className="text-font text-center text-bold mb-3">
+              <DoubleRightOutlined /> Submit your system online{" "}
+              <DoubleLeftOutlined />
+            </div>
+          </Button>
+        </div>
+        <div className="w-full flex items-center">
+          <Button
+            type="link"
+            size="large"
+            onClick={() =>
+              window.open(
+                "https://github.com/neulab/explainaboard_client",
+                "_blank"
+              )
+            }
+          >
+            <div className="text-font text-center text-bold mb-3">
+              <DoubleRightOutlined /> Submit your system via API{" "}
               <DoubleLeftOutlined />
             </div>
           </Button>

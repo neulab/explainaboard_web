@@ -2,9 +2,11 @@ import React, { ReactNode, useState } from "react";
 import { Layout as AntdLayout, Menu } from "antd";
 import { Route } from "../../routes";
 import "./index.css";
+import logo from "../../logo-simple.png";
 import { useHistory, useLocation } from "react-router";
 import { useEnv } from "..";
 import { UserPanel } from "../UserPanel";
+import { GithubFilled } from "@ant-design/icons";
 
 interface Props {
   routes: Route[];
@@ -44,13 +46,20 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
   return (
     <AntdLayout style={{ minHeight: "100vh" }}>
       <AntdLayout.Sider collapsible collapsed={collapsed} onCollapse={toggle}>
-        <div className="logo">ExplainaBoard</div>
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={selectedMenus}
           openKeys={openMenus}
         >
+          <Menu.Item
+            key={"logo"}
+            icon={<img src={logo} alt="" style={{ height: "20px" }} />}
+            onClick={() => history.push("/")}
+            style={{ height: "44px" }}
+          >
+            <div className="site-title">ExplainaBoard</div>
+          </Menu.Item>
           {routes
             .filter(({ hideFromMenu }) => !hideFromMenu)
             .map(({ path, icon, title, subroutes }) => {
@@ -92,6 +101,18 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
       <AntdLayout className="site-layout">
         <AntdLayout.Header className="site-layout-header">
           <div className="header-items-container">
+            <div className="header-icon">
+              <div>
+                <GithubFilled
+                  onClick={() =>
+                    window.open(
+                      "https://github.com/neulab/ExplainaBoard",
+                      "_blank"
+                    )
+                  }
+                />
+              </div>
+            </div>
             <div style={{ paddingRight: "10px" }}>
               {env === "development" && "(development environment)"}
             </div>
