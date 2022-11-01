@@ -518,274 +518,282 @@ export function SystemSubmitDrawer(props: Props) {
 
   return (
     <Drawer
-      width="60%"
+      width="90%"
       title={editMode ? "Edit System" : "New System"}
       footer={footer}
       onClose={onClose}
       {...rest}
     >
       <Spin spinning={state === State.loading} tip="processing...">
-        <Form
-          labelCol={{ span: 7 }}
-          onFinish={submit}
-          form={form}
-          scrollToFirstError
-          onValuesChange={onValuesChange}
-          initialValues={
-            editMode
-              ? {
-                  name: systemToEdit?.system_name,
-                  // Must be boolean
-                  is_private: systemToEdit?.is_private || false,
-                  shared_users: systemToEdit?.shared_users,
-                }
-              : { is_private: true }
-          }
-        >
-          <Form.Item
-            name="name"
-            label="System Name"
-            rules={editMode ? [{ required: true }] : []}
-            hidden={!editMode}
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            name="task"
-            label="Task"
-            rules={editMode ? [] : [{ required: true }]}
-            help={
-              selectedTask && (
-                <Tooltip
-                  title={
-                    <TextWithLink
-                      text={selectedTask.description}
-                      target="_blank"
-                    />
-                  }
-                  placement="left"
-                  color="white"
-                  overlayInnerStyle={{ color: "black" }}
-                >
-                  <Button type="link" size="small" style={{ padding: 0 }}>
-                    Need help generating system output?
-                  </Button>
-                </Tooltip>
-              )
-            }
-            hidden={editMode}
-          >
-            <TaskSelect taskCategories={taskCategories} />
-          </Form.Item>
-
-          <Form.Item
-            label="Use custom dataset?"
-            tooltip="Custom dataset will not be shown on the leaderboard"
-            hidden={editMode}
-          >
-            <Checkbox
-              checked={useCustomDataset}
-              onChange={(e) => onUseCustomDatasetChange(e.target.checked)}
-              disabled={editMode}
-            />
-          </Form.Item>
-
-          {useCustomDataset ? (
-            <>
+        <Row>
+          <Space align="start">
+            <ClientCodeDisplay codeGenFields={codeGenFields} />
+            <Form
+              labelCol={{ span: 7 }}
+              onFinish={submit}
+              form={form}
+              scrollToFirstError
+              onValuesChange={onValuesChange}
+              initialValues={
+                editMode
+                  ? {
+                      name: systemToEdit?.system_name,
+                      // Must be boolean
+                      is_private: systemToEdit?.is_private || false,
+                      shared_users: systemToEdit?.shared_users,
+                    }
+                  : { is_private: true }
+              }
+            >
               <Form.Item
-                name="custom_dataset_file"
-                label="Custom Dataset"
+                name="name"
+                label="System Name"
+                rules={editMode ? [{ required: true }] : []}
+                hidden={!editMode}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                name="task"
+                label="Task"
+                rules={editMode ? [] : [{ required: true }]}
+                help={
+                  selectedTask && (
+                    <Tooltip
+                      title={
+                        <TextWithLink
+                          text={selectedTask.description}
+                          target="_blank"
+                        />
+                      }
+                      placement="left"
+                      color="white"
+                      overlayInnerStyle={{ color: "black" }}
+                    >
+                      <Button type="link" size="small" style={{ padding: 0 }}>
+                        Need help generating system output?
+                      </Button>
+                    </Tooltip>
+                  )
+                }
+                hidden={editMode}
+              >
+                <TaskSelect taskCategories={taskCategories} />
+              </Form.Item>
+
+              <Form.Item
+                label="Use custom dataset?"
+                tooltip="Custom dataset will not be shown on the leaderboard"
+                hidden={editMode}
+              >
+                <Checkbox
+                  checked={useCustomDataset}
+                  onChange={(e) => onUseCustomDatasetChange(e.target.checked)}
+                  disabled={editMode}
+                />
+              </Form.Item>
+
+              {useCustomDataset ? (
+                <>
+                  <Form.Item
+                    name="custom_dataset_file"
+                    label="Custom Dataset"
+                    rules={
+                      editMode
+                        ? []
+                        : [
+                            { required: true },
+                            {
+                              validator: getDatasetFileValidator(),
+                            },
+                          ]
+                    }
+                    hidden={editMode}
+                  >
+                    <DataFileUpload
+                      allowedFileTypes={allowedFileType.custom_dataset}
+                    />
+                  </Form.Item>
+                </>
+              ) : (
+                <Form.Item
+                  name="dataset"
+                  label="Dataset"
+                  rules={
+                    editMode
+                      ? []
+                      : [{ required: true, validator: validateDataset }]
+                  }
+                  hidden={editMode}
+                >
+                  <DatasetSelect
+                    options={datasetOptions}
+                    disabled={selectedTaskName == null}
+                    onSearchDataset={(query) => searchDatasets(query)}
+                  />
+                </Form.Item>
+              )}
+
+              <Form.Item
+                name="sys_out_file"
+                label="System Output"
                 rules={
                   editMode
                     ? []
                     : [
                         { required: true },
                         {
-                          validator: getDatasetFileValidator(),
+                          validator: getSystemOutputFileValidator(),
                         },
                       ]
                 }
                 hidden={editMode}
               >
                 <DataFileUpload
-                  allowedFileTypes={allowedFileType.custom_dataset}
+                  allowedFileTypes={allowedFileType.system_output}
+                  maxFileCount={10}
                 />
               </Form.Item>
-            </>
-          ) : (
-            <Form.Item
-              name="dataset"
-              label="Dataset"
-              rules={
-                editMode ? [] : [{ required: true, validator: validateDataset }]
-              }
-              hidden={editMode}
-            >
-              <DatasetSelect
-                options={datasetOptions}
-                disabled={selectedTaskName == null}
-                onSearchDataset={(query) => searchDatasets(query)}
-              />
-            </Form.Item>
-          )}
 
-          <Form.Item
-            name="sys_out_file"
-            label="System Output"
-            rules={
-              editMode
-                ? []
-                : [
-                    { required: true },
-                    {
-                      validator: getSystemOutputFileValidator(),
-                    },
-                  ]
-            }
-            hidden={editMode}
-          >
-            <DataFileUpload
-              allowedFileTypes={allowedFileType.system_output}
-              maxFileCount={10}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="metric_names"
-            label="Metrics"
-            rules={editMode ? [] : [{ required: true }]}
-            hidden={editMode}
-          >
-            <Select
-              mode="multiple"
-              options={(selectedTask?.supported_metrics || []).map((opt) => ({
-                value: opt,
-              }))}
-            />
-          </Form.Item>
-
-          <Form.Item
-            name="is_private"
-            label="Make it private?"
-            rules={[{ required: true }]}
-            valuePropName="checked"
-            tooltip="Check this box if you don't want other users to see your system (We will add support to change the visibility of systems in the future)"
-          >
-            <Checkbox />
-          </Form.Item>
-
-          <Form.Item
-            name="shared_users"
-            label="Shared Users"
-            tooltip="Enter the email addresses of the users you'd like to share with, pressing enter after each one."
-            rules={[{ validator: validateSharedUsers }]}
-          >
-            <Select mode="tags" />
-          </Form.Item>
-
-          <Row>
-            <Col span={4}>&nbsp;</Col>
-            <Col span={10}>
               <Form.Item
-                name="source_language"
-                label="Input Language"
-                rules={editMode ? [] : [{ required: true }]}
-                hidden={editMode}
-                tooltip="Choose the input/output languages of the dataset. Select 'Other(other)' if the dataset uses custom languages. Select 'None(none)' if the dataset contains other modalities like images. "
-              >
-                <Select
-                  showSearch
-                  options={inputLangFiltered.map((opt) => ({
-                    label: `${opt.name}(${opt.iso3_code})`,
-                    value: opt.iso3_code,
-                  }))}
-                  placeholder="Search language"
-                  filterOption={() => true}
-                  onSearch={setInputLangQuery}
-                  onChange={onSourceLangChange}
-                />
-              </Form.Item>
-              {otherSourceLang && (
-                <Form.Item
-                  name="other_source_language"
-                  label="Other Language"
-                  rules={[{ required: true }]}
-                >
-                  <Input placeholder="Enter custom language" />
-                </Form.Item>
-              )}
-            </Col>
-            <Col span={10}>
-              <Form.Item
-                name="target_language"
-                label="Output Language"
+                name="metric_names"
+                label="Metrics"
                 rules={editMode ? [] : [{ required: true }]}
                 hidden={editMode}
               >
                 <Select
-                  showSearch
-                  options={outputLangFiltered.map((opt) => ({
-                    label: `${opt.name}(${opt.iso3_code})`,
-                    value: opt.iso3_code,
-                  }))}
-                  placeholder="Search language"
-                  filterOption={() => true}
-                  onSearch={setOutputLangQuery}
-                  onChange={onTargetLangChange}
+                  mode="multiple"
+                  options={(selectedTask?.supported_metrics || []).map(
+                    (opt) => ({
+                      value: opt,
+                    })
+                  )}
                 />
               </Form.Item>
-              {otherTargetLang && (
-                <Form.Item
-                  name="other_target_language"
-                  label="Other Language"
-                  rules={[{ required: true }]}
-                >
-                  <Input placeholder="Enter custom language" />
-                </Form.Item>
-              )}
-            </Col>
-          </Row>
 
-          <Form.Item
-            name="system_details"
-            label="System Details"
-            tooltip={
-              <>
-                <p>
-                  Enter any details you want to record about the system. This
-                  can be done in one of two formats.
-                </p>
-                <p>
-                  <b>- Colon Separated -</b>
-                  <br />
-                  <div style={monospaceStyle}>
-                    url: https://...
-                    <br />
-                    arch: transformer
-                  </div>
-                </p>
-                <p>
-                  <b>- JSON -</b>
-                  <br />
-                  <div style={monospaceStyle}>
-                    &#123;
-                    <br />
-                    &nbsp;&quot;url&quot;: &quot;https://...&quot;,
-                    <br />
-                    &nbsp;&quot;arch&quot;: &quot;transformer&quot;
-                    <br />
-                    &#125;
-                  </div>
-                </p>
-              </>
-            }
-            hidden={editMode}
-          >
-            <TextArea rows={3} />
-          </Form.Item>
-        </Form>
-        <ClientCodeDisplay codeGenFields={codeGenFields} />
+              <Form.Item
+                name="is_private"
+                label="Make it private?"
+                rules={[{ required: true }]}
+                valuePropName="checked"
+                tooltip="Check this box if you don't want other users to see your system (We will add support to change the visibility of systems in the future)"
+              >
+                <Checkbox />
+              </Form.Item>
+
+              <Form.Item
+                name="shared_users"
+                label="Shared Users"
+                tooltip="Enter the email addresses of the users you'd like to share with, pressing enter after each one."
+                rules={[{ validator: validateSharedUsers }]}
+              >
+                <Select mode="tags" />
+              </Form.Item>
+
+              <Row>
+                <Col span={4}>&nbsp;</Col>
+                <Col span={10}>
+                  <Form.Item
+                    name="source_language"
+                    label="Input Language"
+                    rules={editMode ? [] : [{ required: true }]}
+                    hidden={editMode}
+                    tooltip="Choose the input/output languages of the dataset. Select 'Other(other)' if the dataset uses custom languages. Select 'None(none)' if the dataset contains other modalities like images. "
+                  >
+                    <Select
+                      showSearch
+                      options={inputLangFiltered.map((opt) => ({
+                        label: `${opt.name}(${opt.iso3_code})`,
+                        value: opt.iso3_code,
+                      }))}
+                      placeholder="Search language"
+                      filterOption={() => true}
+                      onSearch={setInputLangQuery}
+                      onChange={onSourceLangChange}
+                    />
+                  </Form.Item>
+                  {otherSourceLang && (
+                    <Form.Item
+                      name="other_source_language"
+                      label="Other Language"
+                      rules={[{ required: true }]}
+                    >
+                      <Input placeholder="Enter custom language" />
+                    </Form.Item>
+                  )}
+                </Col>
+                <Col span={10}>
+                  <Form.Item
+                    name="target_language"
+                    label="Output Language"
+                    rules={editMode ? [] : [{ required: true }]}
+                    hidden={editMode}
+                  >
+                    <Select
+                      showSearch
+                      options={outputLangFiltered.map((opt) => ({
+                        label: `${opt.name}(${opt.iso3_code})`,
+                        value: opt.iso3_code,
+                      }))}
+                      placeholder="Search language"
+                      filterOption={() => true}
+                      onSearch={setOutputLangQuery}
+                      onChange={onTargetLangChange}
+                    />
+                  </Form.Item>
+                  {otherTargetLang && (
+                    <Form.Item
+                      name="other_target_language"
+                      label="Other Language"
+                      rules={[{ required: true }]}
+                    >
+                      <Input placeholder="Enter custom language" />
+                    </Form.Item>
+                  )}
+                </Col>
+              </Row>
+
+              <Form.Item
+                name="system_details"
+                label="System Details"
+                tooltip={
+                  <>
+                    <p>
+                      Enter any details you want to record about the system.
+                      This can be done in one of two formats.
+                    </p>
+                    <p>
+                      <b>- Colon Separated -</b>
+                      <br />
+                      <div style={monospaceStyle}>
+                        url: https://...
+                        <br />
+                        arch: transformer
+                      </div>
+                    </p>
+                    <p>
+                      <b>- JSON -</b>
+                      <br />
+                      <div style={monospaceStyle}>
+                        &#123;
+                        <br />
+                        &nbsp;&quot;url&quot;: &quot;https://...&quot;,
+                        <br />
+                        &nbsp;&quot;arch&quot;: &quot;transformer&quot;
+                        <br />
+                        &#125;
+                      </div>
+                    </p>
+                  </>
+                }
+                hidden={editMode}
+              >
+                <TextArea rows={3} />
+              </Form.Item>
+            </Form>
+          </Space>
+        </Row>
       </Spin>
     </Drawer>
   );
