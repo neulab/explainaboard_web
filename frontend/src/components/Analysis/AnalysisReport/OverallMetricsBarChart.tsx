@@ -49,6 +49,8 @@ export function OverallMetricsBarChart({
         title="Overall Performance"
         seriesNames={systemNames}
         xAxisData={metricNames}
+        xAxisName="metric"
+        yAxisName="score"
         seriesDataList={resultsValues}
         seriesLabelsList={resultsValues}
         confidenceScoresList={resultsConfidenceScores}

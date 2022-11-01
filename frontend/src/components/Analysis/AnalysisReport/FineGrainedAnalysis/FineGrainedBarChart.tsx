@@ -83,6 +83,8 @@ export function FineGrainedBarChart(props: Props) {
         title={title}
         seriesNames={systemNames}
         xAxisData={bucketNames}
+        xAxisName={resultFirst.featureDescription}
+        yAxisName={resultFirst.metricName}
         seriesDataList={resultsValues}
         seriesLabelsList={resultsValues}
         numbersOfSamplesList={resultsNumbersOfSamples}
