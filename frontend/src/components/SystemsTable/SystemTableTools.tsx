@@ -43,15 +43,26 @@ export function SystemTableTools({
   selectedSystemIDs,
   onActiveSystemChange,
 }: Props) {
-  function findSelectedSystemDatasetNames() {
-    const selectedSystems = systems.filter((sys) =>
-      selectedSystemIDs.includes(sys.system_id)
-    );
+  console.log("selectedSystemIDs", selectedSystemIDs);
+  function findSelectedSystemDatasetNames(selectedSystems: SystemModel[]) {
     return new Set<string>(
       selectedSystems.map((sys) => sys.dataset?.dataset_name || "unspecified")
     );
   }
-  const selectedSystemDatasetNames = findSelectedSystemDatasetNames();
+  function hasDuplicateSelectedSystemNames(selectedSystems: SystemModel[]) {
+    const selectedSystemNames = selectedSystems.map((sys) => sys.system_name);
+    const distinctSystemNames = new Set(selectedSystemNames);
+    return distinctSystemNames.size !== selectedSystemNames.length
+      ? true
+      : false;
+  }
+  const selectedSystems = systems.filter((sys) =>
+    selectedSystemIDs.includes(sys.system_id)
+  );
+  const selectedSystemDatasetNames =
+    findSelectedSystemDatasetNames(selectedSystems);
+  const duplicateSelectedSystemNames =
+    hasDuplicateSelectedSystemNames(selectedSystems);
 
   // Deleted Selected Systems
   async function deleteSystems(systemIDs: string[]) {
@@ -139,6 +150,11 @@ export function SystemTableTools({
       tooltipMessage =
         "Cannot perform multiple system analysis on systems with different dataset names.";
     }
+    if (duplicateSelectedSystemNames) {
+      disabled = true;
+      tooltipMessage =
+        "Cannot perform multiple system analysis on systems with the same names.";
+    }
     analysisButton = (
       <Button
         disabled={disabled}
@@ -166,6 +182,11 @@ export function SystemTableTools({
       disabled = true;
       tooltipMessage =
         "Cannot perform multiple analysis on systems with different dataset names.";
+    }
+    if (duplicateSelectedSystemNames) {
+      disabled = true;
+      tooltipMessage =
+        "Cannot perform multiple system analysis on systems with the same names.";
     }
     analysisButton = (
       <Button
