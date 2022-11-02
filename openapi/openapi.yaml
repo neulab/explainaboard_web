@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.10"
+  version: "0.2.11"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -332,7 +332,13 @@ paths:
             items:
               type: string
             description: list of emails with whom the system is shared
-
+        - in: query
+          name: system_tags
+          schema:
+            type: array
+            items:
+              type: object
+            description: list of emails with whom the system is shared
       responses:
         "200":
           description: OK
@@ -931,6 +937,7 @@ components:
           description: a place to store arbitrary system details you want to remember
         system_tags:
           type: array
+          default: []
           items:
             type: object
           description: |
@@ -1032,6 +1039,7 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/SystemTag"
+
           required:
             - system_id
             - creator

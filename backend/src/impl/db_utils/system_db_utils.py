@@ -124,6 +124,9 @@ class SystemDBUtils:
             if required_field not in document:
                 document[required_field] = None
 
+        if "system_tags" not in document:
+            document["system_tags"] = []
+
         system = System.from_dict(document)
         if include_metric_stats:
             # Unbinarize to numpy array and set explicitly
@@ -193,6 +196,7 @@ class SystemDBUtils:
         shared_users: list[str] | None = None,
         include_metric_stats: bool = False,
         dataset_list: list[tuple[str, str, str]] | None = None,
+        system_tags: list[str] | None = None,
     ) -> SystemsReturn:
         """find multiple systems that matches the filters"""
 
@@ -218,6 +222,8 @@ class SystemDBUtils:
             search_conditions.append({"creator": creator})
         if shared_users:
             search_conditions.append({"shared_users": shared_users})
+        if system_tags:
+            search_conditions.append({"shared_users": system_tags})
 
         if dataset_list:
             dataset_dicts = [

@@ -225,6 +225,7 @@ export function SystemSubmitDrawer(props: Props) {
     system_details,
     system_tags,
   }: FormData) {
+    console.log(system_tags);
     try {
       setState(State.loading);
 
@@ -726,7 +727,7 @@ export function SystemSubmitDrawer(props: Props) {
             </Col>
           </Row>
           <Form.Item name="system_tags" label="System Tags" hidden={editMode}>
-            <SystemTagInput />
+            <SystemTagInput value={[]} />
           </Form.Item>
 
           <Form.Item
