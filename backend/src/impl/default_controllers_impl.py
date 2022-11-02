@@ -22,7 +22,7 @@ from explainaboard_web.impl.analyses.significance_analysis import (
 )
 from explainaboard_web.impl.auth import User as authUser
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
+from explainaboard_web.impl.db_utils.benchmark_db_utils import BenchmarkDBUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.language_code import get_language_codes
@@ -172,48 +172,24 @@ def datasets_get(
 
 
 def benchmark_configs_get(parent: str | None) -> list[BenchmarkConfig]:
-    scriptpath = os.path.dirname(__file__)
-    config_folder = os.path.join(scriptpath, "./benchmark_configs/")
-    # Add benchmarks to here if they should be displayed on the page.
-    # This should perhaps be moved to the database or made dynamic later.
-    # display_benchmarks = ["masakhaner", "gaokao"]
-    # Get all benchmark configs
-    """
-    display_benchmarks = ["masakhaner", "gaokao"]
-    # Get all benchmark configs
-    benchmark_configs = [
-        BenchmarkUtils.config_from_json_file(f"{config_folder}/config_{x}.json")
-        for x in display_benchmarks
-    ]
-    """
-    benchmark_configs = []
-    for file_name in sorted(os.listdir(config_folder)):
-        if file_name.endswith(".json"):
-            benchmark_dict = BenchmarkUtils.config_dict_from_file(
-                config_folder + file_name
-            )
-            # must match parent if one exists
-            if (parent or "") == (benchmark_dict.get("parent", "")):
-                benchmark_configs.append(BenchmarkConfig.from_dict(benchmark_dict))
-
-    return benchmark_configs
+    return BenchmarkDBUtils.find_configs(parent)
 
 
 def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
-    config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
+    config = BenchmarkConfig.from_dict(BenchmarkDBUtils.find_config_by_id(benchmark_id))
     if config.type == "abstract":
         return Benchmark(config, None, None)
     file_path = benchmark_id + "_benchmark.json"
     benchmark_file = open_cached_file(file_path, datetime.timedelta(seconds=1))
     if not benchmark_file:
-        sys_infos = BenchmarkUtils.load_sys_infos(config)
-        orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
+        sys_infos = BenchmarkDBUtils.load_sys_infos(config)
+        orig_df = BenchmarkDBUtils.generate_dataframe_from_sys_infos(config, sys_infos)
 
-        system_dfs = BenchmarkUtils.generate_view_dataframes(
+        system_dfs = BenchmarkDBUtils.generate_view_dataframes(
             config, orig_df, by_creator=False
         )
         system_dict = {k: v.to_dict() for k, v in system_dfs}
-        creator_dfs = BenchmarkUtils.generate_view_dataframes(
+        creator_dfs = BenchmarkDBUtils.generate_view_dataframes(
             config, orig_df, by_creator=True
         )
         creator_dict = {k: v.to_dict() for k, v in creator_dfs}
@@ -230,7 +206,7 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
         view_dict = json.load(f)["creator"]
     else:
         view_dict = json.load(f)["system"]
-    plot_dict = BenchmarkUtils.generate_plots(benchmark_id)
+    plot_dict = BenchmarkDBUtils.generate_plots(benchmark_id)
     views = []
     for k, v in view_dict.items():
         if by_creator:
@@ -240,7 +216,7 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
         else:
             col_name = "system_name"
         views.append(
-            BenchmarkUtils.dataframe_to_table(
+            BenchmarkDBUtils.dataframe_to_table(
                 k, pd.DataFrame.from_dict(v), plot_dict, col_name
             )
         )

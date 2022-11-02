@@ -26,6 +26,9 @@ class DBUtils:
         db_name="metadata", collection_name="system_metadata_v012"
     )
     USER_METADATA = DBCollection(db_name="metadata", collection_name="user_metadata")
+    BENCHMARK_METADATA = DBCollection(
+        db_name="metadata", collection_name="benchmark_metadata2"
+    )
 
     @staticmethod
     def get_database(db_name: str):
