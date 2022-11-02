@@ -16,7 +16,16 @@ export function OverallMetricsBarChart({
   metricNames,
   onBarClick,
 }: Props) {
-  const systemNames = systems.map((system) => system.system_name);
+  function getSystemNames(systems: SystemModel[]) {
+    const systemNames = systems.map((sys) => sys.system_name);
+    const distinctSystemNames = new Set(systemNames);
+    if (distinctSystemNames.size !== systemNames.length) {
+      return systems.map((sys) => sys.system_name + "_" + sys.system_id);
+    } else {
+      return systemNames;
+    }
+  }
+  const systemNames = getSystemNames(systems);
   const resultsValues: number[][] = [];
   const resultsNumbersOfSamples: number[][] = [];
   const resultsConfidenceScores: Array<[number, number]>[] = [];

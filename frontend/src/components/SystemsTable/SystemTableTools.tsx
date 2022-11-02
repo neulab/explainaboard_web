@@ -43,23 +43,15 @@ export function SystemTableTools({
   selectedSystemIDs,
   onActiveSystemChange,
 }: Props) {
-  function findSelectedSystemDatasetNames(selectedSystems: SystemModel[]) {
+  function findSelectedSystemDatasetNames() {
+    const selectedSystems = systems.filter((sys) =>
+      selectedSystemIDs.includes(sys.system_id)
+    );
     return new Set<string>(
       selectedSystems.map((sys) => sys.dataset?.dataset_name || "unspecified")
     );
   }
-  function hasDuplicateSelectedSystemNames(selectedSystems: SystemModel[]) {
-    const selectedSystemNames = selectedSystems.map((sys) => sys.system_name);
-    const distinctSystemNames = new Set(selectedSystemNames);
-    return distinctSystemNames.size !== selectedSystemNames.length;
-  }
-  const selectedSystems = systems.filter((sys) =>
-    selectedSystemIDs.includes(sys.system_id)
-  );
-  const selectedSystemDatasetNames =
-    findSelectedSystemDatasetNames(selectedSystems);
-  const duplicateSelectedSystemNames =
-    hasDuplicateSelectedSystemNames(selectedSystems);
+  const selectedSystemDatasetNames = findSelectedSystemDatasetNames();
 
   // Deleted Selected Systems
   async function deleteSystems(systemIDs: string[]) {
@@ -146,11 +138,6 @@ export function SystemTableTools({
       disabled = true;
       tooltipMessage =
         "Cannot perform multiple system analysis on systems with different dataset names.";
-    }
-    if (duplicateSelectedSystemNames) {
-      disabled = true;
-      tooltipMessage =
-        "Cannot perform multiple system analysis on systems with the same names.";
     }
     analysisButton = (
       <Button
