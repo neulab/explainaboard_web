@@ -19,7 +19,6 @@ import {
   System,
   TaskCategory,
   LanguageCode,
-  SystemTag,
 } from "../../clients/openapi";
 import { backendClient, parseBackendError } from "../../clients";
 import { findTask, toBase64, unwrap } from "../../utils";
@@ -31,7 +30,6 @@ import ReactGA from "react-ga4";
 import useSearch, { FilterFunc } from "./useSearch";
 import { SystemModel } from "../../models";
 import "./index.css";
-import { SystemTagInput } from "./SystemTagInput";
 
 const { TextArea } = Input;
 
@@ -225,7 +223,6 @@ export function SystemSubmitDrawer(props: Props) {
     system_details,
     system_tags,
   }: FormData) {
-    console.log(system_tags);
     try {
       setState(State.loading);
 
@@ -726,8 +723,13 @@ export function SystemSubmitDrawer(props: Props) {
               )}
             </Col>
           </Row>
-          <Form.Item name="system_tags" label="System Tags" hidden={editMode}>
-            <SystemTagInput value={[]} />
+
+          <Form.Item
+            name="system_tags"
+            label="System Tags"
+            tooltip="Tags to help yourself and others group your systems"
+          >
+            <Select mode="tags" />
           </Form.Item>
 
           <Form.Item
@@ -788,5 +790,5 @@ interface FormData {
   is_private: boolean;
   system_details: string;
   shared_users: string[];
-  system_tags: SystemTag[];
+  system_tags: string[];
 }

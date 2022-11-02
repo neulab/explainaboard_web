@@ -337,7 +337,7 @@ paths:
           schema:
             type: array
             items:
-              type: object
+              type: string
             description: list of emails with whom the system is shared
       responses:
         "200":
@@ -939,7 +939,7 @@ components:
           type: array
           default: []
           items:
-            type: object
+            type: string
           description: |
             User defined tags for the system,
             useful for searching and grouping systems
@@ -1038,7 +1038,7 @@ components:
                 useful for searching and grouping systems
               type: array
               items:
-                $ref: "#/components/schemas/SystemTag"
+                type: string
 
           required:
             - system_id

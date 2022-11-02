@@ -163,9 +163,7 @@ export function SystemTableContent({
       dataIndex: "system_tags",
       title: "System Tags",
       render: (_, record) =>
-        record.system_tags?.map((tag) => (
-          <Tag key={tag.tag_name}>{tag.tag_name}</Tag>
-        )),
+        record.system_tags?.map((tag) => <Tag key={tag}>{tag}</Tag>),
       width: 130,
       align: "center",
     },
