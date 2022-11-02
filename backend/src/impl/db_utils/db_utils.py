@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 from bson.objectid import InvalidId, ObjectId
 from explainaboard_web.impl.db import get_db
@@ -88,7 +90,10 @@ class DBUtils:
 
     @staticmethod
     def find_one_by_id(
-        collection: DBCollection, docid: str, projection: Optional[dict] = None
+        collection: DBCollection,
+        docid: str,
+        projection: dict | None = None,
+        session: ClientSession | None = None,
     ):
         """
         Find and return a document with the _id field
@@ -102,11 +107,16 @@ class DBUtils:
             """Mongo accepts custom ID"""
             _id = docid
         finally:
-            return DBUtils.get_collection(collection).find_one({"_id": _id}, projection)
+            return DBUtils.get_collection(collection).find_one(
+                {"_id": _id}, projection, session=session
+            )
 
     @staticmethod
     def update_one_by_id(
-        collection: DBCollection, docid: str, field_to_value: dict
+        collection: DBCollection,
+        docid: str,
+        field_to_value: dict,
+        session: ClientSession | None = None,
     ) -> bool:
         """
         Update a document with the _id field
@@ -117,7 +127,7 @@ class DBUtils:
         """
         try:
             result: UpdateResult = DBUtils.get_collection(collection).update_one(
-                {"_id": ObjectId(docid)}, {"$set": field_to_value}
+                {"_id": ObjectId(docid)}, {"$set": field_to_value}, session=session
             )
             if int(result.modified_count) == 1:
                 return True
@@ -179,11 +189,11 @@ class DBUtils:
     @staticmethod
     def find(
         collection: DBCollection,
-        filt: Optional[dict] = None,
-        sort: Optional[list] = None,
+        filt: dict | None = None,
+        sort: list | None = None,
         skip=0,
         limit: int = 10,
-        projection: Optional[dict] = None,
+        projection: dict | None = None,
     ) -> tuple[Cursor, int]:
         """
         Find multiple documents
