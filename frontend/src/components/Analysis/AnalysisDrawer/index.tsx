@@ -203,7 +203,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
     const duplicateNameWarning =
       distinctSystemNames.size !== systemNames.length;
     const duplicateNameWarningMsg =
-      "The systems have duplicate names. Unique system IDs are attached to distinguish between them. Please change system names for a better presentation.";
+      "The systems have duplicate names. Unique system IDs are attached to distinguish between them. Please change system names using the edit button on `Systems` page.";
     if (systems.length === 1) {
       return `Single Analysis of ${systems[0].system_name}`;
     } else if (systems.length === 2) {
