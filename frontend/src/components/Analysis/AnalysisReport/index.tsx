@@ -25,6 +25,7 @@ export function AnalysisReport(props: Props) {
   const {
     task,
     systems,
+    systemAnalyses,
     metricToSystemAnalysesParsed,
     significanceTestInfo,
     updateFeatureNameToBucketInfo,
@@ -48,6 +49,7 @@ export function AnalysisReport(props: Props) {
     <div>
       <OverallMetricsBarChart
         systems={systems}
+        systemAnalyses={systemAnalyses}
         metricNames={Object.keys(metricToSystemAnalysesParsed)}
         onBarClick={onActiveMetricChange}
       />
