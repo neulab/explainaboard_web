@@ -99,13 +99,14 @@ export function MetricPane(props: Props) {
         caseIDs: resultParsed.cases[barIndex],
       })
     );
+    const selectedLevelAndCaseIDs = levelAndCaseIDs[systemIndex];
     try {
       let caseDetails = await Promise.all(
-        levelAndCaseIDs.map(({ levelName, caseIDs }, i) =>
+        systems.map((sys) =>
           backendClient.systemCasesGetById(
-            systems[i].system_id,
-            levelName,
-            caseIDs
+            sys.system_id,
+            selectedLevelAndCaseIDs.levelName,
+            selectedLevelAndCaseIDs.caseIDs
           )
         )
       );
