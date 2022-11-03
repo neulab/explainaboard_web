@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Drawer, Spin } from "antd";
+import { Drawer, Spin, Tooltip } from "antd";
 import { SystemModel } from "../../../models";
 import { ErrorBoundary, AnalysisReport } from "../../../components";
 import { PageState } from "../../../utils";
@@ -8,6 +8,7 @@ import {
   SystemAnalysesReturn,
   SystemsAnalysesBody,
 } from "../../../clients/openapi";
+import { WarningOutlined } from "@ant-design/icons";
 import { parseFineGrainedResults, valuesToIntervals } from "../utils";
 import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 import ReactGA from "react-ga4";
@@ -194,14 +195,38 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
     setBucketInfoUpdated(false);
   }
 
-  function getDrawerTitle(): string {
+  function getDrawerTitle(): React.ReactNode {
+    const systemNames = systems.map((sys) => sys.system_name);
+    const distinctSystemNames = new Set(systemNames);
+    const duplicateNameWarning =
+      distinctSystemNames.size !== systemNames.length;
+    const duplicateNameWarningMsg =
+      "The systems have duplicate names. Unique system IDs are attached to distinguish between them. Please change system names using the edit button on `Systems` page.";
     if (systems.length === 1) {
       return `Single Analysis of ${systems[0].system_name}`;
     } else if (systems.length === 2) {
       const systemNames = systems.map((sys) => sys.system_name).join(" and ");
-      return `Pairwise Analysis of ${systemNames}`;
+      return (
+        <div>
+          Pairwise Analysis of {systemNames}{" "}
+          {duplicateNameWarning && (
+            <Tooltip title={duplicateNameWarningMsg}>
+              <WarningOutlined />
+            </Tooltip>
+          )}
+        </div>
+      );
     }
-    return "Analysis";
+    return (
+      <div>
+        Analysis{" "}
+        {duplicateNameWarning && (
+          <Tooltip title={duplicateNameWarningMsg}>
+            <WarningOutlined />
+          </Tooltip>
+        )}
+      </div>
+    );
   }
 
   function renderDrawerContent(): React.ReactElement {
