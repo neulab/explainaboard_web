@@ -14,7 +14,7 @@ export function SignificanceTestList({ significanceTestInfo }: Props) {
       disabled={disabled}
       titleTooltip={
         disabled
-          ? "Significance Test is not available for single system analysis."
+          ? "Significance test is only available for pairwise analysis (selecting two systems)."
           : undefined
       }
     >
