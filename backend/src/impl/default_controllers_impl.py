@@ -389,10 +389,8 @@ def system_cases_get_by_id(
 
 
 def systems_delete_by_id(system_id: str):
-    success = SystemDBUtils.delete_system_by_id(system_id)
-    if success:
-        return "Success"
-    abort_with_error_message(400, f"cannot find system_id: {system_id}")
+    SystemDBUtils.delete_system_by_id(system_id)
+    return "Success"
 
 
 def systems_analyses_post(body: SystemsAnalysesBody):
