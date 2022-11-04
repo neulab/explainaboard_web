@@ -15,7 +15,6 @@ from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils
 from explainaboard_web.impl.internal_models.system_model import SystemModel
-from explainaboard_web.impl.storage import get_storage
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models import (
     AnalysisCase,
@@ -210,31 +209,6 @@ class SystemDBUtils:
         raise ValueError("neither dataset or custom_dataset is available")
 
     @staticmethod
-    def _find_output_or_case_raw(
-        system_id: str, analysis_level: str, output_ids: list[int] | None
-    ) -> list[dict]:
-        filt: dict[str, Any] = {
-            "system_id": system_id,
-            "analysis_level": analysis_level,
-        }
-        output_collection = DBUtils.get_system_output_collection(system_id)
-        cursor, total = DBUtils.find(
-            collection=output_collection,
-            filt=filt,
-        )
-        if total != 1:
-            abort_with_error_message(
-                400, f"Could not find system outputs for {system_id}"
-            )
-        data = next(cursor)["data"]
-        sys_data_str = get_storage().download_and_decompress(data)
-        sys_data: list = json.loads(sys_data_str)
-
-        if output_ids is not None:
-            sys_data = [sys_data[x] for x in output_ids]
-        return sys_data
-
-    @staticmethod
     def create_system(
         metadata: SystemMetadata,
         system_output: SystemOutputProps,
@@ -372,9 +346,11 @@ class SystemDBUtils:
         """
         find multiple system outputs whose ids are in output_ids
         """
-        sys_data = SystemDBUtils._find_output_or_case_raw(
-            str(system_id), SystemModel._SYSTEM_OUTPUT_CONST, output_ids
-        )
+        system = SystemDBUtils.find_system_by_id(system_id)
+        try:
+            sys_data = system.get_raw_system_outputs(output_ids)
+        except ValueError:
+            abort_with_error_message(400, "invalid output_ids")
         return [SystemDBUtils.system_output_from_dict(doc) for doc in sys_data]
 
     @staticmethod
@@ -384,42 +360,21 @@ class SystemDBUtils:
         """
         find multiple system outputs whose ids are in case_ids
         """
-        sys_data = SystemDBUtils._find_output_or_case_raw(
-            str(system_id), level, case_ids
-        )
+        system = SystemDBUtils.find_system_by_id(system_id)
+        try:
+            sys_data = system.get_raw_analysis_cases(level, case_ids)
+        except ValueError:
+            abort_with_error_message(400, "invalid case_ids")
         return [SystemDBUtils.analysis_case_from_dict(doc) for doc in sys_data]
 
     @staticmethod
-    def delete_system_by_id(system_id: str):
+    def delete_system_by_id(system_id: str) -> None:
+        """aborts if the system does not exist or if the user doesn't have permission"""
         user = get_user()
-        if not user.is_authenticated:
-            abort_with_error_message(401, "log in required")
-
-        def db_operations(session: ClientSession) -> bool:
-            """TODO: add logging if error"""
-            sys = SystemDBUtils.find_system_by_id(system_id)
-            if sys.creator != user.id:
-                abort_with_error_message(403, "you can only delete your own systems")
-            result = DBUtils.delete_one_by_id(
-                DBUtils.DEV_SYSTEM_METADATA, system_id, session=session
-            )
-            if not result:
-                abort_with_error_message(400, f"failed to delete system {system_id}")
-
-            # remove system outputs
-            output_collection = DBUtils.get_system_output_collection(system_id)
-            filt = {"system_id": system_id}
-            outputs, _ = DBUtils.find(output_collection, filt, limit=0)
-            data_blob_names = [output["data"] for output in outputs]
-            DBUtils.delete_many(output_collection, filt, session=session)
-
-            # Delete system output objects from Storage. This needs to be the last step
-            # because we are using transaction support from MongoDB and we cannot roll
-            # back an operation on Cloud Storage.
-            get_storage().delete(data_blob_names)
-            return True
-
-        return DBUtils.execute_transaction(db_operations)
+        sys = SystemDBUtils.find_system_by_id(system_id)
+        if sys.creator != user.id:
+            abort_with_error_message(403, "you can only delete your own systems")
+        sys.delete()
 
 
 class FindSystemsReturn(NamedTuple):

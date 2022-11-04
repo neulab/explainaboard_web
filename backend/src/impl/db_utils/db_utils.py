@@ -21,20 +21,11 @@ class DBCollection:
 class DBUtils:
 
     # Names of DBs or collections
-    SYSTEM_OUTPUT_COLLECTION_DB = "system_output_collections_v012"
     SYSTEM_OUTPUT_COLLECTION_PREFIX = "system_outputs"
     DEV_SYSTEM_METADATA = DBCollection(
         db_name="metadata", collection_name="system_metadata_v012"
     )
     USER_METADATA = DBCollection(db_name="metadata", collection_name="user_metadata")
-
-    @staticmethod
-    def get_system_output_collection(system_id: str) -> DBCollection:
-        return DBCollection(
-            db_name=DBUtils.SYSTEM_OUTPUT_COLLECTION_DB,
-            collection_name=f"{DBUtils.SYSTEM_OUTPUT_COLLECTION_PREFIX}"
-            f"_{system_id[0:3]}",
-        )
 
     @staticmethod
     def get_database(db_name: str):
