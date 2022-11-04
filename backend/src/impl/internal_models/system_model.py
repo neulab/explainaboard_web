@@ -235,7 +235,9 @@ class SystemModel(System):
             session=session,
         )
 
-    def get_system_output(self, output_ids: list[int] | None) -> list[dict]:
+    def get_raw_system_outputs(self, output_ids: list[int] | None) -> list[dict]:
+        """Downloads the system outputs and returns the outputs associated with
+        output_ids. If output_ids=None, all system outputs are returned."""
         data_path: str = self._get_private_properties()["system_output"]
         sys_data_str = get_storage().download_and_decompress(data_path)
         sys_data: list = json.loads(sys_data_str)
@@ -247,9 +249,11 @@ class SystemModel(System):
                 raise ValueError(f"{output_ids=} contains invalid value") from e
         return sys_data
 
-    def get_analysis_cases(
+    def get_raw_analysis_cases(
         self, analysis_level: str, case_ids: list[int] | None
     ) -> list[dict]:
+        """Downloads the analysis cases for the analysis_level and returns the
+        cases associated with case_ids. If case_ids=None, all cases are returned."""
         case_data_lookup: dict[str, str] = self._get_private_properties()[
             "analysis_cases"
         ]

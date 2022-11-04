@@ -348,7 +348,7 @@ class SystemDBUtils:
         """
         system = SystemDBUtils.find_system_by_id(system_id)
         try:
-            sys_data = system.get_system_output(output_ids)
+            sys_data = system.get_raw_system_outputs(output_ids)
         except ValueError:
             abort_with_error_message(400, "invalid output_ids")
         return [SystemDBUtils.system_output_from_dict(doc) for doc in sys_data]
@@ -362,7 +362,7 @@ class SystemDBUtils:
         """
         system = SystemDBUtils.find_system_by_id(system_id)
         try:
-            sys_data = system.get_analysis_cases(level, case_ids)
+            sys_data = system.get_raw_analysis_cases(level, case_ids)
         except ValueError:
             abort_with_error_message(400, "invalid case_ids")
         return [SystemDBUtils.analysis_case_from_dict(doc) for doc in sys_data]
