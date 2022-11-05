@@ -9,6 +9,7 @@ from typing import Any
 
 from explainaboard import get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
+from explainaboard.metrics.metric import MetricConfig
 from explainaboard.serialization.legacy import general_to_dict
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
@@ -63,16 +64,26 @@ class SystemModel(System):
 
         return super().from_dict(document)
 
-    def _get_private_properties(self) -> dict:
+    def _get_private_properties(self, session: ClientSession | None = None) -> dict:
         """Retrieves privates properties of the system. These properties are meant
         for internal use only.
+
+        Args:
+            session: A mongodb session. Private properties are stored in the DB so
+                we need to query the DB to retrieve this data. If multiple DB operations
+                needs to be performed in one session, the same session should be used
+                to query private properties.
+                TODO(lyuyang): cache this data in memory. Even if it is cached in
+                memory, session is still required in situations where we need to refresh
+                the cache.
 
         Raises:
             ValueError: The system cannot be found in the DB. This method should not be
                 called on a system that hasn't been created or has been deleted.
-        TODO(lyuyang): store this in memory
         """
-        sys_doc = DBUtils.find_one_by_id(DBUtils.DEV_SYSTEM_METADATA, self.system_id)
+        sys_doc = DBUtils.find_one_by_id(
+            DBUtils.DEV_SYSTEM_METADATA, self.system_id, session=session
+        )
         if not sys_doc:
             raise ValueError(f"system {self.system_id} does not exist in the DB")
         return sys_doc
@@ -119,7 +130,7 @@ class SystemModel(System):
     ):
         """Saves `system_output` to storage. If `system_output` has been saved
         previously, it is replaced with the new one."""
-        properties = self._get_private_properties()
+        properties = self._get_private_properties(session=session)
         if properties.get("system_output"):
             # delete previously saved system_output
             get_storage().delete([properties["system_output"]])
@@ -144,7 +155,7 @@ class SystemModel(System):
         force_update=False,
     ) -> None:
         """regenerates overall statistics and updates cache"""
-        properties = self._get_private_properties()
+        properties = self._get_private_properties(session=session)
         if not force_update:
             if "system_info" in properties and "metric_stats" in properties:
                 # cache hit
@@ -156,7 +167,7 @@ class SystemModel(System):
                 metric.name: metric
                 for metric in get_processor(self.task).full_metric_list()
             }
-            metric_configs = []
+            metric_configs: list[MetricConfig] = []
             for metric_name in metadata.metric_names:
                 if metric_name not in metrics_lookup:
                     abort_with_error_message(
@@ -166,11 +177,16 @@ class SystemModel(System):
             custom_features = system_output_data.metadata.custom_features or {}
             custom_features.update(self.get_dataset_custom_features())
             processor_metadata = {
-                **metadata.to_dict(),
+                # system properties
+                "system_name": self.system_name,
+                "source_language": self.source_language,
+                "target_language": self.target_language,
                 "dataset_name": self.dataset.dataset_name if self.dataset else None,
                 "sub_dataset_name": self.dataset.sub_dataset if self.dataset else None,
-                "dataset_split": metadata.dataset_split,
-                "task_name": metadata.task,
+                "dataset_split": self.dataset.split if self.dataset else None,
+                "task_name": self.task,
+                "system_details": self.system_details,
+                # processor parameters
                 "metric_configs": metric_configs,
                 "custom_features": custom_features,
                 "custom_analyses": system_output_data.metadata.custom_analyses or [],
