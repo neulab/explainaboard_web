@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.11"
+  version: "0.2.12"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -972,6 +972,14 @@ components:
               description: the user who created the system
             preferred_username:
               type: string
+            metric_names:
+              description: >
+                metric_names selected when the system is created. It is the same as
+                the metric_names field in SystemMetadata.
+              type: array
+              items:
+                type: string
+              example: [Accuracy, F1]
             results:
               type: object
               example: {"span": {"F1": 0.9221}}
@@ -1013,6 +1021,7 @@ components:
             - source_language
             - target_language
             - task
+            - metric_names
             - results
         - $ref: "#/components/schemas/Time"
 

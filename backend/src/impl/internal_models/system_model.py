@@ -21,7 +21,6 @@ from explainaboard_web.impl.utils import (
 )
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_info import SystemInfo
-from explainaboard_web.models.system_metadata import SystemMetadata
 from pymongo.client_session import ClientSession
 
 
@@ -149,7 +148,6 @@ class SystemModel(System):
 
     def update_overall_statistics(
         self,
-        metadata: SystemMetadata,
         system_output_data: FileLoaderReturn,
         session: ClientSession | None = None,
         force_update=False,
@@ -168,11 +166,9 @@ class SystemModel(System):
                 for metric in get_processor(self.task).full_metric_list()
             }
             metric_configs: list[MetricConfig] = []
-            for metric_name in metadata.metric_names:
+            for metric_name in self.metric_names:
                 if metric_name not in metrics_lookup:
-                    abort_with_error_message(
-                        400, f"{metric_name} is not a supported metric"
-                    )
+                    raise ValueError(f"{metric_name} is not a supported metric")
                 metric_configs.append(metrics_lookup[metric_name])
             custom_features = system_output_data.metadata.custom_features or {}
             custom_features.update(self.get_dataset_custom_features())
