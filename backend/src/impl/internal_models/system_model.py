@@ -142,15 +142,15 @@ class SystemModel(System):
         DBUtils.update_one_by_id(
             DBUtils.DEV_SYSTEM_METADATA,
             self.system_id,
-            {"system_output": blob_name},
+            {
+                "system_output": blob_name,
+                "system_output_metadata": general_to_dict(system_output.metadata),
+            },
             session=session,
         )
 
     def update_overall_statistics(
-        self,
-        system_output_data: FileLoaderReturn,
-        session: ClientSession | None = None,
-        force_update=False,
+        self, session: ClientSession | None = None, force_update=False
     ) -> None:
         """regenerates overall statistics and updates cache"""
         properties = self._get_private_properties(session=session)
@@ -170,7 +170,8 @@ class SystemModel(System):
                 if metric_name not in metrics_lookup:
                     raise ValueError(f"{metric_name} is not a supported metric")
                 metric_configs.append(metrics_lookup[metric_name])
-            custom_features = system_output_data.metadata.custom_features or {}
+            system_output_metadata: dict = properties.get("system_output_metadata", {})
+            custom_features = system_output_metadata.get("custom_features") or {}
             custom_features.update(self.get_dataset_custom_features())
             processor_metadata = {
                 # system properties
@@ -185,11 +186,14 @@ class SystemModel(System):
                 # processor parameters
                 "metric_configs": metric_configs,
                 "custom_features": custom_features,
-                "custom_analyses": system_output_data.metadata.custom_analyses or [],
+                "custom_analyses": system_output_metadata.get("custom_analyses") or [],
             }
 
             return processor.get_overall_statistics(
-                metadata=processor_metadata, sys_output=system_output_data.samples
+                metadata=processor_metadata,
+                sys_output=self.get_raw_system_outputs(
+                    output_ids=None, session=session
+                ),
             )
 
         overall_statistics = _process()
@@ -247,10 +251,12 @@ class SystemModel(System):
             session=session,
         )
 
-    def get_raw_system_outputs(self, output_ids: list[int] | None) -> list[dict]:
+    def get_raw_system_outputs(
+        self, output_ids: list[int] | None, session: ClientSession | None = None
+    ) -> list[dict]:
         """Downloads the system outputs and returns the outputs associated with
         output_ids. If output_ids=None, all system outputs are returned."""
-        data_path: str = self._get_private_properties()["system_output"]
+        data_path: str = self._get_private_properties(session=session)["system_output"]
         sys_data_str = get_storage().download_and_decompress(data_path)
         sys_data: list = json.loads(sys_data_str)
 
