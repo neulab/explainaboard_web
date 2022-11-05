@@ -66,11 +66,15 @@ class SystemModel(System):
     def _get_private_properties(self) -> dict:
         """Retrieves privates properties of the system. These properties are meant
         for internal use only.
+
+        Raises:
+            ValueError: The system cannot be found in the DB. This method should not be
+                called on a system that hasn't been created or has been deleted.
         TODO(lyuyang): store this in memory
         """
         sys_doc = DBUtils.find_one_by_id(DBUtils.DEV_SYSTEM_METADATA, self.system_id)
         if not sys_doc:
-            abort_with_error_message(404, f"system id: {self.system_id} not found")
+            raise ValueError(f"system {self.system_id} does not exist in the DB")
         return sys_doc
 
     def get_system_info(self) -> SystemInfo:
@@ -113,7 +117,12 @@ class SystemModel(System):
     def save_system_output(
         self, system_output: FileLoaderReturn, session: ClientSession | None = None
     ):
-        """TODO(lyuyang): should delete stale data from storage"""
+        """Saves `system_output` to storage. If `system_output` has been saved
+        previously, it is replaced with the new one."""
+        properties = self._get_private_properties()
+        if properties.get("system_output"):
+            # delete previously saved system_output
+            get_storage().delete([properties["system_output"]])
         sample_list = [general_to_dict(v) for v in system_output.samples]
         blob_name = f"{self.system_id}/{self._SYSTEM_OUTPUT_CONST}"
         get_storage().compress_and_upload(
@@ -134,23 +143,12 @@ class SystemModel(System):
         session: ClientSession | None = None,
         force_update=False,
     ) -> None:
-        """regenerates overall statistics and updates cache
-        TODO(lyuyang) This method is not complete. It should only be called once because
-        it does not remove system cases from cloud storage properly."""
+        """regenerates overall statistics and updates cache"""
+        properties = self._get_private_properties()
         if not force_update:
-            sys_doc = DBUtils.find_one_by_id(
-                DBUtils.DEV_SYSTEM_METADATA, self.system_id, session=session
-            )
-            if not sys_doc:
-                raise ValueError(f"system {self.system_id} hasn't been created")
-            if "system_info" in sys_doc and "metric_stats" in sys_doc:
+            if "system_info" in properties and "metric_stats" in properties:
                 # cache hit
                 return
-        sys_doc = DBUtils.find_one_by_id(
-            DBUtils.DEV_SYSTEM_METADATA, self.system_id, session=session
-        )
-        if sys_doc.get("system_info"):
-            raise ValueError("update_overall_statistics can only be called once")
 
         def _process():
             processor = get_processor(self.task)
@@ -226,7 +224,9 @@ class SystemModel(System):
                 analysis_cases_lookup[analysis_level.name] = blob_name
             return analysis_cases_lookup
 
-        # Insert system output and analysis cases
+        if properties.get("analysis_cases"):
+            # invalidate cache
+            get_storage().delete(properties["analysis_cases"].values())
 
         DBUtils.update_one_by_id(
             DBUtils.DEV_SYSTEM_METADATA,
