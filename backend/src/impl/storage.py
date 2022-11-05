@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import zlib
+from collections.abc import Iterable
 
 from flask import current_app, g
 from google.cloud import storage as cloud_storage
@@ -49,7 +50,7 @@ class Storage:
     def download_and_decompress(self, blob_name: str) -> str:
         return zlib.decompress(self.download(blob_name)).decode()
 
-    def delete(self, blob_names: list[str]) -> None:
+    def delete(self, blob_names: Iterable[str]) -> None:
         self._bucket.delete_blobs([self._bucket.blob(name) for name in blob_names])
 
 
