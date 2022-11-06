@@ -647,7 +647,7 @@ export function SystemSubmitDrawer(props: Props) {
             </Col>
             <Col span={10}>
               <Typography.Link
-                href="https://github.com/neulab/ExplainaBoard/docs/supported_metrics.md"
+                href="https://github.com/neulab/ExplainaBoard/blob/main/docs/supported_metrics.md"
                 style={{ marginLeft: 8 }}
               >
                 Metric Description
