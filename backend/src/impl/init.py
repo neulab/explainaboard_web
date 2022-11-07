@@ -23,6 +23,7 @@ def init(app: Flask) -> Flask:
                 f"Requires explainaboard_api_client=={api_version}, "
                 + f"got {header_api_version} instead. "
                 + "Please upgrade to the required version.",
+                40001,
             )
 
     return app

@@ -1,3 +1,4 @@
+import json
 from unittest import TestCase
 
 from explainaboard_web.__main__ import create_app
@@ -24,3 +25,4 @@ class TestAPIVersion(TestCase):
     def test_check_api_version_mismatch(self):
         res = self.client.get(self.api_path, headers={self.api_version_header: "0.0.0"})
         self.assertEqual(res.status_code, 400)
+        self.assertEqual(json.loads(res.data)["error_code"], 40001)
