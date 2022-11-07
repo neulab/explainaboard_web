@@ -626,16 +626,16 @@ export function SystemSubmitDrawer(props: Props) {
             />
           </Form.Item>
 
-          <Row>
-            <Col span={4}>&nbsp;</Col>
-            <Col span={10}>
-              <Form.Item
-                name="metric_names"
-                label="Metrics"
-                rules={editMode ? [] : [{ required: true }]}
-                hidden={editMode}
-              >
+          <Form.Item
+            label="Metrics"
+            name="metric_names"
+            rules={editMode ? [] : [{ required: true }]}
+            hidden={editMode}
+          >
+            <Space size={"small"}>
+              <Form.Item noStyle>
                 <Select
+                  style={{ width: 300 }}
                   mode="multiple"
                   options={(selectedTask?.supported_metrics || []).map(
                     (opt) => ({
@@ -644,16 +644,14 @@ export function SystemSubmitDrawer(props: Props) {
                   )}
                 />
               </Form.Item>
-            </Col>
-            <Col span={10}>
               <Typography.Link
+                target="_blank"
                 href="https://github.com/neulab/ExplainaBoard/blob/main/docs/supported_metrics.md"
-                style={{ marginLeft: 8 }}
               >
                 Metric Description
               </Typography.Link>
-            </Col>
-          </Row>
+            </Space>
+          </Form.Item>
 
           <Form.Item
             name="is_private"
