@@ -28,7 +28,11 @@ from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.language_code import get_language_codes
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
-from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
+from explainaboard_web.impl.utils import (
+    abort_with_error_message,
+    decode_base64,
+    get_api_version,
+)
 from explainaboard_web.models import (
     Benchmark,
     BenchmarkConfig,
@@ -82,18 +86,10 @@ def _has_read_access(system: System) -> bool:
 
 @lru_cache(maxsize=None)
 def info_get():
-    api_version = None
-    with open("explainaboard_web/swagger/swagger.yaml") as f:
-        for line in f:
-            if line.startswith("  version: "):
-                api_version = line[len("version: ") + 1 : -1].strip()
-                break
-    if not api_version:
-        raise RuntimeError("failed to extract API version")
     return {
         "env": os.getenv("EB_ENV"),
         "auth_url": current_app.config.get("AUTH_URL"),
-        "api_version": api_version,
+        "api_version": get_api_version(),
     }
 
 
