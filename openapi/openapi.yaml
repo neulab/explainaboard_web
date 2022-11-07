@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.13"
+  version: "0.2.14"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -23,6 +23,8 @@ security:
 
 paths:
   /tasks:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns all task categories and tasks
       operationId: tasksGet
@@ -38,6 +40,8 @@ paths:
                   $ref: "#/components/schemas/TaskCategory"
 
   /languagecodes:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Return all language codes
       operationId: languageCodesGet
@@ -53,6 +57,8 @@ paths:
                   $ref: "#/components/schemas/LanguageCode"
 
   /benchmarkconfigs:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns all benchmark configs matching the specification
       operationId: benchmarkConfigsGet
@@ -75,6 +81,8 @@ paths:
                   $ref: "#/components/schemas/BenchmarkConfig"
 
   /benchmark/{benchmark_id}:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns benchmark metadata by id
       operationId: benchmarkGetById
@@ -107,8 +115,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/APIError"
 
-
   /datasets/{dataset_id}:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns dataset metadata by id
       operationId: datasetsGetById
@@ -138,6 +147,8 @@ paths:
                 $ref: "#/components/schemas/APIError"
 
   /datasets:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns a list of datasets
       operationId: datasetsGet
@@ -186,6 +197,8 @@ paths:
                 $ref: "#/components/schemas/DatasetsReturn"
 
   /systems/{system_id}:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns system metadata info by id
       operationId: systemsGetById
@@ -258,6 +271,8 @@ paths:
                 example: "Success"
 
   /systems:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns a list of systems
       operationId: systemsGet
@@ -366,6 +381,8 @@ paths:
                 $ref: "#/components/schemas/APIError"
 
   /systems/{system_id}/outputs:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns a list of outputs of a particular system.
       operationId: systemOutputsGetById
@@ -401,6 +418,8 @@ paths:
                   $ref: "#/components/schemas/SystemOutput"
 
   /systems/{system_id}/cases:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: Returns a list of analysis cases of a particular system.
       operationId: systemCasesGetById
@@ -443,6 +462,8 @@ paths:
                   $ref: "#/components/schemas/AnalysisCase"
 
   /systems/analyses:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     post:
       summary: Returns analysis result(s) of one or multiple systems
       operationId: systemsAnalysesPost
@@ -491,6 +512,8 @@ paths:
                 $ref: "#/components/schemas/SystemAnalysesReturn"
 
   /info:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: |
         information for environment identifier, backend version, login URL, etc.
@@ -513,7 +536,10 @@ paths:
                   api_version:
                     type: string
                 required: [env, auth_url, api_version]
+
   /user:
+    parameters:
+      - $ref: '#/components/parameters/APIVersionHeader'
     get:
       summary: get user info
       operationId: userGet
@@ -535,6 +561,14 @@ components:
       type: http
       scheme: bearer
       description: use JWT to authenticate (for web app only)
+
+  parameters:
+    APIVersionHeader:
+      in: header
+      name: X-API-version
+      description: The api client version used by the CLI client.
+      schema:
+        type: string
 
   schemas:
     # The schema for primitive types do not get generated well in flask.
