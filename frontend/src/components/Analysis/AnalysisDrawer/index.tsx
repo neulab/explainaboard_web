@@ -273,7 +273,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
         base64: true,
       });
     }
-    zip.generateAsync({ type: "blob" }).then(function (content) {
+    zip.generateAsync({ type: "blob" }).then(function (content: Blob) {
       fileSaver.saveAs(content, zipFileName);
     });
   }
