@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Drawer, Spin, Tooltip } from "antd";
+import { Button, Drawer, Space, Spin, Tooltip } from "antd";
 import { SystemModel } from "../../../models";
 import { ErrorBoundary, AnalysisReport } from "../../../components";
 import { PageState } from "../../../utils";
@@ -261,10 +261,19 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
       closable={pageState !== PageState.loading}
       maskClosable={pageState !== PageState.loading}
       extra={
-        <AnalysisButton
-          disabled={!bucketInfoUpdated}
-          onClick={() => setShouldUpdateAnalysis(true)}
-        />
+        <Space>
+          <Button
+            type="link"
+            target="_blank"
+            href="https://github.com/neulab/ExplainaBoard/blob/main/docs/supported_metrics.md"
+          >
+            Metric Description
+          </Button>
+          <AnalysisButton
+            disabled={!bucketInfoUpdated}
+            onClick={() => setShouldUpdateAnalysis(true)}
+          />
+        </Space>
       }
     >
       {/* The analysis report is expected to fail if a user selects systems with different datasets.
