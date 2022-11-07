@@ -1,6 +1,15 @@
-import { Radio, RadioChangeEvent, Space, Typography } from "antd";
+import {
+  Drawer,
+  DrawerProps,
+  Radio,
+  RadioChangeEvent,
+  Space,
+  Typography,
+} from "antd";
 import React, { useState } from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
+
+export const showCliCodeKey = "showCliCode";
 
 export type CodeGenFields = {
   task: string;
@@ -60,37 +69,55 @@ const getCodeFuncs: {
 const defaultLang = "python";
 const supportedLangs = ["python", "bash"];
 
-type Props = {
+interface Props extends DrawerProps {
   codeGenFields: CodeGenFields;
-};
+  visible: boolean;
+  onClose: () => void;
+}
 
-export default function ClientCodeDisplay({ codeGenFields }: Props) {
+export default function ClientCodeDisplay({
+  codeGenFields,
+  visible = false,
+  onClose,
+}: Props) {
   const [language, setLanguage] = useState<string>(defaultLang);
   const handleSizeChange = (e: RadioChangeEvent) => {
     setLanguage(e.target.value);
   };
 
-  return (
-    <Space direction="vertical" style={{ width: "30vw" }}>
-      <Typography.Title level={5}>
-        Submit With Command Line Client
-      </Typography.Title>
+  function closeAndSaveOption() {
+    localStorage.setItem(showCliCodeKey, "false");
+    onClose();
+  }
 
-      <Radio.Group value={language} onChange={handleSizeChange}>
-        {supportedLangs.map((lang) => (
-          <Radio.Button key={lang} value={lang}>
-            {lang}
-          </Radio.Button>
-        ))}
-      </Radio.Group>
-      <CopyBlock
-        language={language}
-        text={getCodeFuncs[language](codeGenFields)}
-        showLineNumbers
-        theme={dracula}
-        wrapLines={true}
-        codeBlock
-      />
-    </Space>
+  return (
+    <Drawer
+      visible={visible}
+      onClose={closeAndSaveOption}
+      mask={false}
+      maskClosable={false}
+    >
+      <Space direction="vertical" style={{ width: "30vw" }}>
+        <Typography.Title level={5}>
+          Submit With Command Line Client
+        </Typography.Title>
+
+        <Radio.Group value={language} onChange={handleSizeChange}>
+          {supportedLangs.map((lang) => (
+            <Radio.Button key={lang} value={lang}>
+              {lang}
+            </Radio.Button>
+          ))}
+        </Radio.Group>
+        <CopyBlock
+          language={language}
+          text={getCodeFuncs[language](codeGenFields)}
+          showLineNumbers
+          theme={dracula}
+          wrapLines={true}
+          codeBlock
+        />
+      </Space>
+    </Drawer>
   );
 }
