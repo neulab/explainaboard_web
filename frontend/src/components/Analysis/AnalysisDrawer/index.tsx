@@ -14,6 +14,9 @@ import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 import ReactGA from "react-ga4";
 import { AnalysisButton } from "./AnalysisButton";
 import { FallbackUI } from "./FallbackUI";
+import { DownloadAnalysisButton } from "./DownloadAnalysisButton";
+import JSZip from "jszip";
+import fileSaver from "file-saver";
 
 interface Props {
   /** systems to display */
@@ -36,6 +39,9 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   }>({});
   const [bucketInfoUpdated, setBucketInfoUpdated] = useState<boolean>(false);
+  const [chartFiles, setCharFiles] = useState<{
+    [imgName: string]: string;
+  }>({});
 
   /**
    * Derive task from the first system. If multiple systems are selected,
@@ -187,6 +193,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
 
   function closeSystemAnalysis() {
     // set to true so analysis is performed next time when drawer is opened
+    setCharFiles({});
     setShouldUpdateAnalysis(true);
     closeDrawer();
     setSystemAnalysesReturn(undefined);
@@ -229,6 +236,12 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
     );
   }
 
+  function addChartFile(imgName: string, base64File: string) {
+    const tmp = chartFiles;
+    tmp[imgName] = base64File;
+    setCharFiles(tmp);
+  }
+
   function renderDrawerContent(): React.ReactElement {
     if (visible && systemAnalysesReturn) {
       return (
@@ -240,12 +253,29 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
           metricToSystemAnalysesParsed={metricToAnalyses}
           featureNameToBucketInfo={featureNameToBucketInfo}
           updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
+          addChartFile={addChartFile}
         />
       );
     }
     if (pageState === PageState.error)
       return <FallbackUI errorMessage={errorMessage} />;
     return <div style={{ height: "50vh" }} />;
+  }
+
+  function downloadAnalysis() {
+    const zip = new JSZip();
+    const zipFileName =
+      "ExplainaBoard_Analysis_" +
+      systems.map((sys) => sys.system_name).join("_") +
+      ".zip";
+    for (const fileName of Object.keys(chartFiles)) {
+      zip.file(fileName + ".png", chartFiles[fileName].split("base64,")[1], {
+        base64: true,
+      });
+    }
+    zip.generateAsync({ type: "blob" }).then(function (content) {
+      fileSaver.saveAs(content, zipFileName);
+    });
   }
 
   return (
@@ -261,10 +291,16 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
       closable={pageState !== PageState.loading}
       maskClosable={pageState !== PageState.loading}
       extra={
-        <AnalysisButton
-          disabled={!bucketInfoUpdated}
-          onClick={() => setShouldUpdateAnalysis(true)}
-        />
+        <div>
+          <DownloadAnalysisButton
+            disabled={pageState === PageState.loading}
+            onClick={() => downloadAnalysis()}
+          />{" "}
+          <AnalysisButton
+            disabled={!bucketInfoUpdated}
+            onClick={() => setShouldUpdateAnalysis(true)}
+          />
+        </div>
       }
     >
       {/* The analysis report is expected to fail if a user selects systems with different datasets.
