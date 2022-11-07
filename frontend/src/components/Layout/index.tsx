@@ -1,10 +1,12 @@
 import React, { ReactNode, useState } from "react";
-import { Layout as AntdLayout, Menu } from "antd";
+import { Dropdown, Layout as AntdLayout, Menu, Typography } from "antd";
 import { Route } from "../../routes";
 import "./index.css";
+import logo from "../../logo-simple.png";
 import { useHistory, useLocation } from "react-router";
 import { useEnv } from "..";
 import { UserPanel } from "../UserPanel";
+import { GithubFilled } from "@ant-design/icons";
 
 interface Props {
   routes: Route[];
@@ -41,16 +43,44 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
     else setOpenMenus([...openMenus, menuKey]);
   };
 
+  const githubMenu = (
+    <Menu>
+      <Menu.Item key="CLI">
+        <Typography.Link
+          href={"https://github.com/neulab/explainaboard_client"}
+          target="_blank"
+        >
+          Client
+        </Typography.Link>
+      </Menu.Item>
+      <Menu.Item key="SDK">
+        <Typography.Link
+          href={"https://github.com/neulab/ExplainaBoard"}
+          target="_blank"
+        >
+          SDK
+        </Typography.Link>
+      </Menu.Item>
+    </Menu>
+  );
+
   return (
     <AntdLayout style={{ minHeight: "100vh" }}>
       <AntdLayout.Sider collapsible collapsed={collapsed} onCollapse={toggle}>
-        <div className="logo">ExplainaBoard</div>
         <Menu
           theme="dark"
           mode="inline"
           selectedKeys={selectedMenus}
           openKeys={openMenus}
         >
+          <Menu.Item
+            key={"logo"}
+            icon={<img src={logo} alt="" style={{ height: "20px" }} />}
+            onClick={() => history.push("/")}
+            style={{ height: "44px" }}
+          >
+            <div className="site-title">ExplainaBoard</div>
+          </Menu.Item>
           {routes
             .filter(({ hideFromMenu }) => !hideFromMenu)
             .map(({ path, icon, title, subroutes }) => {
@@ -92,6 +122,13 @@ export const Layout: React.FC<Props> = ({ routes, children }) => {
       <AntdLayout className="site-layout">
         <AntdLayout.Header className="site-layout-header">
           <div className="header-items-container">
+            <div className="header-icon">
+              <Dropdown overlay={githubMenu} placement="bottom">
+                <div>
+                  <GithubFilled />
+                </div>
+              </Dropdown>
+            </div>
             <div style={{ paddingRight: "10px" }}>
               {env === "development" && "(development environment)"}
             </div>
