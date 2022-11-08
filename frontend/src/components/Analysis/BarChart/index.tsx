@@ -81,7 +81,6 @@ export function BarChart(props: Props) {
 
     for (let j = 0; j < seriesData.length; j++) {
       globalMaxValue = Math.max(globalMaxValue, seriesData[j]);
-      console.log("globalMaxValue", globalMaxValue);
       const x = xAxisData[j];
 
       if (j < confidenceScores.length) {
