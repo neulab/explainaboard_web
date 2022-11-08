@@ -555,14 +555,19 @@ export function SystemSubmitDrawer(props: Props) {
       footer={footer}
       onClose={closeAllDrawers}
       visible={visible}
+      push={{ distance: "400" }}
       {...rest}
     >
+      <ClientCodeDisplay
+        codeGenFields={codeGenFields}
+        visible={cliCodeVisible && !editMode}
+        mask={false}
+        maskClosable={false}
+        width={400}
+        onClose={() => setCliCodeVisible(!cliCodeVisible)}
+      />
+
       <Spin spinning={state === State.loading} tip="processing...">
-        <ClientCodeDisplay
-          codeGenFields={codeGenFields}
-          visible={cliCodeVisible && !editMode}
-          onClose={() => setCliCodeVisible(!cliCodeVisible)}
-        />
         <Form
           labelCol={{ span: 7 }}
           onFinish={submit}

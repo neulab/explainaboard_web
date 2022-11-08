@@ -79,6 +79,7 @@ export default function ClientCodeDisplay({
   codeGenFields,
   visible = false,
   onClose,
+  ...rest
 }: Props) {
   const [language, setLanguage] = useState<string>(defaultLang);
   const handleSizeChange = (e: RadioChangeEvent) => {
@@ -91,13 +92,8 @@ export default function ClientCodeDisplay({
   }
 
   return (
-    <Drawer
-      visible={visible}
-      onClose={closeAndSaveOption}
-      mask={false}
-      maskClosable={false}
-    >
-      <Space direction="vertical" style={{ width: "30vw" }}>
+    <Drawer visible={visible} onClose={closeAndSaveOption} {...rest}>
+      <Space direction="vertical">
         <Typography.Title level={5}>
           Submit With Command Line Client
         </Typography.Title>
@@ -112,10 +108,7 @@ export default function ClientCodeDisplay({
         <CopyBlock
           language={language}
           text={getCodeFuncs[language](codeGenFields)}
-          showLineNumbers
           theme={dracula}
-          wrapLines={true}
-          codeBlock
         />
       </Space>
     </Drawer>
