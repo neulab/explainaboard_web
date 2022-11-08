@@ -33,6 +33,7 @@ import { SystemModel } from "../../models";
 import "./index.css";
 
 const { TextArea } = Input;
+const { Text, Link } = Typography;
 
 interface Props extends DrawerProps {
   systemToEdit?: SystemModel;
@@ -629,6 +630,7 @@ export function SystemSubmitDrawer(props: Props) {
           <Form.Item
             label="Metrics"
             name="metric_names"
+            tooltip="The metrics that are used to evaluate each system."
             rules={editMode ? [] : [{ required: true }]}
             hidden={editMode}
           >
@@ -644,12 +646,16 @@ export function SystemSubmitDrawer(props: Props) {
                   )}
                 />
               </Form.Item>
-              <Typography.Link
-                target="_blank"
-                href="https://github.com/neulab/ExplainaBoard/blob/main/docs/supported_metrics.md"
-              >
-                Metric Description
-              </Typography.Link>
+              <Text>
+                <Link
+                  target="_blank"
+                  href="https://github.com/neulab/ExplainaBoard/blob/main/docs/supported_metrics.md"
+                >
+                  Click here&nbsp;
+                </Link>
+                to see a list of metrics supported for each task, along with
+                detailed descriptions.
+              </Text>
             </Space>
           </Form.Item>
 
