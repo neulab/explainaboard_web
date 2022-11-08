@@ -4,9 +4,7 @@ import {
   SingleAnalysis,
   AnalysisResult,
   Performance,
-  Analysis,
 } from "../../clients/openapi";
-import { SystemModel } from "../../models";
 
 export function initParsedResult(
   metricName: string,
@@ -170,10 +168,9 @@ export function parseBucketAnalysisFeatures(
  * results that can be accessed in the format:
  * > value[metric_name : string][analysis_name : int][system_id : int]
  */
-export function parseFineGrainedResults(
-  systems: SystemModel[],
-  singleAnalyses: SingleAnalysis[]
-): { [metric: string]: { [feature: string]: ResultFineGrainedParsed[] } } {
+export function parseFineGrainedResults(singleAnalyses: SingleAnalysis[]): {
+  [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
+} {
   const parsedResults: {
     [metric: string]: {
       [analysis: string]: ResultFineGrainedParsed[];
@@ -182,37 +179,32 @@ export function parseFineGrainedResults(
   const parsedComboAnalyses: ResultFineGrainedParsed[] = [];
 
   // Loop through each system analysis and parse
-  for (let systemIdx = 0; systemIdx < systems.length; systemIdx++) {
-    const system = systems[systemIdx];
-    const singleAnalysis: SingleAnalysis = singleAnalyses[systemIdx];
-
+  for (const { system_info, analysis_results } of singleAnalyses) {
     for (
       let analysisIdx = 0;
-      analysisIdx < singleAnalysis.analysis_results.length;
+      analysisIdx < analysis_results.length;
       analysisIdx++
     ) {
-      const myResult = singleAnalysis.analysis_results[analysisIdx];
+      const myResult = analysis_results[analysisIdx];
       const analysisFeature =
         myResult.cls_name === "BucketAnalysisResult"
           ? myResult.name
           : myResult.features.sort().join();
       // Find the analysis setting for the system analysis
       // Analysis results may not be in the same order or size as analysis settings
-      const myAnalysis: Analysis | undefined = system.system_info.analyses.find(
-        (analysis) => {
-          if (myResult.cls_name === "BucketAnalysisResult") {
-            return (
-              analysis.cls_name === "BucketAnalysis" &&
-              analysis.feature === analysisFeature
-            );
-          } else {
-            return (
-              analysis.cls_name === "ComboCountAnalysis" &&
-              analysis.features.sort().join() === analysisFeature
-            );
-          }
+      const myAnalysis = system_info.analyses.find((analysis) => {
+        if (myResult.cls_name === "BucketAnalysisResult") {
+          return (
+            analysis.cls_name === "BucketAnalysis" &&
+            analysis.feature === analysisFeature
+          );
+        } else {
+          return (
+            analysis.cls_name === "ComboCountAnalysis" &&
+            analysis.features.sort().join() === analysisFeature
+          );
         }
-      );
+      });
 
       const analysisName = myResult.name;
       const analysisDescription = myAnalysis?.description || analysisName;
@@ -264,7 +256,7 @@ export function parseFineGrainedResults(
     for (const [feature, metricFeatureResults] of Object.entries(
       metricResults
     )) {
-      if (metricFeatureResults.length !== systems.length) {
+      if (metricFeatureResults.length !== singleAnalyses.length) {
         throw new Error(
           `found metric=${metric}, feature=${feature} for some but not all systems`
         );

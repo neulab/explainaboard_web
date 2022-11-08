@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Optional, TypeVar
+from typing import TypeVar
 
 from bson.objectid import InvalidId, ObjectId
 from explainaboard_web.impl.db import get_db
@@ -19,20 +21,11 @@ class DBCollection:
 class DBUtils:
 
     # Names of DBs or collections
-    SYSTEM_OUTPUT_COLLECTION_DB = "system_output_collections_v012"
     SYSTEM_OUTPUT_COLLECTION_PREFIX = "system_outputs"
     DEV_SYSTEM_METADATA = DBCollection(
         db_name="metadata", collection_name="system_metadata_v012"
     )
     USER_METADATA = DBCollection(db_name="metadata", collection_name="user_metadata")
-
-    @staticmethod
-    def get_system_output_collection(system_id: str) -> DBCollection:
-        return DBCollection(
-            db_name=DBUtils.SYSTEM_OUTPUT_COLLECTION_DB,
-            collection_name=f"{DBUtils.SYSTEM_OUTPUT_COLLECTION_PREFIX}"
-            f"_{system_id[0:3]}",
-        )
 
     @staticmethod
     def get_database(db_name: str):
@@ -88,7 +81,10 @@ class DBUtils:
 
     @staticmethod
     def find_one_by_id(
-        collection: DBCollection, docid: str, projection: Optional[dict] = None
+        collection: DBCollection,
+        docid: str,
+        projection: dict | None = None,
+        session: ClientSession | None = None,
     ):
         """
         Find and return a document with the _id field
@@ -102,11 +98,16 @@ class DBUtils:
             """Mongo accepts custom ID"""
             _id = docid
         finally:
-            return DBUtils.get_collection(collection).find_one({"_id": _id}, projection)
+            return DBUtils.get_collection(collection).find_one(
+                {"_id": _id}, projection, session=session
+            )
 
     @staticmethod
     def update_one_by_id(
-        collection: DBCollection, docid: str, field_to_value: dict
+        collection: DBCollection,
+        docid: str,
+        field_to_value: dict,
+        session: ClientSession | None = None,
     ) -> bool:
         """
         Update a document with the _id field
@@ -117,7 +118,7 @@ class DBUtils:
         """
         try:
             result: UpdateResult = DBUtils.get_collection(collection).update_one(
-                {"_id": ObjectId(docid)}, {"$set": field_to_value}
+                {"_id": ObjectId(docid)}, {"$set": field_to_value}, session=session
             )
             if int(result.modified_count) == 1:
                 return True
@@ -179,11 +180,11 @@ class DBUtils:
     @staticmethod
     def find(
         collection: DBCollection,
-        filt: Optional[dict] = None,
-        sort: Optional[list] = None,
+        filt: dict | None = None,
+        sort: list | None = None,
         skip=0,
         limit: int = 10,
-        projection: Optional[dict] = None,
+        projection: dict | None = None,
     ) -> tuple[Cursor, int]:
         """
         Find multiple documents

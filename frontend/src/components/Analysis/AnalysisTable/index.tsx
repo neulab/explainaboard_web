@@ -179,7 +179,6 @@ export function AnalysisTable({
 }: Props) {
   const [page, setPage] = useState(0);
   const [systemOutputs, setSystemOutputs] = useState<SystemOutput[]>([]);
-  const [casesThisPage, setCasesThisPage] = useState<AnalysisCase[]>([]);
   const pageSize = 10;
   const total = cases.length;
   const tableRef = useRef<null | HTMLDivElement>(null);
@@ -188,21 +187,20 @@ export function AnalysisTable({
     setPage(0);
   }, [cases]);
 
+  const offset = page * pageSize;
+  const end = Math.min(offset + pageSize, cases.length);
+
   useEffect(() => {
     async function refreshSystemOutputs() {
       changeState(PageState.loading);
       try {
-        const offset = page * pageSize;
-        const end = Math.min(offset + pageSize, cases.length);
-        const casesThisPage = cases.slice(offset, end);
-        const outputIDs = casesThisPage.map((x) => x.sample_id);
+        const outputIDs = cases.slice(offset, end).map((x) => x.sample_id);
 
         const result = await backendClient.systemOutputsGetById(
           systemIDs[0],
           outputIDs
         );
 
-        setCasesThisPage(casesThisPage);
         setSystemOutputs(result);
       } catch (e) {
         console.log("error", e);
@@ -232,10 +230,10 @@ export function AnalysisTable({
     users will not experience a delay due to the async API call.
     */
     tableRef.current?.scrollIntoView();
-  }, [page, pageSize, cases, changeState, systemIDs, task]);
+  }, [page, pageSize, cases, changeState, systemIDs, task, offset, end]);
 
   // other fields
-  if (casesThisPage.length === 0) {
+  if (systemOutputs.length === 0) {
     return <div>System outputs will display here.</div>;
   }
 
@@ -244,6 +242,7 @@ export function AnalysisTable({
   let colInfo;
   const numSystems = systemIDs.length;
   const taskCols = taskColumnMapping.get(task);
+  const casesThisPage = cases.slice(offset, end);
   if (seqLabTasks.includes(task)) {
     dataSource = specifyDataSeqLab(systemOutputs, casesThisPage, columns);
   } else if (taskCols !== undefined) {

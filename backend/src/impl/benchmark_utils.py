@@ -83,7 +83,7 @@ class BenchmarkUtils:
 
         systems = systems_return.systems
         for system in systems:
-            temp = system.system_info.to_dict()
+            temp = system.get_system_info().to_dict()
             # Don't include systems with no dataset
             if temp["dataset_name"] is not None:
                 temp["creator"] = system.creator.split("@")[0]

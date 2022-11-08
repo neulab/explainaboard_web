@@ -39,6 +39,8 @@ interface Props {
   title: string;
   seriesNames: string[];
   xAxisData: string[];
+  xAxisName: string;
+  yAxisName: string;
   seriesDataList: number[][];
   seriesLabelsList: number[][];
   confidenceScoresList: [number, number][][];
@@ -51,6 +53,8 @@ export function BarChart(props: Props) {
     title,
     seriesNames,
     xAxisData,
+    xAxisName,
+    yAxisName,
     seriesDataList,
     seriesLabelsList,
     numbersOfSamplesList,
@@ -189,7 +193,10 @@ export function BarChart(props: Props) {
                   decimalPlaces
                 )}, ${confidenceScores[dataIndex][1].toFixed(decimalPlaces)}]`
               : "";
-          let ret = `name: ${param.name} <br /> value: ${data} ${confidenceScoreRange}`;
+          const xAxisTickLabel = param.name.replace("|", "-");
+          let ret = `${xAxisName}: ${xAxisTickLabel} <br />\
+           mean value: ${data} <br />\
+           confidence interval: ${confidenceScoreRange}`;
           if (numbersOfSamples[dataIndex] > 0) {
             ret = `${ret} <br /> sample size: ${numbersOfSamples[dataIndex]}`;
           }
@@ -216,6 +223,7 @@ export function BarChart(props: Props) {
     ],
     yAxis: [
       {
+        name: yAxisName,
         type: "value",
         // TODO: get min max from SDK?
         // min: 0,

@@ -19,7 +19,7 @@ export function SystemsPage() {
         <title>ExplainaBoard - Systems</title>
       </Helmet>
       <PageHeader
-        onBack={() => history.goBack()}
+        onBack={() => history.push("/")}
         title="Systems"
         subTitle="All systems submitted by users"
         className="header"

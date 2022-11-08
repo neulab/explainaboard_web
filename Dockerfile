@@ -43,7 +43,7 @@ RUN /bin/bash ./openapi/gen_api_layer.sh backend \
 WORKDIR /app/backend/src/gen
 # Run app in production mode by default. Override this env to run in
 # development or in staging
-ENV FLASK_ENV production
+ENV EB_ENV production
 
 COPY --from=build-step /app/frontend/build /usr/share/nginx/html
 COPY deployment/nginx.conf /etc/nginx/sites-enabled/default

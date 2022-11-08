@@ -5,41 +5,31 @@ import logging
 import re
 import traceback
 from datetime import datetime
-from typing import Any
+from typing import Any, NamedTuple
 
 from bson import ObjectId
-from explainaboard import DatalabLoaderOption, FileType, Source, get_processor
-from explainaboard.loaders.file_loader import FileLoaderReturn
+from explainaboard import DatalabLoaderOption, FileType, Source
 from explainaboard.loaders.loader_registry import get_loader_class
-from explainaboard.serialization.legacy import general_to_dict
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils
-from explainaboard_web.impl.storage import get_storage
-from explainaboard_web.impl.utils import (
-    abort_with_error_message,
-    binarize_bson,
-    unbinarize_bson,
-)
+from explainaboard_web.impl.internal_models.system_model import SystemModel
+from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models import (
     AnalysisCase,
     System,
-    SystemInfo,
     SystemMetadata,
     SystemMetadataUpdatable,
     SystemOutput,
     SystemOutputProps,
-    SystemsReturn,
 )
 from pymongo.client_session import ClientSession
 
 
 class SystemDBUtils:
 
-    _EMAIL_RE = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
     _COLON_RE = r"^([A-Za-z0-9_-]+): (.+)$"
-    _SYSTEM_OUTPUT_CONST = "__SYSOUT__"
 
     @staticmethod
     def _parse_colon_line(line) -> tuple[str, str]:
@@ -82,67 +72,12 @@ class SystemDBUtils:
             document["system_details"] = parsed
 
     @staticmethod
-    def system_from_dict(
-        dikt: dict[str, Any], include_metric_stats: bool = False
-    ) -> System:
-        document: dict[str, Any] = dikt.copy()
-        if document.get("_id"):
-            document["system_id"] = str(document.pop("_id"))
-        if document.get("is_private") is None:
-            document["is_private"] = True
-
-        # Parse the shared users
-        shared_users = document.get("shared_users", None)
-        if shared_users is None or len(shared_users) == 0:
-            document.pop("shared_users", None)
-        else:
-            for user in shared_users:
-                if not re.fullmatch(SystemDBUtils._EMAIL_RE, user):
-                    abort_with_error_message(
-                        400, f"invalid email address for shared user {user}"
-                    )
-
-        metric_stats = []
-        if "metric_stats" in document:
-            metric_stats = document["metric_stats"]
-            document["metric_stats"] = []
-
-        # FIXME(lyuyang): The following for loop is added to work around an issue
-        # related to default values of models. Previously, the generated models
-        # don't enforce required attributes. This function exploits that loophole.
-        # Now that we have fixed that loophole, this function needs some major
-        # refactoring. None was assigned for these fields before implicitly. Now
-        # we assign them explicitly so this hack does not change the current
-        # behavior.
-        for required_field in (
-            "created_at",
-            "last_modified",
-            "system_id",
-            "system_info",
-            "metric_stats",
-        ):
-            if required_field not in document:
-                document[required_field] = None
-
-        if "system_tags" not in document:
-            document["system_tags"] = []
-
-        system = System.from_dict(document)
-        if include_metric_stats:
-            # Unbinarize to numpy array and set explicitly
-            system.metric_stats = [
-                [unbinarize_bson(y) for y in x] for x in metric_stats
-            ]
-        return system
-
-    @staticmethod
     def query_systems(
         query: list | dict,
         page: int,
         page_size: int,
         sort: list | None = None,
-        include_metric_stats: bool = False,
-    ):
+    ) -> FindSystemsReturn:
 
         permissions_list = [{"is_private": False}]
         if get_user().is_authenticated:
@@ -166,18 +101,14 @@ class SystemDBUtils:
         users = UserDBUtils.find_users(list(ids))
         id_to_preferred_username = {user.id: user.preferred_username for user in users}
 
-        systems: list[System] = []
-        if len(documents) == 0:
-            return SystemsReturn(systems, 0)
+        systems: list[SystemModel] = []
 
         for doc in documents:
             doc["preferred_username"] = id_to_preferred_username[doc["creator"]]
-            system = SystemDBUtils.system_from_dict(
-                doc, include_metric_stats=include_metric_stats
-            )
+            system = SystemModel.from_dict(doc)
             systems.append(system)
 
-        return SystemsReturn(systems, total)
+        return FindSystemsReturn(systems, total)
 
     @staticmethod
     def find_systems(
@@ -194,10 +125,9 @@ class SystemDBUtils:
         sort: list | None = None,
         creator: str | None = None,
         shared_users: list[str] | None = None,
-        include_metric_stats: bool = False,
         dataset_list: list[tuple[str, str, str]] | None = None,
         system_tags: list[str] | None = None,
-    ) -> SystemsReturn:
+    ) -> FindSystemsReturn:
         """find multiple systems that matches the filters"""
 
         search_conditions: list[dict[str, Any]] = []
@@ -236,32 +166,26 @@ class SystemDBUtils:
             ]
             search_conditions.append({"$or": dataset_dicts})
 
-        systems_return = SystemDBUtils.query_systems(
-            search_conditions,
-            page,
-            page_size,
-            sort,
-            include_metric_stats,
+        systems, total = SystemDBUtils.query_systems(
+            search_conditions, page, page_size, sort
         )
         if ids and not sort:
             # preserve id order if no `sort` is provided
             orders = {sys_id: i for i, sys_id in enumerate(ids)}
-            systems_return.systems.sort(key=lambda sys: orders[sys.system_id])
-        return systems_return
+            systems.sort(key=lambda sys: orders[sys.system_id])
+        return FindSystemsReturn(systems, total)
 
     @staticmethod
     def _load_sys_output(
-        system: System,
-        metadata: SystemMetadata,
+        system: SystemModel,
         system_output: SystemOutputProps,
         custom_dataset: SystemOutputProps | None,
-        dataset_custom_features: dict,
     ):
         """
         Load the system output from the uploaded file
         """
         if custom_dataset:
-            return get_loader_class(task=metadata.task)(
+            return get_loader_class(task=system.task)(
                 dataset_data=custom_dataset.data,
                 output_data=system_output.data,
                 dataset_source=Source.in_memory,
@@ -271,13 +195,13 @@ class SystemDBUtils:
             ).load()
         elif system.dataset:
             return (
-                get_loader_class(task=metadata.task)
+                get_loader_class(task=system.task)
                 .from_datalab(
                     dataset=DatalabLoaderOption(
                         system.dataset.dataset_name,
                         system.dataset.sub_dataset,
-                        metadata.dataset_split,
-                        custom_features=dataset_custom_features,
+                        system.dataset.split,
+                        custom_features=system.get_dataset_custom_features(),
                     ),
                     output_data=system_output.data,
                     output_file_type=FileType(system_output.file_type),
@@ -286,66 +210,6 @@ class SystemDBUtils:
                 .load()
             )
         raise ValueError("neither dataset or custom_dataset is available")
-
-    @staticmethod
-    def _process(
-        system: System,
-        metadata: SystemMetadata,
-        system_output_data: FileLoaderReturn,
-        custom_features: dict,
-        custom_analyses: list,
-    ):
-        processor = get_processor(metadata.task)
-        metrics_lookup = {
-            metric.name: metric
-            for metric in get_processor(metadata.task).full_metric_list()
-        }
-        metric_configs = []
-        for metric_name in metadata.metric_names:
-            if metric_name not in metrics_lookup:
-                abort_with_error_message(
-                    400, f"{metric_name} is not a supported metric"
-                )
-            metric_configs.append(metrics_lookup[metric_name])
-        processor_metadata = {
-            **metadata.to_dict(),
-            "dataset_name": system.dataset.dataset_name if system.dataset else None,
-            "sub_dataset_name": system.dataset.sub_dataset if system.dataset else None,
-            "dataset_split": metadata.dataset_split,
-            "task_name": metadata.task,
-            "metric_configs": metric_configs,
-            "custom_features": custom_features,
-            "custom_analyses": custom_analyses,
-        }
-
-        return processor.get_overall_statistics(
-            metadata=processor_metadata, sys_output=system_output_data.samples
-        )
-
-    @staticmethod
-    def _find_output_or_case_raw(
-        system_id: str, analysis_level: str, output_ids: list[int] | None
-    ) -> list[dict]:
-        filt: dict[str, Any] = {
-            "system_id": system_id,
-            "analysis_level": analysis_level,
-        }
-        output_collection = DBUtils.get_system_output_collection(system_id)
-        cursor, total = DBUtils.find(
-            collection=output_collection,
-            filt=filt,
-        )
-        if total != 1:
-            abort_with_error_message(
-                400, f"Could not find system outputs for {system_id}"
-            )
-        data = next(cursor)["data"]
-        sys_data_str = get_storage().download_and_decompress(data)
-        sys_data: list = json.loads(sys_data_str)
-
-        if output_ids is not None:
-            sys_data = [sys_data[x] for x in output_ids]
-        return sys_data
 
     @staticmethod
     def create_system(
@@ -363,6 +227,7 @@ class SystemDBUtils:
             user = get_user()
             system["creator"] = user.id
             system["preferred_username"] = user.preferred_username
+            system["created_at"] = system["last_modified"] = datetime.utcnow()
 
             if metadata.dataset_metadata_id:
                 if not metadata.dataset_split:
@@ -404,127 +269,33 @@ class SystemDBUtils:
             system.update(metadata.to_dict())
             # -- parse the system details if getting a string from the frontend
             SystemDBUtils._parse_system_details_in_doc(system, metadata)
-            return SystemDBUtils.system_from_dict(system)
+            return SystemModel.from_dict(system)
 
         system = _validate_and_create_system()
 
         try:
-            # -- find the dataset and grab custom features if they exist
-            dataset_custom_features = {}
-            if system.dataset:
-                dataset_info = DatasetDBUtils.find_dataset_by_id(
-                    system.dataset.dataset_id
-                )
-                if dataset_info and dataset_info.custom_features:
-                    dataset_custom_features = dict(dataset_info.custom_features)
-
             # -- load the system output into memory from the uploaded file(s)
             system_output_data = SystemDBUtils._load_sys_output(
-                system, metadata, system_output, custom_dataset, dataset_custom_features
+                system, system_output, custom_dataset
             )
-            system_custom_features: dict = (
-                system_output_data.metadata.custom_features or {}
-            )
-            custom_analyses: list = system_output_data.metadata.custom_analyses or []
-
-            # -- combine custom features from the two sources
-            custom_features = dict(system_custom_features)
-            custom_features.update(dataset_custom_features)
-
-            # -- do the actual analysis and binarize the metric stats
-            overall_statistics = SystemDBUtils._process(
-                system, metadata, system_output_data, custom_features, custom_analyses
-            )
-            binarized_stats = [
-                [binarize_bson(y.get_data()) for y in x]
-                for x in overall_statistics.metric_stats
-            ]
-
-            # -- add the analysis results to the system object
-            sys_info = overall_statistics.sys_info
-            system.system_info = SystemInfo.from_dict(sys_info.to_dict())
-            system.metric_stats = binarized_stats
-
-            if sys_info.analysis_levels and sys_info.results.overall:
-                # store overall metrics in the DB so they can be queried
-                for level, result in zip(
-                    sys_info.analysis_levels, sys_info.results.overall
-                ):
-                    system.results[level.name] = {}
-                    for metric_result in result:
-                        system.results[level.name][
-                            metric_result.metric_name
-                        ] = metric_result.value
-
-            def db_operations(session: ClientSession) -> str:
-                # Insert system
-                system.created_at = system.last_modified = datetime.utcnow()
-                document = general_to_dict(system)
-                document.pop("system_id")
-                document.pop("preferred_username")
-                system_id = DBUtils.insert_one(
-                    DBUtils.DEV_SYSTEM_METADATA, document, session=session
-                )
-                # Compress the system output and upload to Cloud Storage
-                insert_list = []
-                sample_list = [general_to_dict(v) for v in system_output_data.samples]
-
-                blob_name = f"{system_id}/{SystemDBUtils._SYSTEM_OUTPUT_CONST}"
-                get_storage().compress_and_upload(
-                    blob_name,
-                    json.dumps(sample_list),
-                )
-                insert_list.append(
-                    {
-                        "system_id": system_id,
-                        "analysis_level": SystemDBUtils._SYSTEM_OUTPUT_CONST,
-                        "data": blob_name,
-                    }
-                )
-                # Compress analysis cases
-                for i, (analysis_level, analysis_cases) in enumerate(
-                    zip(
-                        overall_statistics.sys_info.analysis_levels,
-                        overall_statistics.analysis_cases,
-                    )
-                ):
-                    case_list = [general_to_dict(v) for v in analysis_cases]
-
-                    blob_name = f"{system_id}/{analysis_level.name}"
-                    get_storage().compress_and_upload(blob_name, json.dumps(case_list))
-                    insert_list.append(
-                        {
-                            "system_id": system_id,
-                            "analysis_level": analysis_level.name,
-                            "data": blob_name,
-                        }
-                    )
-                # Insert system output and analysis cases
-                output_collection = DBUtils.get_system_output_collection(system_id)
-                result = DBUtils.insert_many(
-                    output_collection, insert_list, False, session
-                )
-                if not result:
-                    abort_with_error_message(
-                        400, f"failed to insert outputs for {system_id}"
-                    )
-                return system_id
-
-            # -- perform upload to the DB
-            system_id = DBUtils.execute_transaction(db_operations)
-            system.system_id = system_id
-
-            # -- replace things that can't be returned through JSON for now
-            system.metric_stats = []
-
-            # -- return the system
-            return system
         except ValueError as e:
             traceback.print_exc()
             abort_with_error_message(400, str(e))
             # mypy doesn't seem to understand the NoReturn type in an except block.
             # It's a noop to fix it
             raise e
+        else:
+
+            def db_operations(session: ClientSession) -> None:
+                system.save_to_db(session)
+                system.save_system_output(system_output_data, session)
+                try:
+                    system.update_overall_statistics(session)
+                except ValueError as e:
+                    abort_with_error_message(400, str(e))
+
+            DBUtils.execute_transaction(db_operations)
+            return system
 
     @staticmethod
     def update_system_by_id(system_id: str, metadata: SystemMetadataUpdatable) -> bool:
@@ -559,7 +330,7 @@ class SystemDBUtils:
                 500, "system creator ID not found in DB, please contact the sysadmins"
             )
         sys_doc["preferred_username"] = user.preferred_username
-        system = SystemDBUtils.system_from_dict(sys_doc)
+        system = SystemModel.from_dict(sys_doc)
         return system
 
     @staticmethod
@@ -581,9 +352,11 @@ class SystemDBUtils:
         """
         find multiple system outputs whose ids are in output_ids
         """
-        sys_data = SystemDBUtils._find_output_or_case_raw(
-            str(system_id), SystemDBUtils._SYSTEM_OUTPUT_CONST, output_ids
-        )
+        system = SystemDBUtils.find_system_by_id(system_id)
+        try:
+            sys_data = system.get_raw_system_outputs(output_ids)
+        except ValueError:
+            abort_with_error_message(400, "invalid output_ids")
         return [SystemDBUtils.system_output_from_dict(doc) for doc in sys_data]
 
     @staticmethod
@@ -593,39 +366,23 @@ class SystemDBUtils:
         """
         find multiple system outputs whose ids are in case_ids
         """
-        sys_data = SystemDBUtils._find_output_or_case_raw(
-            str(system_id), level, case_ids
-        )
+        system = SystemDBUtils.find_system_by_id(system_id)
+        try:
+            sys_data = system.get_raw_analysis_cases(level, case_ids)
+        except ValueError:
+            abort_with_error_message(400, "invalid case_ids")
         return [SystemDBUtils.analysis_case_from_dict(doc) for doc in sys_data]
 
     @staticmethod
-    def delete_system_by_id(system_id: str):
+    def delete_system_by_id(system_id: str) -> None:
+        """aborts if the system does not exist or if the user doesn't have permission"""
         user = get_user()
-        if not user.is_authenticated:
-            abort_with_error_message(401, "log in required")
+        sys = SystemDBUtils.find_system_by_id(system_id)
+        if sys.creator != user.id:
+            abort_with_error_message(403, "you can only delete your own systems")
+        sys.delete()
 
-        def db_operations(session: ClientSession) -> bool:
-            """TODO: add logging if error"""
-            sys = SystemDBUtils.find_system_by_id(system_id)
-            if sys.creator != user.id:
-                abort_with_error_message(403, "you can only delete your own systems")
-            result = DBUtils.delete_one_by_id(
-                DBUtils.DEV_SYSTEM_METADATA, system_id, session=session
-            )
-            if not result:
-                abort_with_error_message(400, f"failed to delete system {system_id}")
 
-            # remove system outputs
-            output_collection = DBUtils.get_system_output_collection(system_id)
-            filt = {"system_id": system_id}
-            outputs, _ = DBUtils.find(output_collection, filt, limit=0)
-            data_blob_names = [output["data"] for output in outputs]
-            DBUtils.delete_many(output_collection, filt, session=session)
-
-            # Delete system output objects from Storage. This needs to be the last step
-            # because we are using transaction support from MongoDB and we cannot roll
-            # back an operation on Cloud Storage.
-            get_storage().delete(data_blob_names)
-            return True
-
-        return DBUtils.execute_transaction(db_operations)
+class FindSystemsReturn(NamedTuple):
+    systems: list[SystemModel]
+    total: int

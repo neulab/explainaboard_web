@@ -24,11 +24,16 @@ from explainaboard_web.impl.auth import User as authUser
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
+from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.language_code import get_language_codes
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
-from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
+from explainaboard_web.impl.utils import (
+    abort_with_error_message,
+    decode_base64,
+    get_api_version,
+)
 from explainaboard_web.models import (
     Benchmark,
     BenchmarkConfig,
@@ -50,6 +55,7 @@ from explainaboard_web.models.task_category import TaskCategory
 from explainaboard_web.models.user import User as modelUser
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
+from pymongo.client_session import ClientSession
 
 
 def _is_creator(system: System, user: authUser) -> bool:
@@ -82,18 +88,10 @@ def _has_read_access(system: System) -> bool:
 
 @lru_cache(maxsize=None)
 def info_get():
-    api_version = None
-    with open("explainaboard_web/swagger/swagger.yaml") as f:
-        for line in f:
-            if line.startswith("  version: "):
-                api_version = line[len("version: ") + 1 : -1].strip()
-                break
-    if not api_version:
-        raise RuntimeError("failed to extract API version")
     return {
-        "env": os.getenv("FLASK_ENV"),
+        "env": os.getenv("EB_ENV"),
         "auth_url": current_app.config.get("AUTH_URL"),
-        "api_version": api_version,
+        "api_version": get_api_version(),
     }
 
 
@@ -296,7 +294,7 @@ def systems_get(
 
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
-    return SystemDBUtils.find_systems(
+    systems, total = SystemDBUtils.find_systems(
         page=page,
         page_size=page_size,
         system_name=system_name,
@@ -309,6 +307,7 @@ def systems_get(
         shared_users=shared_users,
         system_tags=system_tags,
     )
+    return SystemsReturn(systems, total)
 
 
 def systems_post(body: SystemCreateProps) -> System:
@@ -393,10 +392,8 @@ def system_cases_get_by_id(
 
 
 def systems_delete_by_id(system_id: str):
-    success = SystemDBUtils.delete_system_by_id(system_id)
-    if success:
-        return "Success"
-    abort_with_error_message(400, f"cannot find system_id: {system_id}")
+    SystemDBUtils.delete_system_by_id(system_id)
+    return "Success"
 
 
 def systems_analyses_post(body: SystemsAnalysesBody):
@@ -407,33 +404,35 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     system_ids: list = system_ids_str.split(",")
     page = 0
     page_size = len(system_ids)
-    systems: list[System] = SystemDBUtils.find_systems(
-        ids=system_ids,
-        page=page,
-        page_size=page_size,
-        include_metric_stats=True,
+    systems = SystemDBUtils.find_systems(
+        ids=system_ids, page=page, page_size=page_size
     ).systems
-    systems_len = len(systems)
-    if systems_len == 0:
+    if len(systems) == 0:
         return SystemAnalysesReturn(system_analyses)
+
+    def update_overall_statistics(session: ClientSession) -> None:
+        for sys in systems:
+            # refresh overall_statistics if it is outdated
+            sys.update_overall_statistics(session=session)
+
+    DBUtils.execute_transaction(update_overall_statistics)
 
     # performance significance test if there are two systems
     sig_info = []
     if len(systems) == 2:
-
-        system1_info: SystemInfo = systems[0].system_info
+        system1_info: SystemInfo = systems[0].get_system_info()
         system1_info_dict = general_to_dict(system1_info)
         system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
 
         system1_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[0].metric_stats[0]
+            SimpleMetricStats(stat) for stat in systems[0].get_metric_stats()[0]
         ]
 
-        system2_info: SystemInfo = systems[1].system_info
+        system2_info: SystemInfo = systems[1].get_system_info()
         system2_info_dict = general_to_dict(system2_info)
         system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
         system2_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[1].metric_stats[0]
+            SimpleMetricStats(stat) for stat in systems[1].get_metric_stats()[0]
         ]
 
         sig_info = pairwise_significance_test(
@@ -444,7 +443,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
     for system in systems:
-        system_info: SystemInfo = system.system_info
+        system_info = system.get_system_info()
         system_info_dict = general_to_dict(system_info)
         system_output_info = SysOutputInfo.from_dict(system_info_dict)
 
@@ -469,12 +468,14 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
         processor = get_processor(TaskType(system_output_info.task_name))
-        metric_stats = [[SimpleMetricStats(y) for y in x] for x in system.metric_stats]
+        metric_stats = [
+            [SimpleMetricStats(y) for y in x] for x in system.get_metric_stats()
+        ]
 
         # Get analysis cases
         analysis_cases = []
         case_ids = None
-        for i, analysis_level in enumerate(system.system_info.analysis_levels):
+        for analysis_level in system.get_system_info().analysis_levels:
             level_cases = SystemDBUtils.find_analysis_cases(
                 system_id=system.system_id,
                 level=analysis_level.name,
@@ -491,7 +492,10 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             metric_stats,
             skip_failed_analyses=True,
         )
-        single_analysis = SingleAnalysis(analysis_results=processor_result)
+        single_analysis = SingleAnalysis(
+            system_info=system_info,
+            analysis_results=processor_result,
+        )
         system_analyses.append(single_analysis)
 
     return SystemAnalysesReturn(system_analyses, sig_info)

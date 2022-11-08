@@ -345,7 +345,7 @@ export function SystemSubmitDrawer(props: Props) {
         const err = await parseBackendError(e);
         message.error(err.getErrorMsg());
       } else {
-        console.dir(e);
+        console.error(e);
         message.error("[InternalError] Please contact admin");
       }
     } finally {
