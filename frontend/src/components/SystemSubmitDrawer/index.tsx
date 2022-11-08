@@ -118,7 +118,10 @@ const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
 /**
  * Parse the form into fields so that client code generator can recognize
  */
-function parseFormFields(formData: Partial<FormData>): CodeGenFields {
+function parseFormFields(
+  formData: Partial<FormData>,
+  useCustomDataset: boolean
+): CodeGenFields {
   let names: string[] = [];
   if (formData.sys_out_file?.sysNames) {
     names = Object.values(formData.sys_out_file.sysNames);
@@ -129,8 +132,14 @@ function parseFormFields(formData: Partial<FormData>): CodeGenFields {
     system_names: names,
     system_output_file_type: formData.sys_out_file?.fileType || "",
     dataset: formData.dataset?.datasetID || "",
+    use_custom_dataset: useCustomDataset,
+    custom_dataset_file_type: formData.custom_dataset_file?.fileType || "",
     split: formData.dataset?.split || "",
+    metric_names: formData.metric_names || [],
     source_language: formData.source_language || "",
+    target_language: formData.target_language || "",
+    shared_users: formData.shared_users || [],
+    public: !formData.is_private,
   };
 }
 
@@ -155,7 +164,7 @@ export function SystemSubmitDrawer(props: Props) {
   const [otherTargetLang, setOtherTargetLang] = useState(false);
   const [form] = useForm<FormData>();
   const [codeGenFields, setCodeGenFields] = useState(
-    parseFormFields(form.getFieldsValue())
+    parseFormFields(form.getFieldsValue(), useCustomDataset)
   );
   const [cliCodeVisible, setCliCodeVisible] = useState<boolean>(false);
 
@@ -453,7 +462,10 @@ export function SystemSubmitDrawer(props: Props) {
       }
     }
     setCodeGenFields(
-      parseFormFields({ ...changedFields, ...form.getFieldsValue() })
+      parseFormFields(
+        { ...changedFields, ...form.getFieldsValue() },
+        useCustomDataset
+      )
     );
   }
 
@@ -462,7 +474,7 @@ export function SystemSubmitDrawer(props: Props) {
       <Button
         type="primary"
         onClick={() => form.submit()}
-        // loading={state === State.loading}
+        loading={state === State.loading}
       >
         Submit
       </Button>
@@ -488,6 +500,8 @@ export function SystemSubmitDrawer(props: Props) {
 
   function onUseCustomDatasetChange(checked: boolean) {
     setUseCustomDataset(checked);
+    setCodeGenFields(parseFormFields({ ...form.getFieldsValue() }, checked));
+
     if (checked)
       form.setFieldsValue({
         dataset: { datasetID: undefined, split: undefined },
