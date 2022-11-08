@@ -287,7 +287,7 @@ class SystemDBUtils:
                 system.save_to_db(session)
                 system.save_system_output(system_output_data, session)
                 try:
-                    system.update_overall_statistics(system_output_data, session)
+                    system.update_overall_statistics(session)
                 except ValueError as e:
                     abort_with_error_message(400, str(e))
 
