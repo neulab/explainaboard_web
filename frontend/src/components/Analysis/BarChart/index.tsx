@@ -12,6 +12,7 @@ import {
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import { ECElementEvent } from "echarts/types/src/util/types";
+import { DataViewModal } from "./DataViewModal";
 
 // TODO(gneubig): should this be provided more globally?
 const decimalPlaces = 3;
@@ -61,6 +62,11 @@ export function BarChart(props: Props) {
     confidenceScoresList,
     onBarClick,
   } = props;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
 
   const seriesInfoList: SeriesInfo[] = [];
   let globalMaxValue = 0;
@@ -172,6 +178,14 @@ export function BarChart(props: Props) {
       show: true,
       feature: {
         saveAsImage: { show: true },
+        myDataView: {
+          show: true,
+          title: "View Data",
+          icon: "path://M17.5,17.3H33 M17.5,17.3H33 M45.4,29.5h-28 M11.5,2v56H51V14.8L38.4,2H11.5z M38.4,2.2v12.7H51 M45.4,41.7h-28",
+          onclick: function () {
+            showModal();
+          },
+        },
       },
     },
     tooltip: {
@@ -254,25 +268,47 @@ export function BarChart(props: Props) {
     MarkLineComponent,
   ]);
 
+  const trimmedSeriesData = series.map((s) => {
+    return s.data.map((x) => {
+      return Number(x.toFixed(decimalPlaces));
+    });
+  });
+
   return (
-    <ReactEChartsCore
-      echarts={echarts}
-      option={option}
-      notMerge={true}
-      lazyUpdate={true}
-      theme={"theme_name"}
-      ref={(e) => {
-        setEChartsRef(e);
-      }}
-      onEvents={{
-        click: (event: ECElementEvent) => {
-          const { dataIndex, componentType, componentSubType } = event;
-          const systemIndex = event.seriesIndex || 0;
-          if (componentType === "series" && componentSubType === "bar") {
-            onBarClick(dataIndex, systemIndex);
-          }
-        },
-      }}
-    />
+    <>
+      <ReactEChartsCore
+        echarts={echarts}
+        option={option}
+        notMerge={true}
+        lazyUpdate={true}
+        theme={"theme_name"}
+        ref={(e) => {
+          setEChartsRef(e);
+        }}
+        onEvents={{
+          click: (event: ECElementEvent) => {
+            const { dataIndex, componentType, componentSubType } = event;
+            const systemIndex = event.seriesIndex || 0;
+            if (componentType === "series" && componentSubType === "bar") {
+              onBarClick(dataIndex, systemIndex);
+            }
+          },
+        }}
+      />
+      <DataViewModal
+        title={title}
+        visible={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+        }}
+        systemNames={seriesNames}
+        xValues={xAxisData}
+        yValues={trimmedSeriesData}
+        xLabel={xAxisName}
+        yLabel={yAxisName}
+        confidenceScoresList={confidenceScoresList}
+        numbersOfSamplesList={numbersOfSamplesList}
+      />
+    </>
   );
 }
