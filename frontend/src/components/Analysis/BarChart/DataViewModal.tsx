@@ -14,6 +14,7 @@ interface Props {
   yValues: number[][];
   xLabel?: string;
   yLabel?: string;
+  yAxisMax?: number;
   confidenceScoresList: number[][][];
   numbersOfSamplesList: number[][];
 }
@@ -25,11 +26,13 @@ export function DataViewModal({
   systemNames,
   xLabel,
   yLabel,
+  yAxisMax,
   xValues,
   yValues,
   confidenceScoresList,
   numbersOfSamplesList,
 }: Props) {
+  yAxisMax = yAxisMax === undefined ? 1 : yAxisMax;
   const formattedxAxisData = xValues.map((x) => x.replace("\n|\n", "-"));
   const trimmedConfidenceScores = confidenceScoresList.map(
     (confidenceScores) => {
@@ -99,13 +102,20 @@ export function DataViewModal({
     "\\begin{axis}[\n" +
     "            ybar,\n" +
     "            ymin=0,\n" +
-    "            ymax=1,\n" +
+    `            ymax=${yAxisMax},\n` +
     "            xtick=data,\n" +
     `            xlabel=${xLabel},\n` +
     `            ylabel=${yLabel},\n` +
+    "            legend style={at={(0.5,-0.2)},anchor=north,legend cell align=left}, % places the legend at the bottom\n" +
     `            title=${title},\n` +
     `            symbolic x coords={${formattedxAxisData.join()}}\n` +
-    "        ]\n";
+    "        ]\n" +
+    "%%% remove second bar in legend\n" +
+    "\\pgfplotsset{\n" +
+    "    legend image code/.code={\n" +
+    "        \\draw [#1] (0cm,-0.1cm) rectangle (0.6cm,0.1cm);\n" +
+    "    },\n" +
+    "}\n";
 
   for (let sysIdx = 0; sysIdx < systemNames.length; sysIdx++) {
     let data = "";
