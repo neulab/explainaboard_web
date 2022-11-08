@@ -24,12 +24,7 @@
   },
   "homepage": "https://github.com/neulab/explainaboard_web#readme",
   "devDependencies": {
-    "@types/file-saver": "^2.0.5",
     "concurrently": "^6.3.0",
     "husky": "^7.0.4"
-  },
-  "dependencies": {
-    "file-saver": "^2.0.5",
-    "jszip": "^3.10.1"
   }
 }

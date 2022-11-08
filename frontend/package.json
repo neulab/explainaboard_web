@@ -35,7 +35,9 @@
     "react-helmet": "^6.1.0",
     "react-router-dom": "^5.3.0",
     "typescript": "^4.4.3",
-    "web-vitals": "^1.1.2"
+    "web-vitals": "^1.1.2",
+    "file-saver": "^2.0.5",
+    "jszip": "^3.10.1"
   },
   "lint-staged": {
     "**/*": [
@@ -68,6 +70,7 @@
     "eslint-plugin-react": "^7.26.0",
     "lint-staged": "11.1.2",
     "prettier": "^2.4.1",
-    "react-scripts": "4.0.3"
+    "react-scripts": "4.0.3",
+    "@types/file-saver": "^2.0.5"
   }
 }

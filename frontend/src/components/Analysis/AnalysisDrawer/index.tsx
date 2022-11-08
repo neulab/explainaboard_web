@@ -39,7 +39,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   }>({});
   const [bucketInfoUpdated, setBucketInfoUpdated] = useState<boolean>(false);
-  const [chartFiles, setCharFiles] = useState<{
+  const [chartFiles, setChartFiles] = useState<{
     [imgName: string]: string;
   }>({});
 
@@ -193,7 +193,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
 
   function closeSystemAnalysis() {
     // set to true so analysis is performed next time when drawer is opened
-    setCharFiles({});
+    setChartFiles({});
     setShouldUpdateAnalysis(true);
     closeDrawer();
     setSystemAnalysesReturn(undefined);
@@ -239,7 +239,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
   function addChartFile(imgName: string, base64File: string) {
     const tmp = chartFiles;
     tmp[imgName] = base64File;
-    setCharFiles(tmp);
+    setChartFiles(tmp);
   }
 
   function renderDrawerContent(): React.ReactElement {
