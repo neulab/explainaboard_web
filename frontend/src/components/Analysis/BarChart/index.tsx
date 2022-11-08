@@ -12,7 +12,7 @@ import {
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import { ECElementEvent } from "echarts/types/src/util/types";
-import { DataViewModal } from "./DataViewModal";
+import { DataViewModal } from "../DataViewModal";
 
 // TODO(gneubig): should this be provided more globally?
 const decimalPlaces = 3;
