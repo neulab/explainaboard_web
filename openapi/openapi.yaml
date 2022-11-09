@@ -107,24 +107,49 @@ paths:
               schema:
                 $ref: "#/components/schemas/APIError"
 
-  /benchmark:
+  /benchmark/parent:
     post:
-      summary: Uploads a benchmark
-      operationId: benchmarkPost
-      description: Uploads a benchmark
+      summary: Uploads a parent benchmark
+      operationId: benchmarkParentPost
+      description: Uploads a parent benchmark
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BenchmarkCreateProps"
+              $ref: "#/components/schemas/BenchmarkParentCreateProps"
       responses:
         "200":
           description: OK
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BenchmarkCreateProps"
+                - $ref: "#/components/schemas/BenchmarkConfig"
+        "400":
+          description: INPUT ERROR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
+
+  /benchmark/child:
+    post:
+      summary: Uploads a child benchmark
+      operationId: benchmarkChildPost
+      description: Uploads a child benchmark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenchmarkChildCreateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                - $ref: "#/components/schemas/BenchmarkChildConfig"
         "400":
           description: INPUT ERROR
           content:
@@ -1300,18 +1325,12 @@ components:
       additionalProperties: true
       required: [dataset_name]
 
-    BenchmarkCreateProps:
-      type: object
-      oneOf:
-        - $ref: "#/components/schemas/BenchmarkChildCreateProps"
-        - $ref: "#/components/schemas/BenchmarkParentCreateProps"
-
     BenchmarkChildCreateProps:
       type: object
       properties:
-        name:
-          type: string
         id:
+          type: string
+        name:
           type: string
         description:
           type: string
@@ -1331,42 +1350,58 @@ components:
             $ref: '#/components/schemas/BenchmarkMetric'
         system_query:
           type: object
-      required: [name]
+      required: [id, name]
 
-    BenchmarkViews:
+    BenchmarkParentCreateProps:
       type: object
       properties:
+        id:
+          type: string
+        name:
+          type: string
         views:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkViewConfig'
-      required: [views]
-
-    BenchmarkParentCreateProps:
-      allOf:
-        - $ref: "#/components/schemas/BenchmarkChildCreateProps"
-        # Since views is a required property, it must be defined explicitly
-        # and before type: object so it does not get mixed with the optional
-        # properties in code generation, causing syntax errors
-        - $ref: "#/components/schemas/BenchmarkViews"
-        - type: object
-          properties:
-            logo:
-              type: string
-            contact:
-              type: string
-            homepage:
-              type: string
-            paper:
-              $ref: "#/components/schemas/Paper"
-            datasets:
-              type: array
-              items:
-                $ref: '#/components/schemas/BenchmarkDatasetConfig'
-            default_views:
-              type: array
-              items:
-                type: string
+        description:
+          type: string
+        type:
+          type: string
+          description: |
+            "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+        parent:
+          type: string
+          description: "a parent benchmark that this benchmark inherits config from"
+        visibility:
+          type: string
+          description: "a visibility level, public/hidden/none"
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
+        system_query:
+          type: object
+        # The properties above this line except for "views" is identical
+        # to the ones in BenchmarkChildCreateProps. The reason for duplication
+        # is using the allOf + referencing BenchmarkChildCreateProps creates
+        # unexpected validation errors.
+        logo:
+          type: string
+        contact:
+          type: string
+        homepage:
+          type: string
+        paper:
+          $ref: "#/components/schemas/Paper"
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkDatasetConfig'
+        default_views:
+          type: array
+          items:
+            type: string
+      required: [id, name, views]
 
     # This is a hack to force swagger codegen
     # to order required fields at the front to prevent syntax errors
@@ -1377,33 +1412,15 @@ components:
           type: string
       required: [creator]
 
-    BenchmarkConfig:
+    BenchmarkChildConfig:
       allOf:
         - $ref: "#/components/schemas/BenchmarkChildCreateProps"
-        - $ref: "#/components/schemas/BenchmarkViews"
-        - type: object
-          properties:
-            logo:
-              type: string
-            contact:
-              type: string
-            homepage:
-              type: string
-            paper:
-              $ref: "#/components/schemas/Paper"
-            datasets:
-              type: array
-              items:
-                $ref: '#/components/schemas/BenchmarkDatasetConfig'
-            default_views:
-              type: array
-              items:
-                type: string
-        # The properties above this comment are identical to the ones in
-        # BenchmarkParentCreateProps. The reaon for duplication
-        # instead of referencing BenchmarkParentCreateProps directly
-        # is swagger codegen cannot resolve recursive referencing,
-        # causing the fields in BenchmarkChildCreateProps to be lost.
+        - $ref: "#/components/schemas/Time"
+        - $ref: "#/components/schemas/BenchmarkCreator"
+
+    BenchmarkConfig:
+      allOf:
+        - $ref: "#/components/schemas/BenchmarkParentCreateProps"
         - $ref: "#/components/schemas/Time"
         - $ref: "#/components/schemas/BenchmarkCreator"
 

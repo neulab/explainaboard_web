@@ -1,19 +1,21 @@
 from __future__ import annotations
 
-import datetime
 import json
 import os
 from dataclasses import dataclass
+from datetime import datetime
 
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
 from explainaboard.utils.typing_utils import unwrap
+from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.constants import ALL_LANG, LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models import (
+    BenchmarkChildConfig,
     BenchmarkChildCreateProps,
     BenchmarkConfig,
     BenchmarkMetric,
@@ -73,11 +75,22 @@ class BenchmarkDBUtils:
 
     @staticmethod
     def create_benchmark(
-        config: BenchmarkChildCreateProps | BenchmarkParentCreateProps,
-    ) -> BenchmarkChildCreateProps | BenchmarkParentCreateProps:
-        config_dict = config.to_dict()
-        BenchmarkDBUtils._convert_id_to_db(config_dict)
-        DBUtils.insert_one(DBUtils.BENCHMARK_METADATA, config_dict)
+        props: BenchmarkParentCreateProps | BenchmarkChildCreateProps,
+    ) -> BenchmarkConfig | BenchmarkChildConfig:
+        props_dict = props.to_dict()
+
+        user = get_user()
+        props_dict["creator"] = user.id
+        props_dict["created_at"] = props_dict["last_modified"] = datetime.utcnow()
+
+        if type(props) == BenchmarkParentCreateProps:
+            config = BenchmarkConfig.from_dict(props_dict)
+        else:
+            config = BenchmarkChildConfig.from_dict(props_dict)
+
+        BenchmarkDBUtils._convert_id_to_db(props_dict)
+        DBUtils.insert_one(DBUtils.BENCHMARK_METADATA, props_dict)
+
         return config
 
     @staticmethod

@@ -27,7 +27,7 @@ class DBUtils:
     )
     USER_METADATA = DBCollection(db_name="metadata", collection_name="user_metadata")
     BENCHMARK_METADATA = DBCollection(
-        db_name="metadata", collection_name="benchmark_metadata2"
+        db_name="metadata", collection_name="benchmark_metadata"
     )
 
     @staticmethod
