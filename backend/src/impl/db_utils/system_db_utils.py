@@ -310,6 +310,7 @@ class SystemDBUtils:
             "is_private": metadata.is_private,
             "shared_users": metadata.shared_users,
             "system_details": metadata.system_details,
+            "system_tags": metadata.system_tags,
         }
 
         return DBUtils.update_one_by_id(
