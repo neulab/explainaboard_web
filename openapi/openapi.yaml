@@ -107,6 +107,30 @@ paths:
               schema:
                 $ref: "#/components/schemas/APIError"
 
+  /benchmark:
+    post:
+      summary: Uploads a benchmark
+      operationId: benchmarkPost
+      description: Uploads a benchmark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenchmarkCreateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BenchmarkCreateProps"
+        "400":
+          description: INPUT ERROR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
 
   /datasets/{dataset_id}:
     get:
@@ -1276,15 +1300,17 @@ components:
       additionalProperties: true
       required: [dataset_name]
 
-    BenchmarkConfig:
+    BenchmarkCreateProps:
+      type: object
+      oneOf:
+        - $ref: "#/components/schemas/BenchmarkChildCreateProps"
+        - $ref: "#/components/schemas/BenchmarkParentCreateProps"
+
+    BenchmarkChildCreateProps:
       type: object
       properties:
         name:
           type: string
-        views:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkViewConfig'
         id:
           type: string
         description:
@@ -1299,30 +1325,87 @@ components:
         visibility:
           type: string
           description: "a visibility level, public/hidden/none"
-        logo:
-          type: string
-        contact:
-          type: string
-        homepage:
-          type: string
-        paper:
-          type: object
-          $ref: "#/components/schemas/Paper"
         metrics:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkMetric'
-        datasets:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkDatasetConfig'
         system_query:
           type: object
-        default_views:
+      required: [name]
+
+    BenchmarkViews:
+      type: object
+      properties:
+        views:
           type: array
           items:
-            type: string
-      required: [name, views]
+            $ref: '#/components/schemas/BenchmarkViewConfig'
+      required: [views]
+
+    BenchmarkParentCreateProps:
+      allOf:
+        - $ref: "#/components/schemas/BenchmarkChildCreateProps"
+        # Since views is a required property, it must be defined explicitly
+        # and before type: object so it does not get mixed with the optional
+        # properties in code generation, causing syntax errors
+        - $ref: "#/components/schemas/BenchmarkViews"
+        - type: object
+          properties:
+            logo:
+              type: string
+            contact:
+              type: string
+            homepage:
+              type: string
+            paper:
+              $ref: "#/components/schemas/Paper"
+            datasets:
+              type: array
+              items:
+                $ref: '#/components/schemas/BenchmarkDatasetConfig'
+            default_views:
+              type: array
+              items:
+                type: string
+
+    # This is a hack to force swagger codegen
+    # to order required fields at the front to prevent syntax errors
+    BenchmarkCreator:
+      type: object
+      properties:
+        creator:
+          type: string
+      required: [creator]
+
+    BenchmarkConfig:
+      allOf:
+        - $ref: "#/components/schemas/BenchmarkChildCreateProps"
+        - $ref: "#/components/schemas/BenchmarkViews"
+        - type: object
+          properties:
+            logo:
+              type: string
+            contact:
+              type: string
+            homepage:
+              type: string
+            paper:
+              $ref: "#/components/schemas/Paper"
+            datasets:
+              type: array
+              items:
+                $ref: '#/components/schemas/BenchmarkDatasetConfig'
+            default_views:
+              type: array
+              items:
+                type: string
+        # The properties above this comment are identical to the ones in
+        # BenchmarkParentCreateProps. The reaon for duplication
+        # instead of referencing BenchmarkParentCreateProps directly
+        # is swagger codegen cannot resolve recursive referencing,
+        # causing the fields in BenchmarkChildCreateProps to be lost.
+        - $ref: "#/components/schemas/Time"
+        - $ref: "#/components/schemas/BenchmarkCreator"
 
     SignificanceTestInfo:
       type: object

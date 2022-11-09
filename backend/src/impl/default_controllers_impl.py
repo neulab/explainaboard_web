@@ -35,7 +35,10 @@ from explainaboard_web.impl.utils import (
 )
 from explainaboard_web.models import (
     Benchmark,
+    BenchmarkChildCreateProps,
     BenchmarkConfig,
+    BenchmarkCreateProps,
+    BenchmarkParentCreateProps,
     DatasetMetadata,
     SingleAnalysis,
     SystemOutput,
@@ -221,6 +224,22 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
             )
         )
     return Benchmark(config, views, update_time)
+
+
+def benchmark_post(body: dict) -> BenchmarkCreateProps:
+    # Normally body's type should be BenchmarkCreateProps
+    # but it is instead a dict here because deserialize_model()
+    # in /gen/explainaboard_web/utils.py returns a dict when
+    # swagger_types is empty, which is the case of
+    # BenchmarkCreateProps due to the usage "oneOf" keyword
+    # in openapi.yaml + likely a bug in model generation.
+    # Nevertheless, before this function the body still gets
+    # properly validated against the specified schema.
+    if body["parent"]:
+        body = BenchmarkChildCreateProps.from_dict(body)
+    else:
+        body = BenchmarkParentCreateProps.from_dict(body)
+    return BenchmarkDBUtils.create_benchmark(body)
 
 
 """ /systems """

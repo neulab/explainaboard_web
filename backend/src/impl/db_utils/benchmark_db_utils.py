@@ -14,8 +14,10 @@ from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models import (
+    BenchmarkChildCreateProps,
     BenchmarkConfig,
     BenchmarkMetric,
+    BenchmarkParentCreateProps,
     BenchmarkTableData,
     BenchmarkViewConfig,
     DatasetMetadata,
@@ -30,8 +32,17 @@ class BenchmarkDBUtils:
     _DEFAULT_SETS = {"all_lang": ALL_LANG}
 
     @staticmethod
+    def _convert_id_from_db(doc: dict) -> None:
+        doc["id"] = doc["_id"]
+        doc.pop("_id")
+
+    @staticmethod
+    def _convert_id_to_db(doc: dict) -> None:
+        doc["_id"] = doc["id"]
+        doc.pop("id")
+
+    @staticmethod
     def find_configs(parent: str | None = None, page: int = 0, page_size: int = 0):
-        # TODO(chihhao) caching
         filt = None
         if parent is not None:
             filt = {"parent": parent}
@@ -40,8 +51,7 @@ class BenchmarkDBUtils:
         )
         configs = []
         for config in list(cursor):
-            config["id"] = config["_id"]
-            config.pop("_id")
+            BenchmarkDBUtils._convert_id_from_db(config)
             configs.append(config)
         return configs
 
@@ -50,17 +60,24 @@ class BenchmarkDBUtils:
         config = DBUtils.find_one_by_id(DBUtils.BENCHMARK_METADATA, benchmark_id)
         if not config:
             abort_with_error_message(404, f"benchmark id: {benchmark_id} not found")
-        config["id"] = config["_id"]
-        config.pop("_id")
+        BenchmarkDBUtils._convert_id_from_db(config)
 
         parent_id = config.get("parent")
         if parent_id:
             parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
             parent_config.update(config)
-            parent_config["id"] = parent_config["_id"]
-            parent_config.pop("_id")
+            BenchmarkDBUtils._convert_id_from_db(parent_config)
             return parent_config
 
+        return config
+
+    @staticmethod
+    def create_benchmark(
+        config: BenchmarkChildCreateProps | BenchmarkParentCreateProps,
+    ) -> BenchmarkChildCreateProps | BenchmarkParentCreateProps:
+        config_dict = config.to_dict()
+        BenchmarkDBUtils._convert_id_to_db(config_dict)
+        DBUtils.insert_one(DBUtils.BENCHMARK_METADATA, config_dict)
         return config
 
     @staticmethod
