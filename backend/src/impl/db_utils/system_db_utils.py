@@ -153,7 +153,7 @@ class SystemDBUtils:
         if shared_users:
             search_conditions.append({"shared_users": shared_users})
         if system_tags:
-            search_conditions.append({"shared_users": system_tags})
+            search_conditions.append({"system_tags": system_tags})
 
         if dataset_list:
             dataset_dicts = [
