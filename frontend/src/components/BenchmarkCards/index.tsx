@@ -14,7 +14,8 @@ export function BenchmarkCards({ items, subtitle }: Props) {
   const history = useHistory();
   const { Title } = Typography;
 
-  const visibleItems = items.filter((config) => config.visibility === "public");
+  const visibleItems = items;
+  // const visibleItems = items.filter((config) => config.visibility === "public");
 
   return (
     <div className="page">

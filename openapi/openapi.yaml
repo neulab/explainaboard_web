@@ -124,7 +124,7 @@ paths:
           content:
             application/json:
               schema:
-                - $ref: "#/components/schemas/BenchmarkConfig"
+                $ref: "#/components/schemas/BenchmarkConfig"
         "400":
           description: INPUT ERROR
           content:
@@ -149,7 +149,7 @@ paths:
           content:
             application/json:
               schema:
-                - $ref: "#/components/schemas/BenchmarkChildConfig"
+                $ref: "#/components/schemas/BenchmarkChildConfig"
         "400":
           description: INPUT ERROR
           content:
@@ -1288,8 +1288,10 @@ components:
           type: string
         weight:
           type: number
+          nullable: true
         default:
           type: number
+          nullable: true
       required: [name]
 
     BenchmarkOperationConfig:
@@ -1338,19 +1340,22 @@ components:
           type: string
           description: |
             "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+            "otherwise 'standard'"
         parent:
           type: string
           description: "a parent benchmark that this benchmark inherits config from"
         visibility:
           type: string
-          description: "a visibility level, public/hidden/none"
+          description: "a visibility level, public/hidden"
         metrics:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkMetric'
+          nullable: true
         system_query:
           type: object
-      required: [id, name]
+          nullable: true
+      required: [id, name, description, type, parent, visibility]
 
     BenchmarkParentCreateProps:
       type: object
@@ -1369,39 +1374,48 @@ components:
           type: string
           description: |
             "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+            "otherwise 'standard'"
         parent:
           type: string
           description: "a parent benchmark that this benchmark inherits config from"
         visibility:
           type: string
-          description: "a visibility level, public/hidden/none"
+          description: "a visibility level, public/hidden"
         metrics:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkMetric'
+          nullable: true
         system_query:
           type: object
+          nullable: true
         # The properties above this line except for "views" is identical
         # to the ones in BenchmarkChildCreateProps. The reason for duplication
         # is using the allOf + referencing BenchmarkChildCreateProps creates
         # unexpected validation errors.
         logo:
           type: string
+          nullable: true
         contact:
           type: string
+          nullable: true
         homepage:
           type: string
+          nullable: true
         paper:
           $ref: "#/components/schemas/Paper"
+          nullable: true
         datasets:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkDatasetConfig'
+          nullable: true
         default_views:
           type: array
           items:
             type: string
-      required: [id, name, views]
+          nullable: true
+      required: [id, name, views, description, type, parent, visibility]
 
     # This is a hack to force swagger codegen
     # to order required fields at the front to prevent syntax errors

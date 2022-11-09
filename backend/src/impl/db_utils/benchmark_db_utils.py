@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import datetime
 import json
 import os
 from dataclasses import dataclass
-from datetime import datetime
 
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
@@ -54,6 +54,11 @@ class BenchmarkDBUtils:
         configs = []
         for config in list(cursor):
             BenchmarkDBUtils._convert_id_from_db(config)
+            parent_id = config.get("parent")
+            if parent_id:
+                parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
+                parent_config.update(config)
+                config = parent_config
             configs.append(config)
         return configs
 
@@ -68,7 +73,6 @@ class BenchmarkDBUtils:
         if parent_id:
             parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
             parent_config.update(config)
-            BenchmarkDBUtils._convert_id_from_db(parent_config)
             return parent_config
 
         return config
@@ -81,7 +85,9 @@ class BenchmarkDBUtils:
 
         user = get_user()
         props_dict["creator"] = user.id
-        props_dict["created_at"] = props_dict["last_modified"] = datetime.utcnow()
+        props_dict["created_at"] = props_dict[
+            "last_modified"
+        ] = datetime.datetime.utcnow()
 
         if type(props) == BenchmarkParentCreateProps:
             config = BenchmarkConfig.from_dict(props_dict)
