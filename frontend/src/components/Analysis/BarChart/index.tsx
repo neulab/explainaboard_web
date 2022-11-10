@@ -175,13 +175,14 @@ export function BarChart(props: Props) {
     },
     legend: legend,
     toolbox: {
+      itemSize: 20,
       show: true,
       feature: {
         saveAsImage: { show: true },
         myDataView: {
           show: true,
-          title: "View Data",
-          icon: "path://M17.5,17.3H33 M17.5,17.3H33 M45.4,29.5h-28 M11.5,2v56H51V14.8L38.4,2H11.5z M38.4,2.2v12.7H51 M45.4,41.7h-28",
+          title: "View LaTeX format",
+          icon: "image://icons/TeX-doc-icon.png",
           onclick: function () {
             showModal();
           },
