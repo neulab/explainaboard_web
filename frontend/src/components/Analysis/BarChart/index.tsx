@@ -12,7 +12,8 @@ import {
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import { ECElementEvent } from "echarts/types/src/util/types";
-import { DataViewModal } from "../DataViewModal";
+import { LatexViewModal } from "./LatexViewModal";
+import { TableViewModal } from "./TableViewModal";
 
 // TODO(gneubig): should this be provided more globally?
 const decimalPlaces = 3;
@@ -62,10 +63,14 @@ export function BarChart(props: Props) {
     confidenceScoresList,
     onBarClick,
   } = props;
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLatexModalOpen, setIsLatexModalOpen] = useState(false);
+  const [isTableModalOpen, setIsTableModalOpen] = useState(false);
 
-  const showModal = () => {
-    setIsModalOpen(true);
+  const showLatexModal = () => {
+    setIsLatexModalOpen(true);
+  };
+  const showTableModal = () => {
+    setIsTableModalOpen(true);
   };
 
   const seriesInfoList: SeriesInfo[] = [];
@@ -179,12 +184,20 @@ export function BarChart(props: Props) {
       show: true,
       feature: {
         saveAsImage: { show: true },
-        myDataView: {
+        myLatexView: {
           show: true,
           title: "View LaTeX format",
           icon: "image://icons/TeX-doc-icon.png",
           onclick: function () {
-            showModal();
+            showLatexModal();
+          },
+        },
+        myTableView: {
+          show: true,
+          title: "View Table",
+          icon: "image://icons/icons8-columns-96.png",
+          onclick: function () {
+            showTableModal();
           },
         },
       },
@@ -296,11 +309,25 @@ export function BarChart(props: Props) {
           },
         }}
       />
-      <DataViewModal
+      <LatexViewModal
         title={title}
-        visible={isModalOpen}
+        visible={isLatexModalOpen}
         onClose={() => {
-          setIsModalOpen(false);
+          setIsLatexModalOpen(false);
+        }}
+        systemNames={seriesNames}
+        xValues={xAxisData}
+        yValues={trimmedSeriesData}
+        xLabel={xAxisName}
+        yLabel={yAxisName}
+        yAxisMax={Math.ceil(globalMaxValue)}
+        confidenceScoresList={confidenceScoresList}
+      />
+      <TableViewModal
+        title={title}
+        visible={isTableModalOpen}
+        onClose={() => {
+          setIsTableModalOpen(false);
         }}
         systemNames={seriesNames}
         xValues={xAxisData}

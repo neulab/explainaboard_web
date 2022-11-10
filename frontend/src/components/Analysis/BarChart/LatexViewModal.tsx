@@ -1,7 +1,6 @@
-import { Modal, Table } from "antd";
-import Paragraph from "antd/lib/typography/Paragraph";
-import Title from "antd/lib/typography/Title";
+import { Modal } from "antd";
 import React from "react";
+import { CopyBlock, dracula } from "react-code-blocks";
 
 const decimalPlaces = 3;
 
@@ -16,10 +15,9 @@ interface Props {
   yLabel?: string;
   yAxisMax?: number;
   confidenceScoresList: number[][][];
-  numbersOfSamplesList: number[][];
 }
 
-export function DataViewModal({
+export function LatexViewModal({
   title,
   visible,
   onClose,
@@ -30,7 +28,6 @@ export function DataViewModal({
   xValues,
   yValues,
   confidenceScoresList,
-  numbersOfSamplesList,
 }: Props) {
   yAxisMax = yAxisMax === undefined ? 1 : yAxisMax;
   const formattedxAxisData = xValues.map((x) => x.replace("\n|\n", "-"));
@@ -43,49 +40,11 @@ export function DataViewModal({
       });
     }
   );
-  const dataSrc = [];
-  for (let i = 0; i < yValues[0].length; i++) {
-    for (let sysIdx = 0; sysIdx < systemNames.length; sysIdx++) {
-      dataSrc.push({
-        xValue: formattedxAxisData[i],
-        systemName: systemNames[sysIdx],
-        yValue: yValues[sysIdx][i],
-        confInterval: `[${trimmedConfidenceScores[sysIdx][i][0]}, ${trimmedConfidenceScores[sysIdx][i][1]}]`,
-        sampleSize: numbersOfSamplesList[sysIdx][i],
-      });
-    }
-  }
 
-  const columns = [
-    {
-      title: "X Axis Value",
-      key: "xValue",
-      dataIndex: "xValue",
-    },
-    {
-      title: "System Name",
-      key: "systemName",
-      dataIndex: "systemName",
-    },
-    {
-      title: "Y Axis Value",
-      key: "yValue",
-      dataIndex: "yValue",
-    },
-    {
-      title: "Confidence Interval",
-      key: "confInterval",
-      dataIndex: "confInterval",
-    },
-    {
-      title: "Sample Size",
-      key: "sampleSize",
-      dataIndex: "sampleSize",
-    },
-  ];
-  const table = <Table dataSource={dataSrc} columns={columns} />;
-  xLabel = xLabel === undefined ? "" : xLabel;
-  yLabel = yLabel === undefined ? "" : yLabel;
+  // escape the underscore
+  xLabel = xLabel === undefined ? "" : xLabel.replace("_", "\\_");
+  yLabel = yLabel === undefined ? "" : yLabel.replace("_", "\\_");
+  title = title.replace("_", "\\_");
 
   const legend = `\\legend{${systemNames.join()}}\n`;
 
@@ -139,11 +98,8 @@ export function DataViewModal({
       onCancel={onClose}
       width="50%"
     >
-      {table}
-      <Title>Tex Table Format</Title>
-      <Paragraph copyable>
-        <pre>{texTable}</pre>
-      </Paragraph>
+      <h2>LaTex Bar Chart</h2>
+      <CopyBlock language="text" text={texTable} theme={dracula} />
     </Modal>
   );
 }
