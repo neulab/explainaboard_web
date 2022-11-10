@@ -42,9 +42,8 @@ export function LatexViewModal({
   );
 
   // escape the underscore
-  xLabel = xLabel === undefined ? "" : xLabel.replace("_", "\\_");
-  yLabel = yLabel === undefined ? "" : yLabel.replace("_", "\\_");
-  title = title.replace("_", "\\_");
+  xLabel = xLabel === undefined ? "" : xLabel;
+  yLabel = yLabel === undefined ? "" : yLabel;
 
   const legend = `\\legend{${systemNames.join()}}\n`;
 
@@ -63,10 +62,10 @@ export function LatexViewModal({
     "            ymin=0,\n" +
     `            ymax=${yAxisMax},\n` +
     "            xtick=data,\n" +
-    `            xlabel=${xLabel},\n` +
-    `            ylabel=${yLabel},\n` +
+    `            xlabel=${xLabel.replace("_", "\\_")},\n` +
+    `            ylabel=${yLabel.replace("_", "\\_")},\n` +
     "            legend style={at={(0.5,-0.2)},anchor=north,legend cell align=left}, % places the legend at the bottom\n" +
-    `            title=${title},\n` +
+    `            title=${title.replace("_", "\\_")},\n` +
     `            symbolic x coords={${formattedxAxisData.join()}}\n` +
     "        ]\n" +
     "%%% remove second bar in legend\n" +
