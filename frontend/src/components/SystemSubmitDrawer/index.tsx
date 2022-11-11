@@ -34,6 +34,7 @@ import ClientCodeDisplay, {
   CodeGenFields,
   showCliCodeKey,
 } from "./ClientCodeDisplay";
+import { useLocalStorage } from "../useLocalStorage";
 
 const { TextArea } = Input;
 
@@ -166,7 +167,10 @@ export function SystemSubmitDrawer(props: Props) {
   const [codeGenFields, setCodeGenFields] = useState(
     parseFormFields(form.getFieldsValue(), useCustomDataset)
   );
-  const [cliCodeVisible, setCliCodeVisible] = useState<boolean>(false);
+  const [cliCodeVisible, setCliCodeVisible] = useLocalStorage<boolean>(
+    showCliCodeKey,
+    false
+  );
 
   const { systemToEdit, onClose, visible, ...rest } = props;
   const editMode = systemToEdit !== undefined;
@@ -176,7 +180,7 @@ export function SystemSubmitDrawer(props: Props) {
   }, [form]);
 
   function closeCliCodeDisplay() {
-    setCliCodeVisible(false);
+    setCliCodeVisible(false, false);
   }
 
   function closeAllDrawers() {
@@ -186,8 +190,8 @@ export function SystemSubmitDrawer(props: Props) {
 
   useEffect(() => {
     if (visible)
-      setCliCodeVisible(localStorage.getItem(showCliCodeKey) === "true");
-  }, [visible]);
+      setCliCodeVisible(localStorage.getItem(showCliCodeKey) === "true", false);
+  }, [visible, setCliCodeVisible]);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -488,7 +492,7 @@ export function SystemSubmitDrawer(props: Props) {
         <Button
           onClick={() => {
             const newState = !cliCodeVisible;
-            setCliCodeVisible(newState);
+            setCliCodeVisible(newState, true);
             localStorage.setItem(showCliCodeKey, newState.toString());
           }}
         >
@@ -578,7 +582,7 @@ export function SystemSubmitDrawer(props: Props) {
         mask={false}
         maskClosable={false}
         width={400}
-        onClose={() => setCliCodeVisible(!cliCodeVisible)}
+        onClose={() => setCliCodeVisible(!cliCodeVisible, true)}
       />
 
       <Spin spinning={state === State.loading} tip="processing...">

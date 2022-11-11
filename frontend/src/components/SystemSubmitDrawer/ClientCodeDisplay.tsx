@@ -1,11 +1,4 @@
-import {
-  Drawer,
-  DrawerProps,
-  Radio,
-  RadioChangeEvent,
-  Space,
-  Typography,
-} from "antd";
+import { Drawer, DrawerProps, Radio, Space, Typography } from "antd";
 import React, { useState } from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 
@@ -136,23 +129,21 @@ export default function ClientCodeDisplay({
   ...rest
 }: Props) {
   const [language, setLanguage] = useState<string>(defaultLang);
-  const handleSizeChange = (e: RadioChangeEvent) => {
-    setLanguage(e.target.value);
+  const onLanguageChange = (newLanguage: string) => {
+    setLanguage(newLanguage);
   };
 
-  function closeAndSaveOption() {
-    localStorage.setItem(showCliCodeKey, "false");
-    onClose();
-  }
-
   return (
-    <Drawer visible={visible} onClose={closeAndSaveOption} {...rest}>
+    <Drawer visible={visible} onClose={onClose} {...rest}>
       <Space direction="vertical">
         <Typography.Title level={5}>
           Submit With Command Line Client
         </Typography.Title>
 
-        <Radio.Group value={language} onChange={handleSizeChange}>
+        <Radio.Group
+          value={language}
+          onChange={(e) => onLanguageChange(e.target.value)}
+        >
           {supportedLangs.map((lang) => (
             <Radio.Button key={lang} value={lang}>
               {lang}
