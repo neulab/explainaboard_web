@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.13"
+  version: "0.2.14"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -1102,8 +1102,6 @@ components:
         huggingface_link:
           type: string
           format: url
-        custom_features:
-          type: object
       required:
         - dataset_id
         - dataset_name
