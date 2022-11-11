@@ -1,16 +1,50 @@
 import { Drawer, DrawerProps, Radio, Space, Typography } from "antd";
 import React, { useState } from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
+import { FormData } from ".";
 
-export const showCliCodeKey = "showCliCode";
+/**
+ * Parse the form into fields so that client code generator can recognize
+ */
+function parseFormData(
+  formData: Partial<FormData>,
+  useCustomDataset: boolean
+): CodeGenFields {
+  let names: string[] = [];
+  if (formData.sys_out_file?.fileList) {
+    const sysNames = formData.sys_out_file?.sysNames;
+    if (sysNames) {
+      names = formData.sys_out_file.fileList.map((file) => sysNames[file.uid]);
+    }
+  }
+
+  return {
+    task: formData.task || "",
+    system_name: names[0] || "",
+    system_output_file_type: formData.sys_out_file?.fileType || "",
+    system_output_file_path: "PATH TO YOUR SYSTEM",
+    dataset: formData.dataset?.datasetID || "",
+    use_custom_dataset: useCustomDataset,
+    custom_dataset_file_type: formData.custom_dataset_file?.fileType || "",
+    custom_dataset_file_path: "PATH TO YOUR DATASET FILE",
+    split: formData.dataset?.split || "",
+    metric_names: formData.metric_names || [],
+    source_language: formData.source_language || "",
+    target_language: formData.target_language || "",
+    shared_users: formData.shared_users || [],
+    public: !formData.is_private,
+  };
+}
 
 export type CodeGenFields = {
   task: string;
-  system_names: string[];
+  system_name: string;
   system_output_file_type: string;
+  system_output_file_path: string;
   dataset: string;
   use_custom_dataset: boolean;
   custom_dataset_file_type: string;
+  custom_dataset_file_path: string;
   split: string;
   metric_names: string[];
   source_language: string;
@@ -22,14 +56,14 @@ export type CodeGenFields = {
 function getPythonClientCode(fields: CodeGenFields) {
   const params: { [key: string]: string } = {
     task: `"${fields.task}"`,
-    system_name: `"${fields.system_names[0] || ""}"`,
-    system_output_file: '"PATH TO YOUR SYSTEM"',
+    system_name: `"${fields.system_name}"`,
+    system_output_file: `"${fields.system_output_file_path}"`,
     system_output_file_type: `"${fields.system_output_file_type}"`,
     source_language: `"${fields.source_language}"`,
   };
 
   if (fields.use_custom_dataset) {
-    params["custom_dataset_file"] = `"PATH TO YOUR DATASET FILE"`;
+    params["custom_dataset_file"] = `"${fields.custom_dataset_file_path}"`;
     params["custom_dataset_file_type"] = `"${fields.custom_dataset_file_type}"`;
     params["split"] = `"${fields.split}"`;
   } else {
@@ -69,14 +103,14 @@ evaluation_result = client.evaluate_system_file(\n${paramLines}\n)
 function getBashClientCode(fields: CodeGenFields) {
   const params: { [key: string]: string } = {
     task: `"${fields.task}"`,
-    "system-name": `"${fields.system_names[0] || ""}"`,
-    "system-output-file": '"PATH TO YOUR SYSTEM"',
+    "system-name": `"${fields.system_name}"`,
+    "system-output-file": `"${fields.system_output_file_path}"`,
     "system-output-file-type": `"${fields.system_output_file_type}"`,
     "source-language": `"${fields.source_language}"`,
   };
 
   if (fields.use_custom_dataset) {
-    params["custom-dataset-file"] = `"PATH TO YOUR DATASET FILE"`;
+    params["custom-dataset-file"] = `"${fields.custom_dataset_file_path}"`;
     params["custom-dataset-file-type"] = `"${fields.custom_dataset_file_type}"`;
     params["split"] = `"${fields.split}"`;
   } else {
@@ -117,13 +151,15 @@ const defaultLang = "python";
 const supportedLangs = ["python", "bash"];
 
 interface Props extends DrawerProps {
-  codeGenFields: CodeGenFields;
+  formData: FormData;
+  useCustomDataset: boolean;
   visible: boolean;
   onClose: () => void;
 }
 
 export default function ClientCodeDisplay({
-  codeGenFields,
+  formData,
+  useCustomDataset,
   visible = false,
   onClose,
   ...rest
@@ -152,7 +188,9 @@ export default function ClientCodeDisplay({
         </Radio.Group>
         <CopyBlock
           language={language}
-          text={getCodeFuncs[language](codeGenFields)}
+          text={getCodeFuncs[language](
+            parseFormData(formData, useCustomDataset)
+          )}
           theme={dracula}
         />
       </Space>

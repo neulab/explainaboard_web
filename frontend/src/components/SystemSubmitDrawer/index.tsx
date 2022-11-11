@@ -30,10 +30,7 @@ import ReactGA from "react-ga4";
 import useSearch, { FilterFunc } from "./useSearch";
 import { SystemModel } from "../../models";
 import "./index.css";
-import ClientCodeDisplay, {
-  CodeGenFields,
-  showCliCodeKey,
-} from "./ClientCodeDisplay";
+import ClientCodeDisplay from "./ClientCodeDisplay";
 import { useLocalStorage } from "../useLocalStorage";
 
 const { TextArea } = Input;
@@ -43,6 +40,8 @@ interface Props extends DrawerProps {
   onClose: () => void;
   visible: boolean;
 }
+
+const showCliCodeKey = "showCliCode";
 
 type SysToSubmit = {
   base64: string;
@@ -117,34 +116,6 @@ const filterFunc: FilterFunc<LanguageCode> = (query, data) => {
 };
 
 /**
- * Parse the form into fields so that client code generator can recognize
- */
-function parseFormFields(
-  formData: Partial<FormData>,
-  useCustomDataset: boolean
-): CodeGenFields {
-  let names: string[] = [];
-  if (formData.sys_out_file?.sysNames) {
-    names = Object.values(formData.sys_out_file.sysNames);
-  }
-
-  return {
-    task: formData.task || "",
-    system_names: names,
-    system_output_file_type: formData.sys_out_file?.fileType || "",
-    dataset: formData.dataset?.datasetID || "",
-    use_custom_dataset: useCustomDataset,
-    custom_dataset_file_type: formData.custom_dataset_file?.fileType || "",
-    split: formData.dataset?.split || "",
-    metric_names: formData.metric_names || [],
-    source_language: formData.source_language || "",
-    target_language: formData.target_language || "",
-    shared_users: formData.shared_users || [],
-    public: !formData.is_private,
-  };
-}
-
-/**
  * A drawer for system output submission
  * @param props.onClose
  * @param props.visible
@@ -164,15 +135,16 @@ export function SystemSubmitDrawer(props: Props) {
   const [otherSourceLang, setOtherSourceLang] = useState(false);
   const [otherTargetLang, setOtherTargetLang] = useState(false);
   const [form] = useForm<FormData>();
-  const [codeGenFields, setCodeGenFields] = useState(
-    parseFormFields(form.getFieldsValue(), useCustomDataset)
-  );
   const [cliCodeVisible, setCliCodeVisible] = useLocalStorage<boolean>(
     showCliCodeKey,
     false
   );
 
   const { systemToEdit, onClose, visible, ...rest } = props;
+
+  const [, __updateCliCode] = React.useState<boolean>();
+  const updateCliCode = React.useCallback(() => __updateCliCode((s) => !s), []);
+
   const editMode = systemToEdit !== undefined;
 
   const resetAllFormFields = useCallback(() => {
@@ -465,12 +437,7 @@ export function SystemSubmitDrawer(props: Props) {
         }
       }
     }
-    setCodeGenFields(
-      parseFormFields(
-        { ...changedFields, ...form.getFieldsValue() },
-        useCustomDataset
-      )
-    );
+    updateCliCode();
   }
 
   const footer = (
@@ -504,7 +471,6 @@ export function SystemSubmitDrawer(props: Props) {
 
   function onUseCustomDatasetChange(checked: boolean) {
     setUseCustomDataset(checked);
-    setCodeGenFields(parseFormFields({ ...form.getFieldsValue() }, checked));
 
     if (checked)
       form.setFieldsValue({
@@ -577,7 +543,8 @@ export function SystemSubmitDrawer(props: Props) {
       {...rest}
     >
       <ClientCodeDisplay
-        codeGenFields={codeGenFields}
+        formData={form.getFieldsValue()}
+        useCustomDataset={useCustomDataset}
         visible={cliCodeVisible && !editMode}
         mask={false}
         maskClosable={false}
@@ -851,7 +818,7 @@ export function SystemSubmitDrawer(props: Props) {
   );
 }
 
-interface FormData {
+export interface FormData {
   name: string;
   task: string;
   dataset: DatasetValue;
