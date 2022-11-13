@@ -31,7 +31,7 @@ function renderColInfo(
     title: "ID",
     fixed: "left",
     render: (value) => (
-      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
+      <Typography.Paragraph style={{ marginBottom: 0 }}>
         {value}
       </Typography.Paragraph>
     ),
@@ -52,7 +52,8 @@ function renderColInfo(
           </div>
         ) : (
           <Typography.Paragraph
-            ellipsis={{ rows: 3, tooltip: true, expandable: true }}
+            copyable
+            ellipsis={{ rows: 3, tooltip: false, expandable: true }}
             style={{ marginBottom: 0, minWidth: "80px", maxWidth: maxWidth }}
           >
             {value}
