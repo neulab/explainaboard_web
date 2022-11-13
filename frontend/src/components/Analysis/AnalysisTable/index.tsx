@@ -50,7 +50,7 @@ function renderColInfo(
         ) : (
           <Typography.Paragraph
             copyable
-            ellipsis={{ rows: 3, tooltip: true, expandable: true }}
+            ellipsis={{ rows: 3, tooltip: false, expandable: true }}
             style={{ marginBottom: 0, minWidth: "80px", maxWidth: maxWidth }}
           >
             {value}
