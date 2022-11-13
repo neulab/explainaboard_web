@@ -12,7 +12,6 @@ from explainaboard import get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.metrics.metric import MetricConfig
 from explainaboard.serialization.legacy import general_to_dict
-from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.storage import get_storage
 from explainaboard_web.impl.utils import (
@@ -99,13 +98,6 @@ class SystemModel(System):
         properties = self._get_private_properties()
         return [[unbinarize_bson(y) for y in x] for x in properties["metric_stats"]]
 
-    def get_dataset_custom_features(self) -> dict:
-        if self.dataset:
-            dataset_info = DatasetDBUtils.find_dataset_by_id(self.dataset.dataset_id)
-            if dataset_info and dataset_info.custom_features:
-                return dict(dataset_info.custom_features)
-        return {}
-
     def save_to_db(self, session: ClientSession | None = None) -> None:
         """creates a new record if not exist, otherwise update
         TODO(lyuyang): implement update
@@ -178,8 +170,6 @@ class SystemModel(System):
                     raise ValueError(f"{metric_name} is not a supported metric")
                 metric_configs.append(metrics_lookup[metric_name])
             system_output_metadata: dict = properties.get("system_output_metadata", {})
-            custom_features = system_output_metadata.get("custom_features") or {}
-            custom_features.update(self.get_dataset_custom_features())
             processor_metadata = {
                 # system properties
                 "system_name": self.system_name,
@@ -192,7 +182,7 @@ class SystemModel(System):
                 "system_details": self.system_details,
                 # processor parameters
                 "metric_configs": metric_configs,
-                "custom_features": custom_features,
+                "custom_features": system_output_metadata.get("custom_features") or {},
                 "custom_analyses": system_output_metadata.get("custom_analyses") or [],
             }
 
