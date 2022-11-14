@@ -19,6 +19,7 @@ from explainaboard_web.models import (
     BenchmarkCreateProps,
     BenchmarkMetric,
     BenchmarkTableData,
+    BenchmarkUpdateProps,
     BenchmarkViewConfig,
     DatasetMetadata,
 )
@@ -32,6 +33,12 @@ class BenchmarkDBUtils:
     _DEFAULT_SETS = {"all_lang": ALL_LANG}
 
     @staticmethod
+    def _update_with_not_none_values(dest: dict, source: dict) -> None:
+        for k, v in source.items():
+            if v is not None:
+                dest[k] = v
+
+    @staticmethod
     def _convert_id_from_db(doc: dict) -> None:
         doc["id"] = doc["_id"]
         doc.pop("_id")
@@ -42,38 +49,45 @@ class BenchmarkDBUtils:
         doc.pop("id")
 
     @staticmethod
-    def find_configs(parent: str | None = None, page: int = 0, page_size: int = 0):
-        filt = None
-        if parent is not None:
-            filt = {"parent": parent}
+    def find_configs(parent: str, page: int = 0, page_size: int = 0):
+        permissions_list = [{"is_private": False}]
+        if get_user().is_authenticated:
+            user = get_user()
+            permissions_list.append({"creator": user.id})
+            permissions_list.append({"shared_users": user.email})
+
+        filt = {"$and": [{"parent": parent}, {"$or": permissions_list}]}
         cursor, _ = DBUtils.find(
             DBUtils.BENCHMARK_METADATA, filt=filt, limit=page * page_size
         )
         configs = []
-        for config in list(cursor):
-            BenchmarkDBUtils._convert_id_from_db(config)
-            parent_id = config.get("parent")
+        for config_dict in list(cursor):
+            BenchmarkDBUtils._convert_id_from_db(config_dict)
+            parent_id = config_dict.get("parent")
             if parent_id:
                 parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
-                parent_config.update(config)
-                config = parent_config
-            configs.append(config)
+                parent_dict = parent_config.to_dict()
+                BenchmarkDBUtils._update_with_not_none_values(parent_dict, config_dict)
+                config_dict = parent_dict
+
+            configs.append(BenchmarkConfig.from_dict(config_dict))
         return configs
 
     @staticmethod
     def find_config_by_id(benchmark_id: str) -> BenchmarkConfig:
-        config = DBUtils.find_one_by_id(DBUtils.BENCHMARK_METADATA, benchmark_id)
-        if not config:
+        config_dict = DBUtils.find_one_by_id(DBUtils.BENCHMARK_METADATA, benchmark_id)
+        if not config_dict:
             abort_with_error_message(404, f"benchmark id: {benchmark_id} not found")
-        BenchmarkDBUtils._convert_id_from_db(config)
+        BenchmarkDBUtils._convert_id_from_db(config_dict)
 
-        parent_id = config.get("parent")
+        parent_id = config_dict.get("parent")
         if parent_id:
             parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
-            parent_config.update(config)
-            return BenchmarkConfig.from_dict(parent_config)
+            parent_dict = parent_config.to_dict()
+            BenchmarkDBUtils._update_with_not_none_values(parent_dict, config_dict)
+            config_dict = parent_dict
 
-        return BenchmarkConfig.from_dict(config)
+        return BenchmarkConfig.from_dict(config_dict)
 
     @staticmethod
     def create_benchmark(props: BenchmarkCreateProps) -> BenchmarkConfig:
@@ -90,6 +104,15 @@ class BenchmarkDBUtils:
         DBUtils.insert_one(DBUtils.BENCHMARK_METADATA, props_dict)
 
         return config
+
+    @staticmethod
+    def update_benchmark_by_id(benchmark_id: str, props: BenchmarkUpdateProps) -> bool:
+        # We discard all fields that have None values in update props.
+        # This is important so that we don't overwrite existing fields in DB.
+        props_dict = {k: v for k, v in props.to_dict().items() if v is not None}
+        return DBUtils.update_one_by_id(
+            DBUtils.BENCHMARK_METADATA, benchmark_id, props_dict
+        )
 
     @staticmethod
     def delete_benchmark_by_id(benchmark_id: str):
@@ -440,9 +463,7 @@ class BenchmarkDBUtils:
 
     @staticmethod
     def generate_plots(benchmark_id):
-        config = BenchmarkConfig.from_dict(
-            BenchmarkDBUtils.find_config_by_id(benchmark_id)
-        )
+        config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
         if config.type == "abstract":
             return {}
         plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.json")

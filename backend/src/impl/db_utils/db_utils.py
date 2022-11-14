@@ -6,7 +6,6 @@ from typing import TypeVar
 
 from bson.objectid import InvalidId, ObjectId
 from explainaboard_web.impl.db import get_db
-from explainaboard_web.impl.utils import abort_with_error_message
 from pymongo.client_session import ClientSession
 from pymongo.cursor import Cursor
 from pymongo.results import DeleteResult, InsertManyResult, UpdateResult
@@ -29,6 +28,14 @@ class DBUtils:
     BENCHMARK_METADATA = DBCollection(
         db_name="metadata", collection_name="benchmark_metadata"
     )
+
+    @staticmethod
+    def _convert_id(_id: str):
+        try:
+            return ObjectId(_id)
+        # mongo accepts custom id
+        except InvalidId:
+            return _id
 
     @staticmethod
     def get_database(db_name: str):
@@ -95,15 +102,10 @@ class DBUtils:
           - id: value of _id
           - projection: include or exclude fields in the document
         """
-        try:
-            _id = ObjectId(docid)
-        except InvalidId:
-            """Mongo accepts custom ID"""
-            _id = docid
-        finally:
-            return DBUtils.get_collection(collection).find_one(
-                {"_id": _id}, projection, session=session
-            )
+        _id = DBUtils._convert_id(docid)
+        return DBUtils.get_collection(collection).find_one(
+            {"_id": _id}, projection, session=session
+        )
 
     @staticmethod
     def update_one_by_id(
@@ -119,14 +121,12 @@ class DBUtils:
           - field_to_value: the new "field to value"(s) to be set in the document
         Returns: `True` if a single document has been updated
         """
-        try:
-            result: UpdateResult = DBUtils.get_collection(collection).update_one(
-                {"_id": ObjectId(docid)}, {"$set": field_to_value}, session=session
-            )
-            if int(result.modified_count) == 1:
-                return True
-        except InvalidId:
-            abort_with_error_message(400, f"id: {docid} is not a valid ID")
+        _id = DBUtils._convert_id(docid)
+        result: UpdateResult = DBUtils.get_collection(collection).update_one(
+            {"_id": _id}, {"$set": field_to_value}, session=session
+        )
+        if int(result.modified_count) == 1:
+            return True
         return False
 
     @staticmethod
@@ -136,12 +136,8 @@ class DBUtils:
         Parameters:
           - doc: the document to replace
         """
-        try:
-            return DBUtils.get_collection(collection).replace_one(
-                {"_id": ObjectId(doc["_id"])}, doc
-            )
-        except InvalidId:
-            abort_with_error_message(400, f"id: {doc['_id']} is not a valid ID")
+        _id = DBUtils._convert_id(doc["_id"])
+        return DBUtils.get_collection(collection).replace_one({"_id": _id}, doc)
 
     @staticmethod
     def delete_one_by_id(
@@ -151,14 +147,12 @@ class DBUtils:
         Delete one document with the given ID
         Returns: `True` if a single document has been deleted
         """
-        try:
-            result: DeleteResult = DBUtils.get_collection(collection).delete_one(
-                {"_id": ObjectId(docid)}, session=session
-            )
-            if int(result.deleted_count) == 1:
-                return True
-        except InvalidId:
-            abort_with_error_message(400, f"id: {docid} is not a valid mongodb ID")
+        _id = DBUtils._convert_id(docid)
+        result: DeleteResult = DBUtils.get_collection(collection).delete_one(
+            {"_id": _id}, session=session
+        )
+        if int(result.deleted_count) == 1:
+            return True
         return False
 
     @staticmethod

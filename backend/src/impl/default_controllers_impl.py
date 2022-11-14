@@ -37,6 +37,7 @@ from explainaboard_web.models import (
     Benchmark,
     BenchmarkConfig,
     BenchmarkCreateProps,
+    BenchmarkUpdateProps,
     DatasetMetadata,
     SingleAnalysis,
     SystemOutput,
@@ -57,28 +58,27 @@ from flask import current_app
 from pymongo import ASCENDING, DESCENDING
 
 
-def _is_creator(system: System, user: authUser) -> bool:
-    """check if a user is the creator of a system"""
-    return system.creator == user.id
+def _is_creator(obj: System | BenchmarkConfig, user: authUser) -> bool:
+    """check if a user is the creator of a system or benchmark"""
+    return obj.creator == user.id
 
 
-def _is_shared_user(system: System, user: authUser) -> bool:
-    """check if a user is a shared user of a system"""
-    return system.shared_users and user.email in system.shared_users
+def _is_shared_user(obj: System | BenchmarkConfig, user: authUser) -> bool:
+    """check if a user is a shared user of a system or benchmark"""
+    return obj.shared_users and user.email in obj.shared_users
 
 
-def _has_write_access(system: System) -> bool:
-    """check if the current user has write access of a system"""
+def _has_write_access(obj: System | BenchmarkConfig) -> bool:
+    """check if the current user has write access of a system or benchmark"""
     user = get_user()
-    return user.is_authenticated and _is_creator(system, user)
+    return user.is_authenticated and _is_creator(obj, user)
 
 
-def _has_read_access(system: System) -> bool:
-    """check if the current user has read access of a system"""
+def _has_read_access(obj: System | BenchmarkConfig) -> bool:
+    """check if the current user has read access of a system or benchmark"""
     user = get_user()
-    return not system.is_private or (
-        user.is_authenticated
-        and (_is_creator(system, user) or _is_shared_user(system, user))
+    return not obj.is_private or (
+        user.is_authenticated and (_is_creator(obj, user) or _is_shared_user(obj, user))
     )
 
 
@@ -177,7 +177,9 @@ def benchmark_configs_get(parent: str | None) -> list[BenchmarkConfig]:
 
 
 def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
-    config = BenchmarkConfig.from_dict(BenchmarkDBUtils.find_config_by_id(benchmark_id))
+    config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
+    if not _has_read_access(config):
+        abort_with_error_message(403, "benchmark access denied", 40302)
     if config.type == "abstract":
         return Benchmark(config, None, None)
     file_path = benchmark_id + "_benchmark.json"
@@ -225,22 +227,27 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
 
 
 def benchmark_post(body: BenchmarkCreateProps) -> BenchmarkConfig:
+    if body.parent == "" and body.views is None:
+        abort_with_error_message(
+            400, "views (type array) is a required property when parent is empty."
+        )
+
     return BenchmarkDBUtils.create_benchmark(body)
 
 
-def benchmark_update_by_id(body: SystemUpdateProps, benchmark_id: str):
+def benchmark_update_by_id(body: BenchmarkUpdateProps, benchmark_id: str):
     config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
     if not _has_write_access(config):
         abort_with_error_message(403, "benchmark update denied", 40303)
 
-    success = BenchmarkDBUtils.update_system_by_id(benchmark_id, body)
+    success = BenchmarkDBUtils.update_benchmark_by_id(benchmark_id, body)
     if success:
         return "Success"
     abort_with_error_message(400, f"failed to update benchmark {benchmark_id}")
 
 
 def benchmark_delete_by_id(benchmark_id: str):
-    BenchmarkDBUtils.delete_benchmark(benchmark_id)
+    BenchmarkDBUtils.delete_benchmark_by_id(benchmark_id)
     return "Success"
 
 
