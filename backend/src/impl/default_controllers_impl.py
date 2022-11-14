@@ -35,10 +35,8 @@ from explainaboard_web.impl.utils import (
 )
 from explainaboard_web.models import (
     Benchmark,
-    BenchmarkChildConfig,
-    BenchmarkChildCreateProps,
     BenchmarkConfig,
-    BenchmarkParentCreateProps,
+    BenchmarkCreateProps,
     DatasetMetadata,
     SingleAnalysis,
     SystemOutput,
@@ -226,12 +224,24 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
     return Benchmark(config, views, update_time)
 
 
-def benchmark_parent_post(body: BenchmarkParentCreateProps) -> BenchmarkConfig:
+def benchmark_post(body: BenchmarkCreateProps) -> BenchmarkConfig:
     return BenchmarkDBUtils.create_benchmark(body)
 
 
-def benchmark_child_post(body: BenchmarkChildCreateProps) -> BenchmarkChildConfig:
-    return BenchmarkDBUtils.create_benchmark(body)
+def benchmark_update_by_id(body: SystemUpdateProps, benchmark_id: str):
+    config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
+    if not _has_write_access(config):
+        abort_with_error_message(403, "benchmark update denied", 40303)
+
+    success = BenchmarkDBUtils.update_system_by_id(benchmark_id, body)
+    if success:
+        return "Success"
+    abort_with_error_message(400, f"failed to update benchmark {benchmark_id}")
+
+
+def benchmark_delete_by_id(benchmark_id: str):
+    BenchmarkDBUtils.delete_benchmark(benchmark_id)
+    return "Success"
 
 
 """ /systems """

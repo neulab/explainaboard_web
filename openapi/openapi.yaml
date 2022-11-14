@@ -107,17 +107,62 @@ paths:
               schema:
                 $ref: "#/components/schemas/APIError"
 
-  /benchmark/parent:
-    post:
-      summary: Uploads a parent benchmark
-      operationId: benchmarkParentPost
-      description: Uploads a parent benchmark
+    patch:
+      summary: Updates a benchmark by id
+      operationId: benchmarkUpdateById
+      description: Updates a benchmark by id. See requestBody for supported fields.
+      parameters:
+        - in: path
+          name: benchmark_id
+          schema:
+            type: string
+          required: true
+          example: "example_benchmark_id"
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/BenchmarkParentCreateProps"
+              $ref: "#/components/schemas/BenchmarkUpdateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
+
+    delete:
+      summary: Deletes a benchmark by id
+      operationId: benchmarkDeleteById
+      parameters:
+        - in: path
+          name: benchmark_id
+          schema:
+            type: string
+          required: true
+          example: "example_benchmark_id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
+
+  /benchmark:
+    post:
+      summary: Uploads a benchmark
+      operationId: benchmarkPost
+      description: Uploads a benchmark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenchmarkCreateProps"
       responses:
         "200":
           description: OK
@@ -125,31 +170,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BenchmarkConfig"
-        "400":
-          description: INPUT ERROR
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/APIError"
-
-  /benchmark/child:
-    post:
-      summary: Uploads a child benchmark
-      operationId: benchmarkChildPost
-      description: Uploads a child benchmark
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/BenchmarkChildCreateProps"
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BenchmarkChildConfig"
         "400":
           description: INPUT ERROR
           content:
@@ -1327,72 +1347,47 @@ components:
       additionalProperties: true
       required: [dataset_name]
 
-    BenchmarkChildCreateProps:
+    # This is a hack to force swagger codegen
+    # to order required fields at the front to prevent syntax errors
+    BenchmarkCreator:
       type: object
       properties:
-        id:
+        creator:
           type: string
-        name:
-          type: string
-        description:
-          type: string
-        type:
-          type: string
-          description: |
-            "could be 'abstract' to indicate this doesn't fully specify a benchmark"
-            "otherwise 'standard'"
-        parent:
-          type: string
-          description: "a parent benchmark that this benchmark inherits config from"
-        visibility:
-          type: string
-          description: "a visibility level, public/hidden"
-        metrics:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkMetric'
-          nullable: true
-        system_query:
-          type: object
-          nullable: true
-      required: [id, name, description, type, parent, visibility]
+      required: [creator]
 
-    BenchmarkParentCreateProps:
+    BenchmarkCreateProps:
       type: object
       properties:
         id:
           type: string
+        is_private:
+          type: boolean
         name:
           type: string
         views:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkViewConfig'
+        parent:
+          type: string
+          description: |
+            "a parent benchmark that this benchmark inherits config from."
+            "If this benchmark doesn't inherit any configs, "
+            "the field must be an empty string."
         description:
           type: string
+        shared_users:
+          type: array
+          items:
+            type: string
+          description: space-separated list of emails with which system is shared
+          example: ["hello@gmail.com", "world@gmail.com"]
         type:
           type: string
           description: |
             "could be 'abstract' to indicate this doesn't fully specify a benchmark"
-            "otherwise 'standard'"
-        parent:
-          type: string
-          description: "a parent benchmark that this benchmark inherits config from"
-        visibility:
-          type: string
-          description: "a visibility level, public/hidden"
-        metrics:
-          type: array
-          items:
-            $ref: '#/components/schemas/BenchmarkMetric'
           nullable: true
-        system_query:
-          type: object
-          nullable: true
-        # The properties above this line except for "views" is identical
-        # to the ones in BenchmarkChildCreateProps. The reason for duplication
-        # is using the allOf + referencing BenchmarkChildCreateProps creates
-        # unexpected validation errors.
         logo:
           type: string
           nullable: true
@@ -1403,40 +1398,96 @@ components:
           type: string
           nullable: true
         paper:
+          type: object
           $ref: "#/components/schemas/Paper"
+          nullable: true
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
           nullable: true
         datasets:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkDatasetConfig'
           nullable: true
+        system_query:
+          type: object
+          nullable: true
         default_views:
           type: array
           items:
             type: string
           nullable: true
-      required: [id, name, views, description, type, parent, visibility]
+      required: [id, is_private, name, views, parent, description]
 
-    # This is a hack to force swagger codegen
-    # to order required fields at the front to prevent syntax errors
-    BenchmarkCreator:
+    BenchmarkUpdateProps:
       type: object
       properties:
-        creator:
+        is_private:
+          type: boolean
+        name:
           type: string
-      required: [creator]
-
-    BenchmarkChildConfig:
-      allOf:
-        - $ref: "#/components/schemas/BenchmarkChildCreateProps"
-        - $ref: "#/components/schemas/Time"
-        - $ref: "#/components/schemas/BenchmarkCreator"
+        views:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkViewConfig'
+        parent:
+          type: string
+          description: |
+            "a parent benchmark that this benchmark inherits config from."
+            "If this benchmark doesn't inherit any configs, "
+            "the field must be an empty string."
+        description:
+          type: string
+        shared_users:
+          type: array
+          items:
+            type: string
+          description: space-separated list of emails with which system is shared
+          example: ["hello@gmail.com", "world@gmail.com"]
+        type:
+          type: string
+          description: |
+            "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+          nullable: true
+        logo:
+          type: string
+          nullable: true
+        contact:
+          type: string
+          nullable: true
+        homepage:
+          type: string
+          nullable: true
+        paper:
+          type: object
+          $ref: "#/components/schemas/Paper"
+          nullable: true
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
+          nullable: true
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkDatasetConfig'
+          nullable: true
+        system_query:
+          type: object
+          nullable: true
+        default_views:
+          type: array
+          items:
+            type: string
+          nullable: true
 
     BenchmarkConfig:
       allOf:
-        - $ref: "#/components/schemas/BenchmarkParentCreateProps"
-        - $ref: "#/components/schemas/Time"
+        - $ref: "#/components/schemas/BenchmarkCreateProps"
         - $ref: "#/components/schemas/BenchmarkCreator"
+        - $ref: "#/components/schemas/Time"
 
     SignificanceTestInfo:
       type: object

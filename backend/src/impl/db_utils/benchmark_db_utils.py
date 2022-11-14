@@ -15,11 +15,9 @@ from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models import (
-    BenchmarkChildConfig,
-    BenchmarkChildCreateProps,
     BenchmarkConfig,
+    BenchmarkCreateProps,
     BenchmarkMetric,
-    BenchmarkParentCreateProps,
     BenchmarkTableData,
     BenchmarkViewConfig,
     DatasetMetadata,
@@ -63,7 +61,7 @@ class BenchmarkDBUtils:
         return configs
 
     @staticmethod
-    def find_config_by_id(benchmark_id: str) -> dict:
+    def find_config_by_id(benchmark_id: str) -> BenchmarkConfig:
         config = DBUtils.find_one_by_id(DBUtils.BENCHMARK_METADATA, benchmark_id)
         if not config:
             abort_with_error_message(404, f"benchmark id: {benchmark_id} not found")
@@ -73,14 +71,12 @@ class BenchmarkDBUtils:
         if parent_id:
             parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
             parent_config.update(config)
-            return parent_config
+            return BenchmarkConfig.from_dict(parent_config)
 
-        return config
+        return BenchmarkConfig.from_dict(config)
 
     @staticmethod
-    def create_benchmark(
-        props: BenchmarkParentCreateProps | BenchmarkChildCreateProps,
-    ) -> BenchmarkConfig | BenchmarkChildConfig:
+    def create_benchmark(props: BenchmarkCreateProps) -> BenchmarkConfig:
         props_dict = props.to_dict()
 
         user = get_user()
@@ -89,15 +85,21 @@ class BenchmarkDBUtils:
             "last_modified"
         ] = datetime.datetime.utcnow()
 
-        if type(props) == BenchmarkParentCreateProps:
-            config = BenchmarkConfig.from_dict(props_dict)
-        else:
-            config = BenchmarkChildConfig.from_dict(props_dict)
-
+        config = BenchmarkConfig.from_dict(props_dict)
         BenchmarkDBUtils._convert_id_to_db(props_dict)
         DBUtils.insert_one(DBUtils.BENCHMARK_METADATA, props_dict)
 
         return config
+
+    @staticmethod
+    def delete_benchmark_by_id(benchmark_id: str):
+        user = get_user()
+        config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
+        if config.creator != user.id:
+            abort_with_error_message(403, "you can only delete your own benchmark")
+        result = DBUtils.delete_one_by_id(DBUtils.BENCHMARK_METADATA, benchmark_id)
+        if not result:
+            raise RuntimeError(f"failed to delete benchmark {benchmark_id}")
 
     @staticmethod
     def load_sys_infos(config: BenchmarkConfig) -> list[dict]:
