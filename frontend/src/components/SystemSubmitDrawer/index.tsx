@@ -629,13 +629,12 @@ export function SystemSubmitDrawer(props: Props) {
 
           <Form.Item
             label="Metrics"
-            name="metric_names"
             tooltip="The metrics that are used to evaluate each system."
             rules={editMode ? [] : [{ required: true }]}
             hidden={editMode}
           >
             <Space size={"small"}>
-              <Form.Item noStyle>
+              <Form.Item noStyle name="metric_names">
                 <Select
                   style={{ width: 300 }}
                   mode="multiple"
