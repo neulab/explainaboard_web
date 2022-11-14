@@ -1,12 +1,14 @@
 import { useState } from "react";
 
-type Setter<T> = (
-  value: T | ((oldValue: T) => T),
-  updateStorage: boolean
-) => void;
+type Setter<T> = (value: T | ((oldValue: T) => T)) => void;
 
-// Create a state in the same way as `useState` while binding the state with
-// localStorage. All stored objects will be serialized with JSON.stringify
+/**
+ * Create a state in the same way as `useState` while binding the state with
+ * `localStorage`. All stored objects will be serialized with `JSON.stringify`.
+ * @param key the key associated with the value stored in `localStorage`
+ * @param initialValue same as the initial value for `useState`
+ * @returns
+ */
 export function useLocalStorage<T>(
   key: string,
   initialValue: T
@@ -30,7 +32,7 @@ export function useLocalStorage<T>(
   });
   // Return a wrapped version of useState's setter function that ...
   // ... persists the new value to localStorage.
-  const setValue: Setter<T> = (value, updateStorage) => {
+  const setValue: Setter<T> = (value) => {
     try {
       // Allow value to be a function so we have same API as useState
       const valueToStore =
@@ -38,11 +40,10 @@ export function useLocalStorage<T>(
       // Save state
       setStoredValue(valueToStore);
       // Save to local storage if do update
-      if (typeof window !== "undefined" && updateStorage) {
+      if (typeof window !== "undefined") {
         window.localStorage.setItem(key, JSON.stringify(valueToStore));
       }
     } catch (error) {
-      // A more advanced implementation would handle the error case
       console.log(error);
     }
   };

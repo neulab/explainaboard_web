@@ -41,7 +41,7 @@ interface Props extends DrawerProps {
   visible: boolean;
 }
 
-const showCliCodeKey = "showCliCode";
+const showCliCodePrefKey = "showCliCodePref";
 
 type SysToSubmit = {
   base64: string;
@@ -135,10 +135,11 @@ export function SystemSubmitDrawer(props: Props) {
   const [otherSourceLang, setOtherSourceLang] = useState(false);
   const [otherTargetLang, setOtherTargetLang] = useState(false);
   const [form] = useForm<FormData>();
-  const [cliCodeVisible, setCliCodeVisible] = useLocalStorage<boolean>(
-    showCliCodeKey,
+  const [cliCodeVisiblePref, setCliCodeVisiblePref] = useLocalStorage<boolean>(
+    showCliCodePrefKey,
     false
   );
+  const [cliCodeVisible, setCliCodeVisible] = useState<boolean>(false);
 
   const { systemToEdit, onClose, visible, ...rest } = props;
 
@@ -151,19 +152,9 @@ export function SystemSubmitDrawer(props: Props) {
     form.resetFields();
   }, [form]);
 
-  function closeCliCodeDisplay() {
-    setCliCodeVisible(false, false);
-  }
-
-  function closeAllDrawers() {
-    closeCliCodeDisplay();
-    onClose();
-  }
-
   useEffect(() => {
-    if (visible)
-      setCliCodeVisible(localStorage.getItem(showCliCodeKey) === "true", false);
-  }, [visible, setCliCodeVisible]);
+    setTimeout(() => setCliCodeVisible(cliCodeVisiblePref && visible));
+  }, [visible, cliCodeVisiblePref]);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -350,7 +341,7 @@ export function SystemSubmitDrawer(props: Props) {
         );
       }
       resetAllFormFields();
-      closeAllDrawers();
+      onClose();
     } catch (e) {
       if (editMode) {
         ReactGA.event({
@@ -449,20 +440,11 @@ export function SystemSubmitDrawer(props: Props) {
       >
         Submit
       </Button>
-      <Button
-        onClick={() => closeAllDrawers()}
-        loading={state === State.loading}
-      >
+      <Button onClick={() => onClose()} loading={state === State.loading}>
         Cancel
       </Button>
       {!editMode && (
-        <Button
-          onClick={() => {
-            const newState = !cliCodeVisible;
-            setCliCodeVisible(newState, true);
-            localStorage.setItem(showCliCodeKey, newState.toString());
-          }}
-        >
+        <Button onClick={() => setCliCodeVisiblePref(!cliCodeVisiblePref)}>
           Show Cli Code
         </Button>
       )}
@@ -537,7 +519,7 @@ export function SystemSubmitDrawer(props: Props) {
       width="60%"
       title={editMode ? "Edit System" : "New System"}
       footer={footer}
-      onClose={closeAllDrawers}
+      onClose={onClose}
       visible={visible}
       push={{ distance: "400" }}
       {...rest}
@@ -549,7 +531,7 @@ export function SystemSubmitDrawer(props: Props) {
         mask={false}
         maskClosable={false}
         width={400}
-        onClose={() => setCliCodeVisible(!cliCodeVisible, true)}
+        onClose={() => setCliCodeVisiblePref(!cliCodeVisiblePref)}
       />
 
       <Spin spinning={state === State.loading} tip="processing...">
