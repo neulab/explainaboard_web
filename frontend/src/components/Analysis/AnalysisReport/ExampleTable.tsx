@@ -71,6 +71,7 @@ export function ExampleTable({
     // all single analysis cases + multi-system analysis for tasks with column info
     exampleTable = (
       <AnalysisTable
+        tableTitle={title}
         systemIDs={systemIDs}
         systemNames={systemNames}
         task={task}
@@ -90,6 +91,7 @@ export function ExampleTable({
             return (
               <Tabs.TabPane tab={system.system_name} key={`${sysIndex}`}>
                 <AnalysisTable
+                  tableTitle={title}
                   systemIDs={systemIDsArray[sysIndex]}
                   systemNames={[system.system_name]}
                   task={task}
