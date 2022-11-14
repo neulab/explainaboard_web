@@ -633,7 +633,7 @@ export function SystemSubmitDrawer(props: Props) {
             rules={editMode ? [] : [{ required: true }]}
             hidden={editMode}
           >
-            <Space size={"small"}>
+            <Space size="small">
               <Form.Item noStyle name="metric_names">
                 <Select
                   style={{ width: 300 }}
