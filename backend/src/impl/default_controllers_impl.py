@@ -289,9 +289,6 @@ def systems_get(
     if sort_field != "created_at":
         sort_field = f"results.{sort_field}"
 
-    if not system_tags:
-        system_tags = []
-
     dir = ASCENDING if sort_direction == "asc" else DESCENDING
 
     systems, total = SystemDBUtils.find_systems(
