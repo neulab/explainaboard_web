@@ -5,13 +5,13 @@ from __future__ import annotations
 import json
 import re
 from datetime import datetime
-from typing import Any
+from importlib.metadata import version
+from typing import Any, Final
 
 from explainaboard import get_processor
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.metrics.metric import MetricConfig
 from explainaboard.serialization.legacy import general_to_dict
-from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.storage import get_storage
 from explainaboard_web.impl.utils import (
@@ -26,7 +26,8 @@ from pymongo.client_session import ClientSession
 
 class SystemModel(System):
 
-    _SYSTEM_OUTPUT_CONST = "__SYSOUT__"
+    _SYSTEM_OUTPUT_CONST: Final = "__SYSOUT__"
+    _CURRENT_SDK_VERSION: Final = version("explainaboard")
     """Same as System but implements several helper functions that retrieves
     additional information and persists data to the DB.
     """
@@ -97,13 +98,6 @@ class SystemModel(System):
         properties = self._get_private_properties()
         return [[unbinarize_bson(y) for y in x] for x in properties["metric_stats"]]
 
-    def get_dataset_custom_features(self) -> dict:
-        if self.dataset:
-            dataset_info = DatasetDBUtils.find_dataset_by_id(self.dataset.dataset_id)
-            if dataset_info and dataset_info.custom_features:
-                return dict(dataset_info.custom_features)
-        return {}
-
     def save_to_db(self, session: ClientSession | None = None) -> None:
         """creates a new record if not exist, otherwise update
         TODO(lyuyang): implement update
@@ -142,20 +136,25 @@ class SystemModel(System):
         DBUtils.update_one_by_id(
             DBUtils.DEV_SYSTEM_METADATA,
             self.system_id,
-            {"system_output": blob_name},
+            {
+                "system_output": blob_name,
+                "system_output_metadata": general_to_dict(system_output.metadata),
+            },
             session=session,
         )
 
     def update_overall_statistics(
-        self,
-        system_output_data: FileLoaderReturn,
-        session: ClientSession | None = None,
-        force_update=False,
+        self, session: ClientSession, force_update=False
     ) -> None:
-        """regenerates overall statistics and updates cache"""
+        """If the analysis is outdated or if `force_update`, the analysis is
+        regenerated and the cache is updated."""
         properties = self._get_private_properties(session=session)
         if not force_update:
-            if "system_info" in properties and "metric_stats" in properties:
+            if (
+                "system_info" in properties
+                and "metric_stats" in properties
+                and properties.get("sdk_version_used") == self._CURRENT_SDK_VERSION
+            ):
                 # cache hit
                 return
 
@@ -170,8 +169,7 @@ class SystemModel(System):
                 if metric_name not in metrics_lookup:
                     raise ValueError(f"{metric_name} is not a supported metric")
                 metric_configs.append(metrics_lookup[metric_name])
-            custom_features = system_output_data.metadata.custom_features or {}
-            custom_features.update(self.get_dataset_custom_features())
+            system_output_metadata: dict = properties.get("system_output_metadata", {})
             processor_metadata = {
                 # system properties
                 "system_name": self.system_name,
@@ -184,12 +182,15 @@ class SystemModel(System):
                 "system_details": self.system_details,
                 # processor parameters
                 "metric_configs": metric_configs,
-                "custom_features": custom_features,
-                "custom_analyses": system_output_data.metadata.custom_analyses or [],
+                "custom_features": system_output_metadata.get("custom_features") or {},
+                "custom_analyses": system_output_metadata.get("custom_analyses") or [],
             }
 
             return processor.get_overall_statistics(
-                metadata=processor_metadata, sys_output=system_output_data.samples
+                metadata=processor_metadata,
+                sys_output=self.get_raw_system_outputs(
+                    output_ids=None, session=session
+                ),
             )
 
         overall_statistics = _process()
@@ -213,13 +214,14 @@ class SystemModel(System):
             system_update_values = {
                 "results": self.results,
                 # cache
+                "sdk_version_used": self._CURRENT_SDK_VERSION,
                 "system_info": sys_info.to_dict(),
                 "metric_stats": binarized_metric_stats,
                 "analysis_cases": update_analysis_cases(),
             }
             return system_update_values
 
-        def update_analysis_cases():
+        def update_analysis_cases() -> dict[str, str]:
             """saves analysis cases to storage and returns an updated analysis_cases
             dict for the DB"""
             analysis_cases_lookup: dict[str, str] = {}  # level: data_path
@@ -236,21 +238,29 @@ class SystemModel(System):
                 analysis_cases_lookup[analysis_level.name] = blob_name
             return analysis_cases_lookup
 
-        if properties.get("analysis_cases"):
-            # invalidate cache
-            get_storage().delete(properties["analysis_cases"].values())
-
+        update_values = generate_system_update_values()
         DBUtils.update_one_by_id(
             DBUtils.DEV_SYSTEM_METADATA,
             self.system_id,
-            generate_system_update_values(),
+            update_values,
             session=session,
         )
+        if properties.get("analysis_cases"):
+            # remove stale data. This needs to be the last operation so it is
+            # protected by the transaction.
+            blobs_to_delete = [
+                blob
+                for blob in properties["analysis_cases"].values()
+                if blob not in update_values["analysis_cases"].values()
+            ]
+            get_storage().delete(blobs_to_delete)
 
-    def get_raw_system_outputs(self, output_ids: list[int] | None) -> list[dict]:
+    def get_raw_system_outputs(
+        self, output_ids: list[int] | None, session: ClientSession | None = None
+    ) -> list[dict]:
         """Downloads the system outputs and returns the outputs associated with
         output_ids. If output_ids=None, all system outputs are returned."""
-        data_path: str = self._get_private_properties()["system_output"]
+        data_path: str = self._get_private_properties(session=session)["system_output"]
         sys_data_str = get_storage().download_and_decompress(data_path)
         sys_data: list = json.loads(sys_data_str)
 

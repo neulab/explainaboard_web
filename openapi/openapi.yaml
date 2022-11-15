@@ -1171,8 +1171,6 @@ components:
         huggingface_link:
           type: string
           format: url
-        custom_features:
-          type: object
       required:
         - dataset_id
         - dataset_name
