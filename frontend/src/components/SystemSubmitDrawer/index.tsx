@@ -631,7 +631,7 @@ export function SystemSubmitDrawer(props: Props) {
             label="Metrics"
             tooltip="The metrics that are used to evaluate each system."
             hidden={editMode}
-            required={true}
+            required
           >
             <Space size="small">
               <Form.Item
