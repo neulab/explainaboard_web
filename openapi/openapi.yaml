@@ -1216,13 +1216,6 @@ components:
             $ref: "#/components/schemas/SignificanceTestInfo"
       required: [system_analyses]
 
-    SystemTag:
-      type: object
-      properties:
-        tag_name:
-          type: string
-      required: [tag_name]
-
     Performance:
       type: object
       properties:
