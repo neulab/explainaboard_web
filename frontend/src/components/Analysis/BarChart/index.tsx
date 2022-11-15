@@ -46,6 +46,7 @@ interface Props {
   confidenceScoresList: [number, number][][];
   onBarClick: (barIndex: number, systemIndex: number) => void;
   numbersOfSamplesList: number[][];
+  addChartFile: (imgName: string, base64File: string) => void;
 }
 
 export function BarChart(props: Props) {
@@ -60,6 +61,7 @@ export function BarChart(props: Props) {
     numbersOfSamplesList,
     confidenceScoresList,
     onBarClick,
+    addChartFile,
   } = props;
 
   const seriesInfoList: SeriesInfo[] = [];
@@ -240,6 +242,17 @@ export function BarChart(props: Props) {
     if (eChartsRef != null) {
       const instance = eChartsRef.getEchartsInstance();
       instance.resize();
+      try {
+        addChartFile(
+          title,
+          eChartsRef.getEchartsInstance().getDataURL({ type: "png" })
+        );
+      } catch (e) {
+        console.log(
+          `Error when adding chart ${title} to downloadable files:`,
+          e
+        );
+      }
     }
   });
 
