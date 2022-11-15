@@ -877,7 +877,6 @@ components:
           description: a place to store arbitrary system details you want to remember
         is_private:
           type: boolean
-          default: true
         shared_users:
           type: array
           items:
@@ -911,7 +910,6 @@ components:
           example: en
         is_private:
           type: boolean
-          default: true
         shared_users:
           type: array
           items:
