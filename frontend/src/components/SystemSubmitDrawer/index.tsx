@@ -13,6 +13,7 @@ import {
   Checkbox,
   Row,
   Col,
+  Typography,
 } from "antd";
 import {
   DatasetMetadata,
@@ -30,14 +31,19 @@ import ReactGA from "react-ga4";
 import useSearch, { FilterFunc } from "./useSearch";
 import { SystemModel } from "../../models";
 import "./index.css";
+import ClientCodeDisplay from "./ClientCodeDisplay";
+import { useLocalStorage } from "../useLocalStorage";
 
 const { TextArea } = Input;
+const { Text, Link } = Typography;
 
 interface Props extends DrawerProps {
   systemToEdit?: SystemModel;
   onClose: () => void;
   visible: boolean;
 }
+
+const showCliCodePrefKey = "showCliCodePref";
 
 type SysToSubmit = {
   base64: string;
@@ -130,14 +136,27 @@ export function SystemSubmitDrawer(props: Props) {
   const [useCustomDataset, setUseCustomDataset] = useState(false);
   const [otherSourceLang, setOtherSourceLang] = useState(false);
   const [otherTargetLang, setOtherTargetLang] = useState(false);
-
   const [form] = useForm<FormData>();
-  const { systemToEdit, onClose, ...rest } = props;
+  const [cliCodeVisiblePref, setCliCodeVisiblePref] = useLocalStorage<boolean>(
+    showCliCodePrefKey,
+    false
+  );
+  const [cliCodeVisible, setCliCodeVisible] = useState<boolean>(false);
+
+  const { systemToEdit, onClose, visible, ...rest } = props;
+
+  const [, __updateCliCode] = React.useState<boolean>();
+  const updateCliCode = React.useCallback(() => __updateCliCode((s) => !s), []);
+
   const editMode = systemToEdit !== undefined;
 
   const resetAllFormFields = useCallback(() => {
     form.resetFields();
   }, [form]);
+
+  useEffect(() => {
+    setTimeout(() => setCliCodeVisible(cliCodeVisiblePref && visible), 100);
+  }, [visible, cliCodeVisiblePref]);
 
   useEffect(() => {
     async function fetchTasks() {
@@ -411,6 +430,7 @@ export function SystemSubmitDrawer(props: Props) {
         }
       }
     }
+    updateCliCode();
   }
 
   const footer = (
@@ -425,11 +445,17 @@ export function SystemSubmitDrawer(props: Props) {
       <Button onClick={() => onClose()} loading={state === State.loading}>
         Cancel
       </Button>
+      {!editMode && (
+        <Button onClick={() => setCliCodeVisiblePref(!cliCodeVisiblePref)}>
+          Show Cli Code
+        </Button>
+      )}
     </Space>
   );
 
   function onUseCustomDatasetChange(checked: boolean) {
     setUseCustomDataset(checked);
+
     if (checked)
       form.setFieldsValue({
         dataset: { datasetID: undefined, split: undefined },
@@ -496,8 +522,20 @@ export function SystemSubmitDrawer(props: Props) {
       title={editMode ? "Edit System" : "New System"}
       footer={footer}
       onClose={onClose}
+      visible={visible}
+      push={{ distance: "400" }}
       {...rest}
     >
+      <ClientCodeDisplay
+        formData={form.getFieldsValue()}
+        useCustomDataset={useCustomDataset}
+        visible={cliCodeVisible && !editMode}
+        mask={false}
+        maskClosable={false}
+        width={400}
+        onClose={() => setCliCodeVisiblePref(!cliCodeVisiblePref)}
+      />
+
       <Spin spinning={state === State.loading} tip="processing...">
         <Form
           labelCol={{ span: 7 }}
@@ -626,17 +664,38 @@ export function SystemSubmitDrawer(props: Props) {
           </Form.Item>
 
           <Form.Item
-            name="metric_names"
             label="Metrics"
-            rules={editMode ? [] : [{ required: true }]}
+            tooltip="The metrics that are used to evaluate each system."
             hidden={editMode}
+            required
           >
-            <Select
-              mode="multiple"
-              options={(selectedTask?.supported_metrics || []).map((opt) => ({
-                value: opt,
-              }))}
-            />
+            <Space size="small">
+              <Form.Item
+                noStyle
+                name="metric_names"
+                rules={editMode ? [] : [{ required: true }]}
+              >
+                <Select
+                  style={{ width: 300 }}
+                  mode="multiple"
+                  options={(selectedTask?.supported_metrics || []).map(
+                    (opt) => ({
+                      value: opt,
+                    })
+                  )}
+                />
+              </Form.Item>
+              <Text>
+                <Link
+                  target="_blank"
+                  href="https://github.com/neulab/ExplainaBoard/blob/main/docs/supported_metrics.md"
+                >
+                  Click here&nbsp;
+                </Link>
+                to see a list of metrics supported for each task, along with
+                detailed descriptions.
+              </Text>
+            </Space>
           </Form.Item>
 
           <Form.Item
@@ -764,7 +823,7 @@ export function SystemSubmitDrawer(props: Props) {
   );
 }
 
-interface FormData {
+export interface FormData {
   name: string;
   task: string;
   dataset: DatasetValue;
