@@ -153,7 +153,7 @@ export function SystemSubmitDrawer(props: Props) {
   }, [form]);
 
   useEffect(() => {
-    setTimeout(() => setCliCodeVisible(cliCodeVisiblePref && visible));
+    setTimeout(() => setCliCodeVisible(cliCodeVisiblePref && visible), 100);
   }, [visible, cliCodeVisiblePref]);
 
   useEffect(() => {
