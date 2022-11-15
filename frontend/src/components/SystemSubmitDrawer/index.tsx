@@ -13,6 +13,7 @@ import {
   Checkbox,
   Row,
   Col,
+  Typography,
 } from "antd";
 import {
   DatasetMetadata,
@@ -34,6 +35,7 @@ import ClientCodeDisplay from "./ClientCodeDisplay";
 import { useLocalStorage } from "../useLocalStorage";
 
 const { TextArea } = Input;
+const { Text, Link } = Typography;
 
 interface Props extends DrawerProps {
   systemToEdit?: SystemModel;
@@ -662,17 +664,38 @@ export function SystemSubmitDrawer(props: Props) {
           </Form.Item>
 
           <Form.Item
-            name="metric_names"
             label="Metrics"
-            rules={editMode ? [] : [{ required: true }]}
+            tooltip="The metrics that are used to evaluate each system."
             hidden={editMode}
+            required
           >
-            <Select
-              mode="multiple"
-              options={(selectedTask?.supported_metrics || []).map((opt) => ({
-                value: opt,
-              }))}
-            />
+            <Space size="small">
+              <Form.Item
+                noStyle
+                name="metric_names"
+                rules={editMode ? [] : [{ required: true }]}
+              >
+                <Select
+                  style={{ width: 300 }}
+                  mode="multiple"
+                  options={(selectedTask?.supported_metrics || []).map(
+                    (opt) => ({
+                      value: opt,
+                    })
+                  )}
+                />
+              </Form.Item>
+              <Text>
+                <Link
+                  target="_blank"
+                  href="https://github.com/neulab/ExplainaBoard/blob/main/docs/supported_metrics.md"
+                >
+                  Click here&nbsp;
+                </Link>
+                to see a list of metrics supported for each task, along with
+                detailed descriptions.
+              </Text>
+            </Space>
           </Form.Item>
 
           <Form.Item
