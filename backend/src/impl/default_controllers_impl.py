@@ -17,6 +17,10 @@ from explainaboard.metrics.metric import SimpleMetricStats
 from explainaboard.serialization.legacy import general_to_dict
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.typing_utils import narrow
+from flask import current_app
+from pymongo import ASCENDING, DESCENDING
+from pymongo.client_session import ClientSession
+
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
@@ -27,6 +31,7 @@ from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.language_code import get_language_codes
+from explainaboard_web.impl.metric_descriptions import get_metric_descriptions
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
 from explainaboard_web.impl.utils import (
@@ -53,9 +58,6 @@ from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
 from explainaboard_web.models.user import User as modelUser
-from flask import current_app
-from pymongo import ASCENDING, DESCENDING
-from pymongo.client_session import ClientSession
 
 
 def _is_creator(system: System, user: authUser) -> bool:
@@ -168,6 +170,13 @@ def datasets_get(
         dataset_name=dataset_name,
         task=task,
     )
+
+
+""" /metricdescriptions """
+
+
+def metric_descriptions_get() -> dict[str, str]:
+    return get_metric_descriptions()
 
 
 """ /benchmarks """
