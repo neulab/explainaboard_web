@@ -122,6 +122,9 @@ export function SystemSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.loading);
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
   const [languageCodes, setLanguageCodes] = useState<LanguageCode[]>([]);
+  const [metricDescriptions, setMetricDescriptions] = useState<{
+    [key: string]: string;
+  }>({});
   const { filtered: inputLangFiltered, setQuery: setInputLangQuery } =
     useSearch<LanguageCode>(languageCodes, filterFunc);
   const { filtered: outputLangFiltered, setQuery: setOutputLangQuery } =
@@ -144,6 +147,7 @@ export function SystemSubmitDrawer(props: Props) {
       setState(State.loading);
       setTaskCategories(await backendClient.tasksGet());
       setLanguageCodes(await backendClient.languageCodesGet());
+      setMetricDescriptions(await backendClient.metricDescriptionsGet());
       setState(State.other);
     }
 
@@ -635,6 +639,11 @@ export function SystemSubmitDrawer(props: Props) {
               mode="multiple"
               options={(selectedTask?.supported_metrics || []).map((opt) => ({
                 value: opt,
+                label: (
+                  <Tooltip placement="topLeft" title={metricDescriptions[opt]}>
+                    <div>{opt}</div>
+                  </Tooltip>
+                ),
               }))}
             />
           </Form.Item>
