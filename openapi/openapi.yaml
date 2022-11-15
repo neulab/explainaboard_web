@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.14"
+  version: "0.2.15"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -332,6 +332,15 @@ paths:
             items:
               type: string
             description: list of emails with whom the system is shared
+        - in: query
+          name: system_tags
+          schema:
+            type: array
+            items:
+              type: string
+            description: |
+              User defined tags for the system,
+              useful for searching and grouping systems
 
       responses:
         "200":
@@ -925,6 +934,15 @@ components:
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
+        system_tags:
+          type: array
+          default: []
+          items:
+            type: string
+          description: |
+            User defined tags for the system,
+            useful for searching and grouping systems
+
       required:
         [
           task,
@@ -985,6 +1003,13 @@ components:
                 type: object
                 additionalProperties:
                   type: number
+            system_tags:
+              description: |
+                User defined tags for the system,
+                useful for searching and grouping systems
+              type: array
+              items:
+                type: string
             shared_users:
               type: array
               items:
@@ -1021,6 +1046,7 @@ components:
             - task
             - metric_names
             - results
+            - system_tags
         - $ref: "#/components/schemas/Time"
 
     DatasetFeature:

@@ -126,6 +126,7 @@ class SystemDBUtils:
         creator: str | None = None,
         shared_users: list[str] | None = None,
         dataset_list: list[tuple[str, str, str]] | None = None,
+        system_tags: list[str] | None = None,
     ) -> FindSystemsReturn:
         """find multiple systems that matches the filters"""
 
@@ -151,6 +152,8 @@ class SystemDBUtils:
             search_conditions.append({"creator": creator})
         if shared_users:
             search_conditions.append({"shared_users": shared_users})
+        if system_tags:
+            search_conditions.append({"system_tags": system_tags})
 
         if dataset_list:
             dataset_dicts = [
