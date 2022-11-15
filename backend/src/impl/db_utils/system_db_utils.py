@@ -201,7 +201,6 @@ class SystemDBUtils:
                         system.dataset.dataset_name,
                         system.dataset.sub_dataset,
                         system.dataset.split,
-                        custom_features=system.get_dataset_custom_features(),
                     ),
                     output_data=system_output.data,
                     output_file_type=FileType(system_output.file_type),

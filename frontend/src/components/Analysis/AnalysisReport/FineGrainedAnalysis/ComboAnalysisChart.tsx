@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import * as echarts from "echarts/core";
 import ReactEChartsCore from "echarts-for-react/lib/core";
 import { ECElementEvent } from "echarts/types/src/util/types";
@@ -17,10 +17,20 @@ interface Props {
     barIndex: number,
     systemIndex: number
   ) => void;
+  addChartFile: (imgName: string, base64File: string) => void;
 }
 
 export function ComboAnalysisChart(props: Props) {
-  const { systems, analyses, title, onEntryClick, colSpan } = props;
+  const { systems, analyses, title, onEntryClick, colSpan, addChartFile } =
+    props;
+  const [eChartsRef, setEChartsRef] = useState<ReactEChartsCore | null>();
+  useEffect(() => {
+    if (eChartsRef != null) {
+      const instance = eChartsRef.getEchartsInstance();
+      instance.resize();
+      addChartFile(title, instance.getDataURL({ type: "png" }));
+    }
+  });
 
   // For now we only support combo analysis for single-system analysis.
   if (analyses.length !== 1) {
@@ -188,6 +198,9 @@ export function ComboAnalysisChart(props: Props) {
         notMerge={true}
         lazyUpdate={true}
         theme={"theme_name"}
+        ref={(e) => {
+          setEChartsRef(e);
+        }}
         onEvents={{
           click: (event: ECElementEvent) => {
             const { dataIndex, componentType, componentSubType } = event;

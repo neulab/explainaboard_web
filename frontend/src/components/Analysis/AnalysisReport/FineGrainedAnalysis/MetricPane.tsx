@@ -22,6 +22,7 @@ interface Props {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
   metric: string;
+  addChartFile: (imgName: string, base64File: string) => void;
 }
 
 /** Info that uniquely identifies a bar in the charts */
@@ -39,6 +40,7 @@ export function MetricPane(props: Props) {
     metric,
     featureNameToBucketInfo,
     updateFeatureNameToBucketInfo,
+    addChartFile,
   } = props;
   const systemAnalysesParsed = metricToSystemAnalysesParsed[metric];
 
@@ -192,6 +194,7 @@ export function MetricPane(props: Props) {
                       );
                     }}
                     key={feature}
+                    addChartFile={addChartFile}
                   />
                 );
               }
@@ -207,6 +210,7 @@ export function MetricPane(props: Props) {
                     onBarClick(feature, barIndex, systemIndex)
                   }
                   key={feature}
+                  addChartFile={addChartFile}
                 />
               );
             })
