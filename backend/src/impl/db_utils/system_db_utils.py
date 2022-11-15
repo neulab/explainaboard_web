@@ -198,7 +198,6 @@ class SystemDBUtils:
                         system.dataset.dataset_name,
                         system.dataset.sub_dataset,
                         system.dataset.split,
-                        custom_features=system.get_dataset_custom_features(),
                     ),
                     output_data=system_output.data,
                     output_file_type=FileType(system_output.file_type),
@@ -287,7 +286,7 @@ class SystemDBUtils:
                 system.save_to_db(session)
                 system.save_system_output(system_output_data, session)
                 try:
-                    system.update_overall_statistics(system_output_data, session)
+                    system.update_overall_statistics(session)
                 except ValueError as e:
                     abort_with_error_message(400, str(e))
 

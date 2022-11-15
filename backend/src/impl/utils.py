@@ -1,10 +1,28 @@
 import base64
+import os
 import pickle
 import zlib
+from functools import lru_cache
 from typing import Any
 
 from bson.binary import Binary
 from flask import abort, jsonify
+
+import explainaboard_web
+
+
+@lru_cache(maxsize=None)
+def get_api_version() -> str:
+    api_version = None
+    eb_dir = os.path.dirname(explainaboard_web.__file__)
+    with open(os.path.join(eb_dir, "swagger/swagger.yaml")) as f:
+        for line in f:
+            if line.startswith("  version: "):
+                api_version = line[len("version: ") + 1 : -1].strip()
+                break
+    if not api_version:
+        raise RuntimeError("failed to extract API version")
+    return api_version
 
 
 def abort_with_error_message(status_code: int, err_message: str, err_code=-1):

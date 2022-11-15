@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { message, Table, Tooltip, Typography } from "antd";
+import { Button, message, Table, Tooltip, Typography } from "antd";
+import tableExport from "antd-table-export";
 import { ColumnsType } from "antd/lib/table";
 import { AnalysisCase, SystemOutput } from "../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../clients";
@@ -9,8 +10,10 @@ import {
   seqLabTasks,
 } from "../AnalysisTable/taskColumnMapping";
 import { addPredictionColInfo, unnestAnalysisCases } from "./utils";
+import { DownloadOutlined } from "@ant-design/icons";
 
 interface Props {
+  tableTitle: string;
   systemIDs: string[];
   systemNames: string[];
   task: string;
@@ -28,7 +31,7 @@ function renderColInfo(
     title: "ID",
     fixed: "left",
     render: (value) => (
-      <Typography.Paragraph copyable style={{ marginBottom: 0 }}>
+      <Typography.Paragraph style={{ marginBottom: 0 }}>
         {value}
       </Typography.Paragraph>
     ),
@@ -49,7 +52,8 @@ function renderColInfo(
           </div>
         ) : (
           <Typography.Paragraph
-            ellipsis={{ rows: 3, tooltip: true, expandable: true }}
+            copyable
+            ellipsis={{ rows: 3, tooltip: false, expandable: true }}
             style={{ marginBottom: 0, minWidth: "80px", maxWidth: maxWidth }}
           >
             {value}
@@ -171,6 +175,7 @@ function specifyDataSeqLab(
 }
 
 export function AnalysisTable({
+  tableTitle,
   systemIDs,
   systemNames,
   task,
@@ -238,55 +243,83 @@ export function AnalysisTable({
   }
 
   const columns: ColumnsType<SystemOutput> = [];
-  let dataSource: { [p: string]: string }[];
-  let colInfo;
+  const casesThisPage = cases.slice(offset, end);
   const numSystems = systemIDs.length;
   const taskCols = taskColumnMapping.get(task);
-  const casesThisPage = cases.slice(offset, end);
-  if (seqLabTasks.includes(task)) {
-    dataSource = specifyDataSeqLab(systemOutputs, casesThisPage, columns);
-  } else if (taskCols !== undefined) {
-    colInfo = addPredictionColInfo(task, systemNames);
-    /* expand columns if it is multi-system analysis */
-    if (numSystems > 1) {
-      dataSource = specifyDataGeneric(
-        unnestAnalysisCases(casesThisPage, taskCols.predictionColumns[0].id),
-        columns,
-        colInfo
-      );
+  function getDataSourceAndColumns(
+    caseSource: AnalysisCase[],
+    columns: ColumnsType<SystemOutput>
+  ) {
+    let dataSource: { [p: string]: string }[];
+    let colInfo;
+    if (seqLabTasks.includes(task)) {
+      dataSource = specifyDataSeqLab(systemOutputs, caseSource, columns);
+    } else if (taskCols !== undefined) {
+      colInfo = addPredictionColInfo(task, systemNames);
+      /* expand columns if it is multi-system analysis */
+      if (numSystems > 1) {
+        dataSource = specifyDataGeneric(
+          unnestAnalysisCases(caseSource, taskCols.predictionColumns[0].id),
+          columns,
+          colInfo
+        );
+      } else {
+        dataSource = specifyDataGeneric(caseSource, columns, colInfo);
+      }
     } else {
-      dataSource = specifyDataGeneric(casesThisPage, columns, colInfo);
+      dataSource = specifyDataGeneric(caseSource, columns);
     }
-  } else {
-    dataSource = specifyDataGeneric(casesThisPage, columns);
-  }
 
-  // add id to dataSource
-  for (let i = 0; i < dataSource.length; i++) {
-    for (const [key, value] of Object.entries(dataSource[i])) {
-      if (key === "sample_id") {
-        dataSource[i]["id"] = value;
+    // add id to dataSource
+    for (let i = 0; i < dataSource.length; i++) {
+      for (const [key, value] of Object.entries(dataSource[i])) {
+        if (key === "sample_id") {
+          dataSource[i]["id"] = value;
+        }
       }
     }
+    return dataSource;
+  }
+  const dataSource: { [p: string]: string }[] = getDataSourceAndColumns(
+    casesThisPage,
+    columns
+  );
+
+  function downloadTable() {
+    const dowloadColumns: ColumnsType<SystemOutput> = [];
+    const totalDataSource: { [p: string]: string }[] = getDataSourceAndColumns(
+      cases,
+      dowloadColumns
+    );
+    const exportColumns = dowloadColumns.map((col: SystemOutput) => {
+      return { dataIndex: col.dataIndex, title: col.title };
+    });
+    const exportInstance = new tableExport(totalDataSource, exportColumns);
+    exportInstance.download(tableTitle);
   }
 
   return (
-    <Table
-      ref={tableRef}
-      columns={columns}
-      dataSource={dataSource}
-      rowKey="id"
-      size="small"
-      pagination={{
-        total,
-        showTotal: (total, range) =>
-          `${range[0]}-${range[1]} (total: ${total})`,
-        pageSize,
-        // conversion between 0-based and 1-based index
-        current: page + 1,
-        onChange: (newPage) => setPage(newPage - 1),
-      }}
-      scroll={{ y: 550, x: "max-content", scrollToFirstRowOnChange: true }}
-    />
+    <div>
+      <Button icon={<DownloadOutlined />} onClick={downloadTable}>
+        Download
+      </Button>
+      <Table
+        ref={tableRef}
+        columns={columns}
+        dataSource={dataSource}
+        rowKey="id"
+        size="small"
+        pagination={{
+          total,
+          showTotal: (total, range) =>
+            `${range[0]}-${range[1]} (total: ${total})`,
+          pageSize,
+          // conversion between 0-based and 1-based index
+          current: page + 1,
+          onChange: (newPage) => setPage(newPage - 1),
+        }}
+        scroll={{ y: 550, x: "max-content", scrollToFirstRowOnChange: true }}
+      />
+    </div>
   );
 }

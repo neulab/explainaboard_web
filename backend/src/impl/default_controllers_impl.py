@@ -24,11 +24,16 @@ from explainaboard_web.impl.auth import User as authUser
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
+from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.language_code import get_language_codes
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
-from explainaboard_web.impl.utils import abort_with_error_message, decode_base64
+from explainaboard_web.impl.utils import (
+    abort_with_error_message,
+    decode_base64,
+    get_api_version,
+)
 from explainaboard_web.models import (
     Benchmark,
     BenchmarkConfig,
@@ -50,6 +55,7 @@ from explainaboard_web.models.task_category import TaskCategory
 from explainaboard_web.models.user import User as modelUser
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
+from pymongo.client_session import ClientSession
 
 
 def _is_creator(system: System, user: authUser) -> bool:
@@ -82,18 +88,10 @@ def _has_read_access(system: System) -> bool:
 
 @lru_cache(maxsize=None)
 def info_get():
-    api_version = None
-    with open("explainaboard_web/swagger/swagger.yaml") as f:
-        for line in f:
-            if line.startswith("  version: "):
-                api_version = line[len("version: ") + 1 : -1].strip()
-                break
-    if not api_version:
-        raise RuntimeError("failed to extract API version")
     return {
         "env": os.getenv("EB_ENV"),
         "auth_url": current_app.config.get("AUTH_URL"),
-        "api_version": api_version,
+        "api_version": get_api_version(),
     }
 
 
@@ -407,10 +405,16 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     if len(systems) == 0:
         return SystemAnalysesReturn(system_analyses)
 
+    def update_overall_statistics(session: ClientSession) -> None:
+        for sys in systems:
+            # refresh overall_statistics if it is outdated
+            sys.update_overall_statistics(session=session)
+
+    DBUtils.execute_transaction(update_overall_statistics)
+
     # performance significance test if there are two systems
     sig_info = []
     if len(systems) == 2:
-
         system1_info: SystemInfo = systems[0].get_system_info()
         system1_info_dict = general_to_dict(system1_info)
         system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
