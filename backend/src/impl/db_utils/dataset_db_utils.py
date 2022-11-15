@@ -48,7 +48,6 @@ class DatasetDB:
                 "split": v_dataset["splits"],
                 "tasks": tasks,
                 "languages": v_dataset.get("languages"),
-                "custom_features": v_dataset.get("custom_features"),
             }
             self.metadatas.append(DatasetMetadata.from_dict(doc))
         self.name_trie = marisa_trie.Trie(self.name_dict.keys())

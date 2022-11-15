@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.10"
+  version: "0.2.14"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -715,8 +715,6 @@ components:
                 type: array
                 items:
                   $ref: "#/components/schemas/Performance"
-            analyses:
-              type: object
           required: [overall]
         dataset_name:
           type: string
@@ -969,22 +967,19 @@ components:
             task:
               type: string
               example: "text-classification"
-            system_info:
-              $ref: "#/components/schemas/SystemInfo"
-            metric_stats:
-              description: |
-                An array of sufficient statistics for each metric, used in SDK's
-                fine-grained analysis
-              type: array
-              items:
-                type: array
-                items:
-                  type: number
             creator:
               type: string
               description: the user who created the system
             preferred_username:
               type: string
+            metric_names:
+              description: >
+                metric_names selected when the system is created. It is the same as
+                the metric_names field in SystemMetadata.
+              type: array
+              items:
+                type: string
+              example: [Accuracy, F1]
             results:
               type: object
               example: {"span": {"F1": 0.9221}}
@@ -1026,9 +1021,8 @@ components:
             - source_language
             - target_language
             - task
+            - metric_names
             - results
-            - system_info
-            - metric_stats
         - $ref: "#/components/schemas/Time"
 
     DatasetFeature:
@@ -1108,8 +1102,6 @@ components:
         huggingface_link:
           type: string
           format: url
-        custom_features:
-          type: object
       required:
         - dataset_id
         - dataset_name
@@ -1178,12 +1170,14 @@ components:
     SingleAnalysis:
       type: object
       properties:
+        system_info:
+          $ref: "#/components/schemas/SystemInfo"
         analysis_results:
           type: array
           description: results for each analysis level
           items:
             $ref: "#/components/schemas/AnalysisResult"
-      required: [analysis_results]
+      required: [system_info, analysis_results]
 
     SystemAnalysesReturn:
       type: object

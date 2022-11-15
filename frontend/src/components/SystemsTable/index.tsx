@@ -33,7 +33,7 @@ export function SystemsTable() {
     const prevString = query.toString();
     const newString = filters.toUrlParams().toString();
     if (prevString !== newString) {
-      history.push({ search: filters.toUrlParams().toString() });
+      history.replace({ search: filters.toUrlParams().toString() });
     }
   }, [history, filters, query]);
 

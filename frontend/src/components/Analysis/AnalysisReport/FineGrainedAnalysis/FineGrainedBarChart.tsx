@@ -30,7 +30,16 @@ export function FineGrainedBarChart(props: Props) {
     onBarClick,
   } = props;
   // For invariant variables across all systems, we can simply take from the first result
-  const systemNames = systems.map((system) => system.system_name);
+  function getSystemNames(systems: SystemModel[]) {
+    const systemNames = systems.map((sys) => sys.system_name);
+    const distinctSystemNames = new Set(systemNames);
+    if (distinctSystemNames.size !== systemNames.length) {
+      return systems.map((sys) => sys.system_name + "_" + sys.system_id);
+    } else {
+      return systemNames;
+    }
+  }
+  const systemNames = getSystemNames(systems);
   const resultFirst = results[0];
   const bucketNames = resultFirst.bucketNames;
   const featureName = resultFirst.featureName;
@@ -83,6 +92,8 @@ export function FineGrainedBarChart(props: Props) {
         title={title}
         seriesNames={systemNames}
         xAxisData={bucketNames}
+        xAxisName={resultFirst.featureDescription}
+        yAxisName={resultFirst.metricName}
         seriesDataList={resultsValues}
         seriesLabelsList={resultsValues}
         numbersOfSamplesList={resultsNumbersOfSamples}
