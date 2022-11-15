@@ -949,7 +949,6 @@ components:
           description: a place to store arbitrary system details you want to remember
         is_private:
           type: boolean
-          default: true
         shared_users:
           type: array
           items:
@@ -983,7 +982,6 @@ components:
           example: en
         is_private:
           type: boolean
-          default: true
         shared_users:
           type: array
           items:
@@ -1350,15 +1348,6 @@ components:
       additionalProperties: true
       required: [dataset_name]
 
-    # This is a hack to force swagger codegen
-    # to order required fields at the front to prevent syntax errors
-    BenchmarkCreator:
-      type: object
-      properties:
-        creator:
-          type: string
-      required: [creator]
-
     BenchmarkCreateProps:
       type: object
       properties:
@@ -1491,8 +1480,12 @@ components:
     BenchmarkConfig:
       allOf:
         - $ref: "#/components/schemas/BenchmarkCreateProps"
-        - $ref: "#/components/schemas/BenchmarkCreator"
         - $ref: "#/components/schemas/Time"
+        - type: object
+          properties:
+            creator:
+              type: string
+          required: [creator]
 
     SignificanceTestInfo:
       type: object
