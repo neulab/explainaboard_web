@@ -81,7 +81,6 @@ paths:
     get:
       summary: Returns benchmark metadata by id
       operationId: benchmarkGetById
-      security: []
       description: Returns benchmark metadata by id.
       parameters:
         - in: path
