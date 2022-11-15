@@ -9,6 +9,7 @@ export const filterKeyMap = {
   datasetSplit: "dataset_split",
   subdataset: "sub_dataset",
   activeSystemIDs: "system_id",
+  systemTags: "system_tags",
 };
 
 export type FilterUpdate = Partial<SystemFilter>;
@@ -24,6 +25,7 @@ export class SystemFilter {
   split: string | undefined;
   subdataset: string | undefined;
   activeSystemIDs: Array<string> | undefined;
+  systemTags: Array<string> | undefined;
 
   constructor(partial: FilterUpdate) {
     Object.assign(this, partial);
@@ -81,6 +83,10 @@ export class SystemFilter {
     const subdataset = query.get(filterKeyMap.subdataset);
     filters.subdataset = subdataset === null ? undefined : subdataset;
 
+    const systemTags = query.get(filterKeyMap.systemTags);
+    filters.systemTags =
+      systemTags === null ? undefined : systemTags.split(filterDelim);
+
     return new SystemFilter(filters);
   }
 
@@ -98,6 +104,8 @@ export class SystemFilter {
         filter.activeSystemIDs.join(filterDelim);
     if (filter.dataset) dict[filterKeyMap.dataset] = filter.dataset;
     if (filter.subdataset) dict[filterKeyMap.subdataset] = filter.subdataset;
+    if (filter.systemTags && filter.systemTags.length > 0)
+      dict[filterKeyMap.systemTags] = filter.systemTags.join(filterDelim);
 
     return dict;
   }
