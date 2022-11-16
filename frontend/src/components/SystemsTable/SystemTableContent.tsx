@@ -160,6 +160,14 @@ export function SystemTableContent({
       align: "center",
     },
     {
+      dataIndex: "system_tags",
+      title: "System Tags",
+      render: (_, record) =>
+        record.system_tags.map((tag) => <Tag key={tag}>{tag}</Tag>),
+      width: 130,
+      align: "center",
+    },
+    {
       dataIndex: "action",
       title: "",
       fixed: "right",
