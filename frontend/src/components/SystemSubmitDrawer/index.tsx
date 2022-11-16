@@ -240,6 +240,7 @@ export function SystemSubmitDrawer(props: Props) {
     shared_users,
     is_private,
     system_details,
+    system_tags,
   }: FormData) {
     try {
       setState(State.loading);
@@ -293,6 +294,7 @@ export function SystemSubmitDrawer(props: Props) {
                 task: task,
                 source_language,
                 target_language,
+                system_tags,
                 is_private,
                 shared_users: trimmedUsers,
                 system_details: { __TO_PARSE__: system_details },
@@ -320,6 +322,7 @@ export function SystemSubmitDrawer(props: Props) {
                 target_language,
                 is_private,
                 shared_users: trimmedUsers,
+                system_tags,
                 system_details: { __TO_PARSE__: system_details },
               },
               system_output: {
@@ -781,6 +784,14 @@ export function SystemSubmitDrawer(props: Props) {
           </Row>
 
           <Form.Item
+            name="system_tags"
+            label="System Tags"
+            tooltip="Tags to help yourself and others group your systems"
+          >
+            <Select mode="tags" />
+          </Form.Item>
+
+          <Form.Item
             name="system_details"
             label="System Details"
             tooltip={
@@ -838,4 +849,5 @@ export interface FormData {
   is_private: boolean;
   system_details: string;
   shared_users: string[];
+  system_tags: string[];
 }

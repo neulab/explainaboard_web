@@ -223,7 +223,7 @@ export function SystemTableTools({
           placeholder="All Tasks"
           style={{ minWidth: "150px" }}
         />
-        <div>
+        <div style={{ display: "flex", flexDirection: "row" }}>
           <Select
             options={[
               ...metricOptions.map((opt) => ({ value: opt, label: opt })),
@@ -253,6 +253,14 @@ export function SystemTableTools({
           placeholder="Search by system name"
           value={value.name}
           onChange={(e) => onChange({ name: e.target.value })}
+        />
+
+        <Select
+          mode="tags"
+          allowClear
+          placeholder="Tags"
+          onChange={(value) => onChange({ systemTags: value })}
+          style={{ minWidth: "120px" }}
         />
 
         <NewSystemButton onClick={showSubmitDrawer} />

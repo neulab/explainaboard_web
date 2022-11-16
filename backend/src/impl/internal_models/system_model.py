@@ -52,6 +52,11 @@ class SystemModel(System):
                         400, f"invalid email address for shared user {user}"
                     )
 
+        # Parse system tags
+        system_tags = document.get("system_tags", None)
+        if system_tags is None or len(system_tags) == 0:
+            document["system_tags"] = []
+
         # FIXME(lyuyang): The following for loop is added to work around an issue
         # related to default values of models. Previously, the generated models
         # don't enforce required attributes. This function exploits that loophole.

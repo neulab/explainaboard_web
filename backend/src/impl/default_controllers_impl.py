@@ -275,6 +275,7 @@ def systems_get(
     sort_direction: str,
     creator: str | None,
     shared_users: list[str] | None,
+    system_tags: list[str] | None,
 ) -> SystemsReturn:
     """Returns a systems according to the provided filters
 
@@ -305,6 +306,7 @@ def systems_get(
         sort=[(sort_field, dir)],
         creator=creator,
         shared_users=shared_users,
+        system_tags=system_tags,
     )
     return SystemsReturn(systems, total)
 

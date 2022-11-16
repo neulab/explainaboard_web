@@ -143,7 +143,9 @@ export function SystemsTable() {
             pageSize,
             filters.sortField,
             filters.sortDir,
-            creator
+            creator,
+            undefined, // shared users
+            filters.systemTags
           );
         setSystems(newSystems.map((sys) => newSystemModel(sys)));
         setTotal(newTotal);
