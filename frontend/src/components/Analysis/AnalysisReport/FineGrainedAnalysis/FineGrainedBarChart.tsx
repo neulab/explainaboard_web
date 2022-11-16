@@ -17,6 +17,7 @@ interface Props {
   title: string;
   results: ResultFineGrainedParsed[];
   onBarClick: (barIndex: number, systemIndex: number) => void;
+  addChartFile: (imgName: string, base64File: string) => void;
 }
 
 export function FineGrainedBarChart(props: Props) {
@@ -28,6 +29,7 @@ export function FineGrainedBarChart(props: Props) {
     colSpan,
     results,
     onBarClick,
+    addChartFile,
   } = props;
   // For invariant variables across all systems, we can simply take from the first result
   function getSystemNames(systems: SystemModel[]) {
@@ -99,6 +101,7 @@ export function FineGrainedBarChart(props: Props) {
         numbersOfSamplesList={resultsNumbersOfSamples}
         confidenceScoresList={resultsConfidenceScores}
         onBarClick={onBarClick}
+        addChartFile={addChartFile}
       />
       {bucketSlider}
     </Col>

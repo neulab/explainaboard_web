@@ -19,6 +19,7 @@ interface Props {
   metricToSystemAnalysesParsed: {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
+  addChartFile: (imgName: string, base64File: string) => void;
 }
 
 export function FineGrainedAnalysis({
@@ -30,6 +31,7 @@ export function FineGrainedAnalysis({
   featureNameToBucketInfo,
   updateFeatureNameToBucketInfo,
   metricToSystemAnalysesParsed,
+  addChartFile,
 }: Props) {
   return (
     <AnalysisPanel title="Fine-grained Performance">
@@ -47,6 +49,7 @@ export function FineGrainedAnalysis({
               updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
               metricToSystemAnalysesParsed={metricToSystemAnalysesParsed}
               metric={metric}
+              addChartFile={addChartFile}
             />
           </Tabs.TabPane>
         ))}
