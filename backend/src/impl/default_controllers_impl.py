@@ -59,6 +59,7 @@ from flask import current_app
 from pymongo import ASCENDING, DESCENDING
 from pymongo.client_session import ClientSession
 
+
 def _is_creator(system: System, user: authUser) -> bool:
     """check if a user is the creator of a system"""
     return system.creator == user.id
