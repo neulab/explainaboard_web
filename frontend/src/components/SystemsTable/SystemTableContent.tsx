@@ -252,6 +252,7 @@ export function SystemTableContent({
     filters: Record<string, FilterValue | null>,
     sorter: SorterResult<SystemModel> | SorterResult<SystemModel>[]
   ) => {
+    // Handle filter change
     for (const k in filters) {
       if (
         k === "dataset.split" &&
@@ -262,6 +263,8 @@ export function SystemTableContent({
         onFilterChange({ task: filters[k]?.toString() });
       }
     }
+    // Handle sorter change
+    // Only one sorted column allowed now
     if (!(sorter instanceof Array)) {
       const sortFieldName =
         sorter.column === undefined
@@ -282,7 +285,7 @@ export function SystemTableContent({
         sortFieldName === undefined &&
         filterValue.sortField !== "created_at"
       ) {
-        // default filter
+        // Default sorted column
         onFilterChange({ sortField: "created_at", sortDir: "desc" });
       }
     }
