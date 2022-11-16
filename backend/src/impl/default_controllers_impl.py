@@ -43,21 +43,21 @@ from explainaboard_web.models import (
     Benchmark,
     BenchmarkConfig,
     DatasetMetadata,
+    DatasetsReturn,
+    LanguageCode,
     SingleAnalysis,
+    System,
+    SystemAnalysesReturn,
+    SystemCreateProps,
+    SystemInfo,
     SystemOutput,
+    SystemsAnalysesBody,
+    SystemsReturn,
+    SystemUpdateProps,
+    Task,
+    TaskCategory,
 )
-from explainaboard_web.models.datasets_return import DatasetsReturn
-from explainaboard_web.models.language_code import LanguageCode
-from explainaboard_web.models.system import System
-from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
-from explainaboard_web.models.system_create_props import SystemCreateProps
-from explainaboard_web.models.system_info import SystemInfo
-from explainaboard_web.models.system_update_props import SystemUpdateProps
-from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
-from explainaboard_web.models.systems_return import SystemsReturn
-from explainaboard_web.models.task import Task
-from explainaboard_web.models.task_category import TaskCategory
-from explainaboard_web.models.user import User as modelUser
+from explainaboard_web.models import User as modelUser
 
 
 def _is_creator(system: System, user: authUser) -> bool:
