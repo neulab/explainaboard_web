@@ -62,6 +62,7 @@ export function SystemTableContent({
     width: 135,
     ellipsis: true,
     align: "center",
+    sorter: true,
   }));
 
   function showSystemAnalysis(systemID: string) {
@@ -183,6 +184,7 @@ export function SystemTableContent({
       render: (_, record) => record.created_at.format("MM/DD/YYYY HH:mm"),
       width: 130,
       align: "center",
+      sorter: true,
     },
     {
       dataIndex: "system_tags",
@@ -246,7 +248,7 @@ export function SystemTableContent({
   };
 
   const handleTableChange = (
-    pagination: TablePaginationConfig,
+    _pagination: TablePaginationConfig,
     filters: Record<string, FilterValue | null>,
     sorter: SorterResult<SystemModel> | SorterResult<SystemModel>[]
   ) => {
@@ -258,6 +260,30 @@ export function SystemTableContent({
         onFilterChange({ split: filters[k]?.toString() });
       } else if (k === "task" && filters[k]?.toString() !== filterValue.task) {
         onFilterChange({ task: filters[k]?.toString() });
+      }
+    }
+    if (!(sorter instanceof Array)) {
+      const sortFieldName =
+        sorter.column === undefined
+          ? undefined
+          : sorter.column.title === "Created At"
+          ? "created_at"
+          : sorter.column.title?.toString();
+      if (
+        sortFieldName !== undefined &&
+        (sortFieldName !== filterValue.sortField ||
+          !sorter.order?.toString().startsWith(filterValue.sortDir))
+      ) {
+        onFilterChange({
+          sortField: sortFieldName,
+          sortDir: sorter.order?.toString() === "descend" ? "desc" : "asc",
+        });
+      } else if (
+        sortFieldName === undefined &&
+        filterValue.sortField !== "created_at"
+      ) {
+        // default filter
+        onFilterChange({ sortField: "created_at", sortDir: "desc" });
       }
     }
   };
