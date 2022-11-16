@@ -10,7 +10,7 @@ import {
   Popconfirm,
   Radio,
 } from "antd";
-import { TaskSelect } from "..";
+// import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
 import {
   ArrowDownOutlined,
@@ -205,7 +205,7 @@ export function SystemTableTools({
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
         {mineVsAllSystemsToggle}
-        <Select
+        {/* <Select
           options={["test", "validation", "train", "all"].map((opt) => ({
             value: opt,
             label: opt,
@@ -222,7 +222,7 @@ export function SystemTableTools({
           onChange={(value) => onChange({ task: value || "" })}
           placeholder="All Tasks"
           style={{ minWidth: "150px" }}
-        />
+        /> */}
         <div style={{ display: "flex", flexDirection: "row" }}>
           <Select
             options={[
