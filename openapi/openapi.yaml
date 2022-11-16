@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.15"
+  version: "0.2.16"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -268,6 +268,13 @@ paths:
         - {}
 
       parameters:
+        - in: query
+          name: ids
+          schema:
+            type: array
+            items:
+              type: string
+            description: system ids
         - in: query
           name: system_name
           description: fuzzy match for system name

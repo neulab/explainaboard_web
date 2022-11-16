@@ -27,8 +27,6 @@ export function SystemsTable() {
     SystemFilter.parseQueryToFilter(query)
   );
 
-  const [activeSystemIDs, setActiveSystemIds] = useState<string[]>([]);
-
   useEffect(() => {
     const prevString = query.toString();
     const newString = filters.toUrlParams().toString();
@@ -49,7 +47,7 @@ export function SystemsTable() {
 
   // set systems to be analyzed
   const onActiveSystemChange = (ids: string[]) => {
-    setActiveSystemIds(ids);
+    setFilters(filters.update({ activeSystemIDs: ids }));
   };
 
   // system to be edited
@@ -134,6 +132,7 @@ export function SystemsTable() {
       try {
         const { systems: newSystems, total: newTotal } =
           await backendClient.systemsGet(
+            filters.activeSystemIDs,
             filters.name,
             filters.task,
             filters.dataset,
@@ -209,7 +208,7 @@ export function SystemsTable() {
       />
       <AnalysisDrawer
         systems={systems.filter((sys) =>
-          activeSystemIDs.includes(sys.system_id)
+          filters.activeSystemIDs?.includes(sys.system_id)
         )}
         closeDrawer={() => onActiveSystemChange([])}
       />
