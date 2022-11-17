@@ -8,7 +8,7 @@ import os
 from functools import lru_cache
 
 import pandas as pd
-from explainaboard import DatalabLoaderOption, TaskType, get_processor
+from explainaboard import DatalabLoaderOption, TaskType, get_processor_class
 from explainaboard.analysis.analyses import BucketAnalysis
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
@@ -17,6 +17,10 @@ from explainaboard.metrics.metric import SimpleMetricStats
 from explainaboard.serialization.legacy import general_to_dict
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.typing_utils import narrow
+from flask import current_app
+from pymongo import ASCENDING, DESCENDING
+from pymongo.client_session import ClientSession
+
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
@@ -55,9 +59,6 @@ from explainaboard_web.models.systems_return import SystemsReturn
 from explainaboard_web.models.task import Task
 from explainaboard_web.models.task_category import TaskCategory
 from explainaboard_web.models.user import User as modelUser
-from flask import current_app
-from pymongo import ASCENDING, DESCENDING
-from pymongo.client_session import ClientSession
 
 
 def _is_creator(obj: System | BenchmarkConfig, user: authUser) -> bool:
@@ -124,9 +125,9 @@ def tasks_get() -> list[TaskCategory]:
         for _task in _category.tasks:
             loader_class = get_loader_class(_task.name)
             supported_formats = loader_class.supported_file_types()
-            supported_metrics = [
-                metric.name for metric in get_processor(_task.name).full_metric_list()
-            ]
+            supported_metrics = list(
+                get_processor_class(TaskType(_task.name)).full_metric_list().keys()
+            )
             tasks.append(
                 Task(
                     _task.name, _task.description, supported_metrics, supported_formats
@@ -468,7 +469,6 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             "user-defined bucket analyses are not " "re-implemented"
         )
 
-        processor = get_processor(TaskType(system_output_info.task_name))
         metric_stats = [
             [SimpleMetricStats(y) for y in x] for x in system.get_metric_stats()
         ]
@@ -487,6 +487,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             level_cases = [AnalysisCase.from_dict(narrow(dict, x)) for x in level_cases]
             analysis_cases.append(level_cases)
 
+        processor = get_processor_class(TaskType(system_output_info.task_name))()
         processor_result = processor.perform_analyses(
             system_output_info,
             analysis_cases,

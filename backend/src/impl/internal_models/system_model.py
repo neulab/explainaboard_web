@@ -8,10 +8,12 @@ from datetime import datetime
 from importlib.metadata import version
 from typing import Any, Final
 
-from explainaboard import get_processor
+from explainaboard import TaskType, get_processor_class
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.metrics.metric import MetricConfig
 from explainaboard.serialization.legacy import general_to_dict
+from pymongo.client_session import ClientSession
+
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.storage import get_storage
 from explainaboard_web.impl.utils import (
@@ -21,7 +23,6 @@ from explainaboard_web.impl.utils import (
 )
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_info import SystemInfo
-from pymongo.client_session import ClientSession
 
 
 class SystemModel(System):
@@ -164,11 +165,8 @@ class SystemModel(System):
                 return
 
         def _process():
-            processor = get_processor(self.task)
-            metrics_lookup = {
-                metric.name: metric
-                for metric in get_processor(self.task).full_metric_list()
-            }
+            processor = get_processor_class(TaskType(self.task))()
+            metrics_lookup = processor.full_metric_list().copy()
             metric_configs: list[MetricConfig] = []
             for metric_name in self.metric_names:
                 if metric_name not in metrics_lookup:

@@ -1,7 +1,8 @@
 import unittest
 
-from explainaboard import get_processor
+from explainaboard import TaskType, get_processor_class
 from explainaboard.loaders.loader_registry import get_loader_class
+
 from explainaboard_web.impl.tasks import get_task_categories
 
 
@@ -19,7 +20,9 @@ class TestTasks(unittest.TestCase):
             self.assertIsNotNone(task_category.description)
             self.assertIsNotNone(task_category.name)
             for task in task_category.tasks:
-                supported_metrics = get_processor(task.name).full_metric_list()
+                supported_metrics = get_processor_class(
+                    TaskType(task.name)
+                ).full_metric_list()
                 supported_formats = get_loader_class(task.name).supported_file_types()
                 self.assertEqual(
                     len(supported_metrics),
