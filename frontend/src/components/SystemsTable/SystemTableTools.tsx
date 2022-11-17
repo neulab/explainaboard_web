@@ -1,7 +1,7 @@
 import React from "react";
 import {
-  Button,
-  ButtonProps,
+  // Button,
+  // ButtonProps,
   Input,
   Select,
   Space,
@@ -21,6 +21,7 @@ import { SystemModel } from "../../models";
 import { LoginState, useUser } from "../useUser";
 import { backendClient, parseBackendError } from "../../clients";
 import { FilterUpdate, SystemFilter } from "./SystemFilter";
+import Button, { ButtonProps } from "antd-button-color";
 
 interface Props {
   systems: SystemModel[];
@@ -276,7 +277,11 @@ function NewSystemButton(props: ButtonProps) {
   const { login, state } = useUser();
   if (state === LoginState.yes)
     return (
-      <Button danger type="primary" {...props}>
+      <Button
+        style={{ backgroundColor: "#28a745", borderColor: "#28a745" }}
+        type="primary"
+        {...props}
+      >
         Submit New System
       </Button>
     );
@@ -286,7 +291,10 @@ function NewSystemButton(props: ButtonProps) {
       placement="topLeft"
       defaultVisible
     >
-      <Button danger type="default" onClick={login}>
+      <Button
+        onClick={login}
+        style={{ borderColor: "#28a745", color: "#28a745" }}
+      >
         Submit New System
       </Button>
     </Tooltip>
