@@ -258,6 +258,7 @@ export function SystemSubmitDrawer(props: Props) {
               is_private,
               shared_users: trimmedUsers,
               system_details: { __TO_PARSE__: system_details },
+              system_tags,
             },
           },
           systemToEdit.system_id
@@ -553,6 +554,7 @@ export function SystemSubmitDrawer(props: Props) {
                   // Must be boolean
                   is_private: systemToEdit?.is_private || false,
                   shared_users: systemToEdit?.shared_users,
+                  system_tags: systemToEdit?.system_tags,
                 }
               : { is_private: true }
           }

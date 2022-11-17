@@ -960,6 +960,13 @@ components:
       properties:
         system_name:
           type: string
+        system_tags:
+          type: array
+          items:
+            type: string
+          description: |
+            User defined tags for the system,
+            useful for searching and grouping systems
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
@@ -975,6 +982,7 @@ components:
         [
           is_private,
           system_name,
+          system_tags,
         ]
 
     SystemMetadata:
