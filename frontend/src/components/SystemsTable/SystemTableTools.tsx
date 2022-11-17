@@ -273,16 +273,22 @@ export function SystemTableTools({
 }
 
 function NewSystemButton(props: ButtonProps) {
-  const { state } = useUser();
+  const { login, state } = useUser();
   if (state === LoginState.yes)
     return (
-      <Button type="primary" {...props}>
-        New
+      <Button danger type="primary" {...props}>
+        Submit New System
       </Button>
     );
   return (
-    <Tooltip title="Please log in to submit new systems" placement="topLeft">
-      <Button disabled>New</Button>
+    <Tooltip
+      title="Please log in to submit new systems"
+      placement="topLeft"
+      defaultVisible
+    >
+      <Button danger type="default" onClick={login}>
+        Submit New System
+      </Button>
     </Tooltip>
   );
 }
