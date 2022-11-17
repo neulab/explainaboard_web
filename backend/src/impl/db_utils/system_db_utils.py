@@ -135,11 +135,13 @@ class SystemDBUtils:
         if ids:
             search_conditions.append({"_id": {"$in": [ObjectId(_id) for _id in ids]}})
         if system_name:
-            search_conditions.append({"system_name": {"$regex": rf"^{system_name}.*"}})
+            search_conditions.append({"system_name": {"$regex": rf"{system_name}.*"}})
         if task:
             search_conditions.append({"task": task})
         if dataset_name:
-            search_conditions.append({"dataset.dataset_name": dataset_name})
+            search_conditions.append(
+                {"dataset.dataset_name": {"$regex": rf"{dataset_name}.*"}}
+            )
         if subdataset_name:
             search_conditions.append({"dataset.sub_dataset": subdataset_name})
         if source_language:

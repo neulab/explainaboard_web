@@ -190,6 +190,24 @@ export function SystemTableTools({
     );
   }
 
+  const handleSearch = (query: string) => {
+    let systemQuery = undefined;
+    let datasetQuery = undefined;
+    const segments = query.split(";");
+    segments.forEach((seg) => {
+      const components = seg.split(":");
+      const property = components[0].trim();
+      if (property === "system" && components.length > 1) {
+        systemQuery =
+          components[1]?.trim().length > 0 ? components[1].trim() : undefined;
+      } else if (property === "dataset" && components.length > 0) {
+        datasetQuery =
+          components[1]?.trim().length > 0 ? components[1].trim() : undefined;
+      }
+    });
+    onChange({ name: systemQuery, dataset: datasetQuery });
+  };
+
   return (
     <div style={{ width: "100%" }}>
       <Space style={{ width: "fit-content", float: "left" }}>
@@ -200,11 +218,13 @@ export function SystemTableTools({
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
         {mineVsAllSystemsToggle}
-        <Input.Search
-          placeholder="Search by system name"
-          value={value.name}
-          onChange={(e) => onChange({ name: e.target.value })}
-        />
+        <Tooltip title="Search by system name and/or dataset name. Query format is 'system: target name; dataset: target name'.">
+          <Input.Search
+            placeholder="Search by system/dataset name"
+            onChange={(e) => handleSearch(e.target.value)}
+            style={{ minWidth: "300px" }}
+          />
+        </Tooltip>
 
         <Select
           mode="tags"
