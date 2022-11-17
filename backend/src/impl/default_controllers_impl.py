@@ -18,7 +18,6 @@ from explainaboard.analysis.analyses import BucketAnalysis
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.metrics.metric import SimpleMetricStats
-from explainaboard.serialization.legacy import general_to_dict
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.typing_utils import narrow
 from flask import current_app
@@ -56,7 +55,6 @@ from explainaboard_web.models.language_code import LanguageCode
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_create_props import SystemCreateProps
-from explainaboard_web.models.system_info import SystemInfo
 from explainaboard_web.models.system_update_props import SystemUpdateProps
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_return import SystemsReturn
@@ -426,16 +424,14 @@ def systems_analyses_post(body: SystemsAnalysesBody):
     # performance significance test if there are two systems
     sig_info = []
     if len(systems) == 2:
-        system1_info: SystemInfo = systems[0].get_system_info()
-        system1_info_dict = general_to_dict(system1_info)
+        system1_info_dict = systems[0].get_system_info().to_dict()
         system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
 
         system1_metric_stats: list[SimpleMetricStats] = [
             SimpleMetricStats(stat) for stat in systems[0].get_metric_stats()[0]
         ]
 
-        system2_info: SystemInfo = systems[1].get_system_info()
-        system2_info_dict = general_to_dict(system2_info)
+        system2_info_dict = systems[1].get_system_info().to_dict()
         system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
         system2_metric_stats: list[SimpleMetricStats] = [
             SimpleMetricStats(stat) for stat in systems[1].get_metric_stats()[0]
@@ -450,8 +446,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
     for system in systems:
         system_info = system.get_system_info()
-        system_info_dict = general_to_dict(system_info)
-        system_output_info = SysOutputInfo.from_dict(system_info_dict)
+        system_output_info = SysOutputInfo.from_dict(system_info.to_dict())
 
         for analysis in system_output_info.analyses:
             if (

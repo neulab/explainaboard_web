@@ -2,6 +2,7 @@
 # necessary because mypy is not configured to read from `System`
 from __future__ import annotations
 
+import dataclasses
 import json
 import re
 from datetime import datetime
@@ -11,7 +12,6 @@ from typing import Any, Final
 from explainaboard import TaskType, get_processor_class
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.metrics.metric import MetricConfig
-from explainaboard.serialization.legacy import general_to_dict
 from pymongo.client_session import ClientSession
 
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
@@ -133,18 +133,17 @@ class SystemModel(System):
         if properties.get("system_output"):
             # delete previously saved system_output
             get_storage().delete([properties["system_output"]])
-        sample_list = [general_to_dict(v) for v in system_output.samples]
         blob_name = f"{self.system_id}/{self._SYSTEM_OUTPUT_CONST}"
         get_storage().compress_and_upload(
             blob_name,
-            json.dumps(sample_list),
+            json.dumps(system_output.samples),
         )
         DBUtils.update_one_by_id(
             DBUtils.DEV_SYSTEM_METADATA,
             self.system_id,
             {
                 "system_output": blob_name,
-                "system_output_metadata": general_to_dict(system_output.metadata),
+                "system_output_metadata": dataclasses.asdict(system_output.metadata),
             },
             session=session,
         )
@@ -234,7 +233,7 @@ class SystemModel(System):
                 overall_statistics.sys_info.analysis_levels,
                 overall_statistics.analysis_cases,
             ):
-                case_list = [general_to_dict(v) for v in analysis_cases]
+                case_list = [dataclasses.asdict(v) for v in analysis_cases]
 
                 blob_name = f"{self.system_id}/{analysis_level.name}"
                 get_storage().compress_and_upload(blob_name, json.dumps(case_list))
