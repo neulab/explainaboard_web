@@ -8,11 +8,15 @@ import os
 from functools import lru_cache
 
 import pandas as pd
-from explainaboard import DatalabLoaderOption, TaskType, get_processor_class
+from explainaboard import (
+    DatalabLoaderOption,
+    TaskType,
+    get_loader_class,
+    get_processor_class,
+)
 from explainaboard.analysis.analyses import BucketAnalysis
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
-from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import SimpleMetricStats
 from explainaboard.serialization.legacy import general_to_dict
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path

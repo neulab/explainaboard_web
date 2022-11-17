@@ -8,8 +8,9 @@ from datetime import datetime
 from typing import Any, NamedTuple
 
 from bson import ObjectId
-from explainaboard import DatalabLoaderOption, FileType, Source
-from explainaboard.loaders.loader_registry import get_loader_class
+from explainaboard import DatalabLoaderOption, FileType, Source, get_loader_class
+from pymongo.client_session import ClientSession
+
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
@@ -24,7 +25,6 @@ from explainaboard_web.models import (
     SystemOutput,
     SystemOutputProps,
 )
-from pymongo.client_session import ClientSession
 
 
 class SystemDBUtils:

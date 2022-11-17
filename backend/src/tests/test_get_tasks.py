@@ -1,7 +1,6 @@
 import unittest
 
-from explainaboard import TaskType, get_processor_class
-from explainaboard.loaders.loader_registry import get_loader_class
+from explainaboard import TaskType, get_loader_class, get_processor_class
 
 from explainaboard_web.impl.tasks import get_task_categories
 
