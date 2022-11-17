@@ -81,6 +81,10 @@ paths:
     get:
       summary: Returns benchmark metadata by id
       operationId: benchmarkGetById
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       description: Returns benchmark metadata by id.
       parameters:
         - in: path
@@ -260,6 +264,10 @@ paths:
     get:
       summary: Returns system metadata info by id
       operationId: systemsGetById
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       description: |
         Returns a system_metadata by id. id is the DB id so it is mostly used
         internally.
