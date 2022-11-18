@@ -52,7 +52,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/LanguageCode"
 
-  /metricdescriptions:
+  /metric-descriptions:
     get:
       summary: Return all metric descriptions
       operationId: metricDescriptionsGet
