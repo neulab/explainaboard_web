@@ -692,7 +692,7 @@ export function SystemSubmitDrawer(props: Props) {
                       value: opt,
                       label: (
                         <Tooltip
-                          placement="topLeft"
+                          placement="right"
                           title={metricDescriptions[opt]}
                         >
                           <div>{opt}</div>
