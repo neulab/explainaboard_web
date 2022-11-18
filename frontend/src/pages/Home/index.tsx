@@ -97,7 +97,7 @@ export function Home() {
             }
           >
             <div className="text-font text-center text-bold mb-3">
-              <DoubleRightOutlined /> Submit your system via API{" "}
+              <DoubleRightOutlined /> Submit your system via API client (github){" "}
               <DoubleLeftOutlined />
             </div>
           </Button>
