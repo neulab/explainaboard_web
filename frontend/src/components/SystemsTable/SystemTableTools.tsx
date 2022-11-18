@@ -92,34 +92,37 @@ export function SystemTableTools({
     );
   }
 
-  let analysisButton = (
-    <Tooltip
-      title={
-        <div>
-          <p>Single Analysis: Click the Analysis button on any system row.</p>
-          <p>
-            Pairwise Analysis: Select two systems that use the same dataset. A
-            Pairwise Analysis button will appear at the top. The dataset name
-            can be unspecified, but proceed with caution.
-          </p>
-          <p>
-            Multi-system Analysis: Select multiple system that use the same
-            dataset.
-          </p>
-        </div>
-      }
-      placement="bottom"
-      color="white"
-      overlayInnerStyle={{ color: "black" }}
-    >
-      <Button type="link" size="small" style={{ padding: 0 }}>
-        What kind of analysis is supported?
-      </Button>
-    </Tooltip>
-  );
+  let analysisButton;
 
+  if (selectedSystemIDs.length === 0) {
+    analysisButton = (
+      <Tooltip
+        title={
+          <div>
+            <p>Single Analysis: Click the Analysis button on any system row.</p>
+            <p>
+              Pairwise Analysis: Select two systems that use the same dataset. A
+              Pairwise Analysis button will appear at the top. The dataset name
+              can be unspecified, but proceed with caution.
+            </p>
+            <p>
+              Multi-system Analysis: Select multiple system that use the same
+              dataset.
+            </p>
+          </div>
+        }
+        placement="bottom"
+        color="white"
+        overlayInnerStyle={{ color: "black" }}
+      >
+        <Button type="link" size="small" style={{ padding: 0 }}>
+          What kind of analysis is supported?
+        </Button>
+      </Tooltip>
+    );
+  }
   // Single analysis
-  if (selectedSystemIDs.length === 1) {
+  else if (selectedSystemIDs.length === 1) {
     analysisButton = (
       <Button onClick={() => onActiveSystemChange(selectedSystemIDs)}>
         Analysis

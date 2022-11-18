@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.15"
+  version: "0.2.19"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -52,7 +52,7 @@ paths:
                 items:
                   $ref: "#/components/schemas/LanguageCode"
 
-  /metricdescriptions:
+  /metric-descriptions:
     get:
       summary: Return all metric descriptions
       operationId: metricDescriptionsGet
@@ -78,7 +78,10 @@ paths:
     get:
       summary: Returns all benchmark configs matching the specification
       operationId: benchmarkConfigsGet
-      security: []
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       parameters:
         - in: query
           name: parent_id
@@ -100,7 +103,10 @@ paths:
     get:
       summary: Returns benchmark metadata by id
       operationId: benchmarkGetById
-      security: []
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       description: Returns benchmark metadata by id.
       parameters:
         - in: path
@@ -129,6 +135,75 @@ paths:
               schema:
                 $ref: "#/components/schemas/APIError"
 
+    patch:
+      summary: Updates a benchmark by id
+      operationId: benchmarkUpdateById
+      description: Updates a benchmark by id. See requestBody for supported fields.
+      parameters:
+        - in: path
+          name: benchmark_id
+          schema:
+            type: string
+          required: true
+          example: "example_benchmark_id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenchmarkUpdateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
+
+    delete:
+      summary: Deletes a benchmark by id
+      operationId: benchmarkDeleteById
+      parameters:
+        - in: path
+          name: benchmark_id
+          schema:
+            type: string
+          required: true
+          example: "example_benchmark_id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
+
+  /benchmark:
+    post:
+      summary: Uploads a benchmark
+      operationId: benchmarkPost
+      description: Uploads a benchmark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenchmarkCreateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BenchmarkConfig"
+        "400":
+          description: INPUT ERROR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
 
   /datasets/{dataset_id}:
     get:
@@ -211,6 +286,10 @@ paths:
     get:
       summary: Returns system metadata info by id
       operationId: systemsGetById
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       description: |
         Returns a system_metadata by id. id is the DB id so it is mostly used
         internally.
@@ -903,6 +982,13 @@ components:
       properties:
         system_name:
           type: string
+        system_tags:
+          type: array
+          items:
+            type: string
+          description: |
+            User defined tags for the system,
+            useful for searching and grouping systems
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
@@ -918,6 +1004,7 @@ components:
         [
           is_private,
           system_name,
+          system_tags,
         ]
 
     SystemMetadata:
@@ -1283,8 +1370,10 @@ components:
           type: string
         weight:
           type: number
+          nullable: true
         default:
           type: number
+          nullable: true
       required: [name]
 
     BenchmarkOperationConfig:
@@ -1320,53 +1409,144 @@ components:
       additionalProperties: true
       required: [dataset_name]
 
-    BenchmarkConfig:
+    BenchmarkCreateProps:
       type: object
       properties:
+        id:
+          type: string
+        is_private:
+          type: boolean
+        shared_users:
+          type: array
+          items:
+            type: string
+          description: space-separated list of emails with which system is shared
+          example: ["hello@gmail.com", "world@gmail.com"]
         name:
+          type: string
+        parent:
+          type: string
+          description: |
+            "a parent benchmark that this benchmark inherits config from."
+            "If this benchmark doesn't inherit any configs, "
+            "the field must be an empty string."
+        description:
           type: string
         views:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkViewConfig'
-        id:
-          type: string
-        description:
-          type: string
+          nullable: true
         type:
           type: string
           description: |
             "could be 'abstract' to indicate this doesn't fully specify a benchmark"
-        parent:
-          type: string
-          description: "a parent benchmark that this benchmark inherits config from"
-        visibility:
-          type: string
-          description: "a visibility level, public/hidden/none"
+          nullable: true
         logo:
           type: string
+          nullable: true
         contact:
           type: string
+          nullable: true
         homepage:
           type: string
+          nullable: true
         paper:
           type: object
           $ref: "#/components/schemas/Paper"
+          nullable: true
         metrics:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkMetric'
+          nullable: true
         datasets:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkDatasetConfig'
+          nullable: true
         system_query:
           type: object
+          nullable: true
         default_views:
           type: array
           items:
             type: string
-      required: [name, views]
+          nullable: true
+      required: [id, is_private, shared_users, name, parent, description]
+
+    BenchmarkUpdateProps:
+      type: object
+      properties:
+        is_private:
+          type: boolean
+        shared_users:
+          type: array
+          items:
+            type: string
+          description: space-separated list of emails with which system is shared
+          example: ["hello@gmail.com", "world@gmail.com"]
+        name:
+          type: string
+        parent:
+          type: string
+          description: |
+            "a parent benchmark that this benchmark inherits config from."
+            "If this benchmark doesn't inherit any configs, "
+            "the field must be an empty string."
+        description:
+          type: string
+        views:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkViewConfig'
+          nullable: true
+        type:
+          type: string
+          description: |
+            "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+          nullable: true
+        logo:
+          type: string
+          nullable: true
+        contact:
+          type: string
+          nullable: true
+        homepage:
+          type: string
+          nullable: true
+        paper:
+          type: object
+          $ref: "#/components/schemas/Paper"
+          nullable: true
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
+          nullable: true
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkDatasetConfig'
+          nullable: true
+        system_query:
+          type: object
+          nullable: true
+        default_views:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    BenchmarkConfig:
+      allOf:
+        - $ref: "#/components/schemas/BenchmarkCreateProps"
+        - $ref: "#/components/schemas/Time"
+        - type: object
+          properties:
+            creator:
+              type: string
+          required: [creator]
 
     SignificanceTestInfo:
       type: object
