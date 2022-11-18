@@ -1,5 +1,7 @@
-import React from "react";
-import { Tabs, Typography } from "antd";
+import React, { useEffect, useState } from "react";
+import { Tabs, Tooltip, Typography } from "antd";
+import { QuestionCircleOutlined } from "@ant-design/icons";
+import { backendClient } from "../../../../clients";
 import { AnalysisPanel } from "../AnalysisPanel";
 import { MetricPane } from "./MetricPane";
 import { SystemModel } from "../../../../models";
@@ -33,6 +35,17 @@ export function FineGrainedAnalysis({
   metricToSystemAnalysesParsed,
   addChartFile,
 }: Props) {
+  const [metricDescriptions, setMetricDescriptions] = useState<{
+    [key: string]: string;
+  }>({});
+
+  useEffect(() => {
+    async function fetchMetricDescriptions() {
+      setMetricDescriptions(await backendClient.metricDescriptionsGet());
+    }
+    fetchMetricDescriptions();
+  }, []);
+
   return (
     <AnalysisPanel title="Fine-grained Performance">
       <Typography.Paragraph>
@@ -41,7 +54,17 @@ export function FineGrainedAnalysis({
       </Typography.Paragraph>
       <Tabs activeKey={activeMetric} onChange={onActiveMetricChange}>
         {metricNames.map((metric) => (
-          <Tabs.TabPane tab={metric} key={metric}>
+          <Tabs.TabPane
+            key={metric}
+            tab={
+              <span>
+                {metric}&nbsp;
+                <Tooltip title={metricDescriptions[metric]}>
+                  <QuestionCircleOutlined style={{ color: "gray" }} />
+                </Tooltip>
+              </span>
+            }
+          >
             <MetricPane
               task={task}
               systems={systems}
