@@ -27,6 +27,7 @@ from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.language_code import get_language_codes
+from explainaboard_web.impl.metric_descriptions import get_metric_descriptions
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
 from explainaboard_web.impl.utils import (
@@ -40,21 +41,21 @@ from explainaboard_web.models import (
     BenchmarkCreateProps,
     BenchmarkUpdateProps,
     DatasetMetadata,
+    DatasetsReturn,
+    LanguageCode,
     SingleAnalysis,
+    System,
+    SystemAnalysesReturn,
+    SystemCreateProps,
+    SystemInfo,
     SystemOutput,
+    SystemsAnalysesBody,
+    SystemsReturn,
+    SystemUpdateProps,
+    Task,
+    TaskCategory,
 )
-from explainaboard_web.models.datasets_return import DatasetsReturn
-from explainaboard_web.models.language_code import LanguageCode
-from explainaboard_web.models.system import System
-from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
-from explainaboard_web.models.system_create_props import SystemCreateProps
-from explainaboard_web.models.system_info import SystemInfo
-from explainaboard_web.models.system_update_props import SystemUpdateProps
-from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
-from explainaboard_web.models.systems_return import SystemsReturn
-from explainaboard_web.models.task import Task
-from explainaboard_web.models.task_category import TaskCategory
-from explainaboard_web.models.user import User as modelUser
+from explainaboard_web.models import User as modelUser
 from flask import current_app
 from pymongo import ASCENDING, DESCENDING
 from pymongo.client_session import ClientSession
@@ -169,6 +170,13 @@ def datasets_get(
         dataset_name=dataset_name,
         task=task,
     )
+
+
+""" /metricdescriptions """
+
+
+def metric_descriptions_get() -> dict[str, str]:
+    return get_metric_descriptions()
 
 
 """ /benchmarks """

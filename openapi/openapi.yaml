@@ -52,6 +52,28 @@ paths:
                 items:
                   $ref: "#/components/schemas/LanguageCode"
 
+  /metric-descriptions:
+    get:
+      summary: Return all metric descriptions
+      operationId: metricDescriptionsGet
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
+
   /benchmarkconfigs:
     get:
       summary: Returns all benchmark configs matching the specification
