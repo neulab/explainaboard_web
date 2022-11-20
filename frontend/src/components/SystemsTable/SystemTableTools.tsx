@@ -273,16 +273,29 @@ export function SystemTableTools({
 }
 
 function NewSystemButton(props: ButtonProps) {
-  const { state } = useUser();
+  const { login, state } = useUser();
   if (state === LoginState.yes)
     return (
-      <Button type="primary" {...props}>
-        New
+      <Button
+        style={{ backgroundColor: "#28a745", borderColor: "#28a745" }}
+        type="primary"
+        {...props}
+      >
+        Submit New System
       </Button>
     );
   return (
-    <Tooltip title="Please log in to submit new systems" placement="topLeft">
-      <Button disabled>New</Button>
+    <Tooltip
+      title="Please log in to submit new systems"
+      placement="topLeft"
+      defaultVisible
+    >
+      <Button
+        onClick={login}
+        style={{ borderColor: "#28a745", color: "#28a745" }}
+      >
+        Submit New System
+      </Button>
     </Tooltip>
   );
 }

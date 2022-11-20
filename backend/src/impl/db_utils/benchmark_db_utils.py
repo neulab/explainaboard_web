@@ -205,11 +205,12 @@ class BenchmarkDBUtils:
         dataset_metadatas: list[DatasetMetadata] = []
         for x in dataset_configs:
             dataset_return = DatasetDBUtils.find_datasets(
-                dataset_name=x["dataset_name"], sub_dataset=x["sub_dataset"]
+                dataset_name=x["dataset_name"], sub_dataset=x.get("sub_dataset", None)
             )
             if dataset_return.total != 1:
                 raise ValueError(
-                    f'Could not find dataset {x["dataset_name"]}, {x["sub_dataset"]}'
+                    f"Could not find dataset "
+                    f'{x["dataset_name"]}, {x.get("sub_dataset", None)}'
                 )
             dataset_metadatas.append(dataset_return.datasets[0])
 
@@ -300,6 +301,8 @@ class BenchmarkDBUtils:
                     for df_key, df_arr in df_input.items():
                         if df_key in column_dict:
                             info = column_dict[df_key]
+                        elif df_key == "sub_dataset":
+                            info = None
                         elif df_key == "dataset_split":
                             info = "test"
                         elif df_key == "source_language":
