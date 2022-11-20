@@ -18,6 +18,7 @@ from explainaboard.analysis.analyses import BucketAnalysis
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
 from explainaboard.metrics.metric import SimpleMetricStats
+from explainaboard.serialization.serializers import PrimitiveSerializer
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.typing_utils import narrow
 from flask import current_app
@@ -55,6 +56,7 @@ from explainaboard_web.models.language_code import LanguageCode
 from explainaboard_web.models.system import System
 from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
 from explainaboard_web.models.system_create_props import SystemCreateProps
+from explainaboard_web.models.system_info import SystemInfo
 from explainaboard_web.models.system_update_props import SystemUpdateProps
 from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
 from explainaboard_web.models.systems_return import SystemsReturn
@@ -423,19 +425,20 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
     # performance significance test if there are two systems
     sig_info = []
+    serializer = PrimitiveSerializer()
     if len(systems) == 2:
-        system1_info_dict = systems[0].get_system_info().to_dict()
-        system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
+        system1_output_info: SysOutputInfo = systems[0].get_system_info()
 
-        system1_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[0].get_metric_stats()[0]
-        ]
+        system1_metric_stats: dict[str, SimpleMetricStats] = {
+            name: SimpleMetricStats(stats)
+            for name, stats in systems[0].get_metric_stats()[0].items()
+        }
 
-        system2_info_dict = systems[1].get_system_info().to_dict()
-        system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
-        system2_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[1].get_metric_stats()[0]
-        ]
+        system2_output_info: SysOutputInfo = systems[1].get_system_info()
+        system2_metric_stats: dict[str, SimpleMetricStats] = {
+            name: SimpleMetricStats(stats)
+            for name, stats in systems[1].get_metric_stats()[0].items()
+        }
 
         sig_info = pairwise_significance_test(
             system1_output_info,
@@ -445,8 +448,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
     for system in systems:
-        system_info = system.get_system_info()
-        system_output_info = SysOutputInfo.from_dict(system_info.to_dict())
+        system_output_info: SysOutputInfo = system.get_system_info()
 
         for analysis in system_output_info.analyses:
             if (
@@ -469,7 +471,11 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
         metric_stats = [
-            [SimpleMetricStats(y) for y in x] for x in system.get_metric_stats()
+            {
+                metric_name: SimpleMetricStats(stats)
+                for metric_name, stats in level.items()
+            }
+            for level in system.get_metric_stats()
         ]
 
         # Get analysis cases
@@ -494,8 +500,8 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             skip_failed_analyses=True,
         )
         single_analysis = SingleAnalysis(
-            system_info=system_info,
-            analysis_results=processor_result,
+            system_info=SystemInfo.from_dict(serializer.serialize(system_output_info)),
+            analysis_results=serializer.serialize(processor_result),
         )
         system_analyses.append(single_analysis)
 

@@ -10,8 +10,10 @@ from importlib.metadata import version
 from typing import Any, Final
 
 from explainaboard import TaskType, get_processor_class
+from explainaboard.info import OverallStatistics, SysOutputInfo
 from explainaboard.loaders.file_loader import FileLoaderReturn
-from explainaboard.metrics.metric import MetricConfig
+from explainaboard.metrics.metric import MetricConfig, Score
+from explainaboard.serialization.serializers import PrimitiveSerializer
 from pymongo.client_session import ClientSession
 
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
@@ -22,7 +24,6 @@ from explainaboard_web.impl.utils import (
     unbinarize_bson,
 )
 from explainaboard_web.models.system import System
-from explainaboard_web.models.system_info import SystemInfo
 
 
 class SystemModel(System):
@@ -94,15 +95,19 @@ class SystemModel(System):
             raise ValueError(f"system {self.system_id} does not exist in the DB")
         return sys_doc
 
-    def get_system_info(self) -> SystemInfo:
+    def get_system_info(self) -> SysOutputInfo:
         """retrieves system info from DB"""
         properties = self._get_private_properties()
-        return SystemInfo.from_dict(properties["system_info"])
+        serializer = PrimitiveSerializer()
+        return serializer.deserialize(properties["system_info"])
 
-    def get_metric_stats(self) -> list[list[float]]:
+    def get_metric_stats(self) -> list[dict[str, list[float]]]:
         """retrieves metric stats from DB"""
         properties = self._get_private_properties()
-        return [[unbinarize_bson(y) for y in x] for x in properties["metric_stats"]]
+        return [
+            {name: unbinarize_bson(stats) for name, stats in level.items()}
+            for level in properties["metric_stats"]
+        ]
 
     def save_to_db(self, session: ClientSession | None = None) -> None:
         """creates a new record if not exist, otherwise update
@@ -163,14 +168,16 @@ class SystemModel(System):
                 # cache hit
                 return
 
-        def _process():
+        def _process() -> OverallStatistics:
             processor = get_processor_class(TaskType(self.task))()
-            metrics_lookup = processor.full_metric_list().copy()
-            metric_configs: list[MetricConfig] = []
-            for metric_name in self.metric_names:
-                if metric_name not in metrics_lookup:
-                    raise ValueError(f"{metric_name} is not a supported metric")
-                metric_configs.append(metrics_lookup[metric_name])
+            all_sample_level_metrics = processor.full_metric_list().copy()
+            metric_configs: dict[str, MetricConfig] = {}
+            for selected_metric in self.metric_names:
+                if selected_metric not in all_sample_level_metrics:
+                    raise ValueError(f"{selected_metric} is not a supported metric")
+                metric_configs[selected_metric] = all_sample_level_metrics[
+                    selected_metric
+                ]
             system_output_metadata: dict = properties.get("system_output_metadata", {})
             processor_metadata = {
                 # system properties
@@ -197,27 +204,29 @@ class SystemModel(System):
 
         overall_statistics = _process()
         binarized_metric_stats = [
-            [binarize_bson(y.get_data()) for y in x]
-            for x in overall_statistics.metric_stats
+            {
+                metric_name: binarize_bson(stats.get_data())
+                for metric_name, stats in level.items()
+            }
+            for level in overall_statistics.metric_stats
         ]
         sys_info = overall_statistics.sys_info
 
         def generate_system_update_values():
-            if sys_info.analysis_levels and sys_info.results.overall:
+            if sys_info.results.overall:
                 # store overall metrics in the DB so they can be queried
-                for level, result in zip(
-                    sys_info.analysis_levels, sys_info.results.overall
-                ):
-                    self.results[level.name] = {}
-                    for metric_result in result:
-                        self.results[level.name][
-                            metric_result.metric_name
-                        ] = metric_result.value
+                for level, result in sys_info.results.overall.items():
+                    self.results[level] = {}
+                    for metric_name, metric_result in result.items():
+                        self.results[level][metric_name] = metric_result.get_value(
+                            Score, "score"
+                        ).value
+            serializer = PrimitiveSerializer()
             system_update_values = {
                 "results": self.results,
                 # cache
                 "sdk_version_used": self._CURRENT_SDK_VERSION,
-                "system_info": sys_info.to_dict(),
+                "system_info": serializer.serialize(sys_info),
                 "metric_stats": binarized_metric_stats,
                 "analysis_cases": update_analysis_cases(),
             }

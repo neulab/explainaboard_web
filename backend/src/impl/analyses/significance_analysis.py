@@ -1,18 +1,18 @@
 import numpy as np
 from explainaboard.info import SysOutputInfo
-from explainaboard.metrics.metric import MetricStats
-from explainaboard.utils.typing_utils import unwrap
+from explainaboard.metrics.metric import Metric, MetricStats
+
 from explainaboard_web.models import SignificanceTestInfo
 
 
 def pairwise_significance_test(
     sys1_info: SysOutputInfo,
     sys2_info: SysOutputInfo,
-    sys1_metric_stats: list[MetricStats],
-    sys2_metric_stats: list[MetricStats],
+    sys1_metric_stats: dict[str, MetricStats],
+    sys2_metric_stats: dict[str, MetricStats],
     n_samples: int = 1000,
     prop_samples: float = 0.5,
-) -> list:
+) -> list[SignificanceTestInfo]:
     """
     significance test based on bootstrapped resampling method, which are controlled by
     two major hyper-parameters:
@@ -20,16 +20,8 @@ def pairwise_significance_test(
     :param prop_samples: The ratio of samples to take every time
     """
 
-    sys1_metric_names = []
-    sys2_metric_names = []
-    metric_funcs = []
-    sig_info = []
-
-    for config in unwrap(sys1_info.analysis_levels[0].metric_configs):
-        sys1_metric_names.append(config.name)
-        metric_funcs.append(config.to_metric())
-    for config in unwrap(sys2_info.analysis_levels[0].metric_configs):
-        sys2_metric_names.append(config.name)
+    sys1_metric_names = set(sys1_metric_stats.keys())
+    sys2_metric_names = set(sys2_metric_stats.keys())
 
     # metric validation
     if sys1_metric_names != sys2_metric_names:
@@ -39,10 +31,20 @@ def pairwise_significance_test(
             f"{sys2_metric_names}"
         )
 
+    metric_funcs: dict[str, Metric] = {}
+
+    for metric_name, metric_config in sys1_info.analysis_levels[
+        0
+    ].metric_configs.items():
+        metric_funcs[metric_name] = metric_config.to_metric()
+
+    sig_info: list[SignificanceTestInfo] = []
+
     rng = np.random.default_rng()
-    for sys1_metric_stat, sys2_metric_stat, metric_func, metric_name in zip(
-        sys1_metric_stats, sys2_metric_stats, metric_funcs, sys1_metric_names
-    ):
+    for metric_name in sys1_metric_names:
+        sys1_metric_stat = sys1_metric_stats[metric_name]
+        sys2_metric_stat = sys2_metric_stats[metric_name]
+        metric_func = metric_funcs[metric_name]
 
         n_elems = max(int(prop_samples * len(sys1_metric_stat)), 1)
         all_indices = np.array(range(len(sys1_metric_stat)))
@@ -53,14 +55,10 @@ def pairwise_significance_test(
 
         # Calculating performance for system 1
         sys1_agg_stats = metric_func.aggregate_stats(sys1_filt_stats)
-        sys1_samp_results = metric_func.calc_metric_from_aggregate(
-            sys1_agg_stats, config
-        )
+        sys1_samp_results = metric_func.calc_metric_from_aggregate(sys1_agg_stats)
         # Calculating performance for system 2
         sys2_agg_stats = metric_func.aggregate_stats(sys2_filt_stats)
-        sys2_samp_results = metric_func.calc_metric_from_aggregate(
-            sys2_agg_stats, config
-        )
+        sys2_samp_results = metric_func.calc_metric_from_aggregate(sys2_agg_stats)
 
         # Judge which system wins based on their performance in each sampling round
         wins = [0.0, 0.0, 0.0]
