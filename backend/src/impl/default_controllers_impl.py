@@ -21,10 +21,6 @@ from explainaboard.metrics.metric import SimpleMetricStats
 from explainaboard.serialization.serializers import PrimitiveSerializer
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.typing_utils import narrow
-from flask import current_app
-from pymongo import ASCENDING, DESCENDING
-from pymongo.client_session import ClientSession
-
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
@@ -64,6 +60,9 @@ from explainaboard_web.models import (
     TaskCategory,
 )
 from explainaboard_web.models import User as modelUser
+from flask import current_app
+from pymongo import ASCENDING, DESCENDING
+from pymongo.client_session import ClientSession
 
 
 def _is_creator(obj: System | BenchmarkConfig, user: authUser) -> bool:

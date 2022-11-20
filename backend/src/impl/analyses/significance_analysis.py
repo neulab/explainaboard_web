@@ -1,7 +1,6 @@
 import numpy as np
 from explainaboard.info import SysOutputInfo
 from explainaboard.metrics.metric import Metric, MetricStats
-
 from explainaboard_web.models import SignificanceTestInfo
 
 

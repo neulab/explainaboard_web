@@ -1,7 +1,6 @@
 import unittest
 
 from explainaboard import TaskType, get_loader_class, get_processor_class
-
 from explainaboard_web.impl.tasks import get_task_categories
 
 
@@ -25,7 +24,7 @@ class TestTasks(unittest.TestCase):
                 supported_formats = get_loader_class(task.name).supported_file_types()
                 self.assertEqual(
                     len(supported_metrics),
-                    len({x.name for x in supported_metrics}),
+                    len(supported_metrics),
                     f"duplicate metric names in {task.name}",
                 )
                 self.assertGreater(len(supported_formats.custom_dataset), 0)

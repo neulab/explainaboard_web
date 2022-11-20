@@ -14,8 +14,6 @@ from explainaboard.info import OverallStatistics, SysOutputInfo
 from explainaboard.loaders.file_loader import FileLoaderReturn
 from explainaboard.metrics.metric import MetricConfig, Score
 from explainaboard.serialization.serializers import PrimitiveSerializer
-from pymongo.client_session import ClientSession
-
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.storage import get_storage
 from explainaboard_web.impl.utils import (
@@ -24,6 +22,7 @@ from explainaboard_web.impl.utils import (
     unbinarize_bson,
 )
 from explainaboard_web.models.system import System
+from pymongo.client_session import ClientSession
 
 
 class SystemModel(System):
