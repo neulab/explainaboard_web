@@ -128,6 +128,9 @@ export function SystemSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.loading);
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
   const [languageCodes, setLanguageCodes] = useState<LanguageCode[]>([]);
+  const [metricDescriptions, setMetricDescriptions] = useState<{
+    [key: string]: string;
+  }>({});
   const { filtered: inputLangFiltered, setQuery: setInputLangQuery } =
     useSearch<LanguageCode>(languageCodes, filterFunc);
   const { filtered: outputLangFiltered, setQuery: setOutputLangQuery } =
@@ -163,6 +166,7 @@ export function SystemSubmitDrawer(props: Props) {
       setState(State.loading);
       setTaskCategories(await backendClient.tasksGet());
       setLanguageCodes(await backendClient.languageCodesGet());
+      setMetricDescriptions(await backendClient.metricDescriptionsGet());
       setState(State.other);
     }
 
@@ -258,6 +262,7 @@ export function SystemSubmitDrawer(props: Props) {
               is_private,
               shared_users: trimmedUsers,
               system_details: { __TO_PARSE__: system_details },
+              system_tags,
             },
           },
           systemToEdit.system_id
@@ -553,6 +558,7 @@ export function SystemSubmitDrawer(props: Props) {
                   // Must be boolean
                   is_private: systemToEdit?.is_private || false,
                   shared_users: systemToEdit?.shared_users,
+                  system_tags: systemToEdit?.system_tags,
                 }
               : { is_private: true }
           }
@@ -684,6 +690,14 @@ export function SystemSubmitDrawer(props: Props) {
                   options={(selectedTask?.supported_metrics || []).map(
                     (opt) => ({
                       value: opt,
+                      label: (
+                        <Tooltip
+                          placement="right"
+                          title={metricDescriptions[opt]}
+                        >
+                          <div>{opt}</div>
+                        </Tooltip>
+                      ),
                     })
                   )}
                 />
