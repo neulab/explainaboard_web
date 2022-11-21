@@ -47,6 +47,7 @@ export function SystemsTable() {
 
   // set systems to be analyzed
   const onActiveSystemChange = (ids: string[]) => {
+    setPage(0);
     setFilters(filters.update({ activeSystemIDs: ids }));
   };
 

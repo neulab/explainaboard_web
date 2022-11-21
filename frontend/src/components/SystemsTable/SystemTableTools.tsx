@@ -260,6 +260,7 @@ export function SystemTableTools({
 
         <Select
           mode="tags"
+          value={value.systemTags}
           allowClear
           placeholder="Tags"
           onChange={(value) => onChange({ systemTags: value })}
