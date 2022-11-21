@@ -206,6 +206,9 @@ export function SystemsTable() {
         setSelectedSystemIDs={setSelectedSystemIDs}
         onActiveSystemChange={onActiveSystemChange}
         showEditDrawer={showEditDrawer}
+        onFilterChange={onFilterChange}
+        filterValue={filters}
+        taskCategories={taskCategories}
       />
       <AnalysisDrawer
         systems={systems.filter((sys) =>
