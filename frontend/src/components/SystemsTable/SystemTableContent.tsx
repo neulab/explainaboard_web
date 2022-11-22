@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   message,
   Popconfirm,
   Space,
+  Select,
   Table,
   Typography,
   Tag,
@@ -15,6 +16,8 @@ import { SystemModel } from "../../models";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { PrivateIcon, useUser } from "..";
 import { generateLeaderboardURL } from "../../utils";
+import { DatasetMetadata } from "../../clients/openapi";
+import { FilterUpdate, SystemFilter } from "./SystemFilter";
 const { Text } = Typography;
 
 interface Props {
@@ -30,6 +33,8 @@ interface Props {
   setSelectedSystemIDs: React.Dispatch<React.SetStateAction<string[]>>;
   onActiveSystemChange: (ids: string[]) => void;
   showEditDrawer: (systemIDToEdit: string) => void;
+  onFilterChange: (value: FilterUpdate) => void;
+  filterValue: SystemFilter;
 }
 
 export function SystemTableContent({
@@ -44,6 +49,8 @@ export function SystemTableContent({
   setSelectedSystemIDs,
   onActiveSystemChange,
   showEditDrawer,
+  onFilterChange,
+  filterValue,
 }: Props) {
   const { userInfo } = useUser();
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
@@ -69,6 +76,43 @@ export function SystemTableContent({
       }
     }
   }
+
+  const [datasets, setDatasets] = useState<{ label: string; value: string }[]>(
+    []
+  );
+  const [datasetSearchText, setDatasetSearchText] = useState("");
+
+  useEffect(() => {
+    async function fetchDatasets() {
+      const { datasets: newDatasets } = await backendClient.datasetsGet(
+        undefined,
+        datasetSearchText,
+        undefined,
+        0,
+        30
+      );
+      const distinctNames = Array.from(
+        new Set(
+          newDatasets.map((dataset: DatasetMetadata) => dataset.dataset_name)
+        )
+      );
+      setDatasets(
+        distinctNames.map((name: string) => {
+          return { label: name, value: name };
+        })
+      );
+    }
+    fetchDatasets();
+  }, [datasetSearchText, filterValue.task]);
+
+  const onDatasetSearch = (value: string) => {
+    console.log("search:", value);
+    setDatasetSearchText(value);
+  };
+
+  const onDatasetChange = (value: string) => {
+    onFilterChange({ dataset: value });
+  };
 
   const columns: ColumnsType<SystemModel> = [
     {
@@ -125,6 +169,21 @@ export function SystemTableContent({
         ) : (
           "unspecified"
         ),
+      filterDropdown: () => (
+        <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+          <Select
+            showSearch
+            allowClear
+            placeholder="Search dataset"
+            onSearch={onDatasetSearch}
+            onChange={onDatasetChange}
+            value={filterValue.dataset}
+            style={{ minWidth: "120px" }}
+            options={datasets}
+          />
+        </div>
+      ),
+      filteredValue: filterValue.dataset ? [filterValue.dataset] : null,
     },
     {
       dataIndex: ["dataset", "split"],
