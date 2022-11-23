@@ -143,14 +143,22 @@ class SystemModel(System):
             blob_name,
             json.dumps(system_output.samples),
         )
-        serializer = PrimitiveSerializer()
         system_output_metadata = dataclasses.asdict(system_output.metadata)
-        system_output_metadata["custom_features"] = serializer.serialize(
-            system_output.metadata.custom_features
-        )
-        # TODO(lyuyang): This related to a bug in the SDK: custom_analyses aren't
-        # deserialized properly so it is actually a dict. When that is fixed
-        # in the SDK, this code also needs to be updated.
+        # TODO(lyuyang): This related to a bug in the SDK: custom_features and
+        # custom_analyses aren't deserialized properly in some cases. When that
+        # is fixed in the SDK, this code also needs to be updated.
+        serializer = PrimitiveSerializer()
+        system_output_metadata[
+            "custom_features"
+        ] = system_output.metadata.custom_features
+        if system_output.metadata.custom_features:
+            levels = list(system_output_metadata["custom_features"].values())
+            if levels:
+                features = list(levels[0].values())
+                if features and not isinstance(features[0], dict):
+                    system_output_metadata["custom_features"] = serializer.serialize(
+                        system_output.metadata.custom_features
+                    )
         system_output_metadata[
             "custom_analyses"
         ] = system_output.metadata.custom_analyses
