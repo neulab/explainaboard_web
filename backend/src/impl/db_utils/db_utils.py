@@ -5,10 +5,11 @@ from dataclasses import dataclass
 from typing import TypeVar
 
 from bson.objectid import InvalidId, ObjectId
-from explainaboard_web.impl.db import get_db
 from pymongo.client_session import ClientSession
 from pymongo.cursor import Cursor
 from pymongo.results import DeleteResult, InsertManyResult, UpdateResult
+
+from explainaboard_web.impl.db import get_db
 
 
 @dataclass

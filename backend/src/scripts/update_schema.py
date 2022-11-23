@@ -1,8 +1,9 @@
 import argparse
 import copy
 
-from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from flask import Flask
+
+from explainaboard_web.impl.db_utils.db_utils import DBUtils
 
 """
 This is a utility script that can be used to update the schema of the database when
