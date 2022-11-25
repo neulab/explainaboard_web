@@ -1,6 +1,6 @@
 // interface modified from https://app.quicktype.io/
 
-import { Performance, ComboCount } from "../../clients/openapi";
+import { ComboCount, MetricResult } from "../../clients/openapi";
 
 export interface ResultFineGrainedParsed {
   /**
@@ -21,7 +21,7 @@ export interface ResultFineGrainedParsed {
   // The number of samples in each bucket
   numbersOfSamples: number[];
   // performances[i]: performance (value/confidence) for bucket i
-  performances: Performance[];
+  performances: MetricResult[];
   // Used by combo count analyses
   comboCounts: ComboCount[];
   // Combo count analyses features. Used by combo count analyses

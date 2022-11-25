@@ -8,8 +8,7 @@ from datetime import datetime
 from typing import Any, NamedTuple
 
 from bson import ObjectId
-from explainaboard import DatalabLoaderOption, FileType, Source
-from explainaboard.loaders.loader_registry import get_loader_class
+from explainaboard import DatalabLoaderOption, FileType, Source, get_loader_class
 from pymongo.client_session import ClientSession
 
 from explainaboard_web.impl.auth import get_user
