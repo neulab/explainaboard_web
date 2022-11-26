@@ -56,27 +56,22 @@ export function TableViewModal({
   const columns = [
     {
       title: "X Axis Value",
-      key: "xValue",
       dataIndex: "xValue",
     },
     {
       title: "System Name",
-      key: "systemName",
       dataIndex: "systemName",
     },
     {
       title: "Y Axis Value",
-      key: "yValue",
       dataIndex: "yValue",
     },
     {
       title: "Confidence Interval",
-      key: "confInterval",
       dataIndex: "confInterval",
     },
     {
       title: "Sample Size",
-      key: "sampleSize",
       dataIndex: "sampleSize",
     },
   ];
