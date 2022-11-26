@@ -190,17 +190,13 @@ export function BarChart(props: Props) {
           show: true,
           title: "View LaTeX format",
           icon: "image://icons/TeX-doc-icon.png",
-          onclick: function () {
-            showLatexModal();
-          },
+          onclick: showLatexModal,
         },
         myTableView: {
           show: true,
           title: "View Table",
           icon: "image://icons/icons8-columns-96.png",
-          onclick: function () {
-            showTableModal();
-          },
+          onclick: showTableModal,
         },
       },
     },
