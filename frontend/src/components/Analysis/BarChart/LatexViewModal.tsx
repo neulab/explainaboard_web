@@ -41,7 +41,6 @@ export function LatexViewModal({
     }
   );
 
-  // escape the underscore
   xLabel = xLabel === undefined ? "" : xLabel;
   yLabel = yLabel === undefined ? "" : yLabel;
 
