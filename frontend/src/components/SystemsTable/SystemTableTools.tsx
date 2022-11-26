@@ -92,34 +92,37 @@ export function SystemTableTools({
     );
   }
 
-  let analysisButton = (
-    <Tooltip
-      title={
-        <div>
-          <p>Single Analysis: Click the Analysis button on any system row.</p>
-          <p>
-            Pairwise Analysis: Select two systems that use the same dataset. A
-            Pairwise Analysis button will appear at the top. The dataset name
-            can be unspecified, but proceed with caution.
-          </p>
-          <p>
-            Multi-system Analysis: Select multiple system that use the same
-            dataset.
-          </p>
-        </div>
-      }
-      placement="bottom"
-      color="white"
-      overlayInnerStyle={{ color: "black" }}
-    >
-      <Button type="link" size="small" style={{ padding: 0 }}>
-        What kind of analysis is supported?
-      </Button>
-    </Tooltip>
-  );
+  let analysisButton;
 
+  if (selectedSystemIDs.length === 0) {
+    analysisButton = (
+      <Tooltip
+        title={
+          <div>
+            <p>Single Analysis: Click the Analysis button on any system row.</p>
+            <p>
+              Pairwise Analysis: Select two systems that use the same dataset. A
+              Pairwise Analysis button will appear at the top. The dataset name
+              can be unspecified, but proceed with caution.
+            </p>
+            <p>
+              Multi-system Analysis: Select multiple system that use the same
+              dataset.
+            </p>
+          </div>
+        }
+        placement="bottom"
+        color="white"
+        overlayInnerStyle={{ color: "black" }}
+      >
+        <Button type="link" size="small" style={{ padding: 0 }}>
+          What kind of analysis is supported?
+        </Button>
+      </Tooltip>
+    );
+  }
   // Single analysis
-  if (selectedSystemIDs.length === 1) {
+  else if (selectedSystemIDs.length === 1) {
     analysisButton = (
       <Button onClick={() => onActiveSystemChange(selectedSystemIDs)}>
         Analysis
@@ -223,7 +226,7 @@ export function SystemTableTools({
           placeholder="All Tasks"
           style={{ minWidth: "150px" }}
         />
-        <div>
+        <div style={{ display: "flex", flexDirection: "row" }}>
           <Select
             options={[
               ...metricOptions.map((opt) => ({ value: opt, label: opt })),
@@ -255,6 +258,14 @@ export function SystemTableTools({
           onChange={(e) => onChange({ name: e.target.value })}
         />
 
+        <Select
+          mode="tags"
+          allowClear
+          placeholder="Tags"
+          onChange={(value) => onChange({ systemTags: value })}
+          style={{ minWidth: "120px" }}
+        />
+
         <NewSystemButton onClick={showSubmitDrawer} />
       </Space>
     </div>
@@ -262,16 +273,29 @@ export function SystemTableTools({
 }
 
 function NewSystemButton(props: ButtonProps) {
-  const { state } = useUser();
+  const { login, state } = useUser();
   if (state === LoginState.yes)
     return (
-      <Button type="primary" {...props}>
-        New
+      <Button
+        style={{ backgroundColor: "#28a745", borderColor: "#28a745" }}
+        type="primary"
+        {...props}
+      >
+        Submit New System
       </Button>
     );
   return (
-    <Tooltip title="Please log in to submit new systems" placement="topLeft">
-      <Button disabled>New</Button>
+    <Tooltip
+      title="Please log in to submit new systems"
+      placement="topLeft"
+      defaultVisible
+    >
+      <Button
+        onClick={login}
+        style={{ borderColor: "#28a745", color: "#28a745" }}
+      >
+        Submit New System
+      </Button>
     </Tooltip>
   );
 }

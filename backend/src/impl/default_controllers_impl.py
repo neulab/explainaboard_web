@@ -8,25 +8,34 @@ import os
 from functools import lru_cache
 
 import pandas as pd
-from explainaboard import DatalabLoaderOption, TaskType, get_processor
+from explainaboard import (
+    DatalabLoaderOption,
+    TaskType,
+    get_loader_class,
+    get_processor_class,
+)
 from explainaboard.analysis.analyses import BucketAnalysis
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
-from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import SimpleMetricStats
-from explainaboard.serialization.legacy import general_to_dict
+from explainaboard.serialization.serializers import PrimitiveSerializer
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.typing_utils import narrow
+from flask import current_app
+from pymongo import ASCENDING, DESCENDING
+from pymongo.client_session import ClientSession
+
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
 from explainaboard_web.impl.auth import User as authUser
 from explainaboard_web.impl.auth import get_user
-from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
+from explainaboard_web.impl.db_utils.benchmark_db_utils import BenchmarkDBUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
 from explainaboard_web.impl.language_code import get_language_codes
+from explainaboard_web.impl.metric_descriptions import get_metric_descriptions
 from explainaboard_web.impl.private_dataset import is_private_dataset
 from explainaboard_web.impl.tasks import get_task_categories
 from explainaboard_web.impl.utils import (
@@ -37,49 +46,47 @@ from explainaboard_web.impl.utils import (
 from explainaboard_web.models import (
     Benchmark,
     BenchmarkConfig,
+    BenchmarkCreateProps,
+    BenchmarkUpdateProps,
     DatasetMetadata,
+    DatasetsReturn,
+    LanguageCode,
     SingleAnalysis,
+    System,
+    SystemAnalysesReturn,
+    SystemCreateProps,
+    SystemInfo,
     SystemOutput,
+    SystemsAnalysesBody,
+    SystemsReturn,
+    SystemUpdateProps,
+    Task,
+    TaskCategory,
 )
-from explainaboard_web.models.datasets_return import DatasetsReturn
-from explainaboard_web.models.language_code import LanguageCode
-from explainaboard_web.models.system import System
-from explainaboard_web.models.system_analyses_return import SystemAnalysesReturn
-from explainaboard_web.models.system_create_props import SystemCreateProps
-from explainaboard_web.models.system_info import SystemInfo
-from explainaboard_web.models.system_update_props import SystemUpdateProps
-from explainaboard_web.models.systems_analyses_body import SystemsAnalysesBody
-from explainaboard_web.models.systems_return import SystemsReturn
-from explainaboard_web.models.task import Task
-from explainaboard_web.models.task_category import TaskCategory
-from explainaboard_web.models.user import User as modelUser
-from flask import current_app
-from pymongo import ASCENDING, DESCENDING
-from pymongo.client_session import ClientSession
+from explainaboard_web.models import User as modelUser
 
 
-def _is_creator(system: System, user: authUser) -> bool:
-    """check if a user is the creator of a system"""
-    return system.creator == user.id
+def _is_creator(obj: System | BenchmarkConfig, user: authUser) -> bool:
+    """check if a user is the creator of a system or benchmark"""
+    return obj.creator == user.id
 
 
-def _is_shared_user(system: System, user: authUser) -> bool:
-    """check if a user is a shared user of a system"""
-    return system.shared_users and user.email in system.shared_users
+def _is_shared_user(obj: System | BenchmarkConfig, user: authUser) -> bool:
+    """check if a user is a shared user of a system or benchmark"""
+    return obj.shared_users and user.email in obj.shared_users
 
 
-def _has_write_access(system: System) -> bool:
-    """check if the current user has write access of a system"""
+def _has_write_access(obj: System | BenchmarkConfig) -> bool:
+    """check if the current user has write access of a system or benchmark"""
     user = get_user()
-    return user.is_authenticated and _is_creator(system, user)
+    return user.is_authenticated and _is_creator(obj, user)
 
 
-def _has_read_access(system: System) -> bool:
-    """check if the current user has read access of a system"""
+def _has_read_access(obj: System | BenchmarkConfig) -> bool:
+    """check if the current user has read access of a system or benchmark"""
     user = get_user()
-    return not system.is_private or (
-        user.is_authenticated
-        and (_is_creator(system, user) or _is_shared_user(system, user))
+    return not obj.is_private or (
+        user.is_authenticated and (_is_creator(obj, user) or _is_shared_user(obj, user))
     )
 
 
@@ -123,9 +130,9 @@ def tasks_get() -> list[TaskCategory]:
         for _task in _category.tasks:
             loader_class = get_loader_class(_task.name)
             supported_formats = loader_class.supported_file_types()
-            supported_metrics = [
-                metric.name for metric in get_processor(_task.name).full_metric_list()
-            ]
+            supported_metrics = list(
+                get_processor_class(TaskType(_task.name)).full_metric_list().keys()
+            )
             tasks.append(
                 Task(
                     _task.name, _task.description, supported_metrics, supported_formats
@@ -170,52 +177,37 @@ def datasets_get(
     )
 
 
+""" /metricdescriptions """
+
+
+def metric_descriptions_get() -> dict[str, str]:
+    return get_metric_descriptions()
+
+
 """ /benchmarks """
 
 
 def benchmark_configs_get(parent: str | None) -> list[BenchmarkConfig]:
-    scriptpath = os.path.dirname(__file__)
-    config_folder = os.path.join(scriptpath, "./benchmark_configs/")
-    # Add benchmarks to here if they should be displayed on the page.
-    # This should perhaps be moved to the database or made dynamic later.
-    # display_benchmarks = ["masakhaner", "gaokao"]
-    # Get all benchmark configs
-    """
-    display_benchmarks = ["masakhaner", "gaokao"]
-    # Get all benchmark configs
-    benchmark_configs = [
-        BenchmarkUtils.config_from_json_file(f"{config_folder}/config_{x}.json")
-        for x in display_benchmarks
-    ]
-    """
-    benchmark_configs = []
-    for file_name in sorted(os.listdir(config_folder)):
-        if file_name.endswith(".json"):
-            benchmark_dict = BenchmarkUtils.config_dict_from_file(
-                config_folder + file_name
-            )
-            # must match parent if one exists
-            if (parent or "") == (benchmark_dict.get("parent", "")):
-                benchmark_configs.append(BenchmarkConfig.from_dict(benchmark_dict))
-
-    return benchmark_configs
+    return BenchmarkDBUtils.find_configs(parent)
 
 
 def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
-    config = BenchmarkConfig.from_dict(BenchmarkUtils.config_dict_from_id(benchmark_id))
+    config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
+    if not _has_read_access(config):
+        abort_with_error_message(403, "benchmark access denied", 40302)
     if config.type == "abstract":
         return Benchmark(config, None, None)
     file_path = benchmark_id + "_benchmark.json"
     benchmark_file = open_cached_file(file_path, datetime.timedelta(seconds=1))
     if not benchmark_file:
-        sys_infos = BenchmarkUtils.load_sys_infos(config)
-        orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(config, sys_infos)
+        sys_infos = BenchmarkDBUtils.load_sys_infos(config)
+        orig_df = BenchmarkDBUtils.generate_dataframe_from_sys_infos(config, sys_infos)
 
-        system_dfs = BenchmarkUtils.generate_view_dataframes(
+        system_dfs = BenchmarkDBUtils.generate_view_dataframes(
             config, orig_df, by_creator=False
         )
         system_dict = {k: v.to_dict() for k, v in system_dfs}
-        creator_dfs = BenchmarkUtils.generate_view_dataframes(
+        creator_dfs = BenchmarkDBUtils.generate_view_dataframes(
             config, orig_df, by_creator=True
         )
         creator_dict = {k: v.to_dict() for k, v in creator_dfs}
@@ -232,7 +224,7 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
         view_dict = json.load(f)["creator"]
     else:
         view_dict = json.load(f)["system"]
-    plot_dict = BenchmarkUtils.generate_plots(benchmark_id)
+    plot_dict = BenchmarkDBUtils.generate_plots(benchmark_id)
     views = []
     for k, v in view_dict.items():
         if by_creator:
@@ -242,11 +234,36 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
         else:
             col_name = "system_name"
         views.append(
-            BenchmarkUtils.dataframe_to_table(
+            BenchmarkDBUtils.dataframe_to_table(
                 k, pd.DataFrame.from_dict(v), plot_dict, col_name
             )
         )
     return Benchmark(config, views, update_time)
+
+
+def benchmark_post(body: BenchmarkCreateProps) -> BenchmarkConfig:
+    if body.parent == "" and body.views is None:
+        abort_with_error_message(
+            400, "views (type array) is a required property when parent is empty."
+        )
+
+    return BenchmarkDBUtils.create_benchmark(body)
+
+
+def benchmark_update_by_id(body: BenchmarkUpdateProps, benchmark_id: str):
+    config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
+    if not _has_write_access(config):
+        abort_with_error_message(403, "benchmark update denied", 40303)
+
+    success = BenchmarkDBUtils.update_benchmark_by_id(benchmark_id, body)
+    if success:
+        return "Success"
+    abort_with_error_message(400, f"failed to update benchmark {benchmark_id}")
+
+
+def benchmark_delete_by_id(benchmark_id: str):
+    BenchmarkDBUtils.delete_benchmark_by_id(benchmark_id)
+    return "Success"
 
 
 """ /systems """
@@ -271,6 +288,7 @@ def systems_get(
     sort_direction: str,
     creator: str | None,
     shared_users: list[str] | None,
+    system_tags: list[str] | None,
 ) -> SystemsReturn:
     """Returns a systems according to the provided filters
 
@@ -301,6 +319,7 @@ def systems_get(
         sort=[(sort_field, dir)],
         creator=creator,
         shared_users=shared_users,
+        system_tags=system_tags,
     )
     return SystemsReturn(systems, total)
 
@@ -414,21 +433,20 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
     # performance significance test if there are two systems
     sig_info = []
+    serializer = PrimitiveSerializer()
     if len(systems) == 2:
-        system1_info: SystemInfo = systems[0].get_system_info()
-        system1_info_dict = general_to_dict(system1_info)
-        system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
+        system1_output_info: SysOutputInfo = systems[0].get_system_info()
 
-        system1_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[0].get_metric_stats()[0]
-        ]
+        system1_metric_stats: dict[str, SimpleMetricStats] = {
+            name: SimpleMetricStats(stats)
+            for name, stats in systems[0].get_metric_stats()[0].items()
+        }
 
-        system2_info: SystemInfo = systems[1].get_system_info()
-        system2_info_dict = general_to_dict(system2_info)
-        system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
-        system2_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[1].get_metric_stats()[0]
-        ]
+        system2_output_info: SysOutputInfo = systems[1].get_system_info()
+        system2_metric_stats: dict[str, SimpleMetricStats] = {
+            name: SimpleMetricStats(stats)
+            for name, stats in systems[1].get_metric_stats()[0].items()
+        }
 
         sig_info = pairwise_significance_test(
             system1_output_info,
@@ -438,9 +456,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
     for system in systems:
-        system_info = system.get_system_info()
-        system_info_dict = general_to_dict(system_info)
-        system_output_info = SysOutputInfo.from_dict(system_info_dict)
+        system_output_info: SysOutputInfo = system.get_system_info()
 
         for analysis in system_output_info.analyses:
             if (
@@ -462,9 +478,12 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             "user-defined bucket analyses are not " "re-implemented"
         )
 
-        processor = get_processor(TaskType(system_output_info.task_name))
         metric_stats = [
-            [SimpleMetricStats(y) for y in x] for x in system.get_metric_stats()
+            {
+                metric_name: SimpleMetricStats(stats)
+                for metric_name, stats in level.items()
+            }
+            for level in system.get_metric_stats()
         ]
 
         # Get analysis cases
@@ -481,6 +500,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             level_cases = [AnalysisCase.from_dict(narrow(dict, x)) for x in level_cases]
             analysis_cases.append(level_cases)
 
+        processor = get_processor_class(TaskType(system_output_info.task_name))()
         processor_result = processor.perform_analyses(
             system_output_info,
             analysis_cases,
@@ -488,8 +508,8 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             skip_failed_analyses=True,
         )
         single_analysis = SingleAnalysis(
-            system_info=system_info,
-            analysis_results=processor_result,
+            system_info=SystemInfo.from_dict(serializer.serialize(system_output_info)),
+            analysis_results=serializer.serialize(processor_result),
         )
         system_analyses.append(single_analysis)
 

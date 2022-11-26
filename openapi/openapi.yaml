@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.14"
+  version: "0.2.21"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -52,11 +52,36 @@ paths:
                 items:
                   $ref: "#/components/schemas/LanguageCode"
 
+  /metric-descriptions:
+    get:
+      summary: Return all metric descriptions
+      operationId: metricDescriptionsGet
+      security: []
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: string
+
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
+
   /benchmarkconfigs:
     get:
       summary: Returns all benchmark configs matching the specification
       operationId: benchmarkConfigsGet
-      security: []
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       parameters:
         - in: query
           name: parent_id
@@ -78,7 +103,10 @@ paths:
     get:
       summary: Returns benchmark metadata by id
       operationId: benchmarkGetById
-      security: []
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       description: Returns benchmark metadata by id.
       parameters:
         - in: path
@@ -107,6 +135,75 @@ paths:
               schema:
                 $ref: "#/components/schemas/APIError"
 
+    patch:
+      summary: Updates a benchmark by id
+      operationId: benchmarkUpdateById
+      description: Updates a benchmark by id. See requestBody for supported fields.
+      parameters:
+        - in: path
+          name: benchmark_id
+          schema:
+            type: string
+          required: true
+          example: "example_benchmark_id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenchmarkUpdateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
+
+    delete:
+      summary: Deletes a benchmark by id
+      operationId: benchmarkDeleteById
+      parameters:
+        - in: path
+          name: benchmark_id
+          schema:
+            type: string
+          required: true
+          example: "example_benchmark_id"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: string
+                example: "Success"
+
+  /benchmark:
+    post:
+      summary: Uploads a benchmark
+      operationId: benchmarkPost
+      description: Uploads a benchmark
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BenchmarkCreateProps"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BenchmarkConfig"
+        "400":
+          description: INPUT ERROR
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIError"
 
   /datasets/{dataset_id}:
     get:
@@ -189,6 +286,10 @@ paths:
     get:
       summary: Returns system metadata info by id
       operationId: systemsGetById
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+        - {}
       description: |
         Returns a system_metadata by id. id is the DB id so it is mostly used
         internally.
@@ -332,6 +433,15 @@ paths:
             items:
               type: string
             description: list of emails with whom the system is shared
+        - in: query
+          name: system_tags
+          schema:
+            type: array
+            items:
+              type: string
+            description: |
+              User defined tags for the system,
+              useful for searching and grouping systems
 
       responses:
         "200":
@@ -631,26 +741,8 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/FeatureType"
         metric_configs:
-          type: array
-          items:
-            $ref: "#/components/schemas/MetricConfig"
+          type: object
       required: [name, features, metric_configs]
-
-    MetricConfig:
-      type: object
-      properties:
-        name:
-          type: string
-        source_language:
-          type: string
-          nullable: true
-        target_language:
-          type: string
-          nullable: true
-        cls_name:
-          type: string
-      additionalProperties: true
-      required: [name, cls_name]
 
     FeatureType:
       type: object
@@ -689,8 +781,6 @@ components:
         target_language:
           type: string
           example: en
-        reload_stat:
-          type: boolean
         confidence_alpha:
           type: number
         analysis_levels:
@@ -709,12 +799,24 @@ components:
           type: object
           properties:
             overall:
-              type: array
+              type: object
               description: metrics for each analysis level
-              items:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Performance"
+              additionalProperties:
+                description: analysis level
+                type: object
+                additionalProperties:
+                  description: metric name
+                  $ref: "#/components/schemas/MetricResult"
+              example: {
+                "example": {
+                  "rouge2": {
+                    "values": {
+                      "score": {"value": 0.12},
+                      "score_ci": {"low": -0.07, "high": 0.34, "alpha": 0.05}
+                    }
+                  }
+                }
+              }
           required: [overall]
         dataset_name:
           type: string
@@ -734,7 +836,6 @@ components:
           system_name,
           source_language,
           target_language,
-          reload_stat,
           confidence_alpha,
           source_tokenizer,
           target_tokenizer,
@@ -752,6 +853,39 @@ components:
         variety:
           type: string
           example: "intl"
+
+    MetricResult:
+      type: object
+      properties:
+        values:
+          type: object
+          properties:
+            score:
+              $ref: "#/components/schemas/Score"
+            score_ci:
+              $ref: "#/components/schemas/ConfidenceInterval"
+      required: [values]
+
+    # --- MetricValue ---
+    Score:
+      type: object
+      properties:
+        value:
+          type: number
+      required: [value]
+
+    ConfidenceInterval:
+      type: object
+      properties:
+        low:
+          type: number
+        high:
+          type: number
+        alpha:
+          type: number
+      required: [low, high, alpha]
+
+    # --- MetricValue (END) ---
 
     APIError:
       type: object
@@ -872,12 +1006,18 @@ components:
       properties:
         system_name:
           type: string
+        system_tags:
+          type: array
+          items:
+            type: string
+          description: |
+            User defined tags for the system,
+            useful for searching and grouping systems
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
         is_private:
           type: boolean
-          default: true
         shared_users:
           type: array
           items:
@@ -888,6 +1028,7 @@ components:
         [
           is_private,
           system_name,
+          system_tags,
         ]
 
     SystemMetadata:
@@ -911,7 +1052,6 @@ components:
           example: en
         is_private:
           type: boolean
-          default: true
         shared_users:
           type: array
           items:
@@ -927,6 +1067,15 @@ components:
         system_details:
           type: object
           description: a place to store arbitrary system details you want to remember
+        system_tags:
+          type: array
+          default: []
+          items:
+            type: string
+          description: |
+            User defined tags for the system,
+            useful for searching and grouping systems
+
       required:
         [
           task,
@@ -987,6 +1136,13 @@ components:
                 type: object
                 additionalProperties:
                   type: number
+            system_tags:
+              description: |
+                User defined tags for the system,
+                useful for searching and grouping systems
+              type: array
+              items:
+                type: string
             shared_users:
               type: array
               items:
@@ -1023,6 +1179,7 @@ components:
             - task
             - metric_names
             - results
+            - system_tags
         - $ref: "#/components/schemas/Time"
 
     DatasetFeature:
@@ -1142,30 +1299,14 @@ components:
       properties:
         name:
           type: string
+        level:
+          type: string
         cls_name:
           type: string
+        details:
+          type: object
       additionalProperties: true
-
-    BucketPerformance:
-      type: object
-      properties:
-        n_samples:
-          type: number
-        bucket_samples:
-          type: array
-          items:
-            type: number
-        performances:
-          type: array
-          items:
-            $ref: "#/components/schemas/Performance"
-        bucket_name:
-          type: string
-        bucket_interval:
-          type: array
-          items:
-            type: number
-      required: [n_samples, bucket_samples, performances]
+      required: [name, level, cls_name, details]
 
     SingleAnalysis:
       type: object
@@ -1191,21 +1332,6 @@ components:
           items:
             $ref: "#/components/schemas/SignificanceTestInfo"
       required: [system_analyses]
-
-    Performance:
-      type: object
-      properties:
-        metric_name:
-          type: string
-        value:
-          type: number
-        confidence_score_low:
-          type: number
-          nullable: true
-        confidence_score_high:
-          type: number
-          nullable: true
-      required: [metric_name, value]
 
     ComboCount:
       type: object
@@ -1237,8 +1363,10 @@ components:
           type: string
         weight:
           type: number
+          nullable: true
         default:
           type: number
+          nullable: true
       required: [name]
 
     BenchmarkOperationConfig:
@@ -1263,64 +1391,156 @@ components:
       properties:
         dataset_name:
           type: string
-        sub_dataset:
-          type: string
         split:
           type: string
         metrics:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkMetric'
+        sub_dataset:
+          type: string
+          nullable: true
       additionalProperties: true
       required: [dataset_name]
 
-    BenchmarkConfig:
+    BenchmarkCreateProps:
       type: object
       properties:
+        id:
+          type: string
+        is_private:
+          type: boolean
+        shared_users:
+          type: array
+          items:
+            type: string
+          description: space-separated list of emails with which system is shared
+          example: ["hello@gmail.com", "world@gmail.com"]
         name:
+          type: string
+        parent:
+          type: string
+          description: |
+            "a parent benchmark that this benchmark inherits config from."
+            "If this benchmark doesn't inherit any configs, "
+            "the field must be an empty string."
+        description:
           type: string
         views:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkViewConfig'
-        id:
-          type: string
-        description:
-          type: string
+          nullable: true
         type:
           type: string
           description: |
             "could be 'abstract' to indicate this doesn't fully specify a benchmark"
-        parent:
-          type: string
-          description: "a parent benchmark that this benchmark inherits config from"
-        visibility:
-          type: string
-          description: "a visibility level, public/hidden/none"
+          nullable: true
         logo:
           type: string
+          nullable: true
         contact:
           type: string
+          nullable: true
         homepage:
           type: string
+          nullable: true
         paper:
           type: object
           $ref: "#/components/schemas/Paper"
+          nullable: true
         metrics:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkMetric'
+          nullable: true
         datasets:
           type: array
           items:
             $ref: '#/components/schemas/BenchmarkDatasetConfig'
+          nullable: true
         system_query:
           type: object
+          nullable: true
         default_views:
           type: array
           items:
             type: string
-      required: [name, views]
+          nullable: true
+      required: [id, is_private, shared_users, name, parent, description]
+
+    BenchmarkUpdateProps:
+      type: object
+      properties:
+        is_private:
+          type: boolean
+        shared_users:
+          type: array
+          items:
+            type: string
+          description: space-separated list of emails with which system is shared
+          example: ["hello@gmail.com", "world@gmail.com"]
+        name:
+          type: string
+        parent:
+          type: string
+          description: |
+            "a parent benchmark that this benchmark inherits config from."
+            "If this benchmark doesn't inherit any configs, "
+            "the field must be an empty string."
+        description:
+          type: string
+        views:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkViewConfig'
+          nullable: true
+        type:
+          type: string
+          description: |
+            "could be 'abstract' to indicate this doesn't fully specify a benchmark"
+          nullable: true
+        logo:
+          type: string
+          nullable: true
+        contact:
+          type: string
+          nullable: true
+        homepage:
+          type: string
+          nullable: true
+        paper:
+          type: object
+          $ref: "#/components/schemas/Paper"
+          nullable: true
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkMetric'
+          nullable: true
+        datasets:
+          type: array
+          items:
+            $ref: '#/components/schemas/BenchmarkDatasetConfig'
+          nullable: true
+        system_query:
+          type: object
+          nullable: true
+        default_views:
+          type: array
+          items:
+            type: string
+          nullable: true
+
+    BenchmarkConfig:
+      allOf:
+        - $ref: "#/components/schemas/BenchmarkCreateProps"
+        - $ref: "#/components/schemas/Time"
+        - type: object
+          properties:
+            creator:
+              type: string
+          required: [creator]
 
     SignificanceTestInfo:
       type: object

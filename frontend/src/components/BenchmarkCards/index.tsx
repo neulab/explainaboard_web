@@ -14,8 +14,6 @@ export function BenchmarkCards({ items, subtitle }: Props) {
   const history = useHistory();
   const { Title } = Typography;
 
-  const visibleItems = items.filter((config) => config.visibility === "public");
-
   return (
     <div className="page">
       <Helmet>
@@ -27,7 +25,7 @@ export function BenchmarkCards({ items, subtitle }: Props) {
         subTitle={subtitle}
       />
       <Row gutter={[16, 16]} className="benchmarks-grid">
-        {visibleItems.map((config) => (
+        {items.map((config) => (
           <Col key={config.id} span={6}>
             <Card
               hoverable

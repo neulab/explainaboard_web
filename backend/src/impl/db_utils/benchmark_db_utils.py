@@ -8,50 +8,122 @@ from dataclasses import dataclass
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
 from explainaboard.utils.typing_utils import unwrap
+from pandas import Series
+
+from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.constants import ALL_LANG, LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
+from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
+from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models import (
     BenchmarkConfig,
+    BenchmarkCreateProps,
     BenchmarkMetric,
     BenchmarkTableData,
+    BenchmarkUpdateProps,
     BenchmarkViewConfig,
     DatasetMetadata,
 )
-from pandas import Series
 
 
 @dataclass
-class BenchmarkUtils:
+class BenchmarkDBUtils:
 
     _SPECIAL_WEIGHT_MAPS = {"pop_weight": POP_WEIGHT, "ling_weight": LING_WEIGHT}
     _DEFAULT_SETS = {"all_lang": ALL_LANG}
 
     @staticmethod
-    def config_dict_from_file(path_json: str) -> dict:
-        with open(path_json) as fin:
-            benchmark_config = json.load(fin)
-        # If a parent exists, then get the parent and update
-        parent_id = benchmark_config.get("parent")
-        if parent_id:
-            parent_config = BenchmarkUtils.config_dict_from_id(parent_id)
-            parent_config.update(benchmark_config)
-            return parent_config
-        return benchmark_config
+    def _update_with_not_none_values(dest: dict, source: dict) -> None:
+        for k, v in source.items():
+            if v is not None:
+                dest[k] = v
 
     @staticmethod
-    def config_dict_from_str(json_str: str) -> dict:
-        return json.loads(json_str)
+    def _convert_id_from_db(doc: dict) -> None:
+        doc["id"] = doc["_id"]
+        doc.pop("_id")
 
     @staticmethod
-    def config_dict_from_id(benchmark_id: str) -> dict:
-        # TODO(gneubig): get this from the database eventually
-        scriptpath = os.path.dirname(__file__)
+    def _convert_id_to_db(doc: dict) -> None:
+        doc["_id"] = doc["id"]
+        doc.pop("id")
 
-        # Get config
-        return BenchmarkUtils.config_dict_from_file(
-            os.path.join(scriptpath, "./benchmark_configs/" + benchmark_id + ".json")
+    @staticmethod
+    def find_configs(parent: str, page: int = 0, page_size: int = 0):
+        permissions_list = [{"is_private": False}]
+        if get_user().is_authenticated:
+            user = get_user()
+            permissions_list.append({"creator": user.id})
+            permissions_list.append({"shared_users": user.email})
+
+        filt = {"$and": [{"parent": parent}, {"$or": permissions_list}]}
+        cursor, _ = DBUtils.find(
+            DBUtils.BENCHMARK_METADATA, filt=filt, limit=page * page_size
         )
+        configs = []
+        for config_dict in list(cursor):
+            BenchmarkDBUtils._convert_id_from_db(config_dict)
+            parent_id = config_dict.get("parent")
+            if parent_id:
+                parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
+                parent_dict = parent_config.to_dict()
+                BenchmarkDBUtils._update_with_not_none_values(parent_dict, config_dict)
+                config_dict = parent_dict
+
+            configs.append(BenchmarkConfig.from_dict(config_dict))
+        return configs
+
+    @staticmethod
+    def find_config_by_id(benchmark_id: str) -> BenchmarkConfig:
+        config_dict = DBUtils.find_one_by_id(DBUtils.BENCHMARK_METADATA, benchmark_id)
+        if not config_dict:
+            abort_with_error_message(404, f"benchmark id: {benchmark_id} not found")
+        BenchmarkDBUtils._convert_id_from_db(config_dict)
+
+        parent_id = config_dict.get("parent")
+        if parent_id:
+            parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
+            parent_dict = parent_config.to_dict()
+            BenchmarkDBUtils._update_with_not_none_values(parent_dict, config_dict)
+            config_dict = parent_dict
+
+        return BenchmarkConfig.from_dict(config_dict)
+
+    @staticmethod
+    def create_benchmark(props: BenchmarkCreateProps) -> BenchmarkConfig:
+        props_dict = props.to_dict()
+
+        user = get_user()
+        props_dict["creator"] = user.id
+        props_dict["created_at"] = props_dict[
+            "last_modified"
+        ] = datetime.datetime.utcnow()
+
+        config = BenchmarkConfig.from_dict(props_dict)
+        BenchmarkDBUtils._convert_id_to_db(props_dict)
+        DBUtils.insert_one(DBUtils.BENCHMARK_METADATA, props_dict)
+
+        return config
+
+    @staticmethod
+    def update_benchmark_by_id(benchmark_id: str, props: BenchmarkUpdateProps) -> bool:
+        # We discard all fields that have None values in update props.
+        # This is important so that we don't overwrite existing fields in DB.
+        props_dict = {k: v for k, v in props.to_dict().items() if v is not None}
+        return DBUtils.update_one_by_id(
+            DBUtils.BENCHMARK_METADATA, benchmark_id, props_dict
+        )
+
+    @staticmethod
+    def delete_benchmark_by_id(benchmark_id: str):
+        user = get_user()
+        config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
+        if config.creator != user.id:
+            abort_with_error_message(403, "you can only delete your own benchmark")
+        result = DBUtils.delete_one_by_id(DBUtils.BENCHMARK_METADATA, benchmark_id)
+        if not result:
+            raise RuntimeError(f"failed to delete benchmark {benchmark_id}")
 
     @staticmethod
     def load_sys_infos(config: BenchmarkConfig) -> list[dict]:
@@ -134,11 +206,12 @@ class BenchmarkUtils:
         dataset_metadatas: list[DatasetMetadata] = []
         for x in dataset_configs:
             dataset_return = DatasetDBUtils.find_datasets(
-                dataset_name=x["dataset_name"], sub_dataset=x["sub_dataset"]
+                dataset_name=x["dataset_name"], sub_dataset=x.get("sub_dataset", None)
             )
             if dataset_return.total != 1:
                 raise ValueError(
-                    f'Could not find dataset {x["dataset_name"]}, {x["sub_dataset"]}'
+                    f"Could not find dataset "
+                    f'{x["dataset_name"]}, {x.get("sub_dataset", None)}'
                 )
             dataset_metadatas.append(dataset_return.datasets[0])
 
@@ -164,7 +237,7 @@ class BenchmarkUtils:
             "creator": [],
         }
         # Extra dataset information columns needed by datasets or operations
-        exclude_keys = ["metrics"] + list(BenchmarkUtils._SPECIAL_WEIGHT_MAPS.keys())
+        exclude_keys = ["metrics"] + list(BenchmarkDBUtils._SPECIAL_WEIGHT_MAPS.keys())
         for dataset_config in dataset_configs:
             for dataset_key in dataset_config.keys():
                 if not (dataset_key in df_input or dataset_key in exclude_keys):
@@ -229,6 +302,8 @@ class BenchmarkUtils:
                     for df_key, df_arr in df_input.items():
                         if df_key in column_dict:
                             info = column_dict[df_key]
+                        elif df_key == "sub_dataset":
+                            info = None
                         elif df_key == "dataset_split":
                             info = "test"
                         elif df_key == "source_language":
@@ -263,7 +338,7 @@ class BenchmarkUtils:
             # weight map info, including special ones indexed by a string
             weight_map: dict[str, float] | str | None = operation.get("weight_map")
             if isinstance(weight_map, str):
-                weight_map = BenchmarkUtils._SPECIAL_WEIGHT_MAPS[weight_map]
+                weight_map = BenchmarkDBUtils._SPECIAL_WEIGHT_MAPS[weight_map]
             # Perform operations
             op = operation["op"]
             if op in {"mean", "sum", "max", "min"}:
@@ -290,7 +365,7 @@ class BenchmarkUtils:
             elif op in {"add_default"}:
                 languages = [
                     lang
-                    for lang in BenchmarkUtils._DEFAULT_SETS[operation["default_set"]]
+                    for lang in BenchmarkDBUtils._DEFAULT_SETS[operation["default_set"]]
                     if lang not in output_df[operation["column"]].values
                 ]
                 temp_df = pd.DataFrame(
@@ -335,7 +410,7 @@ class BenchmarkUtils:
             view_dfs.append(
                 (
                     view_spec.name,
-                    BenchmarkUtils.aggregate_view(orig_df, view_spec, by_creator),
+                    BenchmarkDBUtils.aggregate_view(orig_df, view_spec, by_creator),
                 )
             )
         view_dfs.append(("Original", orig_df))
@@ -360,7 +435,7 @@ class BenchmarkUtils:
         elem_names = [x for x in input_df.columns if x not in {"score", col_name}]
         system_idx = sorted(list(set(input_df[col_name])))
         row_col_names = [
-            BenchmarkUtils._col_name(elem_names, x) for _, x in input_df.iterrows()
+            BenchmarkDBUtils._col_name(elem_names, x) for _, x in input_df.iterrows()
         ]
         column_idx = sorted(list(set(row_col_names)))
         # Terminate on empty data
@@ -392,9 +467,7 @@ class BenchmarkUtils:
 
     @staticmethod
     def generate_plots(benchmark_id):
-        config = BenchmarkConfig.from_dict(
-            BenchmarkUtils.config_dict_from_id(benchmark_id)
-        )
+        config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
         if config.type == "abstract":
             return {}
         plot_path = os.path.join(get_cache_dir(), benchmark_id + "_plot.json")
@@ -402,18 +475,18 @@ class BenchmarkUtils:
             benchmark_id + "_plot.json", datetime.timedelta(seconds=1)
         )
         if not plot_file:
-            sys_infos = BenchmarkUtils.load_sys_infos(config)
+            sys_infos = BenchmarkDBUtils.load_sys_infos(config)
             json_dict = {k.name: [] for k in config.views}
             json_dict["Original"] = []
             json_dict["times"] = []
             unique_dates = sorted(list({x["created_at"].date() for x in sys_infos}))
             for date in unique_dates:
                 systems = [sys for sys in sys_infos if sys["created_at"].date() <= date]
-                orig_df = BenchmarkUtils.generate_dataframe_from_sys_infos(
+                orig_df = BenchmarkDBUtils.generate_dataframe_from_sys_infos(
                     config, systems
                 )
 
-                system_dfs = BenchmarkUtils.generate_view_dataframes(
+                system_dfs = BenchmarkDBUtils.generate_view_dataframes(
                     config, orig_df, by_creator=False
                 )
                 system_dict = {k: v for k, v in system_dfs}

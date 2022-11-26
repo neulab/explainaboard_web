@@ -1,11 +1,10 @@
-import os
-import pathlib
 import unittest
 
 import numpy as np
 import pandas as pd
-from explainaboard_web.impl.benchmark_utils import BenchmarkUtils
+
 from explainaboard_web.impl.constants import POP_WEIGHT
+from explainaboard_web.impl.db_utils.benchmark_db_utils import BenchmarkDBUtils
 
 
 @unittest.skip(
@@ -13,15 +12,6 @@ from explainaboard_web.impl.constants import POP_WEIGHT
     "https://github.com/neulab/explainaboard_web/issues/402"
 )
 class TestBenchmark(unittest.TestCase):
-    @staticmethod
-    def _config_path():
-        return os.path.join(
-            os.path.dirname(pathlib.Path(__file__)),
-            os.path.pardir,
-            "impl",
-            "benchmark_configs",
-        )
-
     def assertDeepAlmostEqual(self, expected, actual, *args, **kwargs):  # noqa: N802
         """
         Assert that two complex structures have almost equal contents.
@@ -64,9 +54,7 @@ class TestBenchmark(unittest.TestCase):
             raise exc
 
     def test_masakhaner_aggregate(self):
-
-        json_file = os.path.join(TestBenchmark._config_path(), "masakhaner.json")
-        config = BenchmarkUtils.config_from_json_file(json_file)
+        config = BenchmarkDBUtils.find_config_by_id("masakhaner")
 
         languages = [
             "bam",
@@ -113,7 +101,7 @@ class TestBenchmark(unittest.TestCase):
                 "score": all_f1s,
             }
         )
-        view_dfs = BenchmarkUtils.generate_view_dataframes(config, orig_df)
+        view_dfs = BenchmarkDBUtils.generate_view_dataframes(config, orig_df)
         mean_df = pd.DataFrame(
             {
                 "system_name": ["sys1", "sys2"],
@@ -142,6 +130,6 @@ class TestBenchmark(unittest.TestCase):
                 "score": [0.6, 0.7, 0.5, 0.9, 0.8, 0.0],
             }
         )
-        table = BenchmarkUtils.dataframe_to_table("my_view", orig_df)
+        table = BenchmarkDBUtils.dataframe_to_table("my_view", orig_df)
         exp_scores = [[0.7, 0.8], [0.6, 0.9], [0.5, 0.0]]
         self.assertDeepAlmostEqual(exp_scores, table.scores)

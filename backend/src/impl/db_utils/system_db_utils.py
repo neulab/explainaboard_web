@@ -8,8 +8,9 @@ from datetime import datetime
 from typing import Any, NamedTuple
 
 from bson import ObjectId
-from explainaboard import DatalabLoaderOption, FileType, Source
-from explainaboard.loaders.loader_registry import get_loader_class
+from explainaboard import DatalabLoaderOption, FileType, Source, get_loader_class
+from pymongo.client_session import ClientSession
+
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
@@ -24,7 +25,6 @@ from explainaboard_web.models import (
     SystemOutput,
     SystemOutputProps,
 )
-from pymongo.client_session import ClientSession
 
 
 class SystemDBUtils:
@@ -126,6 +126,7 @@ class SystemDBUtils:
         creator: str | None = None,
         shared_users: list[str] | None = None,
         dataset_list: list[tuple[str, str, str]] | None = None,
+        system_tags: list[str] | None = None,
     ) -> FindSystemsReturn:
         """find multiple systems that matches the filters"""
 
@@ -151,6 +152,8 @@ class SystemDBUtils:
             search_conditions.append({"creator": creator})
         if shared_users:
             search_conditions.append({"shared_users": shared_users})
+        if system_tags:
+            search_conditions.append({"system_tags": {"$all": system_tags}})
 
         if dataset_list:
             dataset_dicts = [
@@ -306,6 +309,7 @@ class SystemDBUtils:
             "is_private": metadata.is_private,
             "shared_users": metadata.shared_users,
             "system_details": metadata.system_details,
+            "system_tags": metadata.system_tags,
         }
 
         return DBUtils.update_one_by_id(

@@ -19,6 +19,7 @@ interface Props {
     featureName: string,
     bucketInfo: BucketIntervals
   ) => void;
+  addChartFile: (imgName: string, base64File: string) => void;
 }
 
 export function AnalysisReport(props: Props) {
@@ -30,13 +31,13 @@ export function AnalysisReport(props: Props) {
     significanceTestInfo,
     updateFeatureNameToBucketInfo,
     featureNameToBucketInfo,
+    addChartFile,
   } = props;
   const metricNames = useMemo(
     () => Object.keys(metricToSystemAnalysesParsed),
     [metricToSystemAnalysesParsed]
   );
   const [activeMetric, setActiveMetric] = useState<string>(metricNames[0]);
-
   useEffect(() => {
     setActiveMetric(metricNames[0]);
   }, [metricNames]);
@@ -52,6 +53,7 @@ export function AnalysisReport(props: Props) {
         systemAnalyses={systemAnalyses}
         metricNames={Object.keys(metricToSystemAnalysesParsed)}
         onBarClick={onActiveMetricChange}
+        addChartFile={addChartFile}
       />
 
       {significanceTestInfo && (
@@ -67,6 +69,7 @@ export function AnalysisReport(props: Props) {
         activeMetric={activeMetric}
         onActiveMetricChange={onActiveMetricChange}
         metricNames={metricNames}
+        addChartFile={addChartFile}
       />
     </div>
   );

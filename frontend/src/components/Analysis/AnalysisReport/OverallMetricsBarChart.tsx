@@ -2,13 +2,15 @@ import React from "react";
 import { BarChart } from "../..";
 import { SystemAnalysesReturn } from "../../../clients/openapi";
 import { SystemModel } from "../../../models";
-import { getOverallMap, unwrapConfidence } from "../utils";
+import { unwrapValue, unwrapConfidence, getOverallMap } from "../utils";
 import { AnalysisPanel } from "./AnalysisPanel";
+
 interface Props {
   systems: SystemModel[];
   systemAnalyses: SystemAnalysesReturn["system_analyses"];
   metricNames: string[];
   onBarClick: (metricName: string) => void;
+  addChartFile: (imgName: string, base64File: string) => void;
 }
 
 /** A bar chart that shows overall metrics. Each bar represents a different
@@ -18,6 +20,7 @@ export function OverallMetricsBarChart({
   systemAnalyses,
   metricNames,
   onBarClick,
+  addChartFile,
 }: Props) {
   function getSystemNames(systems: SystemModel[]) {
     const systemNames = systems.map((sys) => sys.system_name);
@@ -41,7 +44,7 @@ export function OverallMetricsBarChart({
     for (const metricName of metricNames) {
       if (metricName in overallMap) {
         const metricResults = overallMap[metricName];
-        metricPerformance.push(metricResults.value);
+        metricPerformance.push(unwrapValue(metricResults));
         metricConfidence.push(unwrapConfidence(metricResults));
       } else {
         metricPerformance.push(0);
@@ -68,6 +71,7 @@ export function OverallMetricsBarChart({
         confidenceScoresList={resultsConfidenceScores}
         numbersOfSamplesList={resultsNumbersOfSamples}
         onBarClick={(barIndex: number) => onBarClick(metricNames[barIndex])}
+        addChartFile={addChartFile}
       />
     </AnalysisPanel>
   );

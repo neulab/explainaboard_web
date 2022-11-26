@@ -1,12 +1,13 @@
 import os
 
+from flask import Flask, request
+
 from explainaboard_web.impl.config import (
     LocalDevelopmentConfig,
     ProductionConfig,
     StagingConfig,
 )
 from explainaboard_web.impl.utils import abort_with_error_message, get_api_version
-from flask import Flask, request
 
 
 def init(app: Flask) -> Flask:
