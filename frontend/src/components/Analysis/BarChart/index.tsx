@@ -341,9 +341,6 @@ export function BarChart(props: Props) {
         systemNames={seriesNames}
         xValues={xAxisData}
         yValues={trimmedSeriesData}
-        xLabel={xAxisName}
-        yLabel={yAxisName}
-        yAxisMax={Math.ceil(globalMaxValue)}
         confidenceScoresList={confidenceScoresList}
         numbersOfSamplesList={numbersOfSamplesList}
       />

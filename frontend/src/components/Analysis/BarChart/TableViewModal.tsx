@@ -22,15 +22,11 @@ export function TableViewModal({
   visible,
   onClose,
   systemNames,
-  xLabel,
-  yLabel,
-  yAxisMax,
   xValues,
   yValues,
   confidenceScoresList,
   numbersOfSamplesList,
 }: Props) {
-  yAxisMax = yAxisMax === undefined ? 1 : yAxisMax;
   const formattedxAxisData = xValues.map((x) => x.replace("\n|\n", "-"));
   const trimmedConfidenceScores = confidenceScoresList.map(
     (confidenceScores) => {
