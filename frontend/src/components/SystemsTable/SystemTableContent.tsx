@@ -58,12 +58,26 @@ export function SystemTableContent({
   taskCategories,
 }: Props) {
   const { userInfo } = useUser();
+  if (
+    filterValue.sortField &&
+    filterValue.sortField !== "created_at" &&
+    !metricNames.includes(filterValue.sortField)
+  ) {
+    metricNames.push(filterValue.sortField);
+  }
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
     dataIndex: ["results", ...metric.split(".")],
     title: metric,
     width: 135,
     ellipsis: true,
     align: "center",
+    fixed: filterValue.sortField === metric ? "left" : false,
+    sorter: filterValue.sortField === metric,
+    showSorterTooltip: false,
+    sortOrder:
+      filterValue.sortField === metric && filterValue.sortDir === "asc"
+        ? "ascend"
+        : "descend",
   }));
 
   function showSystemAnalysis(systemID: string) {
@@ -211,6 +225,7 @@ export function SystemTableContent({
       ],
       filteredValue: filterValue.split ? [filterValue.split] : null,
     },
+    ...metricColumns,
     {
       dataIndex: "source_language",
       width: 100,
@@ -223,7 +238,6 @@ export function SystemTableContent({
       title: "Output Lang",
       align: "center",
     },
-    ...metricColumns,
     {
       dataIndex: "preferred_username",
       title: "Creator",
@@ -236,6 +250,13 @@ export function SystemTableContent({
       render: (_, record) => record.created_at.format("MM/DD/YYYY HH:mm"),
       width: 130,
       align: "center",
+      fixed: filterValue.sortField === "created_at" ? "right" : false,
+      sorter: filterValue.sortField === "created_at",
+      showSorterTooltip: false,
+      sortOrder:
+        filterValue.sortField === "created_at" && filterValue.sortDir === "asc"
+          ? "ascend"
+          : "descend",
     },
     {
       dataIndex: "system_tags",
@@ -245,50 +266,64 @@ export function SystemTableContent({
       width: 130,
       align: "center",
     },
-    {
-      dataIndex: "action",
-      title: "",
-      fixed: "right",
-      width: 90,
-      render: (_, record) => {
-        const notCreator = record.creator !== userInfo?.id;
-        return (
-          <Space size="small" direction="vertical">
-            <Space size="small">
-              <Button
-                size="small"
-                onClick={() => showSystemAnalysis(record.system_id)}
-              >
-                Analysis
-              </Button>
-            </Space>
-            <Space size="small">
-              <Button
-                size="small"
-                disabled={notCreator}
-                icon={<EditOutlined />}
-                onClick={() => {
-                  showEditDrawer(record.system_id);
-                }}
-              />
-              <Popconfirm
-                disabled={notCreator}
-                title="Are you sure?"
-                onConfirm={() => deleteSystem(record.system_id)}
-              >
-                <Button
-                  danger
-                  disabled={notCreator}
-                  size="small"
-                  icon={<DeleteOutlined />}
-                />
-              </Popconfirm>
-            </Space>
-          </Space>
-        );
-      },
-    },
   ];
+  columns.sort(function (a, b) {
+    if (
+      (a.fixed === "left" && b.fixed !== "left") ||
+      (a.fixed !== "right" && b.fixed === "right")
+    ) {
+      return -1;
+    } else if (
+      (b.fixed === "left" && a.fixed !== "left") ||
+      (b.fixed !== "right" && a.fixed === "right")
+    ) {
+      return 1;
+    }
+    return 0;
+  });
+  columns.push({
+    dataIndex: "action",
+    title: "",
+    fixed: "right",
+    width: 90,
+    render: (_, record) => {
+      const notCreator = record.creator !== userInfo?.id;
+      return (
+        <Space size="small" direction="vertical">
+          <Space size="small">
+            <Button
+              size="small"
+              onClick={() => showSystemAnalysis(record.system_id)}
+            >
+              Analysis
+            </Button>
+          </Space>
+          <Space size="small">
+            <Button
+              size="small"
+              disabled={notCreator}
+              icon={<EditOutlined />}
+              onClick={() => {
+                showEditDrawer(record.system_id);
+              }}
+            />
+            <Popconfirm
+              disabled={notCreator}
+              title="Are you sure?"
+              onConfirm={() => deleteSystem(record.system_id)}
+            >
+              <Button
+                danger
+                disabled={notCreator}
+                size="small"
+                icon={<DeleteOutlined />}
+              />
+            </Popconfirm>
+          </Space>
+        </Space>
+      );
+    },
+  });
 
   // rowSelection object indicates the need for row selection
   const rowSelection = {
