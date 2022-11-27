@@ -251,29 +251,22 @@ export function SystemTableContent({
     filters: Record<string, FilterValue | null>,
     _sorter: SorterResult<SystemModel> | SorterResult<SystemModel>[]
   ) => {
-    console.log(filters);
-    for (const k in filters) {
-      if (
-        k === "dataset.split" &&
-        ((filters[k] === null && filterValue.split !== undefined) || // Reset filter
-          (filters[k] !== null &&
-            (filters[k] as unknown as string) !== filterValue.split))
-      ) {
-        onFilterChange({
-          split:
-            filters[k] === null ? undefined : (filters[k] as unknown as string),
-        });
-      } else if (
-        k === "task" &&
-        ((filters[k] === null && filterValue.split !== undefined) || // Reset filter
-          (filters[k] !== null &&
-            (filters[k] as unknown as string) !== filterValue.split))
-      ) {
-        onFilterChange({
-          task:
-            filters[k] === null ? undefined : (filters[k] as unknown as string),
-        });
-      }
+    let filterChanged = false;
+    const filterUpdate: Partial<SystemFilter> = {};
+    const dataset_split = filters["dataset.split"]
+      ? (filters["dataset.split"][0] as string)
+      : undefined;
+    if (dataset_split !== filterValue.split) {
+      filterChanged = true;
+      filterUpdate.split = dataset_split;
+    }
+    const task = filters["task"] ? (filters["task"][0] as string) : undefined;
+    if (task !== filterValue.task) {
+      filterChanged = true;
+      filterUpdate.task = task;
+    }
+    if (filterChanged) {
+      onFilterChange(filterUpdate);
     }
   };
 
