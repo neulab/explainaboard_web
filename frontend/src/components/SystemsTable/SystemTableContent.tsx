@@ -106,7 +106,6 @@ export function SystemTableContent({
   }, [datasetSearchText, filterValue.task]);
 
   const onDatasetSearch = (value: string) => {
-    console.log("search:", value);
     setDatasetSearchText(value);
   };
 
