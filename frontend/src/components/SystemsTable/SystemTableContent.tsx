@@ -16,8 +16,11 @@ import { SystemModel } from "../../models";
 import { DeleteOutlined, EditOutlined } from "@ant-design/icons";
 import { PrivateIcon, useUser } from "..";
 import { generateLeaderboardURL } from "../../utils";
-import { DatasetMetadata } from "../../clients/openapi";
+import type { FilterValue, SorterResult } from "antd/lib/table/interface";
+import type { TablePaginationConfig } from "antd/lib/table";
 import { FilterUpdate, SystemFilter } from "./SystemFilter";
+import { TaskCategory } from "../../clients/openapi";
+import { DatasetMetadata } from "../../clients/openapi";
 const { Text } = Typography;
 
 interface Props {
@@ -35,6 +38,7 @@ interface Props {
   showEditDrawer: (systemIDToEdit: string) => void;
   onFilterChange: (value: FilterUpdate) => void;
   filterValue: SystemFilter;
+  taskCategories: TaskCategory[];
 }
 
 export function SystemTableContent({
@@ -51,6 +55,7 @@ export function SystemTableContent({
   showEditDrawer,
   onFilterChange,
   filterValue,
+  taskCategories,
 }: Props) {
   const { userInfo } = useUser();
   const metricColumns: ColumnsType<SystemModel> = metricNames.map((metric) => ({
@@ -77,6 +82,11 @@ export function SystemTableContent({
     }
   }
 
+  const taskFilterList = taskCategories.flatMap((category) => {
+    return category.tasks.map((task) => {
+      return { text: task.name, value: task.name };
+    });
+  });
   const [datasets, setDatasets] = useState<{ label: string; value: string }[]>(
     []
   );
@@ -143,6 +153,9 @@ export function SystemTableContent({
       fixed: "left",
       title: "Task",
       render: (value) => <Tag style={{ whiteSpace: "normal" }}>{value}</Tag>,
+      filters: taskFilterList,
+      filterMultiple: false,
+      filteredValue: filterValue.task ? [filterValue.task] : null,
     },
     {
       dataIndex: "dataset_name",
@@ -190,6 +203,13 @@ export function SystemTableContent({
       title: "Dataset Split",
       fixed: "left",
       align: "center",
+      filterMultiple: false,
+      filters: [
+        { text: "train", value: "train" },
+        { text: "validation", value: "validation" },
+        { text: "test", value: "test" },
+      ],
+      filteredValue: filterValue.split ? [filterValue.split] : null,
     },
     {
       dataIndex: "source_language",
@@ -278,6 +298,30 @@ export function SystemTableContent({
     },
   };
 
+  const handleTableChange = (
+    _pagination: TablePaginationConfig,
+    filters: Record<string, FilterValue | null>,
+    _sorter: SorterResult<SystemModel> | SorterResult<SystemModel>[]
+  ) => {
+    let filterChanged = false;
+    const filterUpdate: Partial<SystemFilter> = {};
+    const dataset_split = filters["dataset.split"]
+      ? (filters["dataset.split"][0] as string)
+      : undefined;
+    if (dataset_split !== filterValue.split) {
+      filterChanged = true;
+      filterUpdate.split = dataset_split;
+    }
+    const task = filters["task"] ? (filters["task"][0] as string) : undefined;
+    if (task !== filterValue.task) {
+      filterChanged = true;
+      filterUpdate.task = task;
+    }
+    if (filterChanged) {
+      onFilterChange(filterUpdate);
+    }
+  };
+
   return (
     <div>
       <Table
@@ -295,6 +339,7 @@ export function SystemTableContent({
           onChange: (newPage, newPageSize) =>
             onPageChange(newPage - 1, newPageSize),
         }}
+        onChange={handleTableChange}
         sticky={false}
         loading={loading}
         scroll={{ x: 100 }}
