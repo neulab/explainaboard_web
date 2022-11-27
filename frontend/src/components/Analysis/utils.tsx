@@ -3,7 +3,7 @@ import {
   AnalysisCase,
   SingleAnalysis,
   AnalysisResult,
-  Performance,
+  MetricResult,
 } from "../../clients/openapi";
 
 export function initParsedResult(
@@ -76,9 +76,9 @@ export function parseComboCountFeatures(
 
   parsedResult.comboCounts = comboCounts.map((countArr) => {
     return {
-      bucket: countArr[0],
-      count: countArr[1],
-      samples: countArr[2],
+      bucket: countArr.features,
+      count: countArr.sample_count,
+      samples: countArr.sample_ids,
     };
   });
   parsedResult.comboFeatures = features;
@@ -128,10 +128,10 @@ export function parseBucketAnalysisFeatures(
     const bucketName =
       bucketPerformance.bucket_name ||
       formatBucketName(bucketPerformance.bucket_interval);
-
-    for (const performance of bucketPerformance["performances"]) {
+    for (const [metricName, performance] of Object.entries(
+      bucketPerformance.results
+    )) {
       const nSamples = bucketPerformance.n_samples;
-      const metricName = performance.metric_name;
       if (!(metricName in parsedResult)) {
         parsedResult[metricName] = initParsedResult(
           metricName,
@@ -141,7 +141,7 @@ export function parseBucketAnalysisFeatures(
         );
       }
       const result = parsedResult[metricName];
-      result.performances.push(performance);
+      result.performances.push(performance as MetricResult);
       result.cases.push(bucketPerformance.bucket_samples);
       result.bucketNames.push(bucketName);
       result.numbersOfSamples.push(nSamples);
@@ -180,29 +180,25 @@ export function parseFineGrainedResults(singleAnalyses: SingleAnalysis[]): {
 
   // Loop through each system analysis and parse
   for (const { system_info, analysis_results } of singleAnalyses) {
-    for (
-      let analysisIdx = 0;
-      analysisIdx < analysis_results.length;
-      analysisIdx++
-    ) {
-      const myResult = analysis_results[analysisIdx];
-      const analysisFeature =
-        myResult.cls_name === "BucketAnalysisResult"
-          ? myResult.name
-          : myResult.features.sort().join();
+    for (const myResult of analysis_results) {
       // Find the analysis setting for the system analysis
       // Analysis results may not be in the same order or size as analysis settings
       const myAnalysis = system_info.analyses.find((analysis) => {
-        if (myResult.cls_name === "BucketAnalysisResult") {
+        if (myResult.details.cls_name === "BucketAnalysisDetails") {
           return (
             analysis.cls_name === "BucketAnalysis" &&
-            analysis.feature === analysisFeature
+            analysis.feature === myResult.name &&
+            analysis.level === myResult.level
           );
-        } else {
+        } else if (myResult.details.cls_name === "ComboCountAnalysisDetails") {
           return (
             analysis.cls_name === "ComboCountAnalysis" &&
-            analysis.features.sort().join() === analysisFeature
+            analysis.level === myResult.level &&
+            analysis.features === myResult.features
           );
+        } else {
+          console.error(`${myResult.details.cls_name} not supported`);
+          return false;
         }
       });
 
@@ -210,9 +206,9 @@ export function parseFineGrainedResults(singleAnalyses: SingleAnalysis[]): {
       const analysisDescription = myAnalysis?.description || analysisName;
       const bucketType = myAnalysis ? myAnalysis["method"] : "";
 
-      if (myResult.cls_name === "BucketAnalysisResult") {
+      if (myResult.details.cls_name === "BucketAnalysisDetails") {
         const metricToParsed = parseBucketAnalysisFeatures(
-          myResult["bucket_performances"],
+          myResult.details.bucket_performances,
           bucketType,
           myResult.level,
           analysisName,
@@ -228,15 +224,17 @@ export function parseFineGrainedResults(singleAnalyses: SingleAnalysis[]): {
           }
           parsedResults[metric][analysisName].push(singleResult);
         }
-      } else if (myResult.cls_name === "ComboCountAnalysisResult") {
+      } else if (myResult.details.cls_name === "ComboCountAnalysisDetails") {
         const parsedComboAnalysis = parseComboCountFeatures(
-          myResult["combo_counts"],
-          myResult.features,
+          myResult.details.combo_occurrences,
+          myResult.details.features,
           myResult.level,
           analysisName,
           analysisDescription
         );
         parsedComboAnalyses.push(parsedComboAnalysis);
+      } else {
+        console.error(`${myResult.details.cls_name} not supported`);
       }
     }
   }
@@ -290,24 +288,30 @@ export function valuesToIntervals(values: number[]): number[][] {
     .map((value, index) => [value, values[index + 1]]);
 }
 
-export function getOverallMap(overallResults: Performance[][]): {
-  [name: string]: Performance;
+export function getOverallMap(overallResults: {
+  [level: string]: { [metric_name: string]: MetricResult };
+}): {
+  [name: string]: MetricResult;
 } {
-  const overallMap: { [name: string]: Performance } = {};
-  for (const overallLevel of overallResults) {
-    for (const overallResult of overallLevel) {
-      overallMap[overallResult.metric_name] = overallResult;
+  const overallMap: { [name: string]: MetricResult } = {};
+  for (const overallLevel of Object.values(overallResults)) {
+    for (const [metric_name, overallResult] of Object.entries(overallLevel)) {
+      overallMap[metric_name] = overallResult;
     }
   }
   return overallMap;
 }
 
-export function unwrapConfidence(perf: Performance): [number, number] {
-  if (
-    perf.confidence_score_low !== undefined &&
-    perf.confidence_score_high !== undefined
-  ) {
-    return [perf.confidence_score_low, perf.confidence_score_high];
+export function unwrapValue(perf: MetricResult): number {
+  if (perf.values.score) {
+    return perf.values.score.value;
+  }
+  return -1;
+}
+
+export function unwrapConfidence(perf: MetricResult): [number, number] {
+  if (perf.values.score_ci) {
+    return [perf.values.score_ci.low, perf.values.score_ci.high];
   }
   return [-1, -1];
 }

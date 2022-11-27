@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   message,
   Popconfirm,
   Space,
+  Select,
   Table,
   Typography,
   Tag,
@@ -19,6 +20,7 @@ import type { FilterValue, SorterResult } from "antd/lib/table/interface";
 import type { TablePaginationConfig } from "antd/lib/table";
 import { FilterUpdate, SystemFilter } from "./SystemFilter";
 import { TaskCategory } from "../../clients/openapi";
+import { DatasetMetadata } from "../../clients/openapi";
 const { Text } = Typography;
 
 interface Props {
@@ -85,6 +87,41 @@ export function SystemTableContent({
       return { text: task.name, value: task.name };
     });
   });
+  const [datasets, setDatasets] = useState<{ label: string; value: string }[]>(
+    []
+  );
+  const [datasetSearchText, setDatasetSearchText] = useState("");
+
+  useEffect(() => {
+    async function fetchDatasets() {
+      const { datasets: newDatasets } = await backendClient.datasetsGet(
+        undefined,
+        datasetSearchText,
+        undefined,
+        0,
+        30
+      );
+      const distinctNames = Array.from(
+        new Set(
+          newDatasets.map((dataset: DatasetMetadata) => dataset.dataset_name)
+        )
+      );
+      setDatasets(
+        distinctNames.map((name: string) => {
+          return { label: name, value: name };
+        })
+      );
+    }
+    fetchDatasets();
+  }, [datasetSearchText, filterValue.task]);
+
+  const onDatasetSearch = (value: string) => {
+    setDatasetSearchText(value);
+  };
+
+  const onDatasetChange = (value: string) => {
+    onFilterChange({ dataset: value });
+  };
 
   const columns: ColumnsType<SystemModel> = [
     {
@@ -144,6 +181,21 @@ export function SystemTableContent({
         ) : (
           "unspecified"
         ),
+      filterDropdown: () => (
+        <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
+          <Select
+            showSearch
+            allowClear
+            placeholder="Search dataset"
+            onSearch={onDatasetSearch}
+            onChange={onDatasetChange}
+            value={filterValue.dataset}
+            style={{ minWidth: "120px" }}
+            options={datasets}
+          />
+        </div>
+      ),
+      filteredValue: filterValue.dataset ? [filterValue.dataset] : null,
     },
     {
       dataIndex: ["dataset", "split"],

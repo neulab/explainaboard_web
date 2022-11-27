@@ -8,15 +8,23 @@ import os
 from functools import lru_cache
 
 import pandas as pd
-from explainaboard import DatalabLoaderOption, TaskType, get_processor
+from explainaboard import (
+    DatalabLoaderOption,
+    TaskType,
+    get_loader_class,
+    get_processor_class,
+)
 from explainaboard.analysis.analyses import BucketAnalysis
 from explainaboard.analysis.case import AnalysisCase
 from explainaboard.info import SysOutputInfo
-from explainaboard.loaders import get_loader_class
 from explainaboard.metrics.metric import SimpleMetricStats
-from explainaboard.serialization.legacy import general_to_dict
+from explainaboard.serialization.serializers import PrimitiveSerializer
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file, sanitize_path
 from explainaboard.utils.typing_utils import narrow
+from flask import current_app
+from pymongo import ASCENDING, DESCENDING
+from pymongo.client_session import ClientSession
+
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
@@ -56,9 +64,6 @@ from explainaboard_web.models import (
     TaskCategory,
 )
 from explainaboard_web.models import User as modelUser
-from flask import current_app
-from pymongo import ASCENDING, DESCENDING
-from pymongo.client_session import ClientSession
 
 
 def _is_creator(obj: System | BenchmarkConfig, user: authUser) -> bool:
@@ -125,9 +130,9 @@ def tasks_get() -> list[TaskCategory]:
         for _task in _category.tasks:
             loader_class = get_loader_class(_task.name)
             supported_formats = loader_class.supported_file_types()
-            supported_metrics = [
-                metric.name for metric in get_processor(_task.name).full_metric_list()
-            ]
+            supported_metrics = list(
+                get_processor_class(TaskType(_task.name)).full_metric_list().keys()
+            )
             tasks.append(
                 Task(
                     _task.name, _task.description, supported_metrics, supported_formats
@@ -428,21 +433,20 @@ def systems_analyses_post(body: SystemsAnalysesBody):
 
     # performance significance test if there are two systems
     sig_info = []
+    serializer = PrimitiveSerializer()
     if len(systems) == 2:
-        system1_info: SystemInfo = systems[0].get_system_info()
-        system1_info_dict = general_to_dict(system1_info)
-        system1_output_info = SysOutputInfo.from_dict(system1_info_dict)
+        system1_output_info: SysOutputInfo = systems[0].get_system_info()
 
-        system1_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[0].get_metric_stats()[0]
-        ]
+        system1_metric_stats: dict[str, SimpleMetricStats] = {
+            name: SimpleMetricStats(stats)
+            for name, stats in systems[0].get_metric_stats()[0].items()
+        }
 
-        system2_info: SystemInfo = systems[1].get_system_info()
-        system2_info_dict = general_to_dict(system2_info)
-        system2_output_info = SysOutputInfo.from_dict(system2_info_dict)
-        system2_metric_stats: list[SimpleMetricStats] = [
-            SimpleMetricStats(stat) for stat in systems[1].get_metric_stats()[0]
-        ]
+        system2_output_info: SysOutputInfo = systems[1].get_system_info()
+        system2_metric_stats: dict[str, SimpleMetricStats] = {
+            name: SimpleMetricStats(stats)
+            for name, stats in systems[1].get_metric_stats()[0].items()
+        }
 
         sig_info = pairwise_significance_test(
             system1_output_info,
@@ -452,9 +456,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
         )
 
     for system in systems:
-        system_info = system.get_system_info()
-        system_info_dict = general_to_dict(system_info)
-        system_output_info = SysOutputInfo.from_dict(system_info_dict)
+        system_output_info: SysOutputInfo = system.get_system_info()
 
         for analysis in system_output_info.analyses:
             if (
@@ -476,9 +478,12 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             "user-defined bucket analyses are not " "re-implemented"
         )
 
-        processor = get_processor(TaskType(system_output_info.task_name))
         metric_stats = [
-            [SimpleMetricStats(y) for y in x] for x in system.get_metric_stats()
+            {
+                metric_name: SimpleMetricStats(stats)
+                for metric_name, stats in level.items()
+            }
+            for level in system.get_metric_stats()
         ]
 
         # Get analysis cases
@@ -495,6 +500,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             level_cases = [AnalysisCase.from_dict(narrow(dict, x)) for x in level_cases]
             analysis_cases.append(level_cases)
 
+        processor = get_processor_class(TaskType(system_output_info.task_name))()
         processor_result = processor.perform_analyses(
             system_output_info,
             analysis_cases,
@@ -502,8 +508,8 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             skip_failed_analyses=True,
         )
         single_analysis = SingleAnalysis(
-            system_info=system_info,
-            analysis_results=processor_result,
+            system_info=SystemInfo.from_dict(serializer.serialize(system_output_info)),
+            analysis_results=serializer.serialize(processor_result),
         )
         system_analyses.append(single_analysis)
 

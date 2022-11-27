@@ -147,7 +147,7 @@ export function ComboAnalysisChart(props: Props) {
       splitArea: {
         show: true,
       },
-      name: analysis.comboFeatures[1],
+      name: analysis.comboFeatures[0],
       nameLocation: "middle",
       nameTextStyle: {
         padding: [1, 0, 0, 0],
@@ -161,7 +161,7 @@ export function ComboAnalysisChart(props: Props) {
       splitArea: {
         show: true,
       },
-      name: analysis.comboFeatures[0],
+      name: analysis.comboFeatures[1],
       nameTextStyle: {
         fontWeight: "bold",
         fontSize: 10,

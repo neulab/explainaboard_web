@@ -8,6 +8,8 @@ from dataclasses import dataclass
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
 from explainaboard.utils.typing_utils import unwrap
+from pandas import Series
+
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.constants import ALL_LANG, LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -23,7 +25,6 @@ from explainaboard_web.models import (
     BenchmarkViewConfig,
     DatasetMetadata,
 )
-from pandas import Series
 
 
 @dataclass
