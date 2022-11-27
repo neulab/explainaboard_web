@@ -227,11 +227,16 @@ export function SystemTableTools({
           style={{ minWidth: "150px" }}
         />
         <div style={{ display: "flex", flexDirection: "row" }}>
+          <Input
+            disabled
+            value="Sorted by"
+            style={{ width: "90px", color: "black" }}
+          />
           <Select
             allowClear
             options={[
               ...metricOptions.map((opt) => ({ value: opt, label: opt })),
-              { value: "created_at", label: "Sorted by" },
+              { value: "created_at", label: "Time" },
             ]}
             value={value.sortField}
             onChange={(value) => onChange({ sortField: value })}

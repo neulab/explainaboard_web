@@ -175,6 +175,13 @@ export function SystemTableContent({
       render: (_, record) => record.created_at.format("MM/DD/YYYY HH:mm"),
       width: 130,
       align: "center",
+      fixed: filterValue.sortField === "created_at" ? "right" : false,
+      sorter: filterValue.sortField === "created_at",
+      showSorterTooltip: false,
+      sortOrder:
+        filterValue.sortField === "created_at" && filterValue.sortDir === "asc"
+          ? "ascend"
+          : "descend",
     },
     {
       dataIndex: "system_tags",
@@ -186,9 +193,15 @@ export function SystemTableContent({
     },
   ];
   columns.sort(function (a, b) {
-    if (a.fixed === "left" && b.fixed !== "left") {
+    if (
+      (a.fixed === "left" && b.fixed !== "left") ||
+      (a.fixed !== "right" && b.fixed === "right")
+    ) {
       return -1;
-    } else if (b.fixed === "left" && a.fixed !== "left") {
+    } else if (
+      (b.fixed === "left" && a.fixed !== "left") ||
+      (b.fixed !== "right" && a.fixed === "right")
+    ) {
       return 1;
     }
     return 0;
