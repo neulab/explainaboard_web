@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 import pandas as pd
+
 from explainaboard_web.impl.constants import POP_WEIGHT
 from explainaboard_web.impl.db_utils.benchmark_db_utils import BenchmarkDBUtils
 

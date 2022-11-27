@@ -2,7 +2,7 @@ import React from "react";
 import { BarChart } from "../..";
 import { SystemAnalysesReturn } from "../../../clients/openapi";
 import { SystemModel } from "../../../models";
-import { getOverallMap, unwrapConfidence } from "../utils";
+import { unwrapValue, unwrapConfidence, getOverallMap } from "../utils";
 import { AnalysisPanel } from "./AnalysisPanel";
 
 interface Props {
@@ -44,7 +44,7 @@ export function OverallMetricsBarChart({
     for (const metricName of metricNames) {
       if (metricName in overallMap) {
         const metricResults = overallMap[metricName];
-        metricPerformance.push(metricResults.value);
+        metricPerformance.push(unwrapValue(metricResults));
         metricConfidence.push(unwrapConfidence(metricResults));
       } else {
         metricPerformance.push(0);

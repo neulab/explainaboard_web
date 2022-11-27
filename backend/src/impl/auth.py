@@ -4,9 +4,10 @@ import secrets
 
 import boto3
 import jwt
+from flask import current_app, g
+
 from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils, UserInDB
 from explainaboard_web.impl.utils import abort_with_error_message
-from flask import current_app, g
 
 
 # Disables N802 to follow the naming scheme in the OpenAPI definition.
