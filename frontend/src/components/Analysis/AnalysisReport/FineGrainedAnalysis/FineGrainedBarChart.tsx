@@ -4,7 +4,7 @@ import { SystemModel } from "../../../../models";
 import { BarChart } from "../../BarChart";
 import { BucketSlider } from "../../BucketSlider";
 import { BucketIntervals, ResultFineGrainedParsed } from "../../types";
-import { unwrapConfidence } from "../../utils";
+import { unwrapValue, unwrapConfidence } from "../../utils";
 
 interface Props {
   systems: SystemModel[];
@@ -82,7 +82,7 @@ export function FineGrainedBarChart(props: Props) {
   const resultsConfidenceScores: Array<[number, number]>[] = [];
   for (const result of results) {
     resultsNumbersOfSamples.push(result.numbersOfSamples);
-    resultsValues.push(result.performances.map((perf) => perf.value));
+    resultsValues.push(result.performances.map((perf) => unwrapValue(perf)));
     resultsConfidenceScores.push(
       result.performances.map((perf) => unwrapConfidence(perf))
     );

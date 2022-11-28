@@ -10,7 +10,6 @@ import {
   Popconfirm,
   Radio,
 } from "antd";
-import { TaskSelect } from "..";
 import { TaskCategory } from "../../clients/openapi";
 import {
   ArrowDownOutlined,
@@ -208,29 +207,17 @@ export function SystemTableTools({
       </Space>
       <Space style={{ width: "fit-content", float: "right" }}>
         {mineVsAllSystemsToggle}
-        <Select
-          options={["test", "validation", "train", "all"].map((opt) => ({
-            value: opt,
-            label: opt,
-          }))}
-          value={value.split || undefined}
-          placeholder="Dataset split"
-          onChange={(value) => onChange({ split: value })}
-          style={{ minWidth: "120px" }}
-        />
-        <TaskSelect
-          taskCategories={taskCategories}
-          allowClear
-          value={value.task || undefined}
-          onChange={(value) => onChange({ task: value || "" })}
-          placeholder="All Tasks"
-          style={{ minWidth: "150px" }}
-        />
         <div style={{ display: "flex", flexDirection: "row" }}>
+          <Input
+            disabled
+            value="Sorted by"
+            style={{ width: "90px", color: "black" }}
+          />
           <Select
+            allowClear
             options={[
               ...metricOptions.map((opt) => ({ value: opt, label: opt })),
-              { value: "created_at", label: "Created At" },
+              { value: "created_at", label: "Time" },
             ]}
             value={value.sortField}
             onChange={(value) => onChange({ sortField: value })}

@@ -748,26 +748,8 @@ components:
           additionalProperties:
             $ref: "#/components/schemas/FeatureType"
         metric_configs:
-          type: array
-          items:
-            $ref: "#/components/schemas/MetricConfig"
+          type: object
       required: [name, features, metric_configs]
-
-    MetricConfig:
-      type: object
-      properties:
-        name:
-          type: string
-        source_language:
-          type: string
-          nullable: true
-        target_language:
-          type: string
-          nullable: true
-        cls_name:
-          type: string
-      additionalProperties: true
-      required: [name, cls_name]
 
     FeatureType:
       type: object
@@ -806,8 +788,6 @@ components:
         target_language:
           type: string
           example: en
-        reload_stat:
-          type: boolean
         confidence_alpha:
           type: number
         analysis_levels:
@@ -826,12 +806,24 @@ components:
           type: object
           properties:
             overall:
-              type: array
+              type: object
               description: metrics for each analysis level
-              items:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Performance"
+              additionalProperties:
+                description: analysis level
+                type: object
+                additionalProperties:
+                  description: metric name
+                  $ref: "#/components/schemas/MetricResult"
+              example: {
+                "example": {
+                  "rouge2": {
+                    "values": {
+                      "score": {"value": 0.12},
+                      "score_ci": {"low": -0.07, "high": 0.34, "alpha": 0.05}
+                    }
+                  }
+                }
+              }
           required: [overall]
         dataset_name:
           type: string
@@ -851,7 +843,6 @@ components:
           system_name,
           source_language,
           target_language,
-          reload_stat,
           confidence_alpha,
           source_tokenizer,
           target_tokenizer,
@@ -869,6 +860,39 @@ components:
         variety:
           type: string
           example: "intl"
+
+    MetricResult:
+      type: object
+      properties:
+        values:
+          type: object
+          properties:
+            score:
+              $ref: "#/components/schemas/Score"
+            score_ci:
+              $ref: "#/components/schemas/ConfidenceInterval"
+      required: [values]
+
+    # --- MetricValue ---
+    Score:
+      type: object
+      properties:
+        value:
+          type: number
+      required: [value]
+
+    ConfidenceInterval:
+      type: object
+      properties:
+        low:
+          type: number
+        high:
+          type: number
+        alpha:
+          type: number
+      required: [low, high, alpha]
+
+    # --- MetricValue (END) ---
 
     APIError:
       type: object
@@ -1282,30 +1306,14 @@ components:
       properties:
         name:
           type: string
+        level:
+          type: string
         cls_name:
           type: string
+        details:
+          type: object
       additionalProperties: true
-
-    BucketPerformance:
-      type: object
-      properties:
-        n_samples:
-          type: number
-        bucket_samples:
-          type: array
-          items:
-            type: number
-        performances:
-          type: array
-          items:
-            $ref: "#/components/schemas/Performance"
-        bucket_name:
-          type: string
-        bucket_interval:
-          type: array
-          items:
-            type: number
-      required: [n_samples, bucket_samples, performances]
+      required: [name, level, cls_name, details]
 
     SingleAnalysis:
       type: object
@@ -1331,21 +1339,6 @@ components:
           items:
             $ref: "#/components/schemas/SignificanceTestInfo"
       required: [system_analyses]
-
-    Performance:
-      type: object
-      properties:
-        metric_name:
-          type: string
-        value:
-          type: number
-        confidence_score_low:
-          type: number
-          nullable: true
-        confidence_score_high:
-          type: number
-          nullable: true
-      required: [metric_name, value]
 
     ComboCount:
       type: object
