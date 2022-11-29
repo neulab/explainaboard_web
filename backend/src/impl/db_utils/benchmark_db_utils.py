@@ -52,8 +52,8 @@ class BenchmarkDBUtils:
     @staticmethod
     def find_configs(parent: str, page: int = 0, page_size: int = 0):
         permissions_list = [{"is_private": False}]
-        if get_user().is_authenticated:
-            user = get_user()
+        user = get_user()
+        if user:
             permissions_list.append({"creator": user.id})
             permissions_list.append({"shared_users": user.email})
 
@@ -95,6 +95,9 @@ class BenchmarkDBUtils:
         props_dict = props.to_dict()
 
         user = get_user()
+        if not user:
+            abort_with_error_message(401, "login required")
+
         props_dict["creator"] = user.id
         props_dict["created_at"] = props_dict[
             "last_modified"
@@ -118,6 +121,8 @@ class BenchmarkDBUtils:
     @staticmethod
     def delete_benchmark_by_id(benchmark_id: str):
         user = get_user()
+        if not user:
+            abort_with_error_message(401, "login required")
         config = BenchmarkDBUtils.find_config_by_id(benchmark_id)
         if config.creator != user.id:
             abort_with_error_message(403, "you can only delete your own benchmark")

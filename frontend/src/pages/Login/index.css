@@ -1,0 +1,41 @@
+.page-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: url(../../logo-full.png);
+  padding: 0;
+}
+
+.flex-container {
+  display: flex;
+  backdrop-filter: blur(8px);
+  height: 100%;
+  width: 100%;
+}
+
+.half-page {
+  position: relative;
+  width: 100%;
+  flex: 1;
+}
+
+.instruction {
+  width: 100%;
+  padding-left: 5vw;
+  padding-right: 1.5vw;
+  max-width: 800px;
+  font-size: 15px;
+  font-weight: 430;
+}
+
+.vertical-center {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+}
+
+/* overrides firebaseui styles*/
+.firebaseui-container {
+  margin: 0 5vw 0 1.5vw;
+}

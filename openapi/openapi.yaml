@@ -624,12 +624,11 @@ paths:
                 properties:
                   env:
                     type: string
-                  auth_url:
-                    type: string
-                    format: url
                   api_version:
                     type: string
-                required: [env, auth_url, api_version]
+                  firebase_api_key:
+                    type: string
+                required: [env, api_version, firebase_api_key]
   /user:
     get:
       summary: get user info
