@@ -71,8 +71,10 @@ https://github.com/neulab/ExplainaBoard/blob/main/docs/task_text_classification.
                 name=TaskType.named_entity_recognition,
                 description="""
 Recognize named entities from a given text.
-See one example of the uploaded file:
-https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/conll2003/conll2003.elmo
+See one example of the system output:
+https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/conll2003/conll2003-elmo-output.conll
+See one example of the custom dataset file:
+https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/conll2003/conll2003-dataset.conll
 """,
             ),
             Task(
@@ -96,15 +98,13 @@ Dividing text into syntactically related non-overlapping groups of words.
             Task(
                 name=TaskType.cloze_mutiple_choice,
                 description="""
-fill in a blank in a text based on given options:
-https://github.com/neulab/ExplainaBoard/blob/main/docs/cloze.md
+Fill in a blank in a text based on given options.
 """,
             ),
             Task(
                 name=TaskType.cloze_generative,
                 description="""
-fill in a blank in a text based on given hint:
-https://github.com/neulab/ExplainaBoard/blob/main/docs/cloze.md
+Fill in a blank in a text based on given hint.
 """,
             ),
         ],
@@ -118,16 +118,24 @@ https://github.com/neulab/ExplainaBoard/blob/main/docs/cloze.md
                 description="""
 A task of extracting an answer from a text given a question.
 See more details about the format of upload files:
-https://github.com/neulab/ExplainaBoard/blob/main/docs/task_extractive_qa_squad.md
+https://github.com/neulab/ExplainaBoard/blob/main/docs/task_extractive_qa.md
 """,
             ),
             Task(
                 name=TaskType.qa_multiple_choice,
-                description="Answer a question from multiple options",
+                description="""
+Answer a question from multiple options
+See more details about the format of upload files:
+https://github.com/neulab/ExplainaBoard/blob/main/docs/task_qa_multiple_choice.md
+""",
             ),
             Task(
                 name=TaskType.qa_open_domain,
-                description="Answer a question in an open domain",
+                description="""
+Answer a question in an open domain
+See more details about the format of upload files:
+https://github.com/neulab/ExplainaBoard/blob/main/docs/task_qa_open_domain.md
+""",
             ),
         ],
     ),
@@ -139,8 +147,10 @@ https://github.com/neulab/ExplainaBoard/blob/main/docs/task_extractive_qa_squad.
                 name=TaskType.aspect_based_sentiment_classification,
                 description="""
 Predict the sentiment of a text based on a specific aspect.
-See more details about the format of upload files:
+See one example of the system output:
 https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/absa/absa-example-output.txt
+See one example of the custom dataset file:
+https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/absa/absa-dataset.tsv
 """,
             ),
         ],

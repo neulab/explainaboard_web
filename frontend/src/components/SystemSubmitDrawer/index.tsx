@@ -590,7 +590,7 @@ export function SystemSubmitDrawer(props: Props) {
                   overlayInnerStyle={{ color: "black" }}
                 >
                   <Button type="link" size="small" style={{ padding: 0 }}>
-                    Need help generating system output?
+                    Submission guide for {selectedTask.name}
                   </Button>
                 </Tooltip>
               )
