@@ -87,6 +87,10 @@ identify word boundaries of some languages (e.g., Chinese).
                 name=TaskType.chunking,
                 description="""
 Dividing text into syntactically related non-overlapping groups of words.
+See one example of the system output:
+https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/chunking/test-conll00-predictions.tsv
+See one example of the custom dataset file:
+https://github.com/neulab/ExplainaBoard/blob/main/data/system_outputs/chunking/dataset-test-conll00.tsv
 """,
             ),
         ],
