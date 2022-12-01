@@ -36,34 +36,36 @@ export function Login() {
     <div className="page-background">
       <div className="flex-container">
         <div className="half-page">
-          <div className="vertical-center instruction">
-            <Typography.Title style={{ textAlign: "center" }}>
-              Welcome to Explainaboard
-            </Typography.Title>
-            <Typography.Paragraph>
-              We have upgraded our sign-in experience to make it easier to use
-              and more secure! Now, your sign-in status is synchronized across
-              tabs and sessions. You can also sign out from all Explainaboard
-              sessions with just one click.
-            </Typography.Paragraph>
+          <div className="vertical-center instruction-container">
+            <div className="instruction-text">
+              <Typography.Title style={{ textAlign: "center", color: "white" }}>
+                Welcome to Explainaboard
+              </Typography.Title>
+              <Typography.Paragraph style={{ color: "white" }}>
+                We have upgraded our sign-in experience to make it easier to use
+                and more secure! Now, your sign-in status is synchronized across
+                tabs and sessions. You can also sign out from all Explainaboard
+                sessions with just one click.
+              </Typography.Paragraph>
 
-            <Typography.Paragraph>
-              If you{" "}
-              <Typography.Text strong>
-                have an account with us and this is the first time for you to
-                sign in with our new sign-in system
-              </Typography.Text>
-              , please reset your password: <br />
-              &emsp;1. Enter your email address and click the <q>NEXT</q>{" "}
-              button.
-              <br />
-              &emsp;2. Enter your <q>display name</q> and old password. Then,
-              click the <q>SAVE</q> button.
-              <br />
-              &emsp;3. The popup will prompt you to reset your password. Please
-              click <q>SEND</q> to send the reset password email and follow the
-              instructions in the email.
-            </Typography.Paragraph>
+              <Typography.Paragraph style={{ color: "white" }}>
+                If you{" "}
+                <Typography.Text strong style={{ color: "white" }}>
+                  have an account with us and this is the first time for you to
+                  sign in with our new sign-in system
+                </Typography.Text>
+                , please reset your password: <br />
+                &emsp;1. Enter your email address and click the <q>NEXT</q>{" "}
+                button.
+                <br />
+                &emsp;2. Enter your <q>display name</q> and old password. Then,
+                click the <q>SAVE</q> button.
+                <br />
+                &emsp;3. The popup will prompt you to reset your password.
+                Please click <q>SEND</q> to send the reset password email and
+                follow the instructions in the email.
+              </Typography.Paragraph>
+            </div>
           </div>
         </div>
         <div className="half-page">

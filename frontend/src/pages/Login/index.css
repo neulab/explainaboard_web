@@ -2,8 +2,7 @@
   position: absolute;
   width: 100%;
   height: 100%;
-  background-image: url(../../logo-full.png);
-  padding: 0;
+  background: rgba(4, 25, 67, 0.852);
 }
 
 .flex-container {
@@ -19,10 +18,16 @@
   flex: 1;
 }
 
-.instruction {
+.instruction-container {
   width: 100%;
   padding-left: 5vw;
-  padding-right: 1.5vw;
+  padding-right: 2vw;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.instruction-text {
+  min-width: 25vw;
   max-width: 800px;
   font-size: 15px;
   font-weight: 430;
@@ -37,5 +42,10 @@
 
 /* overrides firebaseui styles*/
 .firebaseui-container {
-  margin: 0 5vw 0 1.5vw;
+  margin: 0 4vw 0 2vw;
+  min-width: 25vw;
+  /* The modal is visually wider than the
+  text so its max-width is set to a smaller
+  value.*/
+  max-width: 700px;
 }
