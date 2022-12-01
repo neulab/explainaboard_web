@@ -52,6 +52,8 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
              * requires the display name information so we force refresh token here. There
              * is no way to distinguish a new user from an existing one at this point so
              * the best we can do is to refresh for all users.
+             *
+             * See https://github.com/firebase/firebase-functions/issues/95 for details.
              */
             await user.getIdToken(true);
             refreshBackendClient(true);

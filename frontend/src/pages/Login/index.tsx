@@ -1,14 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { CSSProperties, useEffect, useState } from "react";
 import { LoginState, useUser } from "../../components";
 import { auth } from "firebaseui";
-import { EmailAuthProvider, getAuth } from "firebase/auth";
+import {
+  EmailAuthProvider,
+  getAuth,
+  sendEmailVerification,
+} from "firebase/auth";
 import "firebaseui/dist/firebaseui.css";
 import "./index.css";
-import { Spin, Typography } from "antd";
+import { Alert, Spin, Typography } from "antd";
+
+enum VerificationEmailState {
+  notApplicable,
+  sent,
+  error,
+}
 
 export function Login() {
   const { state } = useUser();
   const [ui, setUi] = useState<auth.AuthUI>();
+  const [verificationEmailState, setVerificationEmailState] = useState(
+    VerificationEmailState.notApplicable
+  );
 
   useEffect(() => {
     // Wait until authApp finishes initialization.
@@ -31,9 +44,28 @@ export function Login() {
           requireDisplayName: true,
         },
       ],
+      callbacks: {
+        signInSuccessWithAuthResult(authResult) {
+          const user = authResult.user;
+          if (!user.emailVerified) {
+            sendEmailVerification(authResult.user)
+              .then(() => {
+                setVerificationEmailState(VerificationEmailState.sent);
+              })
+              .catch((e) => {
+                console.error(e);
+                setVerificationEmailState(VerificationEmailState.error);
+              });
+            return false;
+          }
+          return true;
+        },
+      },
     });
+
   return (
     <div className="page-background">
+      <VerificationEmailAlert state={verificationEmailState} />
       <div className="flex-container">
         <div className="half-page">
           <div className="vertical-center instruction-container">
@@ -70,6 +102,7 @@ export function Login() {
         </div>
         <div className="half-page">
           <div id="firebaseui-auth-container" className="vertical-center" />
+
           <Spin
             style={{ width: "100%", position: "relative" }}
             className="vertical-center"
@@ -81,4 +114,32 @@ export function Login() {
       </div>
     </div>
   );
+}
+
+function VerificationEmailAlert({ state }: { state: VerificationEmailState }) {
+  const style: CSSProperties = {
+    position: "absolute",
+    width: "100%",
+    zIndex: 10000,
+  };
+  if (state === VerificationEmailState.sent) {
+    return (
+      <Alert
+        type="info"
+        message="We sent an email to the address you provided. Please click on the link in the email to complete your signup and sign in with your credentials. If you don't see it, you may need to check your spam folder."
+        showIcon
+        style={style}
+      />
+    );
+  } else if (state === VerificationEmailState.error) {
+    return (
+      <Alert
+        type="error"
+        message="We encountered an error when sending the verification email. Please try signing in again later or contact us to resolve the issue."
+        showIcon
+        style={style}
+      />
+    );
+  }
+  return <></>;
 }

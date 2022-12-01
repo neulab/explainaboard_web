@@ -24,8 +24,8 @@ def check_ApiKeyAuth(user_email: str, api_key: str, required_scopes):  # noqa: N
         it. See `security_handler_factory.py` in connexion source code for details.
     """
     user = UserDBUtils.find_user(user_email)
-    if not user or user.api_key != api_key:
-        abort_with_error_message(401, "user email or api key is invalid")
+    if not user or not user.email_verified or user.api_key != api_key:
+        abort_with_error_message(401, "invalid credentials")
     g._user = user
     return {}
 
@@ -45,6 +45,8 @@ def check_BearerAuth(token: str):  # noqa: N802
         abort_with_error_message(401, "invalid token")
     else:
         g._user = UserDBUtils.find_or_create_user(decoded_jwt["user_id"], decoded_jwt)
+        if not g._user.email_verified:
+            abort_with_error_message(401, "invalid token")
         return {}
 
 

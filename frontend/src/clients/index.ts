@@ -14,7 +14,6 @@ import { getAuth } from "firebase/auth";
 const fetchWithBearer: FetchAPI = async (url, init) => {
   const authApp = getAuth();
   if (!authApp || !authApp.currentUser) return await isomorphicFetch(url, init);
-
   const jwt = await authApp.currentUser.getIdToken();
   init.headers["Authorization"] = "Bearer " + jwt;
   return await isomorphicFetch(url, init);

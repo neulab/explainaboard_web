@@ -12,14 +12,32 @@ from explainaboard_web.models.user import User
 class UserDBUtils:
     @staticmethod
     def find_or_create_user(user_id: str, user_info: dict[str, Any]) -> User:
+        """Finds a user based on user_id or create the user in the DB according
+        to user_info.
+        - email_verified is managed by firebase so user_info["email_verify"] is
+        the source of truth for this property. This method updates this property
+        in the DB if it is different from the one in user_info.
+
+        Args:
+            user_id: unique ID of the user. email cannot be used here.
+            user_info: decoded JWT
+        """
         user = UserDBUtils.find_user(user_id)
         if user:
+            if user.email_verified != user_info["email_verified"]:
+                DBUtils.update_one_by_id(
+                    DBUtils.USER_METADATA,
+                    user_id,
+                    {"email_verified": user_info["email_verified"]},
+                )
+                user.email_verified = user_info["email_verified"]
             return user
 
         user = UserDBUtils.create_user(
             User(
                 id=user_id,
                 email=user_info["email"],
+                email_verified=user_info["email_verified"],
                 api_key=secrets.token_urlsafe(16),
                 preferred_username=user_info["name"],
             )
