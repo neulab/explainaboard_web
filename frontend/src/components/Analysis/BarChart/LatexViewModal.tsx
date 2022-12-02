@@ -74,6 +74,21 @@ export function LatexViewModal({
     "    },\n" +
     "}\n";
 
+  if (
+    !(
+      trimmedConfidenceScores.length === systemNames.length &&
+      systemNames.length === yValues.length
+    )
+  ) {
+    console.error(
+      "Error: Length mismatch. Expected trimmedConfidenceScores.length === " +
+        "systemNames.length === yValues.length. " +
+        "Current values are, trimmedConfidenceScores.length:" +
+        `${trimmedConfidenceScores.length}, systemNames.length:` +
+        `${systemNames.length}, yValues.length:${yValues.length}`
+    );
+  }
+
   for (let sysIdx = 0; sysIdx < systemNames.length; sysIdx++) {
     let data = "";
     for (let i = 0; i < yValues[sysIdx].length; i++) {
@@ -95,6 +110,7 @@ export function LatexViewModal({
       footer={null}
       onCancel={onClose}
       width="50%"
+      destroyOnClose
     >
       <h2>LaTex Bar Chart</h2>
       <CopyBlock language="latex" text={texTable} theme={dracula} />

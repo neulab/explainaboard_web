@@ -1,7 +1,12 @@
 import { Modal, Table } from "antd";
+import { ColumnsType } from "antd/lib/table";
 import React from "react";
 
 const decimalPlaces = 3;
+
+interface BarChartData {
+  [key: string]: string | number;
+}
 
 interface Props {
   title: string;
@@ -27,7 +32,7 @@ export function TableViewModal({
   confidenceScoresList,
   numbersOfSamplesList,
 }: Props) {
-  const formattedxAxisData = xValues.map((x) => x.replace("\n|\n", "-"));
+  const formattedXAxisData = xValues.map((x) => x.replace("\n|\n", "-"));
   const trimmedConfidenceScores = confidenceScoresList.map(
     (confidenceScores) => {
       return confidenceScores.map(([lo, hi]) => {
@@ -37,11 +42,30 @@ export function TableViewModal({
       });
     }
   );
-  const dataSrc = [];
+
+  if (
+    !(
+      trimmedConfidenceScores.length === systemNames.length &&
+      systemNames.length === yValues.length &&
+      numbersOfSamplesList.length === systemNames.length
+    )
+  ) {
+    console.error(
+      "Error: Length mismatch. Expected trimmedConfidenceScores.length === " +
+        "systemNames.length === yValues.length === numbersOfSamplesList.length. " +
+        "Current values are, trimmedConfidenceScores.length:" +
+        `${trimmedConfidenceScores.length}, systemNames.length:` +
+        `${systemNames.length}, yValues.length:${yValues.length}, ` +
+        `numbersOfSamplesList.length: ${numbersOfSamplesList.length}`
+    );
+  }
+
+  const dataSrc: BarChartData[] = [];
   for (let i = 0; i < yValues[0].length; i++) {
     for (let sysIdx = 0; sysIdx < systemNames.length; sysIdx++) {
       dataSrc.push({
-        xValue: formattedxAxisData[i],
+        rowKey: `sys${sysIdx}-${i}`,
+        xValue: formattedXAxisData[i],
         systemName: systemNames[sysIdx],
         yValue: yValues[sysIdx][i],
         confInterval: `[${trimmedConfidenceScores[sysIdx][i][0]}, ${trimmedConfidenceScores[sysIdx][i][1]}]`,
@@ -53,7 +77,7 @@ export function TableViewModal({
     }
   }
 
-  const columns = [
+  const columns: ColumnsType<BarChartData> = [
     {
       title: "X Axis Value",
       dataIndex: "xValue",
@@ -83,6 +107,7 @@ export function TableViewModal({
       footer={null}
       onCancel={onClose}
       width="50%"
+      destroyOnClose
     >
       <Table pagination={false} dataSource={dataSrc} columns={columns} />
     </Modal>
