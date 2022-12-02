@@ -95,7 +95,7 @@ export function LatexViewModal({
       destroyOnClose
     >
       <h2>LaTex Bar Chart</h2>
-      <CopyBlock language="latex" text={texTable} theme={dracula} />
+      <CopyBlock language="text" text={texTable} theme={dracula} />
     </Modal>
   );
 }
