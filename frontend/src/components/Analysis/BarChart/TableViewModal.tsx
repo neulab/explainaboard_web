@@ -51,7 +51,7 @@ export function TableViewModal({
   for (let i = 0; i < yValues[0].length; i++) {
     for (let sysIdx = 0; sysIdx < systemNames.length; sysIdx++) {
       dataSrc.push({
-        rowKey: `sys${sysIdx}-${i}`,
+        key: `sys${sysIdx}-${i}`,
         xValue: xValues[i],
         systemName: systemNames[sysIdx],
         yValue: yValues[sysIdx][i],
