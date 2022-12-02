@@ -296,6 +296,16 @@ export function BarChart(props: Props) {
       return Number(x.toFixed(decimalPlaces));
     });
   });
+  const formattedXAxisData = xAxisData.map((x) => x.replace("\n|\n", "-"));
+  const trimmedConfidenceScores = confidenceScoresList.map(
+    (confidenceScores) => {
+      return confidenceScores.map(([lo, hi]) => {
+        const loTrimmed = Number(lo.toFixed(decimalPlaces));
+        const hiTrimmed = Number(hi.toFixed(decimalPlaces));
+        return [loTrimmed, hiTrimmed];
+      });
+    }
+  );
 
   return (
     <>
@@ -325,12 +335,12 @@ export function BarChart(props: Props) {
           setIsLatexModalOpen(false);
         }}
         systemNames={seriesNames}
-        xValues={xAxisData}
+        xValues={formattedXAxisData}
         yValues={trimmedSeriesData}
         xLabel={xAxisName}
         yLabel={yAxisName}
         yAxisMax={Math.ceil(globalMaxValue)}
-        confidenceScoresList={confidenceScoresList}
+        confidenceScoresList={trimmedConfidenceScores}
       />
       <TableViewModal
         title={title}
@@ -339,9 +349,9 @@ export function BarChart(props: Props) {
           setIsTableModalOpen(false);
         }}
         systemNames={seriesNames}
-        xValues={xAxisData}
+        xValues={formattedXAxisData}
         yValues={trimmedSeriesData}
-        confidenceScoresList={confidenceScoresList}
+        confidenceScoresList={trimmedConfidenceScores}
         numbersOfSamplesList={numbersOfSamplesList}
       />
     </>

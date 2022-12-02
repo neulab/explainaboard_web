@@ -2,8 +2,6 @@ import { Modal, Table } from "antd";
 import { ColumnsType } from "antd/lib/table";
 import React from "react";
 
-const decimalPlaces = 3;
-
 interface BarChartData {
   [key: string]: string | number;
 }
@@ -32,29 +30,18 @@ export function TableViewModal({
   confidenceScoresList,
   numbersOfSamplesList,
 }: Props) {
-  const formattedXAxisData = xValues.map((x) => x.replace("\n|\n", "-"));
-  const trimmedConfidenceScores = confidenceScoresList.map(
-    (confidenceScores) => {
-      return confidenceScores.map(([lo, hi]) => {
-        const loTrimmed = lo !== null ? Number(lo.toFixed(decimalPlaces)) : -1;
-        const hiTrimmed = hi !== null ? Number(hi.toFixed(decimalPlaces)) : -1;
-        return [loTrimmed, hiTrimmed];
-      });
-    }
-  );
-
   if (
     !(
-      trimmedConfidenceScores.length === systemNames.length &&
+      confidenceScoresList.length === systemNames.length &&
       systemNames.length === yValues.length &&
       numbersOfSamplesList.length === systemNames.length
     )
   ) {
     console.error(
-      "Error: Length mismatch. Expected trimmedConfidenceScores.length === " +
+      "Error: Length mismatch. Expected confidenceScoresList.length === " +
         "systemNames.length === yValues.length === numbersOfSamplesList.length. " +
-        "Current values are, trimmedConfidenceScores.length:" +
-        `${trimmedConfidenceScores.length}, systemNames.length:` +
+        "Current values are, confidenceScoresList.length:" +
+        `${confidenceScoresList.length}, systemNames.length:` +
         `${systemNames.length}, yValues.length:${yValues.length}, ` +
         `numbersOfSamplesList.length: ${numbersOfSamplesList.length}`
     );
@@ -65,10 +52,10 @@ export function TableViewModal({
     for (let sysIdx = 0; sysIdx < systemNames.length; sysIdx++) {
       dataSrc.push({
         rowKey: `sys${sysIdx}-${i}`,
-        xValue: formattedXAxisData[i],
+        xValue: xValues[i],
         systemName: systemNames[sysIdx],
         yValue: yValues[sysIdx][i],
-        confInterval: `[${trimmedConfidenceScores[sysIdx][i][0]}, ${trimmedConfidenceScores[sysIdx][i][1]}]`,
+        confInterval: `[${confidenceScoresList[sysIdx][i][0]}, ${confidenceScoresList[sysIdx][i][1]}]`,
         sampleSize:
           numbersOfSamplesList[sysIdx][i] === -1
             ? "-"

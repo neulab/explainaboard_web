@@ -2,8 +2,6 @@ import { Modal } from "antd";
 import React from "react";
 import { CopyBlock, dracula } from "react-code-blocks";
 
-const decimalPlaces = 3;
-
 interface Props {
   title: string;
   visible: boolean;
@@ -22,28 +20,13 @@ export function LatexViewModal({
   visible,
   onClose,
   systemNames,
-  xLabel,
-  yLabel,
-  yAxisMax,
+  xLabel = "",
+  yLabel = "",
+  yAxisMax = 1,
   xValues,
   yValues,
   confidenceScoresList,
 }: Props) {
-  yAxisMax = yAxisMax === undefined ? 1 : yAxisMax;
-  const formattedxAxisData = xValues.map((x) => x.replace("\n|\n", "-"));
-  const trimmedConfidenceScores = confidenceScoresList.map(
-    (confidenceScores) => {
-      return confidenceScores.map(([lo, hi]) => {
-        const loTrimmed = lo !== null ? Number(lo.toFixed(decimalPlaces)) : -1;
-        const hiTrimmed = hi !== null ? Number(hi.toFixed(decimalPlaces)) : -1;
-        return [loTrimmed, hiTrimmed];
-      });
-    }
-  );
-
-  xLabel = xLabel === undefined ? "" : xLabel;
-  yLabel = yLabel === undefined ? "" : yLabel;
-
   const legend = `\\legend{${systemNames.join()}}\n`;
 
   const addPlotPrefix =
@@ -65,7 +48,7 @@ export function LatexViewModal({
     `            ylabel=${yLabel.replace("_", "\\_")},\n` +
     "            legend style={at={(0.5,-0.2)},anchor=north,legend cell align=left}, % places the legend at the bottom\n" +
     `            title=${title.replace("_", "\\_")},\n` +
-    `            symbolic x coords={${formattedxAxisData.join()}}\n` +
+    `            symbolic x coords={${xValues.join()}}\n` +
     "        ]\n" +
     "%%% remove second bar in legend\n" +
     "\\pgfplotsset{\n" +
@@ -76,15 +59,15 @@ export function LatexViewModal({
 
   if (
     !(
-      trimmedConfidenceScores.length === systemNames.length &&
+      confidenceScoresList.length === systemNames.length &&
       systemNames.length === yValues.length
     )
   ) {
     console.error(
-      "Error: Length mismatch. Expected trimmedConfidenceScores.length === " +
+      "Error: Length mismatch. Expected confidenceScoresList.length === " +
         "systemNames.length === yValues.length. " +
-        "Current values are, trimmedConfidenceScores.length:" +
-        `${trimmedConfidenceScores.length}, systemNames.length:` +
+        "Current values are, confidenceScoresList.length:" +
+        `${confidenceScoresList.length}, systemNames.length:` +
         `${systemNames.length}, yValues.length:${yValues.length}`
     );
   }
@@ -92,11 +75,10 @@ export function LatexViewModal({
   for (let sysIdx = 0; sysIdx < systemNames.length; sysIdx++) {
     let data = "";
     for (let i = 0; i < yValues[sysIdx].length; i++) {
-      const errorTop =
-        trimmedConfidenceScores[sysIdx][i][1] - yValues[sysIdx][i];
+      const errorTop = confidenceScoresList[sysIdx][i][1] - yValues[sysIdx][i];
       const errorBottom =
-        yValues[sysIdx][i] - trimmedConfidenceScores[sysIdx][i][0];
-      data += `${formattedxAxisData[i]} ${yValues[sysIdx][i]} ${errorBottom} ${errorTop}\n`;
+        yValues[sysIdx][i] - confidenceScoresList[sysIdx][i][0];
+      data += `${xValues[i]} ${yValues[sysIdx][i]} ${errorBottom} ${errorTop}\n`;
     }
     texTable += addPlotPrefix + data + addPlotSuffix;
   }
