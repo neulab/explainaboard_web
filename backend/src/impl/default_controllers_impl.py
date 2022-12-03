@@ -277,6 +277,7 @@ def systems_get_by_id(system_id: str) -> System:
 
 
 def systems_get(
+    ids: list[str] | None,
     system_name: str | None,
     task: str | None,
     dataset: str | None,
@@ -311,6 +312,7 @@ def systems_get(
     systems, total = SystemDBUtils.find_systems(
         page=page,
         page_size=page_size,
+        ids=ids,
         system_name=system_name,
         task=task,
         dataset_name=dataset,
