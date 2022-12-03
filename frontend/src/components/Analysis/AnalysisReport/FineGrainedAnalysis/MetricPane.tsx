@@ -6,7 +6,7 @@ import { ExampleTable } from "../ExampleTable";
 import { FineGrainedBarChart } from "./FineGrainedBarChart";
 import { AnalysisCase } from "../../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../../clients";
-import { compareBucketOfCases } from "../../utils";
+import { compareBucketOfCases, hasDuplicate } from "../../utils";
 import { PageState } from "../../../../utils";
 import { ComboAnalysisChart } from "./ComboAnalysisChart";
 
@@ -59,9 +59,12 @@ export function MetricPane(props: Props) {
 
   function generateComboAnalysisChartTitle(
     analysis: ResultFineGrainedParsed,
-    system: SystemModel
+    system: SystemModel,
+    includeId: boolean
   ): string {
-    return `${analysis.featureDescription} for ${system.system_name}`;
+    return `${analysis.featureDescription} for ${system.system_name}${
+      includeId ? "_" + system.system_id : ""
+    }`;
   }
 
   function getColSpan(): 8 | 12 | 24 {
@@ -170,6 +173,8 @@ export function MetricPane(props: Props) {
   // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
   // into columns. One column contains a single BarChart.
   const charts: JSX.Element[] = [];
+  const hasSameName = hasDuplicate(systems.map((sys) => sys.system_name));
+
   Object.keys(systemAnalysesParsed).forEach((feature) => {
     // Handles combo charts and bar charts differently
     if (feature.toLowerCase().startsWith("combo")) {
@@ -185,7 +190,11 @@ export function MetricPane(props: Props) {
 
         charts.push(
           <ComboAnalysisChart
-            title={generateComboAnalysisChartTitle(analysis, system)}
+            title={generateComboAnalysisChartTitle(
+              analysis,
+              system,
+              hasSameName
+            )}
             colSpan={chartColSpan}
             system={system}
             analysis={analysis}

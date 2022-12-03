@@ -4,7 +4,7 @@ import { SystemModel } from "../../../../models";
 import { BarChart } from "../../BarChart";
 import { BucketSlider } from "../../BucketSlider";
 import { BucketIntervals, ResultFineGrainedParsed } from "../../types";
-import { unwrapValue, unwrapConfidence } from "../../utils";
+import { unwrapValue, unwrapConfidence, hasDuplicate } from "../../utils";
 
 interface Props {
   systems: SystemModel[];
@@ -34,8 +34,7 @@ export function FineGrainedBarChart(props: Props) {
   // For invariant variables across all systems, we can simply take from the first result
   function getSystemNames(systems: SystemModel[]) {
     const systemNames = systems.map((sys) => sys.system_name);
-    const distinctSystemNames = new Set(systemNames);
-    if (distinctSystemNames.size !== systemNames.length) {
+    if (hasDuplicate(systemNames)) {
       return systems.map((sys) => sys.system_name + "_" + sys.system_id);
     } else {
       return systemNames;
