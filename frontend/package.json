@@ -74,5 +74,8 @@
     "lint-staged": "11.1.2",
     "prettier": "^2.4.1",
     "react-scripts": "4.0.3"
+  },
+  "overrides": {
+    "react-syntax-highlighter": "13.5.3"
   }
 }
