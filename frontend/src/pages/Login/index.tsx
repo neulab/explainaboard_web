@@ -71,7 +71,7 @@ export function Login() {
           <div className="vertical-center instruction-container">
             <div className="instruction-text">
               <Typography.Title style={{ textAlign: "center", color: "white" }}>
-                Welcome to Explainaboard
+                Welcome to ExplainaBoard
               </Typography.Title>
               <Typography.Paragraph style={{ color: "white" }}>
                 We have upgraded our sign-in experience to make it easier to use
@@ -95,7 +95,8 @@ export function Login() {
                 <br />
                 &emsp;3. The popup will prompt you to reset your password.
                 Please click <q>SEND</q> to send the reset password email and
-                follow the instructions in the email.
+                follow the instructions in the email. If you don&apos;t see it,
+                please check your spam folder.
               </Typography.Paragraph>
             </div>
           </div>
