@@ -184,11 +184,11 @@ export function SystemTableTools({
     />
   );
 
-  // add "remind log in pop up" if not logged in
+  // add "remind sign in pop up" if not logged in
   if (!loggedIn) {
     const remindLogInMessage = (
       <div>
-        <p>Please log in to see your own systems.</p>
+        <p>Please sign in to see your own systems.</p>
       </div>
     );
 
@@ -274,7 +274,7 @@ function NewSystemButton(props: ButtonProps) {
     );
   return (
     <Tooltip
-      title="Please log in to submit new systems"
+      title="Please sign in to submit new systems"
       placement="topLeft"
       defaultVisible
     >

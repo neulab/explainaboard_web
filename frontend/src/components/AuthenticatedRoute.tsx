@@ -18,7 +18,7 @@ export function AuthenticatedRoute(props: RouteProps) {
         <Space>
           <Button onClick={() => history.push("/")}>Home Page</Button>
           <Button onClick={login} type="primary">
-            Log in
+            Sign in
           </Button>
         </Space>
       }
