@@ -39,7 +39,7 @@ paths:
 
   /languagecodes:
     get:
-      summary: Return all language codes
+      summary: Return all language codesaaaaa
       operationId: languageCodesGet
       security: []
       responses:
