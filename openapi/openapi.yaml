@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.21"
+  version: "0.2.22"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -1331,6 +1331,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SignificanceTestInfo"
+        system_insights:
+          type: array
+          items:
+            type: string
+            example: {"MaxPerformanceGapFeatureStat":"xxx"}
+            additionalProperties:
+              type: string
       required: [system_analyses]
 
     ComboCount:

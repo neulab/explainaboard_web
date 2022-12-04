@@ -8,6 +8,7 @@ import os
 from functools import lru_cache
 
 import pandas as pd
+import requests
 from explainaboard import (
     DatalabLoaderOption,
     TaskType,
@@ -455,6 +456,7 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             system2_metric_stats,
         )
 
+    system_output_infos = []
     for system in systems:
         system_output_info: SysOutputInfo = system.get_system_info()
 
@@ -512,5 +514,27 @@ def systems_analyses_post(body: SystemsAnalysesBody):
             analysis_results=serializer.serialize(processor_result),
         )
         system_analyses.append(single_analysis)
+        system_output_info.results.analyses = processor_result
+        system_output_infos.append(system_output_info)
 
-    return SystemAnalysesReturn(system_analyses, sig_info)
+    sys_infos = serializer.serialize(system_output_infos)
+    context = {
+        "sys_infos": sys_infos,
+    }
+    pload = {
+        "entry_point": "explainaboard/full_analysis",
+        "query": "",
+        "user": "",
+        "context": context,
+    }
+    headers = {"content-type": "application/json"}
+    try:
+        r = requests.post(
+            "http://lbs-insights-715408782.us-east-1.elb.amazonaws.com/insights/",
+            data=json.dumps(pload),
+            headers=headers,
+        )
+        system_insights = json.loads(r.text)
+        return SystemAnalysesReturn(system_analyses, sig_info, system_insights)
+    except Exception:
+        return SystemAnalysesReturn(system_analyses, sig_info)
