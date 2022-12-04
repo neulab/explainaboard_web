@@ -9,6 +9,7 @@ from datetime import datetime
 from importlib.metadata import version
 from typing import Any, Final
 
+from bson.objectid import ObjectId
 from explainaboard import TaskType, get_processor_class
 from explainaboard.info import OverallStatistics, SysOutputInfo
 from explainaboard.loaders.file_loader import FileLoaderReturn
@@ -59,16 +60,6 @@ class SystemModel(System):
         if system_tags is None or len(system_tags) == 0:
             document["system_tags"] = []
 
-        # FIXME(lyuyang): The following for loop is added to work around an issue
-        # related to default values of models. Previously, the generated models
-        # don't enforce required attributes. This function exploits that loophole.
-        # Now that we have fixed that loophole, this function needs some major
-        # refactoring. None was assigned for these fields before implicitly. Now
-        # we assign them explicitly so this hack does not change the current
-        # behavior.
-        if "system_id" not in document:
-            document["system_id"] = None
-
         return super().from_dict(document)
 
     def _get_private_properties(self, session: ClientSession | None = None) -> dict:
@@ -115,19 +106,16 @@ class SystemModel(System):
         """
         self.last_modified = datetime.utcnow()
         document = self.to_dict()
-        document.pop("system_id")
+        document["_id"] = ObjectId(document.pop("system_id"))
         document.pop("preferred_username")
-        if self.system_id and DBUtils.find_one_by_id(
+        if DBUtils.find_one_by_id(
             DBUtils.DEV_SYSTEM_METADATA, self.system_id, session=session
         ):
             # update existing system
             raise NotImplementedError("update is not implemented")
         else:
             # create new system
-            system_id = DBUtils.insert_one(
-                DBUtils.DEV_SYSTEM_METADATA, document, session=session
-            )
-            self.system_id = system_id
+            DBUtils.insert_one(DBUtils.DEV_SYSTEM_METADATA, document, session=session)
 
     def save_system_output(
         self, system_output: FileLoaderReturn, session: ClientSession | None = None
