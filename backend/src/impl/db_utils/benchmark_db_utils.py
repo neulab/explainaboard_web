@@ -474,6 +474,12 @@ class BenchmarkDBUtils:
         )
         if not plot_file:
             sys_infos = BenchmarkDBUtils.load_sys_infos(config)
+            # Default trend is "increase",
+            # meaning show the next date when there is improvement
+            plot_dict = {
+                k.name: (k.trend if k.trend else "increase") for k in config.views
+            }
+            plot_dict["Original"] = "original"
             json_dict = {k.name: [] for k in config.views}
             json_dict["Original"] = []
             json_dict["times"] = []
@@ -487,17 +493,15 @@ class BenchmarkDBUtils:
                 system_dfs = BenchmarkDBUtils.generate_view_dataframes(
                     config, orig_df, by_creator=False
                 )
-                system_dict = {k: v for k, v in system_dfs}
                 for k, v in system_dfs:
-                    if (
-                        (set(system_dict[k].columns) == {"score", "system_name"})
-                        and len(json_dict[k]) == 0
-                        or (
+                    if plot_dict[k] == "all":
+                        json_dict[k].append((str(date), v.max()["score"]))
+                    elif plot_dict[k] == "increase":
+                        if len(json_dict[k]) == 0 or (
                             len(json_dict[k]) > 0
-                            and json_dict[k][-1][1] < system_dict[k].max()["score"]
-                        )
-                    ):
-                        json_dict[k].append((str(date), system_dict[k].max()["score"]))
+                            and json_dict[k][-1][1] < v.max()["score"]
+                        ):
+                            json_dict[k].append((str(date), v.max()["score"]))
             with open(plot_path, "w") as outfile:
                 json.dump(json_dict, outfile)
 
