@@ -80,8 +80,8 @@ class SystemDBUtils:
     ) -> FindSystemsReturn:
 
         permissions_list = [{"is_private": False}]
-        if get_user().is_authenticated:
-            user = get_user()
+        user = get_user()
+        if user:
             permissions_list.append({"creator": user.id})
             permissions_list.append({"shared_users": user.email})
         permission_query = {"$or": permissions_list}
@@ -377,6 +377,8 @@ class SystemDBUtils:
     def delete_system_by_id(system_id: str) -> None:
         """aborts if the system does not exist or if the user doesn't have permission"""
         user = get_user()
+        if not user:
+            abort_with_error_message(401, "login required")
         sys = SystemDBUtils.find_system_by_id(system_id)
         if sys.creator != user.id:
             abort_with_error_message(403, "you can only delete your own systems")

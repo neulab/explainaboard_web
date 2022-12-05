@@ -6,3 +6,4 @@ export * from "./LeaderboardPage";
 export * from "./LoginCallback";
 export * from "./TermsPage";
 export * from "./BenchmarkPage";
+export * from "./Login";

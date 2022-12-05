@@ -29,7 +29,6 @@ from pymongo.client_session import ClientSession
 from explainaboard_web.impl.analyses.significance_analysis import (
     pairwise_significance_test,
 )
-from explainaboard_web.impl.auth import User as authUser
 from explainaboard_web.impl.auth import get_user
 from explainaboard_web.impl.db_utils.benchmark_db_utils import BenchmarkDBUtils
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
@@ -64,15 +63,15 @@ from explainaboard_web.models import (
     Task,
     TaskCategory,
 )
-from explainaboard_web.models import User as modelUser
+from explainaboard_web.models.user import User
 
 
-def _is_creator(obj: System | BenchmarkConfig, user: authUser) -> bool:
+def _is_creator(obj: System | BenchmarkConfig, user: User) -> bool:
     """check if a user is the creator of a system or benchmark"""
     return obj.creator == user.id
 
 
-def _is_shared_user(obj: System | BenchmarkConfig, user: authUser) -> bool:
+def _is_shared_user(obj: System | BenchmarkConfig, user: User) -> bool:
     """check if a user is a shared user of a system or benchmark"""
     return obj.shared_users and user.email in obj.shared_users
 
@@ -80,14 +79,14 @@ def _is_shared_user(obj: System | BenchmarkConfig, user: authUser) -> bool:
 def _has_write_access(obj: System | BenchmarkConfig) -> bool:
     """check if the current user has write access of a system or benchmark"""
     user = get_user()
-    return user.is_authenticated and _is_creator(obj, user)
+    return user and _is_creator(obj, user)
 
 
 def _has_read_access(obj: System | BenchmarkConfig) -> bool:
     """check if the current user has read access of a system or benchmark"""
     user = get_user()
     return not obj.is_private or (
-        user.is_authenticated and (_is_creator(obj, user) or _is_shared_user(obj, user))
+        user and (_is_creator(obj, user) or _is_shared_user(obj, user))
     )
 
 
@@ -98,19 +97,19 @@ def _has_read_access(obj: System | BenchmarkConfig) -> bool:
 def info_get():
     return {
         "env": os.getenv("EB_ENV"),
-        "auth_url": current_app.config.get("AUTH_URL"),
         "api_version": get_api_version(),
+        "firebase_api_key": current_app.config.get("FIREBASE_API_KEY"),
     }
 
 
 """ /user """
 
 
-def user_get() -> modelUser:
+def user_get() -> User:
     user = get_user()
     if not user:
         abort_with_error_message(401, "login required")
-    return modelUser.from_dict(user.get_user_info())
+    return user
 
 
 """ /tasks """
@@ -278,6 +277,7 @@ def systems_get_by_id(system_id: str) -> System:
 
 
 def systems_get(
+    ids: list[str] | None,
     system_name: str | None,
     task: str | None,
     dataset: str | None,
@@ -312,6 +312,7 @@ def systems_get(
     systems, total = SystemDBUtils.find_systems(
         page=page,
         page_size=page_size,
+        ids=ids,
         system_name=system_name,
         task=task,
         dataset_name=dataset,

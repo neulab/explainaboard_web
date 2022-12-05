@@ -5,7 +5,7 @@ import { backendClient } from "../clients";
 
 interface IEnvContext {
   env: string;
-  authURL: string;
+  firebaseAPIKey: string;
 }
 
 const EnvContext = createContext<IEnvContext>({} as IEnvContext);
@@ -16,8 +16,8 @@ export function EnvProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     backendClient
       .infoGet()
-      .then(({ env, auth_url }) => {
-        setValue({ env, authURL: auth_url });
+      .then(({ env, firebase_api_key }) => {
+        setValue({ env, firebaseAPIKey: firebase_api_key });
       })
       .catch((e) => setState(PageState.error));
   }, []);
