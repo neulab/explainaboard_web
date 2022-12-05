@@ -7,7 +7,6 @@ from dataclasses import dataclass
 
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
-from explainaboard.utils.typing_utils import unwrap
 from pandas import Series
 
 from explainaboard_web.impl.auth import get_user
@@ -251,10 +250,9 @@ class BenchmarkDBUtils:
 
         # --- Create the actual data
         for sys_name, systems in system_dataset_results.items():
-            for dataset_config, dataset_metadata, system_tmp in zip(
+            for dataset_config, dataset_metadata, sys in zip(
                 dataset_configs, dataset_metadatas, systems
             ):
-                sys = unwrap(system_tmp)
                 column_dict = dict(dataset_config)
                 column_dict["system_name"] = sys_name
                 dataset_metrics: list[BenchmarkMetric] = dataset_config.get(
