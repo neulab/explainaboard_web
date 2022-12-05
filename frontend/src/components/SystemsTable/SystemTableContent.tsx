@@ -117,7 +117,16 @@ export function SystemTableContent({
       );
       const distinctNames = Array.from(
         new Set(
-          newDatasets.map((dataset: DatasetMetadata) => dataset.dataset_name)
+          newDatasets.flatMap((dataset: DatasetMetadata) => {
+            if (dataset.sub_dataset) {
+              return [
+                dataset.dataset_name,
+                dataset.dataset_name + "/" + dataset.sub_dataset,
+              ];
+            } else {
+              return dataset.dataset_name;
+            }
+          })
         )
       );
       setDatasets(
@@ -133,8 +142,15 @@ export function SystemTableContent({
     setDatasetSearchText(value);
   };
 
-  const onDatasetChange = (value: string) => {
-    onFilterChange({ dataset: value });
+  const onDatasetChange = (value: string | undefined) => {
+    if (value && value.includes("/")) {
+      onFilterChange({
+        dataset: value.split("/")[0],
+        subdataset: value.split("/")[1],
+      });
+    } else {
+      onFilterChange({ dataset: value, subdataset: undefined });
+    }
   };
 
   const columns: ColumnsType<SystemModel> = [
@@ -203,7 +219,11 @@ export function SystemTableContent({
             placeholder="Search dataset"
             onSearch={onDatasetSearch}
             onChange={onDatasetChange}
-            value={filterValue.dataset}
+            value={
+              filterValue.subdataset
+                ? filterValue.dataset + "/" + filterValue.subdataset
+                : filterValue.dataset
+            }
             style={{ minWidth: "120px" }}
             options={datasets}
           />

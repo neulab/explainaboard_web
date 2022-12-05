@@ -32,6 +32,7 @@ function parseFormData(
     source_language: formData.source_language || "",
     target_language: formData.target_language || "",
     shared_users: formData.shared_users || [],
+    system_tags: formData.system_tags || [],
     public: !formData.is_private,
   };
 }
@@ -50,6 +51,7 @@ export type CodeGenFields = {
   source_language: string;
   target_language: string;
   shared_users: string[];
+  system_tags: string[];
   public: boolean;
 };
 
@@ -72,14 +74,17 @@ function getPythonClientCode(fields: CodeGenFields) {
 
   if (fields.metric_names.length > 0)
     params["metric_names"] = `[${fields.metric_names.map(
-      (name) => `"${name}",`
+      (name) => `"${name}"`
     )}]`;
   if (fields.target_language)
     params["target_language"] = fields.target_language;
   if (fields.shared_users.length > 0)
     params["shared_users"] = `[${fields.shared_users.map(
-      (user) => `"${user}",`
+      (user) => `"${user}"`
     )}]`;
+  if (fields.system_tags.length > 0)
+    params["system_tags"] = `[${fields.system_tags.map((tag) => `"${tag}"`)}]`;
+
   if (fields.public) params["public"] = "True";
 
   const paramLines = Object.keys(params)
@@ -118,15 +123,19 @@ function getBashClientCode(fields: CodeGenFields) {
   }
 
   if (fields.metric_names.length > 0)
-    params["metric-names"] = `${fields.metric_names.map(
-      (name) => `"${name}" `
-    )}`;
+    params["metric-names"] = fields.metric_names
+      .map((name) => `"${name}"`)
+      .join(" ");
   if (fields.target_language)
     params["target-language"] = fields.target_language;
   if (fields.shared_users.length > 0)
-    params["shared-users"] = `${fields.shared_users.map(
-      (user) => `"${user}" `
-    )}`;
+    params["shared-users"] = fields.shared_users
+      .map((user) => `"${user}"`)
+      .join(" ");
+  if (fields.system_tags.length > 0)
+    params["system-tags"] = fields.system_tags
+      .map((tag) => `"${tag}"`)
+      .join(" ");
   if (fields.public) params["public"] = "";
 
   const paramLines = Object.keys(params)

@@ -12,6 +12,8 @@ import {
 } from "echarts/components";
 import { CanvasRenderer } from "echarts/renderers";
 import { ECElementEvent } from "echarts/types/src/util/types";
+import { LatexViewModal } from "./LatexViewModal";
+import { TableViewModal } from "./TableViewModal";
 
 // TODO(gneubig): should this be provided more globally?
 const decimalPlaces = 3;
@@ -63,6 +65,15 @@ export function BarChart(props: Props) {
     onBarClick,
     addChartFile,
   } = props;
+  const [isLatexModalOpen, setIsLatexModalOpen] = useState(false);
+  const [isTableModalOpen, setIsTableModalOpen] = useState(false);
+
+  const showLatexModal = () => {
+    setIsLatexModalOpen(true);
+  };
+  const showTableModal = () => {
+    setIsTableModalOpen(true);
+  };
 
   const seriesInfoList: SeriesInfo[] = [];
   let globalMaxValue = 0;
@@ -171,9 +182,22 @@ export function BarChart(props: Props) {
     },
     legend: legend,
     toolbox: {
+      itemSize: 20,
       show: true,
       feature: {
         saveAsImage: { show: true },
+        myLatexView: {
+          show: true,
+          title: "View LaTeX format",
+          icon: "image://icons/TeX-doc-icon.png",
+          onclick: showLatexModal,
+        },
+        myTableView: {
+          show: true,
+          title: "View Table",
+          icon: "image://icons/icons8-columns-96.png",
+          onclick: showTableModal,
+        },
       },
     },
     tooltip: {
@@ -267,25 +291,69 @@ export function BarChart(props: Props) {
     MarkLineComponent,
   ]);
 
+  const trimmedSeriesData = series.map((s) => {
+    return s.data.map((x) => {
+      return Number(x.toFixed(decimalPlaces));
+    });
+  });
+  const formattedXAxisData = xAxisData.map((x) => x.replace("\n|\n", "-"));
+  const trimmedConfidenceScores = confidenceScoresList.map(
+    (confidenceScores) => {
+      return confidenceScores.map(([lo, hi]) => {
+        const loTrimmed = Number(lo.toFixed(decimalPlaces));
+        const hiTrimmed = Number(hi.toFixed(decimalPlaces));
+        return [loTrimmed, hiTrimmed];
+      });
+    }
+  );
+
   return (
-    <ReactEChartsCore
-      echarts={echarts}
-      option={option}
-      notMerge={true}
-      lazyUpdate={true}
-      theme={"theme_name"}
-      ref={(e) => {
-        setEChartsRef(e);
-      }}
-      onEvents={{
-        click: (event: ECElementEvent) => {
-          const { dataIndex, componentType, componentSubType } = event;
-          const systemIndex = event.seriesIndex || 0;
-          if (componentType === "series" && componentSubType === "bar") {
-            onBarClick(dataIndex, systemIndex);
-          }
-        },
-      }}
-    />
+    <>
+      <ReactEChartsCore
+        echarts={echarts}
+        option={option}
+        notMerge={true}
+        lazyUpdate={true}
+        theme={"theme_name"}
+        ref={(e) => {
+          setEChartsRef(e);
+        }}
+        onEvents={{
+          click: (event: ECElementEvent) => {
+            const { dataIndex, componentType, componentSubType } = event;
+            const systemIndex = event.seriesIndex || 0;
+            if (componentType === "series" && componentSubType === "bar") {
+              onBarClick(dataIndex, systemIndex);
+            }
+          },
+        }}
+      />
+      <LatexViewModal
+        title={title}
+        visible={isLatexModalOpen}
+        onClose={() => {
+          setIsLatexModalOpen(false);
+        }}
+        systemNames={seriesNames}
+        xValues={formattedXAxisData}
+        yValues={trimmedSeriesData}
+        xLabel={xAxisName}
+        yLabel={yAxisName}
+        yAxisMax={Math.ceil(globalMaxValue)}
+        confidenceScoresList={trimmedConfidenceScores}
+      />
+      <TableViewModal
+        title={title}
+        visible={isTableModalOpen}
+        onClose={() => {
+          setIsTableModalOpen(false);
+        }}
+        systemNames={seriesNames}
+        xValues={formattedXAxisData}
+        yValues={trimmedSeriesData}
+        confidenceScoresList={trimmedConfidenceScores}
+        numbersOfSamplesList={numbersOfSamplesList}
+      />
+    </>
   );
 }
