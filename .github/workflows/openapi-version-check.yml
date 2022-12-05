@@ -21,13 +21,15 @@ jobs:
         run: |
           version=$(sed -n "s/^  version: \"\(.*\)\"$/\1/p" openapi/openapi.yaml)
           echo "::set-output name=version::$version"
+          echo "new version: $version"
 
       - name: Get previous version
         id: prev_version
         run: |
-          git checkout ${{github.event.pull_request.base.ref}}
+          git checkout main
           version=$(sed -n "s/^  version: \"\(.*\)\"$/\1/p" openapi/openapi.yaml)
           echo "::set-output name=version::$version"
+          echo "previous version: $version"
 
       - name: Openapi version check
         run: |
