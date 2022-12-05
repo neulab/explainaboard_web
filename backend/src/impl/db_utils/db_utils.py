@@ -31,7 +31,7 @@ class DBUtils:
     )
 
     @staticmethod
-    def _convert_id(_id: str):
+    def _convert_id(_id: str | ObjectId):
         try:
             return ObjectId(_id)
         # mongo accepts custom id
@@ -93,7 +93,7 @@ class DBUtils:
     @staticmethod
     def find_one_by_id(
         collection: DBCollection,
-        docid: str,
+        docid: str | ObjectId,
         projection: dict | None = None,
         session: ClientSession | None = None,
     ):
@@ -111,7 +111,7 @@ class DBUtils:
     @staticmethod
     def update_one_by_id(
         collection: DBCollection,
-        docid: str,
+        docid: str | ObjectId,
         field_to_value: dict,
         session: ClientSession | None = None,
     ) -> bool:
@@ -142,7 +142,7 @@ class DBUtils:
 
     @staticmethod
     def delete_one_by_id(
-        collection: DBCollection, docid: str, session: ClientSession = None
+        collection: DBCollection, docid: str | ObjectId, session: ClientSession = None
     ) -> bool:
         """
         Delete one document with the given ID

@@ -227,6 +227,7 @@ class SystemDBUtils:
             system["creator"] = user.id
             system["preferred_username"] = user.preferred_username
             system["created_at"] = system["last_modified"] = datetime.utcnow()
+            system["system_id"] = str(ObjectId())
 
             if metadata.dataset_metadata_id:
                 if not metadata.dataset_split:
