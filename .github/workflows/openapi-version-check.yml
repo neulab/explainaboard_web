@@ -2,7 +2,7 @@ name: Openapi Version Check
 run-name: Verify version is bumped when openapi.yaml is updated
 
 on: # yamllint disable-line rule:truthy
-  push:
+  pull_request:
     branches: ["main"]
     paths: ["openapi/openapi.yaml"]
 
@@ -31,7 +31,7 @@ jobs:
 
       - name: Openapi version check
         run: |
-          function ver { printf "%03d%03d%03d%03d" $(echo "$1" | tr '.' ' '); }
+          function ver { printf "%03d%03d%03d" $(echo "$1" | tr '.' ' '); }
           do_version_check() {
             prev="$1"
             new="$2"
