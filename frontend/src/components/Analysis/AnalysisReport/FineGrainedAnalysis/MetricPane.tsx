@@ -6,7 +6,7 @@ import { ExampleTable } from "../ExampleTable";
 import { FineGrainedBarChart } from "./FineGrainedBarChart";
 import { AnalysisCase } from "../../../../clients/openapi";
 import { backendClient, parseBackendError } from "../../../../clients";
-import { compareBucketOfCases } from "../../utils";
+import { compareBucketOfCases, hasDuplicate } from "../../utils";
 import { PageState } from "../../../../utils";
 import { ComboAnalysisChart } from "./ComboAnalysisChart";
 
@@ -57,8 +57,14 @@ export function MetricPane(props: Props) {
     return `${metric} by ${featureDescription}`;
   }
 
-  function generateComboAnalysisChartTitle(feature: string): string {
-    return systemAnalysesParsed[feature][0].featureDescription;
+  function generateComboAnalysisChartTitle(
+    analysis: ResultFineGrainedParsed,
+    system: SystemModel,
+    includeId: boolean
+  ): string {
+    return `${analysis.featureDescription} for ${system.system_name}${
+      includeId ? "_" + system.system_id : ""
+    }`;
   }
 
   function getColSpan(): 8 | 12 | 24 {
@@ -164,58 +170,65 @@ export function MetricPane(props: Props) {
 
   const isLoading = pageState === PageState.loading;
 
+  // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
+  // into columns. One column contains a single BarChart.
+  const charts: JSX.Element[] = [];
+  const hasSameName = hasDuplicate(systems.map((sys) => sys.system_name));
+
+  Object.keys(systemAnalysesParsed).forEach((feature) => {
+    // Handles combo charts and bar charts differently
+    if (feature.toLowerCase().startsWith("combo")) {
+      const analyses = systemAnalysesParsed[feature];
+
+      // Display one combo chart for each system
+      for (let i = 0; i < Math.min(analyses.length, systems.length); i++) {
+        const analysis = analyses[i];
+        const system = systems[i];
+
+        // It's meaningless if there is only one feature combo
+        if (analysis.comboCounts.length < 1) continue;
+
+        charts.push(
+          <ComboAnalysisChart
+            title={generateComboAnalysisChartTitle(
+              analysis,
+              system,
+              hasSameName
+            )}
+            colSpan={chartColSpan}
+            system={system}
+            analysis={analysis}
+            onEntryClick={(samples, systemID, barIndex, systemIndex) => {
+              onEntryClick(samples, feature, systemID, barIndex, systemIndex);
+            }}
+            key={feature + system.system_name}
+            addChartFile={addChartFile}
+          />
+        );
+      }
+    } else {
+      charts.push(
+        <FineGrainedBarChart
+          systems={systems}
+          featureNameToBucketInfo={featureNameToBucketInfo}
+          updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
+          colSpan={chartColSpan}
+          title={generateBarChartTitle(feature)}
+          results={systemAnalysesParsed[feature]}
+          onBarClick={(barIndex, systemIndex) =>
+            onBarClick(feature, barIndex, systemIndex)
+          }
+          key={feature}
+          addChartFile={addChartFile}
+        />
+      );
+    }
+  });
+
   return (
     <div style={{ cursor: isLoading ? "wait" : "auto" }}>
       <Spin spinning={isLoading}>
-        <Row>
-          {
-            // Map the resultsFineGrainedParsed of the every element in systemAnalysesParsed
-            // into columns. One column contains a single BarChart.
-            Object.keys(systemAnalysesParsed).map((feature) => {
-              if (feature.toLowerCase().startsWith("combo")) {
-                return (
-                  <ComboAnalysisChart
-                    title={generateComboAnalysisChartTitle(feature)}
-                    colSpan={chartColSpan}
-                    systems={systems}
-                    analyses={systemAnalysesParsed[feature]}
-                    onEntryClick={(
-                      samples,
-                      systemID,
-                      barIndex,
-                      systemIndex
-                    ) => {
-                      onEntryClick(
-                        samples,
-                        feature,
-                        systemID,
-                        barIndex,
-                        systemIndex
-                      );
-                    }}
-                    key={feature}
-                    addChartFile={addChartFile}
-                  />
-                );
-              }
-              return (
-                <FineGrainedBarChart
-                  systems={systems}
-                  featureNameToBucketInfo={featureNameToBucketInfo}
-                  updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}
-                  colSpan={chartColSpan}
-                  title={generateBarChartTitle(feature)}
-                  results={systemAnalysesParsed[feature]}
-                  onBarClick={(barIndex, systemIndex) =>
-                    onBarClick(feature, barIndex, systemIndex)
-                  }
-                  key={feature}
-                  addChartFile={addChartFile}
-                />
-              );
-            })
-          }
-        </Row>
+        <Row>{charts}</Row>
         {selectedBar && selectedCases.length > 0 && (
           <ExampleTable
             title={`Examples from bar # ${

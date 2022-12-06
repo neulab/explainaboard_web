@@ -8,8 +8,8 @@ import { Col } from "antd";
 
 interface Props {
   title: string;
-  systems: SystemModel[];
-  analyses: ResultFineGrainedParsed[];
+  system: SystemModel;
+  analysis: ResultFineGrainedParsed;
   colSpan: 8 | 12 | 24;
   onEntryClick: (
     samples: number[][],
@@ -21,7 +21,7 @@ interface Props {
 }
 
 export function ComboAnalysisChart(props: Props) {
-  const { systems, analyses, title, onEntryClick, colSpan, addChartFile } =
+  const { system, analysis, title, onEntryClick, colSpan, addChartFile } =
     props;
   const [eChartsRef, setEChartsRef] = useState<ReactEChartsCore | null>();
   useEffect(() => {
@@ -32,17 +32,7 @@ export function ComboAnalysisChart(props: Props) {
     }
   });
 
-  // For now we only support combo analysis for single-system analysis.
-  if (analyses.length !== 1) {
-    return <></>;
-  }
-
-  const system = systems[0];
-  const analysis = analyses[0];
   const counts = analysis.comboCounts;
-  if (counts.length < 1) {
-    return <></>;
-  }
 
   // Gather all categories and assign index to each of them
   const cateMap = new Map<string, number>();

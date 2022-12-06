@@ -315,3 +315,8 @@ export function unwrapConfidence(perf: MetricResult): [number, number] {
   }
   return [-1, -1];
 }
+
+export function hasDuplicate(strings: string[]): boolean {
+  const distinctSet = new Set(strings);
+  return distinctSet.size !== strings.length;
+}

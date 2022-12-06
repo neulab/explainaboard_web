@@ -9,7 +9,11 @@ import {
   SystemsAnalysesBody,
 } from "../../../clients/openapi";
 import { WarningOutlined } from "@ant-design/icons";
-import { parseFineGrainedResults, valuesToIntervals } from "../utils";
+import {
+  hasDuplicate,
+  parseFineGrainedResults,
+  valuesToIntervals,
+} from "../utils";
 import { ResultFineGrainedParsed, BucketIntervals } from "../types";
 import ReactGA from "react-ga4";
 import { AnalysisButton } from "./AnalysisButton";
@@ -204,9 +208,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
 
   function getDrawerTitle(): React.ReactNode {
     const systemNames = systems.map((sys) => sys.system_name);
-    const distinctSystemNames = new Set(systemNames);
-    const duplicateNameWarning =
-      distinctSystemNames.size !== systemNames.length;
+    const duplicateNameWarning = hasDuplicate(systemNames);
     const duplicateNameWarningMsg =
       "The systems have duplicate names. Unique system IDs are attached to distinguish between them. Please change system names using the edit button on `Systems` page.";
     if (systems.length === 1) {

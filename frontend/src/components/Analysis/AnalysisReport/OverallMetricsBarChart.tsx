@@ -2,7 +2,12 @@ import React from "react";
 import { BarChart } from "../..";
 import { SystemAnalysesReturn } from "../../../clients/openapi";
 import { SystemModel } from "../../../models";
-import { unwrapValue, unwrapConfidence, getOverallMap } from "../utils";
+import {
+  unwrapValue,
+  unwrapConfidence,
+  getOverallMap,
+  hasDuplicate,
+} from "../utils";
 import { AnalysisPanel } from "./AnalysisPanel";
 
 interface Props {
@@ -24,8 +29,7 @@ export function OverallMetricsBarChart({
 }: Props) {
   function getSystemNames(systems: SystemModel[]) {
     const systemNames = systems.map((sys) => sys.system_name);
-    const distinctSystemNames = new Set(systemNames);
-    if (distinctSystemNames.size !== systemNames.length) {
+    if (hasDuplicate(systemNames)) {
       return systems.map((sys) => sys.system_name + "_" + sys.system_id);
     } else {
       return systemNames;
