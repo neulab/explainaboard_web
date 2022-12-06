@@ -4,6 +4,7 @@ import { SystemModel } from "../../../models";
 import { SystemAnalysesReturn } from "../../../clients/openapi/api";
 import { OverallMetricsBarChart } from "./OverallMetricsBarChart";
 import { SignificanceTestList } from "./SignificanceTestList";
+import { SystemInsights } from "./SystemInsights";
 import { FineGrainedAnalysis } from "./FineGrainedAnalysis";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
   systems: SystemModel[];
   systemAnalyses: SystemAnalysesReturn["system_analyses"];
   significanceTestInfo: SystemAnalysesReturn["significance_test_info"];
+  systemInsights: SystemAnalysesReturn["system_insights"];
   metricToSystemAnalysesParsed: {
     [metric: string]: { [feature: string]: ResultFineGrainedParsed[] };
   };
@@ -29,6 +31,7 @@ export function AnalysisReport(props: Props) {
     systemAnalyses,
     metricToSystemAnalysesParsed,
     significanceTestInfo,
+    systemInsights,
     updateFeatureNameToBucketInfo,
     featureNameToBucketInfo,
     addChartFile,
@@ -58,6 +61,10 @@ export function AnalysisReport(props: Props) {
 
       {significanceTestInfo && (
         <SignificanceTestList significanceTestInfo={significanceTestInfo} />
+      )}
+
+      {systemInsights !== undefined && systemInsights.length > 0 && (
+        <SystemInsights systemInsights={systemInsights} />
       )}
 
       <FineGrainedAnalysis

@@ -250,6 +250,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
           systems={systems}
           systemAnalyses={systemAnalysesReturn.system_analyses}
           significanceTestInfo={systemAnalysesReturn.significance_test_info}
+          systemInsights={systemAnalysesReturn.system_insights}
           metricToSystemAnalysesParsed={metricToAnalyses}
           featureNameToBucketInfo={featureNameToBucketInfo}
           updateFeatureNameToBucketInfo={updateFeatureNameToBucketInfo}

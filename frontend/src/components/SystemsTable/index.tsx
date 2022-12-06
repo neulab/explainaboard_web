@@ -7,7 +7,7 @@ import { SystemModel, newSystemModel } from "../../models";
 import { SystemTableTools } from "./SystemTableTools";
 import { SystemTableContent } from "./SystemTableContent";
 import { findTask, PageState } from "../../utils";
-import { TaskCategory } from "../../clients/openapi";
+import { System, TaskCategory } from "../../clients/openapi";
 import { LoginState, useUser } from "../useUser";
 import { useHistory } from "react-router-dom";
 import useQuery from "../useQuery";
@@ -21,13 +21,12 @@ export function SystemsTable() {
   const history = useHistory();
 
   const [systems, setSystems] = useState<SystemModel[]>([]);
+  const [activeSystems, setActiveSystems] = useState<SystemModel[]>([]);
   const [total, setTotal] = useState(0);
   const query = useQuery();
   const [filters, setFilters] = useState<SystemFilter>(
     SystemFilter.parseQueryToFilter(query)
   );
-
-  const [activeSystemIDs, setActiveSystemIds] = useState<string[]>([]);
 
   useEffect(() => {
     const prevString = query.toString();
@@ -49,7 +48,8 @@ export function SystemsTable() {
 
   // set systems to be analyzed
   const onActiveSystemChange = (ids: string[]) => {
-    setActiveSystemIds(ids);
+    setActiveSystems([]);
+    setFilters(filters.update({ activeSystemIDs: ids }));
   };
 
   // system to be edited
@@ -128,25 +128,55 @@ export function SystemsTable() {
   useEffect(() => {
     async function refreshSystems() {
       setPageState(PageState.loading);
-
       const datasetSplit = filters.split === "all" ? undefined : filters.split;
       const creator = filters.showMine ? userId : undefined;
+
+      function getSystems(systemIds: string[], page: number) {
+        return backendClient.systemsGet(
+          systemIds,
+          filters.name,
+          filters.task,
+          filters.dataset,
+          filters.subdataset,
+          datasetSplit,
+          page,
+          pageSize,
+          filters.sortField,
+          filters.sortDir,
+          creator,
+          undefined, // shared users
+          filters.systemTags
+        );
+      }
+
       try {
-        const { systems: newSystems, total: newTotal } =
-          await backendClient.systemsGet(
-            filters.name,
-            filters.task,
-            filters.dataset,
-            filters.subdataset,
-            datasetSplit,
-            page,
-            pageSize,
-            filters.sortField,
-            filters.sortDir,
-            creator,
-            undefined, // shared users
-            filters.systemTags
+        // First request: get current page, ignore system id filters
+        const { systems: newSystems, total: newTotal } = await getSystems(
+          [],
+          page
+        );
+
+        // Second request (only when the first request result does not include the id)
+        let activeSys: System[] = [];
+        if (filters.activeSystemIDs) {
+          const newSystemIds = newSystems.map((sys) => sys.system_id);
+          const allIncludes = filters.activeSystemIDs.every((id) =>
+            newSystemIds.includes(id)
           );
+          if (!allIncludes) {
+            ({ systems: activeSys } = await getSystems(
+              filters.activeSystemIDs,
+              0
+            ));
+          } else {
+            activeSys = newSystems.filter((sys) =>
+              filters.activeSystemIDs?.includes(sys.system_id)
+            );
+          }
+        }
+
+        // Update component states
+        setActiveSystems(activeSys.map((sys) => newSystemModel(sys)));
         setSystems(newSystems.map((sys) => newSystemModel(sys)));
         setTotal(newTotal);
         setPageState(PageState.success);
@@ -211,9 +241,7 @@ export function SystemsTable() {
         taskCategories={taskCategories}
       />
       <AnalysisDrawer
-        systems={systems.filter((sys) =>
-          activeSystemIDs.includes(sys.system_id)
-        )}
+        systems={activeSystems}
         closeDrawer={() => onActiveSystemChange([])}
       />
       <SystemSubmitDrawer

@@ -1,0 +1,55 @@
+name: Openapi Version Check
+run-name: Verify version is bumped when openapi.yaml is updated
+
+on: # yamllint disable-line rule:truthy
+  pull_request:
+    branches: ["main"]
+    paths: ["openapi/openapi.yaml"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          # checkout full tree
+          fetch-depth: 0
+
+      - name: Get new version
+        id: new_version
+        run: |
+          version=$(sed -n "s/^  version: \"\(.*\)\"$/\1/p" openapi/openapi.yaml)
+          echo "::set-output name=version::$version"
+          echo "new version: $version"
+
+      - name: Get previous version
+        id: prev_version
+        run: |
+          git checkout main
+          version=$(sed -n "s/^  version: \"\(.*\)\"$/\1/p" openapi/openapi.yaml)
+          echo "::set-output name=version::$version"
+          echo "previous version: $version"
+
+      - name: Openapi version check
+        run: |
+          function ver { printf "%03d%03d%03d" $(echo "$1" | tr '.' ' '); }
+          do_version_check() {
+            prev="$1"
+            new="$2"
+            if [ $(ver $prev) -lt $(ver $new) ]; then
+              return 0
+            elif [ $(ver $prev) -gt $(ver $new) ]; then
+              echo "ERROR: The new openapi version needs to be greater than \
+              the previous verison."
+            else
+              echo "ERROR: Same openapi version. Remember to bump up openapi \
+              version after modifying openapi/openapi.yaml"
+            fi
+
+            echo "previous version:" $prev
+            echo "new version (the version just pushed):" $new
+            return 1
+          }
+          do_version_check ${{steps.prev_version.outputs.version }} \
+          ${{steps.new_version.outputs.version }}

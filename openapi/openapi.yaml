@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.21"
+  version: "0.2.23"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -370,6 +370,13 @@ paths:
 
       parameters:
         - in: query
+          name: ids
+          schema:
+            type: array
+            items:
+              type: string
+            description: system ids
+        - in: query
           name: system_name
           description: fuzzy match for system name
           schema:
@@ -617,12 +624,11 @@ paths:
                 properties:
                   env:
                     type: string
-                  auth_url:
-                    type: string
-                    format: url
                   api_version:
                     type: string
-                required: [env, auth_url, api_version]
+                  firebase_api_key:
+                    type: string
+                required: [env, api_version, firebase_api_key]
   /user:
     get:
       summary: get user info
@@ -1331,6 +1337,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SignificanceTestInfo"
+        system_insights:
+          type: array
+          items:
+            type: string
+            example: {"MaxPerformanceGapFeatureStat":"xxx"}
+            additionalProperties:
+              type: string
       required: [system_analyses]
 
     ComboCount:
@@ -1622,8 +1635,10 @@ components:
           type: string
         email:
           type: string
+        email_verified:
+          type: boolean
         api_key:
           type: string
         preferred_username:
           type: string
-      required: [id, email, api_key, preferred_username]
+      required: [id, email, email_verified, api_key, preferred_username]
