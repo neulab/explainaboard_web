@@ -26,7 +26,6 @@
     "antd-table-export": "^0.0.5",
     "echarts": "^5.3.3",
     "echarts-for-react": "^3.0.2",
-    "eslint": "^7.32.0",
     "file-saver": "^2.0.5",
     "firebase": "^9.14.0",
     "firebaseui": "^6.0.2",
@@ -76,5 +75,9 @@
     "lint-staged": "11.1.2",
     "prettier": "^2.4.1",
     "react-scripts": "4.0.3"
+  },
+  "overrides": {
+    "react-syntax-highlighter": "13.5.3",
+    "glob": "7.2.3"
   }
 }
