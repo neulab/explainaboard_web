@@ -31,6 +31,13 @@ export function FineGrainedBarChart(props: Props) {
     onBarClick,
     addChartFile,
   } = props;
+
+  if (systems.length !== results.length) {
+    console.error(
+      `systems and results should be the same length ${systems.length}!=${results.length}`
+    );
+  }
+
   // For invariant variables across all systems, we can simply take from the first result
   function getSystemNames(systems: SystemModel[]) {
     const systemNames = systems.map((sys) => sys.system_name);
