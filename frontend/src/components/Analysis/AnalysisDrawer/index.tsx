@@ -245,7 +245,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
   }
 
   function renderDrawerContent(): React.ReactElement {
-    if (visible && systemAnalysesReturn) {
+    if (pageState === PageState.success && visible && systemAnalysesReturn) {
       return (
         <AnalysisReport
           task={getTask()}
@@ -262,7 +262,11 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
     }
     if (pageState === PageState.error)
       return <FallbackUI errorMessage={errorMessage} />;
-    return <div style={{ height: "50vh" }} />;
+    return (
+      <Spin spinning={pageState === PageState.loading} tip="Analyzing...">
+        <div style={{ height: "50vh" }} />
+      </Spin>
+    );
   }
 
   function downloadAnalysis() {
@@ -293,6 +297,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
       */
       closable={pageState !== PageState.loading}
       maskClosable={pageState !== PageState.loading}
+      destroyOnClose
       extra={
         <div>
           <DownloadAnalysisButton
@@ -310,9 +315,7 @@ export function AnalysisDrawer({ systems, closeDrawer }: Props) {
         We use an error boundary component and provide a fall back UI if an error is caught.
       */}
       <ErrorBoundary fallbackUI={<FallbackUI errorMessage={errorMessage} />}>
-        <Spin spinning={pageState === PageState.loading} tip="Analyzing...">
-          {renderDrawerContent()}
-        </Spin>
+        {renderDrawerContent()}
       </ErrorBoundary>
     </Drawer>
   );
