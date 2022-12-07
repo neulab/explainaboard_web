@@ -24,7 +24,7 @@ import {
 import { backendClient, parseBackendError } from "../../clients";
 import { findTask, toBase64, unwrap } from "../../utils";
 import { useForm } from "antd/lib/form/Form";
-import { TaskSelect, TextWithLink } from "..";
+import { TaskSelect } from "..";
 import { DatasetSelect, DatasetValue } from "./DatasetSelect";
 import { DataFileUpload, DataFileValue } from "./FileSelect";
 import ReactGA from "react-ga4";
@@ -576,25 +576,6 @@ export function SystemSubmitDrawer(props: Props) {
             name="task"
             label="Task"
             rules={editMode ? [] : [{ required: true }]}
-            help={
-              selectedTask && (
-                <Tooltip
-                  title={
-                    <TextWithLink
-                      text={selectedTask.description}
-                      target="_blank"
-                    />
-                  }
-                  placement="left"
-                  color="white"
-                  overlayInnerStyle={{ color: "black" }}
-                >
-                  <Button type="link" size="small" style={{ padding: 0 }}>
-                    Submission guide for {selectedTask.name}
-                  </Button>
-                </Tooltip>
-              )
-            }
             hidden={editMode}
           >
             <TaskSelect taskCategories={taskCategories} />
@@ -630,7 +611,9 @@ export function SystemSubmitDrawer(props: Props) {
                 hidden={editMode}
               >
                 <DataFileUpload
+                  taskName={selectedTaskName}
                   allowedFileTypes={allowedFileType.custom_dataset}
+                  forCustomDataset
                 />
               </Form.Item>
             </>
@@ -667,6 +650,7 @@ export function SystemSubmitDrawer(props: Props) {
             hidden={editMode}
           >
             <DataFileUpload
+              taskName={selectedTaskName}
               allowedFileTypes={allowedFileType.system_output}
               maxFileCount={10}
             />
