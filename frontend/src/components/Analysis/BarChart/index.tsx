@@ -176,13 +176,14 @@ export function BarChart(props: Props) {
       text: title,
       left: "center",
       textStyle: {
-        width: "250",
+        width: "180",
         overflow: "break",
       },
     },
     legend: legend,
     toolbox: {
       itemSize: 20,
+      left: 0,
       show: true,
       feature: {
         saveAsImage: { show: true },

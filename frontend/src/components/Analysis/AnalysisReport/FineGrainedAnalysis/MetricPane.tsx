@@ -9,6 +9,7 @@ import { backendClient, parseBackendError } from "../../../../clients";
 import { compareBucketOfCases, hasDuplicate } from "../../utils";
 import { PageState } from "../../../../utils";
 import { ComboAnalysisChart } from "./ComboAnalysisChart";
+import { useWindowSize } from "../../../useWindowSize";
 
 interface Props {
   task: string;
@@ -46,6 +47,7 @@ export function MetricPane(props: Props) {
 
   const [pageState, setPageState] = useState(PageState.success);
   const [selectedBar, setSelectedBar] = useState<BarInfo>();
+  const [windowWidth] = useWindowSize();
 
   // ExampleTable
   // cases to show for each system; numSystem x numCases
@@ -75,10 +77,15 @@ export function MetricPane(props: Props) {
     );
     if (
       maxRightBoundsLength > 5 ||
-      (systems.length > 1 && maxRightBoundsLength > 3)
+      (systems.length > 1 && maxRightBoundsLength > 3) ||
+      windowWidth < 500
     ) {
       return 24;
-    } else if (maxRightBoundsLength > 3 || systems.length > 1) {
+    } else if (
+      maxRightBoundsLength > 3 ||
+      systems.length > 1 ||
+      windowWidth < 1200
+    ) {
       return 12;
     } else {
       return 8;
