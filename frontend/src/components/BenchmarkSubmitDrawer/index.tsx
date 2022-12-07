@@ -41,7 +41,7 @@ export function BenchmarkSubmitDrawer(props: Props) {
         category: "Benchmark",
         action: `benchmark_submit_success`,
       });
-      message.success(`Successfully submitted benchmark (${benchmark.id})}).`);
+      message.success(`Successfully submitted benchmark (${benchmark.id})).`);
       setInput(benchmarkConfigString);
       onClose();
     } catch (e) {
