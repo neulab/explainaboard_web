@@ -50,4 +50,8 @@ export function generateLeaderboardURL(
   return url;
 }
 
+export function capitalizeFirstLetter(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
 export * from "./typing_utils";

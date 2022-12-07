@@ -1,7 +1,6 @@
 import React from "react";
 import {
   Button,
-  ButtonProps,
   Input,
   Select,
   Space,
@@ -20,6 +19,7 @@ import { SystemModel } from "../../models";
 import { LoginState, useUser } from "../useUser";
 import { backendClient, parseBackendError } from "../../clients";
 import { FilterUpdate, SystemFilter } from "./SystemFilter";
+import { NewResourceButton } from "../Button";
 
 interface Props {
   systems: SystemModel[];
@@ -254,36 +254,8 @@ export function SystemTableTools({
           style={{ minWidth: "120px" }}
         />
 
-        <NewSystemButton onClick={showSubmitDrawer} />
+        <NewResourceButton onClick={showSubmitDrawer} resourceName="system" />
       </Space>
     </div>
-  );
-}
-
-function NewSystemButton(props: ButtonProps) {
-  const { login, state } = useUser();
-  if (state === LoginState.yes)
-    return (
-      <Button
-        style={{ backgroundColor: "#28a745", borderColor: "#28a745" }}
-        type="primary"
-        {...props}
-      >
-        Submit New System
-      </Button>
-    );
-  return (
-    <Tooltip
-      title="Please sign in to submit new systems"
-      placement="topLeft"
-      defaultVisible
-    >
-      <Button
-        onClick={login}
-        style={{ borderColor: "#28a745", color: "#28a745" }}
-      >
-        Submit New System
-      </Button>
-    </Tooltip>
   );
 }
