@@ -1,8 +1,18 @@
 import React, { useCallback, useEffect } from "react";
 import { UploadChangeParam, UploadFile } from "antd/lib/upload/interface";
-import { Space, Button, CheckboxOptionType, Radio, Upload, Input } from "antd";
+import {
+  Space,
+  Button,
+  CheckboxOptionType,
+  Radio,
+  Upload,
+  Input,
+  Popover,
+} from "antd";
 import { PlusOutlined, UploadOutlined } from "@ant-design/icons";
-
+import { CodeBlock, dracula } from "react-code-blocks";
+import { customDatasetExamplesMap } from "./CustomDatasetFileFormats";
+import { systemOutputExamplesMap } from "./SystemOutputFileFormats";
 export interface DataFileValue {
   fileList?: UploadFile[];
   // A map from uploaded file uid to the system name
@@ -13,13 +23,53 @@ interface Props {
   value?: DataFileValue;
   onChange?: (value: DataFileValue) => void;
   maxFileCount?: number;
+  taskName: string;
+  forCustomDataset?: boolean;
   allowedFileTypes: string[];
 }
+
+/** Returns required format for system outputs based on selected task and file
+type. Returns custom dataset format if `forCustomDataset` is set to true. */
+function getFileFormat(
+  selectedTask: string,
+  fileType: string,
+  forCustomDataset = false
+) {
+  const header = fileType + " file format";
+  const codeBlocklanguage = fileType === "json" ? "json" : "text";
+  const taskExamples = forCustomDataset
+    ? customDatasetExamplesMap[selectedTask]
+    : systemOutputExamplesMap[selectedTask];
+  if (taskExamples === undefined) return; // task not found in xxxFileFormats.tsx
+
+  const example = taskExamples[fileType];
+  if (example === undefined) return; // fileType not found for task in xxxFileFormats.tsx
+
+  const exampleText = taskExamples[fileType].example;
+  if (exampleText === undefined) return;
+
+  const descriptionText = taskExamples[fileType].description;
+  return (
+    <>
+      {header}: {descriptionText}
+      <br />
+      <b>Example:</b>
+      <CodeBlock
+        language={codeBlocklanguage}
+        text={exampleText}
+        theme={dracula}
+      />
+    </>
+  );
+}
+
 /** DataFileUpload that works with Form.Item */
 export function DataFileUpload({
   value,
   onChange,
   allowedFileTypes,
+  taskName,
+  forCustomDataset = false,
   maxFileCount = 1,
 }: Props) {
   const fileList = value?.fileList;
@@ -91,6 +141,22 @@ export function DataFileUpload({
         size="small"
         options={FILE_TYPES.map((type) => ({
           ...type,
+          label: !allowedFileTypes.includes(type.value as string) ? (
+            <>{type.label}</>
+          ) : (
+            <Popover
+              content={getFileFormat(
+                taskName,
+                type.value as string,
+                forCustomDataset
+              )}
+              overlayStyle={{
+                maxWidth: "600px",
+              }}
+            >
+              {type.label}
+            </Popover>
+          ),
           disabled: !allowedFileTypes.includes(type.value as string),
         }))}
         value={fileType}
