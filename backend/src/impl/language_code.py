@@ -1,16 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 from iso639 import languages
 
-
-@dataclass
-class LanguageCode:
-    name: str
-    iso1_code: str
-    iso3_code: str
-
+from explainaboard_web.models.language_code import LanguageCode
 
 _additional_language_codes: list[LanguageCode] = [
     LanguageCode("Other", "other", "other"),  # for languages not in ISO396
@@ -21,7 +13,7 @@ _additional_language_codes: list[LanguageCode] = [
 def get_language_codes():
     """getter for language codes data"""
     language_codes = [
-        LanguageCode(lang.name, lang.part1, lang.part3)
+        LanguageCode(lang.name, lang.part3, lang.part1)
         for lang in list(languages)
         if len(lang.part3) > 0
     ]
