@@ -77,7 +77,7 @@ export function TutorialPage() {
             />
             <li>
               Along the filter bar in the systems page, click the{" "}
-              <Text strong>New</Text> button.
+              <Text strong>Submit New System</Text> button.
             </li>
             <Image
               src={"/screenshots/filterBar.png"}
@@ -167,7 +167,8 @@ export function TutorialPage() {
             <li>
               Below that, the <Text strong>Fine-grained Performance</Text>{" "}
               section displays one bar chart for each feature. You can view the
-              results for different metrics by switching tabs.
+              results for different metrics by switching tabs. For our sst2
+              example, there is only one metric (Accuracy)
             </li>
             <Image
               src={"/screenshots/finegrainedPerformanceMetricTab.png"}
@@ -178,8 +179,8 @@ export function TutorialPage() {
               By clicking on any of the bars in a bar chart, an example table
               would show up at the bottom of the page. This table will sample
               some of the data points which lies in that particular bar. For
-              example, in a machine translation task, you can use it to compare
-              the reference and your hypothesis.
+              example, you can see what polarity your model predicts for each
+              sentence.
             </li>
             <Image
               src={"/screenshots/exampleTable.png"}
