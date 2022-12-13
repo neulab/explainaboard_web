@@ -21,14 +21,16 @@ export function TutorialPage() {
       <Typography>
         <Title>What is ExplainaBoard? Why Do We Need It?</Title>
         <Paragraph>
-          If you are using a machine learning/AI system, you'll want to know how well it works.
-          The standard way to do this is by creating an evaluation set and calculating the
-          accuracy of your system, maybe comparing a few systems together to see which
-          one is performing better. However, this still doesn't answer many important
-          questions. For instance, "<i>Where</i> is my system failing?" "Is it failing
-          badly for <i>particular types of inputs</i>?" "<i>What should I focus on</i>
-          when trying to improve my systems?" These are the questions that ExplainaBoard
-          was designed to answer.
+          If you are using a machine learning/AI system, you&apos;ll want to
+          know how well it works. The standard way to do this is by creating an
+          evaluation set and calculating the accuracy of your system, maybe
+          comparing a few systems together to see which one is performing
+          better. However, this still doesn&apos;t answer many important
+          questions. For instance, &quot;<i>Where</i> is my system
+          failing?&quot; &quot;Is it failing badly for{" "}
+          <i>particular types of inputs</i>?&quot; &quot;
+          <i>What should I focus on</i> when trying to improve my systems?&quot;
+          These are the questions that ExplainaBoard was designed to answer.
         </Paragraph>
 
         <Title level={2}>Getting Started</Title>
