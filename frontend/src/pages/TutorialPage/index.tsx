@@ -34,7 +34,7 @@ export function TutorialPage() {
         <Title level={2}>Getting Started</Title>
         <Paragraph>
           In this quickstart guide, we will walk you through the basic
-          functionalities of ExplainaBoard:
+          functionality of ExplainaBoard:
         </Paragraph>
         <Paragraph>
           <ul>
