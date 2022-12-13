@@ -1,8 +1,5 @@
-// Please remove
-// 1. "const benchmark_config = "
-// 2. all comments (lines prefixed with "//")
+// Please remove all comments (lines starting with "//")
 // before submitting as they are not allowed in JSON
-//
 // eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
 const benchmark_config = {
   // == REQUIRED FIELDS ==

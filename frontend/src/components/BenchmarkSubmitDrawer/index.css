@@ -1,0 +1,29 @@
+/* Forcefully apply the same style used in react-code-blocks to align the style of
+text area with that of react-code-blocks. */
+#benchmark-submit-drawer-text-area {
+  padding: 8px !important;
+  line-height: 1.66667 !important;
+  overflow-x: auto !important;
+  caret-color: #fff !important;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace !important;
+}
+
+/*
+react-simple-code-editor sets the text color in text-area to be transparent, but
+this makes them invisible when selected (e.g., highlighting using a cursor).
+We forcefully apply the styles below to make them appear as white
+during selection.
+*/
+::selection {
+  -webkit-text-fill-color: #fff !important;
+}
+::-moz-selection {
+  -webkit-text-fill-color: #fff !important;
+}
+
+/* Forcefully apply the style used in react-code-blocks. */
+.benchmark-submit-drawer-pre {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
+    monospace !important;
+}

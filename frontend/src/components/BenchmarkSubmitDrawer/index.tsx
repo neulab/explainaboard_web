@@ -9,12 +9,14 @@ import {
   Row,
   Col,
 } from "antd";
-import { CodeBlock, dracula } from "react-code-blocks";
-import TextareaAutosize from "react-textarea-autosize";
+import Editor from "react-simple-code-editor";
 import ReactGA from "react-ga4";
+import "./index.css";
+
+import { CodeBlock, dracula } from "react-code-blocks";
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import benchmarkConfigString from "raw-loader!./benchmark_config.js";
+import benchmarkConfigJs from "raw-loader!./benchmark_config.js";
 import { backendClient, parseBackendError } from "../../clients";
 
 interface Props extends DrawerProps {
@@ -27,9 +29,29 @@ enum State {
   other,
 }
 
+function configJsToJsonWithComments(str: string) {
+  const strs = str.split("\n");
+  for (let i = 0; i < strs.length; i++) {
+    const substr = strs[i];
+    // remove the line with eslint comment
+    if (substr.includes("eslint")) {
+      strs[i] = "";
+      // update the first open bracket
+    } else if (substr.includes("const benchmark")) {
+      strs[i] = "{";
+      // update the last closing bracket
+    } else if (substr.includes("};")) {
+      strs[i] = "}";
+    }
+  }
+  return strs.join("\n");
+}
+
 export function BenchmarkSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.other);
-  const [input, setInput] = useState(benchmarkConfigString);
+  const [input, setInput] = useState(
+    configJsToJsonWithComments(benchmarkConfigJs)
+  );
 
   const { onClose, visible, ...rest } = props;
 
@@ -42,7 +64,7 @@ export function BenchmarkSubmitDrawer(props: Props) {
         action: `benchmark_submit_success`,
       });
       message.success(`Successfully submitted benchmark (${benchmark.id})).`);
-      setInput(benchmarkConfigString);
+      setInput(configJsToJsonWithComments(benchmarkConfigJs));
       onClose();
     } catch (e) {
       if (e instanceof SyntaxError) {
@@ -80,35 +102,29 @@ export function BenchmarkSubmitDrawer(props: Props) {
       footer={footer}
       onClose={onClose}
       visible={visible}
-      width="86%"
+      width="50%"
       {...rest}
     >
       <Spin spinning={state === State.loading} tip="processing...">
-        <Row gutter={[16, 16]}>
-          <Col span={12}>Editor</Col>
-          <Col span={12}>Preview</Col>
-        </Row>
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <TextareaAutosize
-              // this style is required to align the lines of code in textarea with
-              // with those in code block
-              style={{
-                width: "100%",
-                lineHeight: 1.66667,
-                paddingTop: "8px",
-              }}
-              rows={benchmarkConfigString.split("\n").length}
+        <Row>
+          <Col style={{ width: "100%" }}>
+            <Editor
+              onValueChange={(input) => setInput(input)}
+              highlight={(code) => (
+                <CodeBlock
+                  text={code}
+                  language="json"
+                  theme={dracula}
+                  showLineNumbers={false}
+                  customStyle={{
+                    whiteSpace: "pre-wrap",
+                    overflowWrap: "anywhere",
+                  }}
+                />
+              )}
+              textareaId="benchmark-submit-drawer-text-area"
+              preClassName="benchmark-submit-drawer-pre"
               value={input}
-              onChange={(e) => setInput(e.currentTarget.value)}
-            />
-          </Col>
-          <Col span={12}>
-            <CodeBlock
-              text={input}
-              language="json"
-              theme={dracula}
-              showLineNumbers={false}
             />
           </Col>
         </Row>
