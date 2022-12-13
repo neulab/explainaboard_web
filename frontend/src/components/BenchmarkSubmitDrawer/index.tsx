@@ -117,6 +117,8 @@ export function BenchmarkSubmitDrawer(props: Props) {
                   theme={dracula}
                   showLineNumbers={false}
                   customStyle={{
+                    /* This style helps align react-code-blocks
+                    with react-simple-code-editor. */
                     whiteSpace: "pre-wrap",
                     overflowWrap: "anywhere",
                   }}

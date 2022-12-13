@@ -1,5 +1,5 @@
 /* Forcefully apply the same style used in react-code-blocks to align the style of
-text area with that of react-code-blocks. */
+textarea in react-simple-code-editor with that of react-code-blocks. */
 #benchmark-submit-drawer-text-area {
   padding: 8px !important;
   line-height: 1.66667 !important;
@@ -20,7 +20,7 @@ during selection. */
   -webkit-text-fill-color: #fff !important;
 }
 
-/* Forcefully apply the style used in react-code-blocks. */
+/* Forcefully re-apply the style used in react-code-blocks as it got overwritten. */
 .benchmark-submit-drawer-pre {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace !important;
