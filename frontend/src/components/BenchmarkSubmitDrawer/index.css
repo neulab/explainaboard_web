@@ -9,12 +9,10 @@ text area with that of react-code-blocks. */
     monospace !important;
 }
 
-/*
-react-simple-code-editor sets the text color in text-area to be transparent, but
+/* react-simple-code-editor sets the text color in text-area to be transparent, but
 this makes them invisible when selected (e.g., highlighting using a cursor).
 We forcefully apply the styles below to make them appear as white
-during selection.
-*/
+during selection. */
 ::selection {
   -webkit-text-fill-color: #fff !important;
 }
