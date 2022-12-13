@@ -112,7 +112,7 @@ export function ComboAnalysisChart(props: Props) {
       text: title,
       left: "center",
       textStyle: {
-        width: "250",
+        width: "180",
         overflow: "break",
       },
     },
@@ -121,12 +121,13 @@ export function ComboAnalysisChart(props: Props) {
     },
     toolbox: {
       show: true,
+      left: 0,
+      itemSize: 20,
       feature: {
         saveAsImage: { show: true },
       },
     },
     grid: {
-      left: "3%",
       right: "4%",
       bottom: "3%",
       containLabel: true,
