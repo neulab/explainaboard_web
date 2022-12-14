@@ -132,24 +132,17 @@ class SystemModel(System):
             json.dumps(system_output.samples),
         )
         system_output_metadata = dataclasses.asdict(system_output.metadata)
-        # TODO(lyuyang): This related to a bug in the SDK: custom_features and
-        # custom_analyses aren't deserialized properly in some cases. When that
-        # is fixed in the SDK, this code also needs to be updated.
+
         serializer = PrimitiveSerializer()
         system_output_metadata[
             "custom_features"
         ] = system_output.metadata.custom_features
-        if system_output.metadata.custom_features:
-            levels = list(system_output_metadata["custom_features"].values())
-            if levels:
-                features = list(levels[0].values())
-                if features and not isinstance(features[0], dict):
-                    system_output_metadata["custom_features"] = serializer.serialize(
-                        system_output.metadata.custom_features
-                    )
-        system_output_metadata[
-            "custom_analyses"
-        ] = system_output.metadata.custom_analyses
+        system_output_metadata["custom_features"] = serializer.serialize(
+            system_output.metadata.custom_features
+        )
+        system_output_metadata["custom_analyses"] = serializer.serialize(
+            system_output.metadata.custom_analyses
+        )
 
         DBUtils.update_one_by_id(
             DBUtils.DEV_SYSTEM_METADATA,
@@ -187,6 +180,7 @@ class SystemModel(System):
                     selected_metric
                 ]
             system_output_metadata: dict = properties.get("system_output_metadata", {})
+            serializer = PrimitiveSerializer()
             processor_metadata = {
                 # system properties
                 "system_name": self.system_name,
@@ -199,8 +193,14 @@ class SystemModel(System):
                 "system_details": self.system_details,
                 # processor parameters
                 "metric_configs": metric_configs,
-                "custom_features": system_output_metadata.get("custom_features") or {},
-                "custom_analyses": system_output_metadata.get("custom_analyses") or [],
+                "custom_features": serializer.deserialize(
+                    system_output_metadata.get("custom_features")
+                )
+                or {},
+                "custom_analyses": serializer.deserialize(
+                    system_output_metadata.get("custom_analyses")
+                )
+                or [],
             }
 
             return processor.get_overall_statistics(
