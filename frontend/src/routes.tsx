@@ -6,6 +6,7 @@ import {
   LineChartOutlined,
   CodeOutlined,
   FileOutlined,
+  ReadOutlined,
 } from "@ant-design/icons";
 import {
   DatasetsPage,
@@ -15,6 +16,7 @@ import {
   LoginCallback,
   SystemsPage,
   TermsPage,
+  TutorialPage,
 } from "./pages";
 
 export interface Route extends RouteProps {
@@ -53,6 +55,13 @@ const routes: Route[] = [
     icon: <LineChartOutlined />,
     children: <BenchmarkPage />,
     requireLogin: false,
+  },
+  {
+    path: "/tutorial",
+    title: "Tutorial",
+    exact: true,
+    icon: <ReadOutlined />,
+    children: <TutorialPage />,
   },
   {
     path: "/terms",
