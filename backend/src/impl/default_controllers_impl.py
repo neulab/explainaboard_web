@@ -228,15 +228,14 @@ def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:
     views = []
     for k, v in view_dict.items():
         v_df = pd.DataFrame.from_dict(v)
+        columns = v_df.columns
         if by_creator:
             col_name = "creator"
         elif k == "Most-underserved Languages":
             col_name = "source_language"
         else:
-            columns = v_df.columns
-            # If the df is not grouped by system_name,
-            # choose one as the primary column
-            col_name = "system_name" if "system_name" in columns else columns[0]
+            col_name = "system_name"
+        col_name = col_name if col_name in columns else columns[0]
         views.append(BenchmarkDBUtils.dataframe_to_table(k, v_df, plot_dict, col_name))
     return Benchmark(config, views, update_time)
 
