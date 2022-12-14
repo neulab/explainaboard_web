@@ -157,7 +157,8 @@ class BenchmarkDBUtils:
         else:
             raise ValueError("system_query or datasets must be set by each benchmark")
 
-        return systems_return.systems
+        ret_systems = [x for x in systems_return.systems if x.dataset is not None]
+        return ret_systems
 
     @staticmethod
     def generate_dataframe_from_sys_ids(config: BenchmarkConfig, system_ids: list[str]):
@@ -192,7 +193,7 @@ class BenchmarkDBUtils:
                 }
             )
             dataset_configs = [
-                {"dataset_name": x, "sub_dataset": y, "dataset_split": z}
+                {"dataset_name": x, "sub_dataset": y, "split": z}
                 for x, y, z in dataset_tuples
             ]
         dataset_to_id = {
