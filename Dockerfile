@@ -26,7 +26,7 @@ RUN npm run build
 # Step #2: build the API with the client as static files
 FROM python:3.9-slim-bullseye
 RUN apt-get update \
-    && apt-get install -y default-jre curl nginx --no-install-recommends \
+    && apt-get install -y default-jre curl nginx libsqlite3-dev gcc --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
