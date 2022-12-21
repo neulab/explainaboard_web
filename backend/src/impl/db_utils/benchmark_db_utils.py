@@ -203,7 +203,9 @@ class BenchmarkDBUtils:
         dataset_metadatas: list[DatasetMetadata] = []
         for x in dataset_configs:
             dataset_return = DatasetDBUtils.find_datasets(
-                dataset_name=x["dataset_name"], sub_dataset=x.get("sub_dataset", None)
+                dataset_name=x["dataset_name"],
+                sub_dataset=x.get("sub_dataset", None),
+                strict_name_match=True,
             )
             if dataset_return.total != 1:
                 raise ValueError(
