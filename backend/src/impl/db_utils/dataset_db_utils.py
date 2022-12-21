@@ -105,6 +105,7 @@ class DatasetDBUtils:
         sub_dataset: str | None = None,
         task: str | None = None,
         no_limit: bool = False,
+        strict_name_match: bool = False,
     ) -> DatasetsReturn:
         my_db = DatasetDBUtils.get_dataset_db()
         metadata_ids: set[int] | None = None
@@ -115,6 +116,8 @@ class DatasetDBUtils:
                     metadata_ids.add(my_db.id_dict[dataset_id])
         if dataset_name is not None:
             found_items = my_db.name_trie.keys(dataset_name)
+            if strict_name_match:
+                found_items = [x for x in found_items if x == dataset_name]
             found_ids = [my_db.name_dict[x] for x in found_items]
             chained_ids = list(itertools.chain.from_iterable(found_ids))
             metadata_ids = (
