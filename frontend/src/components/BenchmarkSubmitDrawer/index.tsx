@@ -16,7 +16,7 @@ import "./index.css";
 import { CodeBlock, dracula } from "react-code-blocks";
 
 // eslint-disable-next-line import/no-webpack-loader-syntax
-import benchmarkConfigJs from "raw-loader!./benchmark_config.js";
+import benchmarkConfigJson5 from "json5-loader!./benchmark_config.json5";
 import { backendClient, parseBackendError } from "../../clients";
 
 interface Props extends DrawerProps {
@@ -29,29 +29,9 @@ enum State {
   other,
 }
 
-function configJsToJsonWithComments(str: string) {
-  const strs = str.split("\n");
-  for (let i = 0; i < strs.length; i++) {
-    const substr = strs[i];
-    // remove the line with eslint comment
-    if (substr.includes("eslint")) {
-      strs[i] = "";
-      // update the first open bracket
-    } else if (substr.includes("const benchmark")) {
-      strs[i] = "{";
-      // update the last closing bracket
-    } else if (substr.includes("};")) {
-      strs[i] = "}";
-    }
-  }
-  return strs.join("\n");
-}
-
 export function BenchmarkSubmitDrawer(props: Props) {
   const [state, setState] = useState(State.other);
-  const [input, setInput] = useState(
-    configJsToJsonWithComments(benchmarkConfigJs)
-  );
+  const [input, setInput] = useState(benchmarkConfigJson5);
 
   const { onClose, visible, ...rest } = props;
 
@@ -64,7 +44,7 @@ export function BenchmarkSubmitDrawer(props: Props) {
         action: `benchmark_submit_success`,
       });
       message.success(`Successfully submitted benchmark (${benchmark.id})).`);
-      setInput(configJsToJsonWithComments(benchmarkConfigJs));
+      setInput(benchmarkConfigJson5);
       onClose();
     } catch (e) {
       if (e instanceof SyntaxError) {

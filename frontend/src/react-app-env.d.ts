@@ -4,7 +4,7 @@ declare module "*.yaml" {
   export default data;
 }
 
-declare module "raw-loader!*" {
+declare module "json5-loader!*" {
   const data: string;
   export default data;
 }

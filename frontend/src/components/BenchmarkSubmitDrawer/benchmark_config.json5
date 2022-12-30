@@ -1,7 +1,6 @@
 // Please remove all comments (lines starting with "//")
 // before submitting as they are not allowed in JSON
-// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
-const benchmark_config = {
+{
   // == REQUIRED FIELDS ==
   id: "example",
   is_private: false,
@@ -65,4 +64,4 @@ const benchmark_config = {
     task_name: "example-task",
   },
   default_views: ["Example View"],
-};
+}
