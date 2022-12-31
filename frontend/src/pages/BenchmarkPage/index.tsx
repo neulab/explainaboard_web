@@ -36,9 +36,9 @@ export function BenchmarkPage() {
     const newString = filters.toUrlParams().toString();
     if (prevString !== newString) {
       history.replace({ search: filters.toUrlParams().toString() });
+    } else {
+      fetchItems();
     }
-
-    fetchItems();
   }, [history, filters, query, id]);
 
   if (isAtRootPage || items.length !== 0) {
