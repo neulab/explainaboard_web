@@ -141,9 +141,12 @@ class BenchmarkDBUtils:
             "last_modified"
         ] = datetime.datetime.utcnow()
 
-        config = BenchmarkConfig.from_dict(props_dict)
         BenchmarkDBUtils._convert_id_to_db(props_dict)
         DBUtils.insert_one(DBUtils.BENCHMARK_METADATA, props_dict)
+
+        BenchmarkDBUtils._convert_id_from_db(props_dict)
+        UserDBUtils.insert_preferred_username(props_dict)
+        config = BenchmarkConfig.from_dict(props_dict)
 
         return config
 
