@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useHistory } from "react-router-dom";
 import "./index.css";
 import {
   Card,
@@ -10,6 +9,7 @@ import {
   Space,
   Popconfirm,
   Button,
+  Radio,
   message,
 } from "antd";
 import { BenchmarkConfig } from "../../clients/openapi";
@@ -19,15 +19,22 @@ import { BenchmarkSubmitDrawer } from "../BenchmarkSubmitDrawer";
 import { backendClient, parseBackendError } from "../../clients";
 import { DeleteOutlined } from "@ant-design/icons";
 import { useUser } from "../useUser";
+import { FilterUpdate } from "../../pages/BenchmarkPage/BenchmarkFilter";
 
 interface Props {
   items: Array<BenchmarkConfig>;
-  subtitle: string;
+  isAtRootPage: boolean;
+  showFeatured: boolean;
+  onFilterChange: (value: FilterUpdate) => void;
 }
 
-export function BenchmarkCards({ items, subtitle }: Props) {
+export function BenchmarkCards({
+  items,
+  isAtRootPage,
+  showFeatured,
+  onFilterChange,
+}: Props) {
   const { userInfo } = useUser();
-  const history = useHistory();
   const [submitDrawerVisible, setSubmitDrawerVisible] = useState(false);
 
   async function deleteBenchmark(benchmarkID: string) {
@@ -46,17 +53,35 @@ export function BenchmarkCards({ items, subtitle }: Props) {
     setSubmitDrawerVisible(true);
   }
 
+  const featuredVsAllOptions = [
+    { label: "Featured", value: true, disabled: !isAtRootPage },
+    { label: "All", value: false, disabled: !isAtRootPage },
+  ];
+
+  const featuredVsAllBenchmarksToggle = (
+    <Radio.Group
+      options={featuredVsAllOptions}
+      onChange={({ target: { value } }) => {
+        onFilterChange({ showFeatured: value });
+      }}
+      value={showFeatured}
+      optionType="button"
+      buttonStyle="solid"
+    />
+  );
+
   return (
     <div className="page">
       <Helmet>
         <title>ExplainaBoard - Benchmarks</title>
       </Helmet>
       <PageHeader
-        onBack={() => history.push("/")}
+        onBack={() => onFilterChange({ parentId: "" })}
         title="Benchmarks"
-        subTitle={subtitle}
+        subTitle="Select a benchmark"
       />
-      <Row justify="end">
+      <Row justify="space-between" style={{ marginBottom: "10px" }}>
+        <Space>{featuredVsAllBenchmarksToggle}</Space>
         <Space style={{ width: "fit-content", float: "right" }}>
           <NewResourceButton
             onClick={showSubmitDrawer}
@@ -80,9 +105,9 @@ export function BenchmarkCards({ items, subtitle }: Props) {
                     <Typography.Title level={3}>{config.name}</Typography.Title>
                   </div>
                 }
-                onClick={() =>
-                  history.push(`${document.location.pathname}?id=${config.id}`)
-                }
+                onClick={() => {
+                  onFilterChange({ parentId: config.id, showFeatured: false });
+                }}
                 cover={
                   <img
                     alt="example"
@@ -91,6 +116,7 @@ export function BenchmarkCards({ items, subtitle }: Props) {
                   />
                 }
               >
+                <Row>Creator: {config.preferred_username}</Row>
                 <Row justify="end">
                   <Popconfirm
                     disabled={notCreator}

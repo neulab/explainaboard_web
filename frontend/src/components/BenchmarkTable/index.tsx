@@ -20,10 +20,12 @@ import { useHistory, Link } from "react-router-dom";
 import { CheckSquareTwoTone } from "@ant-design/icons";
 import { Plot } from "../../components";
 import { Helmet } from "react-helmet";
+import { FilterUpdate } from "../../pages/BenchmarkPage/BenchmarkFilter";
 
 interface Props {
   /**initial value for task filter */
   benchmarkID: string;
+  onFilterChange: (value: FilterUpdate) => void;
 }
 
 function tableToPage(my_view: BenchmarkTableData) {
@@ -75,7 +77,7 @@ function tableToPage(my_view: BenchmarkTableData) {
 }
 
 /** A table that lists all systems */
-export function BenchmarkTable({ benchmarkID }: Props) {
+export function BenchmarkTable({ benchmarkID, onFilterChange }: Props) {
   const [benchmark, setBenchmark] = useState<Benchmark>();
   const [pageState, setPageState] = useState(PageState.loading);
   const [byCreator, setByCreator] = useState<boolean>(false);
@@ -161,6 +163,10 @@ export function BenchmarkTable({ benchmarkID }: Props) {
           <Helmet>
             <title>ExplainaBoard - {benchmark.config.name} Benchmark</title>
           </Helmet>
+          <PageHeader
+            title={<b style={{ fontSize: "30px" }}>{benchmarkID} Benchmark</b>}
+            onBack={() => onFilterChange({ parentId: "" })}
+          />
           <Descriptions
             title={<b style={{ fontSize: "30px" }}>{benchmark.config.name}</b>}
           >
