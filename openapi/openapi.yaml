@@ -89,6 +89,12 @@ paths:
           schema:
             type: string
           required: false
+        - in: query
+          name: featured
+          example: true
+          schema:
+            type: boolean
+          required: false
       responses:
         "200":
           description: OK
@@ -1556,7 +1562,9 @@ components:
           properties:
             creator:
               type: string
-          required: [creator]
+            preferred_username:
+              type: string
+          required: [creator, preferred_username]
 
     SignificanceTestInfo:
       type: object

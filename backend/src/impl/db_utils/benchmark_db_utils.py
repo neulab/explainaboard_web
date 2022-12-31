@@ -14,6 +14,7 @@ from explainaboard_web.impl.constants import ALL_LANG, LING_WEIGHT, POP_WEIGHT
 from explainaboard_web.impl.db_utils.dataset_db_utils import DatasetDBUtils
 from explainaboard_web.impl.db_utils.db_utils import DBUtils
 from explainaboard_web.impl.db_utils.system_db_utils import SystemDBUtils
+from explainaboard_web.impl.db_utils.user_db_utils import UserDBUtils
 from explainaboard_web.impl.internal_models.system_model import SystemModel
 from explainaboard_web.impl.utils import abort_with_error_message
 from explainaboard_web.models import (
@@ -50,7 +51,9 @@ class BenchmarkDBUtils:
         doc.pop("id")
 
     @staticmethod
-    def find_configs(parent: str, page: int = 0, page_size: int = 0):
+    def find_configs(
+        parent: str, page: int = 0, page_size: int = 0
+    ) -> list[BenchmarkConfig]:
         permissions_list = [{"is_private": False}]
         user = get_user()
         if user:
@@ -61,21 +64,32 @@ class BenchmarkDBUtils:
         cursor, _ = DBUtils.find(
             DBUtils.BENCHMARK_METADATA, filt=filt, limit=page * page_size
         )
-        configs = []
+
+        config_dicts = []
         for config_dict in list(cursor):
             BenchmarkDBUtils._convert_id_from_db(config_dict)
             parent_id = config_dict.get("parent")
             if parent_id:
-                parent_config = BenchmarkDBUtils.find_config_by_id(parent_id)
+                # do not insert preferred username here as every single config will
+                # issue a find instruction in DB, which creates a lot of overhead
+                parent_config = BenchmarkDBUtils.find_config_by_id(
+                    parent_id, include_preferred_username=False
+                )
                 parent_dict = parent_config.to_dict()
                 BenchmarkDBUtils._update_with_not_none_values(parent_dict, config_dict)
                 config_dict = parent_dict
 
-            configs.append(BenchmarkConfig.from_dict(config_dict))
-        return configs
+            config_dicts.append(config_dict)
+
+        # insert preferred usernames in batch to reduce overhead in DB
+        UserDBUtils.insert_preferred_usernames(config_dicts)
+
+        return [BenchmarkConfig.from_dict(config_dict) for config_dict in config_dicts]
 
     @staticmethod
-    def find_config_by_id(benchmark_id: str) -> BenchmarkConfig:
+    def find_config_by_id(
+        benchmark_id: str, include_preferred_username: bool = True
+    ) -> BenchmarkConfig:
         config_dict = DBUtils.find_one_by_id(DBUtils.BENCHMARK_METADATA, benchmark_id)
         if not config_dict:
             abort_with_error_message(404, f"benchmark id: {benchmark_id} not found")
@@ -88,7 +102,31 @@ class BenchmarkDBUtils:
             BenchmarkDBUtils._update_with_not_none_values(parent_dict, config_dict)
             config_dict = parent_dict
 
+        if include_preferred_username:
+            UserDBUtils.insert_preferred_username(config_dict)
+        else:
+            config_dict["preferred_username"] = ""
+
         return BenchmarkConfig.from_dict(config_dict)
+
+    @staticmethod
+    def find_configs_featured() -> list[BenchmarkConfig]:
+        cursor, _ = DBUtils.find(DBUtils.BENCHMARK_FEATURED_LIST, limit=1)
+        cursor_list = list(cursor)
+        if len(cursor_list) < 1:
+            abort_with_error_message(500, "featured list not found")
+
+        config_dicts = []
+        for benchmark_id in cursor_list[0]["ids"]:
+            config_dict = BenchmarkDBUtils.find_config_by_id(
+                benchmark_id, include_preferred_username=False
+            ).to_dict()
+            config_dicts.append(config_dict)
+
+        # insert preferred usernames in batch to reduce overhead in DB
+        UserDBUtils.insert_preferred_usernames(config_dicts)
+
+        return [BenchmarkConfig.from_dict(config_dict) for config_dict in config_dicts]
 
     @staticmethod
     def create_benchmark(props: BenchmarkCreateProps) -> BenchmarkConfig:
