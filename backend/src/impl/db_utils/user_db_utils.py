@@ -9,6 +9,19 @@ from explainaboard_web.models.user import User
 
 class UserDBUtils:
     @staticmethod
+    def insert_preferred_username(doc: dict) -> None:
+        user = UserDBUtils.find_users([doc["creator"]])[0]
+        doc["preferred_username"] = user.preferred_username
+
+    @staticmethod
+    def insert_preferred_usernames(docs: list[dict]) -> None:
+        user_ids = {doc["creator"] for doc in docs}
+        users = UserDBUtils.find_users(list(user_ids))
+        id_to_preferred_username = {user.id: user.preferred_username for user in users}
+        for doc in docs:
+            doc["preferred_username"] = id_to_preferred_username[doc["creator"]]
+
+    @staticmethod
     def create_user(user: User) -> User:
         doc = user.to_dict()
         doc["_id"] = doc["id"]

@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.24"
+  version: "0.2.25"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -88,6 +88,12 @@ paths:
           example: globalbench
           schema:
             type: string
+          required: false
+        - in: query
+          name: featured
+          example: true
+          schema:
+            type: boolean
           required: false
       responses:
         "200":
@@ -1556,7 +1562,9 @@ components:
           properties:
             creator:
               type: string
-          required: [creator]
+            preferred_username:
+              type: string
+          required: [creator, preferred_username]
 
     SignificanceTestInfo:
       type: object

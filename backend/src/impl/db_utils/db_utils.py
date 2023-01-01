@@ -29,6 +29,9 @@ class DBUtils:
     BENCHMARK_METADATA = DBCollection(
         db_name="metadata", collection_name="benchmark_metadata"
     )
+    BENCHMARK_FEATURED_LIST = DBCollection(
+        db_name="metadata", collection_name="benchmark_featured_list"
+    )
 
     @staticmethod
     def _convert_id(_id: str | ObjectId):
