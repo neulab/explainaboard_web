@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import logging
 import os
 from dataclasses import dataclass
 
@@ -174,6 +175,7 @@ class BenchmarkDBUtils:
     @staticmethod
     def load_sys_infos(config: BenchmarkConfig) -> list[SystemModel]:
         if config.system_query is not None:
+            print(f"{config.system_query=}")
             systems_return = SystemDBUtils.find_systems(
                 dataset_name=config.system_query.get("dataset_name"),
                 subdataset_name=config.system_query.get("sub_dataset"),
@@ -329,10 +331,10 @@ class BenchmarkDBUtils:
                             for k, v in m.items():
                                 if k == dataset_metric["name"]:
                                     matching_results.append(v)
-                        if len(matching_results) != 1:
+                        if len(matching_results) == 0:
                             performance = None
                         else:
-                            performance = matching_results[0]
+                            performance = max(matching_results)
                         column_dict["score"] = (
                             performance
                             if performance
@@ -350,14 +352,28 @@ class BenchmarkDBUtils:
                             info = "test"
                         elif df_key == "source_language":
                             if len(dataset_metadata.languages) == 0:
-                                raise ValueError(f"no {df_key} in {dataset_metadata}")
-                            info = dataset_metadata.languages[0]
+                                logging.getLogger().warning(
+                                    f"No languages found for "
+                                    f"{dataset_metadata.dataset_name}."
+                                )
+                                info = "eng"
+                            else:
+                                info = dataset_metadata.languages[0]
                         elif df_key == "target_language":
                             if len(dataset_metadata.languages) == 0:
-                                raise ValueError(f"no {df_key} in {dataset_metadata}")
-                            info = dataset_metadata.languages[-1]
+                                logging.getLogger().warning(
+                                    f"No languages found for "
+                                    f"{dataset_metadata.dataset_name}."
+                                )
+                                info = "eng"
+                            else:
+                                info = dataset_metadata.languages[-1]
                         else:
-                            raise ValueError(f"could not find information for {df_key}")
+                            logging.getLogger().warning(
+                                f"No {df_key} found for "
+                                f"{dataset_metadata.dataset_name}."
+                            )
+                            info = None
                         df_arr.append(info)
         return pd.DataFrame(df_input)
 
