@@ -175,7 +175,6 @@ class BenchmarkDBUtils:
     @staticmethod
     def load_sys_infos(config: BenchmarkConfig) -> list[SystemModel]:
         if config.system_query is not None:
-            print(f"{config.system_query=}")
             systems_return = SystemDBUtils.find_systems(
                 dataset_name=config.system_query.get("dataset_name"),
                 subdataset_name=config.system_query.get("sub_dataset"),
