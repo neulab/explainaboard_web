@@ -438,7 +438,10 @@ class BenchmarkDBUtils:
             else:
                 raise ValueError(f"Unsupported operation {operation['op']} in spec.")
             if output_df.isnull().values.any():
-                raise ValueError(f"op {operation} resulted in NaN:\n{output_df}")
+                logging.getLogger().warning(
+                    f"op {operation} resulted in NaN, replacing with 0"
+                )
+                output_df = output_df.fillna(0)
             # By default, when a pandas df is aggregated without groupby it becomes a
             # series and is represented as a column so the labels are in the row
             # indices. The below code compensates for this.
