@@ -226,6 +226,20 @@ class BenchmarkDBUtils:
         # Get from configuration if it exists
         if benchmark_config.datasets:
             dataset_configs = [dict(x) for x in benchmark_config.datasets]
+            dataset_to_id = {
+                (
+                    x["dataset_name"],
+                    x.get("sub_dataset", None),
+                    x.get("split", "test"),
+                ): i
+                for i, x in enumerate(dataset_configs)
+            }
+            systems = [
+                x
+                for x in systems
+                if (x.dataset.dataset_name, x.dataset.sub_dataset, x.dataset.split)
+                in dataset_to_id
+            ]
         # Collect (and deduplicate) all datasets from system infos otherwise
         else:
             dataset_tuples = list(
@@ -238,23 +252,30 @@ class BenchmarkDBUtils:
                 {"dataset_name": x, "sub_dataset": y, "split": z}
                 for x, y, z in dataset_tuples
             ]
-        dataset_to_id = {
-            (x["dataset_name"], x.get("sub_dataset", None), x.get("split", "test")): i
-            for i, x in enumerate(dataset_configs)
-        }
-        dataset_metadatas: list[DatasetMetadata] = []
+            dataset_to_id = {
+                (
+                    x["dataset_name"],
+                    x.get("sub_dataset", None),
+                    x.get("split", "test"),
+                ): i
+                for i, x in enumerate(dataset_configs)
+            }
+
+        dataset_metadatas: list[DatasetMetadata | None] = []
         for x in dataset_configs:
             dataset_return = DatasetDBUtils.find_datasets(
                 dataset_name=x["dataset_name"],
                 sub_dataset=x.get("sub_dataset", None),
                 strict_name_match=True,
             )
-            if dataset_return.total != 1:
-                raise ValueError(
+            if dataset_return.total == 1:
+                dataset_metadatas.append(dataset_return.datasets[0])
+            else:
+                logging.getLogger().warning(
                     f"Could not find dataset "
                     f'{x["dataset_name"]}, {x.get("sub_dataset", None)}'
                 )
-            dataset_metadatas.append(dataset_return.datasets[0])
+                dataset_metadatas.append(None)
 
         # --- Rearrange so we have each system's result over each dataset
         system_dataset_results: dict[str, list[SystemModel | None]] = {}
@@ -303,6 +324,8 @@ class BenchmarkDBUtils:
             for dataset_config, dataset_metadata, sys in zip(
                 dataset_configs, dataset_metadatas, systems
             ):
+                if dataset_metadata is None:
+                    continue
                 column_dict = dict(dataset_config)
                 column_dict["system_name"] = sys_name
                 dataset_metrics: list[BenchmarkMetric] = dataset_config.get(
