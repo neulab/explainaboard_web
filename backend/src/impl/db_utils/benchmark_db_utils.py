@@ -184,8 +184,6 @@ class BenchmarkDBUtils:
                 page=0,
                 page_size=0,
             )
-            if systems_return.total == 0:
-                raise ValueError(f"no system outputs found for {config.system_query}")
         elif config.datasets is not None:
             dataset_list = []
             for record in config.datasets:
