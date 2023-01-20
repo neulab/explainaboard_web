@@ -6,6 +6,7 @@ import logging
 import os
 from dataclasses import dataclass
 
+import numpy as np
 import pandas as pd
 from explainaboard.utils.cache_api import get_cache_dir, open_cached_file
 from pandas import Series
@@ -434,6 +435,13 @@ class BenchmarkDBUtils:
                 weight = output_df[operation["weight"]]
                 if weight_map:
                     weight = weight.map(weight_map)
+                    if weight.isnull().values.any():
+                        weight = weight.fillna(0)
+                # Adjust the logit of the weight to make it more or less peaky
+                weight_logit_multiplier = operation.get("weight_logit_multiplier")
+                if weight_logit_multiplier is not None:
+                    weight = np.exp(np.log(weight + 1e-8) * weight_logit_multiplier)
+                    weight /= sum(weight)
                 output_df["score"] = output_df["score"] * weight
                 if op == "weighted_sum":
                     if len(group_by):
