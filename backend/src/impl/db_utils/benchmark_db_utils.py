@@ -399,6 +399,34 @@ class BenchmarkDBUtils:
         return pd.DataFrame(df_input)
 
     @staticmethod
+    def _gini(df: pd.DataFrame, numeric_only: bool) -> pd.Series:
+        """Calculate the Gini coefficient of a numpy array."""
+        # based on bottom eq:
+        # http://www.statsdirect.com/help/generatedimages/equations/equation154.svg
+        # from:
+        # http://www.statsdirect.com/help/default.htm#nonparametric_methods/gini.htm
+        # All values are treated equally, arrays must be 1d:
+        # Get the score column for each task in df as a numpy array:
+        if numeric_only:
+            numerics = ["int16", "int32", "int64", "float16", "float32", "float64"]
+            df = df.select_dtypes(include=numerics)
+        data = []
+        index = []
+        for col in df.columns:
+            array = df[col].to_numpy()
+            x = np.sort(array)
+            # Gini coefficient:
+            total = 0
+            for i, xi in enumerate(x[:-1], 1):
+                total += np.sum(np.abs(xi - x[i:]))
+            gini = total / (len(x) ** 2 * np.mean(x))
+            # Round off to 5 decimal places:
+            data.append(gini)
+            index.append(col)
+
+        return pd.Series(data=data, index=index)
+
+    @staticmethod
     def aggregate_view(
         input_df: pd.DataFrame, view_spec: BenchmarkViewConfig, by_creator: bool
     ) -> pd.DataFrame:
@@ -420,7 +448,7 @@ class BenchmarkDBUtils:
                 weight_map = BenchmarkDBUtils._SPECIAL_WEIGHT_MAPS[weight_map]
             # Perform operations
             op = operation["op"]
-            if op in {"mean", "sum", "max", "min"}:
+            if op in {"mean", "sum", "max", "min", "gini"}:
                 if len(group_by) > 0:
                     output_df = output_df.groupby(group_by)
                 if op == "mean":
@@ -431,6 +459,12 @@ class BenchmarkDBUtils:
                     output_df = output_df.max(numeric_only=True)
                 elif op == "min":
                     output_df = output_df.min(numeric_only=True)
+                elif op == "gini":
+                    if len(group_by) > 0:
+                        logging.getLogger().warning(
+                            "Cannot group and gini, skipping grouping"
+                        )
+                    output_df = BenchmarkDBUtils._gini(output_df, numeric_only=True)
             elif op in {"multiply", "weighted_sum"}:
                 weight = output_df[operation["weight"]]
                 if weight_map:
