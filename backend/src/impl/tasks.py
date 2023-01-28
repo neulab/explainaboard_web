@@ -230,12 +230,7 @@ https://github.com/neulab/ExplainaBoard/blob/main/docs/task_kg_link_tail_predict
             Task(
                 name=TaskType.meta_evaluation_nlg,
                 description="Evaluate the reliablity of automated metrics for "
-                "general natural language generawtion tasks",
-            ),
-            Task(
-                name=TaskType.meta_evaluation_wmt_da,
-                description="Evaluate the reliablity of automated metrics"
-                " for WMT metrics",
+                "general natural language generation tasks",
             ),
         ],
     ),
