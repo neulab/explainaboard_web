@@ -5,6 +5,7 @@ import json
 import logging
 import os
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -54,7 +55,7 @@ class BenchmarkDBUtils:
 
     @staticmethod
     def find_configs(
-        parent: str, page: int = 0, page_size: int = 0
+        benchmark: str | None, parent: str | None, page: int = 0, page_size: int = 0
     ) -> list[BenchmarkConfig]:
         permissions_list = [{"is_private": False}]
         user = get_user()
@@ -62,7 +63,13 @@ class BenchmarkDBUtils:
             permissions_list.append({"creator": user.id})
             permissions_list.append({"shared_users": user.email})
 
-        filt = {"$and": [{"parent": parent}, {"$or": permissions_list}]}
+        and_list: list[dict[str, Any]] = [{"$or": permissions_list}]
+        if benchmark:
+            and_list.append({"_id": benchmark})
+        if parent:
+            and_list.append({"parent": parent})
+
+        filt = {"$and": and_list}
         cursor, _ = DBUtils.find(
             DBUtils.BENCHMARK_METADATA, filt=filt, limit=page * page_size
         )
