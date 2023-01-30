@@ -29,7 +29,11 @@ export function BenchmarkPage() {
   useEffect(() => {
     async function fetchItems() {
       setItems(
-        await backendClient.benchmarkConfigsGet(id, filters.showFeatured)
+        await backendClient.benchmarkConfigsGet(
+          undefined,
+          id,
+          filters.showFeatured
+        )
       );
     }
     const prevString = query.toString();

@@ -188,12 +188,12 @@ def metric_descriptions_get() -> dict[str, str]:
 
 
 def benchmark_configs_get(
-    parent: str | None, featured: bool | None
+    benchmark: str | None, parent: str | None, featured: bool | None
 ) -> list[BenchmarkConfig]:
     if featured:
         return BenchmarkDBUtils.find_configs_featured()
     else:
-        return BenchmarkDBUtils.find_configs(parent)
+        return BenchmarkDBUtils.find_configs(benchmark=benchmark, parent=parent)
 
 
 def benchmark_get_by_id(benchmark_id: str, by_creator: bool) -> Benchmark:

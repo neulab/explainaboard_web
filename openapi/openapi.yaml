@@ -2,7 +2,7 @@ openapi: "3.0.0"
 info:
   title: "ExplainaBoard"
   description: "Backend APIs for ExplainaBoard"
-  version: "0.2.25"
+  version: "0.2.26"
   contact:
     email: "explainaboard@gmail.com"
   license:
@@ -83,6 +83,12 @@ paths:
         - BearerAuth: []
         - {}
       parameters:
+        - in: query
+          name: benchmark_id
+          example: globalbench
+          schema:
+            type: string
+          required: false
         - in: query
           name: parent_id
           example: globalbench
